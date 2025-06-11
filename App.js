@@ -20,6 +20,9 @@ import ProfileSetupScreen from './src/screens/ProfileSetupScreen';
 // Import the UserProvider
 import { UserProvider } from './src/context/UserContext';
 
+// Import the StripeProvider
+import StripeProvider from './src/components/StripeProvider';
+
 // Create navigators - only once
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -62,42 +65,44 @@ function MainTabNavigator() {
 export default function App() {
   return (
     <UserProvider>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Main">
-            {/* Auth screens */}
-            <Stack.Screen 
-              name="Login" 
-              component={LoginScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Register" 
-              component={RegisterScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="ProfileSetup" 
-              component={ProfileSetupScreen} 
-              options={{ headerShown: false }}
-            />
-            
-            {/* Main app */}
-            <Stack.Screen 
-              name="Main" 
-              component={MainTabNavigator}
-              options={{ headerShown: false }}
-            />
-            
-            {/* Other screens */}
-            <Stack.Screen 
-              name="ShowDetails" 
-              component={ShowDetailsScreen}
-              options={{ title: "Show Details" }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SafeAreaProvider>
+      <StripeProvider>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="Main">
+              {/* Auth screens */}
+              <Stack.Screen 
+                name="Login" 
+                component={LoginScreen} 
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="Register" 
+                component={RegisterScreen} 
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="ProfileSetup" 
+                component={ProfileSetupScreen} 
+                options={{ headerShown: false }}
+              />
+              
+              {/* Main app */}
+              <Stack.Screen 
+                name="Main" 
+                component={MainTabNavigator}
+                options={{ headerShown: false }}
+              />
+              
+              {/* Other screens */}
+              <Stack.Screen 
+                name="ShowDetails" 
+                component={ShowDetailsScreen}
+                options={{ title: "Show Details" }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </StripeProvider>
     </UserProvider>
   );
 }

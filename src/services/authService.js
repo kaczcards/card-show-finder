@@ -31,7 +31,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Register new user
-export const registerUser = async (email, password, userData) => {
+export const registerUser = async (email, password, userData, role = 'attendee') => {
   try {
     // Create authentication record
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -48,6 +48,8 @@ export const registerUser = async (email, password, userData) => {
         upcomingShows: userData.notificationPreferences?.upcomingShows || true,
         newShowsInArea: userData.notificationPreferences?.newShowsInArea || true
       },
+      role: role, // Add user role
+      isPremium: role === 'promoter', // Promoters are premium by default
       createdAt: new Date(),
       favoriteShows: []
     });
@@ -99,6 +101,21 @@ export const updateUserProfile = async (userId, profileData) => {
   try {
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, profileData);
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Upgrade user to promoter (will be integrated with Stripe)
+export const upgradeToPromoter = async (userId) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      role: 'promoter',
+      isPremium: true,
+      upgradedAt: new Date()
+    });
     return { success: true, error: null };
   } catch (error) {
     return { success: false, error: error.message };

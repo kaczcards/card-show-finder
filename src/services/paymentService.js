@@ -1,0 +1,127 @@
+// src/services/paymentService.js
+import { initStripe, useStripe } from '@stripe/stripe-react-native';
+import { upgradeToPromoter } from './authService';
+
+// Replace with your actual Stripe publishable key
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_yourStripePublishableKey';
+
+// Mock server endpoint - in production, replace with your actual backend URL
+const API_URL = 'https://your-backend-url.com';
+
+// Initialize Stripe
+export const initializeStripe = async () => {
+  try {
+    await initStripe({
+      publishableKey: STRIPE_PUBLISHABLE_KEY,
+      merchantIdentifier: 'merchant.com.cardshowfinder',
+      urlScheme: 'cardshowfinder',
+    });
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error initializing Stripe:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Mock function to fetch payment intent from server
+// In production, this would call your actual backend
+export const fetchPaymentIntentFromServer = async (userId, amount = 1999) => {
+  try {
+    // In a real app, this would be an API call to your backend
+    // which would create a PaymentIntent with Stripe's API
+    console.log(`Creating payment intent for user ${userId} for $${(amount/100).toFixed(2)}`);
+    
+    // Mock response - in production, this would come from your backend
+    return {
+      success: true,
+      clientSecret: 'mock_client_secret',
+      customerId: 'mock_customer_id',
+      ephemeralKey: 'mock_ephemeral_key',
+    };
+  } catch (error) {
+    console.error('Error fetching payment intent:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Initialize the payment sheet
+export const initializePaymentSheet = async (userId) => {
+  const { presentPaymentSheet } = useStripe();
+  
+  try {
+    // Fetch payment intent from server (or mock)
+    const { clientSecret, customerId, ephemeralKey, error } = 
+      await fetchPaymentIntentFromServer(userId);
+    
+    if (error) {
+      return { success: false, error };
+    }
+    
+    // Initialize the payment sheet
+    const { error: initError } = await presentPaymentSheet({
+      setupIntentClientSecret: clientSecret,
+      customerId,
+      customerEphemeralKeySecret: ephemeralKey,
+      merchantDisplayName: 'Card Show Finder',
+    });
+    
+    if (initError) {
+      console.error('Error initializing payment sheet:', initError);
+      return { success: false, error: initError.message };
+    }
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error in payment sheet initialization:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Present the payment sheet to the user
+export const presentPromoterUpgradePayment = async (userId) => {
+  const { presentPaymentSheet } = useStripe();
+  
+  try {
+    // Present the payment sheet
+    const { error } = await presentPaymentSheet();
+    
+    if (error) {
+      console.error('Payment sheet error:', error);
+      return { success: false, error: error.message };
+    }
+    
+    // Payment successful, upgrade the user to promoter
+    const { success, error: upgradeError } = await upgradeToPromoter(userId);
+    
+    if (upgradeError) {
+      console.error('Error upgrading user:', upgradeError);
+      return { success: false, error: upgradeError };
+    }
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Complete implementation for promoter subscription
+export const handlePromoterUpgrade = async (userId) => {
+  try {
+    // Step 1: Initialize the payment sheet
+    const { success: initSuccess, error: initError } = 
+      await initializePaymentSheet(userId);
+    
+    if (!initSuccess) {
+      return { success: false, error: initError };
+    }
+    
+    // Step 2: Present the payment sheet and process payment
+    const { success, error } = await presentPromoterUpgradePayment(userId);
+    
+    return { success, error };
+  } catch (error) {
+    console.error('Error in promoter upgrade process:', error);
+    return { success: false, error: error.message };
+  }
+};

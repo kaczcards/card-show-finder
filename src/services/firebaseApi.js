@@ -24,7 +24,11 @@ const MOCK_CARD_SHOWS = [
     coordinate: {
       latitude: 41.8781,
       longitude: -87.6298
-    }
+    },
+    categories: ['Sports Cards', 'Baseball Cards', 'Basketball Cards', 'Football Cards', 'Hockey Cards', 'Memorabilia'],
+    hasOnsiteGrading: true,
+    hasAutographGuests: true,
+    description: 'The largest sports collectibles show in the nation featuring hundreds of dealers, authentication services, and special athlete appearances.'
   },
   {
     id: '2',
@@ -37,7 +41,11 @@ const MOCK_CARD_SHOWS = [
     coordinate: {
       latitude: 42.0451,
       longitude: -87.6877
-    }
+    },
+    categories: ['Sports Cards', 'Pokemon Cards', 'Yu-Gi-Oh!', 'Magic: The Gathering'],
+    hasOnsiteGrading: false,
+    hasAutographGuests: false,
+    description: 'A family-friendly card trading event focusing on both sports and gaming cards.'
   },
   {
     id: '3',
@@ -50,7 +58,62 @@ const MOCK_CARD_SHOWS = [
     coordinate: {
       latitude: 41.8850,
       longitude: -87.7845
-    }
+    },
+    categories: ['Sports Cards', 'Baseball Cards', 'Vintage Cards'],
+    hasOnsiteGrading: true,
+    hasAutographGuests: false,
+    description: 'Specializing in pre-1980 baseball cards with expert dealers and appraisers on site.'
+  },
+  {
+    id: '4',
+    title: 'Modern Basketball Showcase',
+    location: 'United Center Annex',
+    address: '1901 W Madison St, Chicago, IL 60612',
+    date: new Date(2025, 7, 18),
+    image: 'https://via.placeholder.com/150',
+    entryFee: '$15.00',
+    coordinate: {
+      latitude: 41.8807,
+      longitude: -87.6742
+    },
+    categories: ['Sports Cards', 'Basketball Cards', 'Modern Cards'],
+    hasOnsiteGrading: true,
+    hasAutographGuests: true,
+    description: 'Featuring the latest basketball card releases, autograph sessions with current NBA players, and on-site grading.'
+  },
+  {
+    id: '5',
+    title: 'Pokemon & TCG Festival',
+    location: 'Gaming Paradise',
+    address: '555 Gamer Blvd, Schaumburg, IL 60173',
+    date: new Date(2025, 8, 10),
+    image: 'https://via.placeholder.com/150',
+    entryFee: 'Free',
+    coordinate: {
+      latitude: 42.0334,
+      longitude: -88.0834
+    },
+    categories: ['Pokemon Cards', 'Magic: The Gathering', 'Yu-Gi-Oh!', 'Other TCGs'],
+    hasOnsiteGrading: false,
+    hasAutographGuests: false,
+    description: 'A trading card game festival with tournaments, trading areas, and new release showcases.'
+  },
+  {
+    id: '6',
+    title: 'Autograph Collectors Expo',
+    location: 'Signature Hall',
+    address: '222 Celebrity Way, Rosemont, IL 60018',
+    date: new Date(2025, 8, 25),
+    image: 'https://via.placeholder.com/150',
+    entryFee: '$25.00',
+    coordinate: {
+      latitude: 41.9865,
+      longitude: -87.8612
+    },
+    categories: ['Autographs', 'Memorabilia', 'Sports Cards'],
+    hasOnsiteGrading: false,
+    hasAutographGuests: true,
+    description: 'Premium show featuring dozens of athletes and celebrities signing autographs throughout the weekend.'
   }
 ];
 
