@@ -42,131 +42,173 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
   const nextMonth = new Date();
   nextMonth.setMonth(today.getMonth() + 1);
   
+  // Ensure initialFilters dates are Date objects
+  const getValidDate = (dateValue) => {
+    if (!dateValue) return new Date();
+    
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      return isNaN(date.getTime()) ? new Date() : date;
+    } catch (error) {
+      console.error("Invalid date:", error);
+      return new Date();
+    }
+  };
+  
   // Filter state
   const [filters, setFilters] = useState({
-    startDate: initialFilters.startDate || today,
-    endDate: initialFilters.endDate || nextMonth,
-    categories: initialFilters.categories || [],
+    startDate: getValidDate(initialFilters.startDate) || today,
+    endDate: getValidDate(initialFilters.endDate) || nextMonth,
+    categories: Array.isArray(initialFilters.categories) ? initialFilters.categories : [],
     features: initialFilters.features || {
       onSiteGrading: false,
       autographGuests: false
     },
-    priceRange: initialFilters.priceRange || [0, 100], // [min, max] in dollars
+    priceRange: Array.isArray(initialFilters.priceRange) ? initialFilters.priceRange : [0, 100], // [min, max] in dollars
     showDatePicker: null, // 'start' or 'end' when showing date picker
   });
   
   // Format date for display
   const formatDate = (date) => {
-    const options = { month: 'short', day: 'numeric', year: 'numeric' };
-    return date.toLocaleDateString(undefined, options);
+    try {
+      const validDate = getValidDate(date);
+      const options = { month: 'short', day: 'numeric', year: 'numeric' };
+      return validDate.toLocaleDateString(undefined, options);
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
   };
   
   // Handle date change
   const handleDateChange = (event, selectedDate) => {
-    if (Platform.OS === 'android') {
-      setFilters(prev => ({ ...prev, showDatePicker: null }));
-    }
-    
-    if (!selectedDate) return; // User canceled
-    
-    const updatedFilters = { ...filters };
-    
-    if (filters.showDatePicker === 'start') {
-      updatedFilters.startDate = selectedDate;
-      // Ensure start date is not after end date
-      if (selectedDate > filters.endDate) {
-        updatedFilters.endDate = new Date(selectedDate);
-        updatedFilters.endDate.setDate(selectedDate.getDate() + 7);
+    try {
+      // On Android, the picker is dismissed automatically
+      if (Platform.OS === 'android') {
+        setFilters(prev => ({ ...prev, showDatePicker: null }));
       }
-    } else {
-      updatedFilters.endDate = selectedDate;
-      // Ensure end date is not before start date
-      if (selectedDate < filters.startDate) {
-        updatedFilters.startDate = new Date(selectedDate);
-        updatedFilters.startDate.setDate(selectedDate.getDate() - 7);
+      
+      if (!selectedDate) return; // User canceled
+      
+      const updatedFilters = { ...filters };
+      
+      if (filters.showDatePicker === 'start') {
+        updatedFilters.startDate = selectedDate;
+        // Ensure start date is not after end date
+        if (selectedDate > filters.endDate) {
+          updatedFilters.endDate = new Date(selectedDate);
+          updatedFilters.endDate.setDate(selectedDate.getDate() + 7);
+        }
+      } else {
+        updatedFilters.endDate = selectedDate;
+        // Ensure end date is not before start date
+        if (selectedDate < filters.startDate) {
+          updatedFilters.startDate = new Date(selectedDate);
+          updatedFilters.startDate.setDate(selectedDate.getDate() - 7);
+        }
       }
-    }
-    
-    updatedFilters.showDatePicker = Platform.OS === 'ios' ? filters.showDatePicker : null;
-    setFilters(updatedFilters);
-    
-    // Notify parent of filter changes
-    if (onFiltersChange) {
-      const { showDatePicker, ...filtersToEmit } = updatedFilters;
-      onFiltersChange(filtersToEmit);
+      
+      updatedFilters.showDatePicker = Platform.OS === 'ios' ? filters.showDatePicker : null;
+      setFilters(updatedFilters);
+      
+      // Notify parent of filter changes
+      if (onFiltersChange) {
+        const { showDatePicker, ...filtersToEmit } = updatedFilters;
+        onFiltersChange(filtersToEmit);
+      }
+    } catch (error) {
+      console.error("Error handling date change:", error);
     }
   };
   
   // Toggle category selection
   const toggleCategory = (category) => {
-    const updatedCategories = [...filters.categories];
-    const categoryIndex = updatedCategories.indexOf(category);
-    
-    if (categoryIndex >= 0) {
-      updatedCategories.splice(categoryIndex, 1);
-    } else {
-      updatedCategories.push(category);
-    }
-    
-    const updatedFilters = { ...filters, categories: updatedCategories };
-    setFilters(updatedFilters);
-    
-    // Notify parent of filter changes
-    if (onFiltersChange) {
-      const { showDatePicker, ...filtersToEmit } = updatedFilters;
-      onFiltersChange(filtersToEmit);
+    try {
+      const updatedCategories = [...filters.categories];
+      const categoryIndex = updatedCategories.indexOf(category);
+      
+      if (categoryIndex >= 0) {
+        updatedCategories.splice(categoryIndex, 1);
+      } else {
+        updatedCategories.push(category);
+      }
+      
+      const updatedFilters = { ...filters, categories: updatedCategories };
+      setFilters(updatedFilters);
+      
+      // Notify parent of filter changes
+      if (onFiltersChange) {
+        const { showDatePicker, ...filtersToEmit } = updatedFilters;
+        onFiltersChange(filtersToEmit);
+      }
+    } catch (error) {
+      console.error("Error toggling category:", error);
     }
   };
   
   // Toggle feature
   const toggleFeature = (featureId) => {
-    const updatedFeatures = { 
-      ...filters.features, 
-      [featureId]: !filters.features[featureId] 
-    };
-    
-    const updatedFilters = { ...filters, features: updatedFeatures };
-    setFilters(updatedFilters);
-    
-    // Notify parent of filter changes
-    if (onFiltersChange) {
-      const { showDatePicker, ...filtersToEmit } = updatedFilters;
-      onFiltersChange(filtersToEmit);
+    try {
+      const updatedFeatures = { 
+        ...filters.features, 
+        [featureId]: !filters.features[featureId] 
+      };
+      
+      const updatedFilters = { ...filters, features: updatedFeatures };
+      setFilters(updatedFilters);
+      
+      // Notify parent of filter changes
+      if (onFiltersChange) {
+        const { showDatePicker, ...filtersToEmit } = updatedFilters;
+        onFiltersChange(filtersToEmit);
+      }
+    } catch (error) {
+      console.error("Error toggling feature:", error);
     }
   };
   
   // Handle price range change
-  const handlePriceChange = (values) => {
-    const updatedFilters = { ...filters, priceRange: values };
-    setFilters(updatedFilters);
-    
-    // Notify parent of filter changes
-    if (onFiltersChange) {
-      const { showDatePicker, ...filtersToEmit } = updatedFilters;
-      onFiltersChange(filtersToEmit);
+  const handlePriceChange = (value) => {
+    try {
+      // Ensure value is within valid range
+      const safeValue = Math.max(0, Math.min(100, value));
+      const updatedFilters = { ...filters, priceRange: [0, safeValue] };
+      setFilters(updatedFilters);
+      
+      // Notify parent of filter changes
+      if (onFiltersChange) {
+        const { showDatePicker, ...filtersToEmit } = updatedFilters;
+        onFiltersChange(filtersToEmit);
+      }
+    } catch (error) {
+      console.error("Error handling price change:", error);
     }
   };
   
   // Reset all filters
   const resetFilters = () => {
-    const resetFilters = {
-      startDate: today,
-      endDate: nextMonth,
-      categories: [],
-      features: {
-        onSiteGrading: false,
-        autographGuests: false
-      },
-      priceRange: [0, 100],
-      showDatePicker: null
-    };
-    
-    setFilters(resetFilters);
-    
-    // Notify parent of filter changes
-    if (onFiltersChange) {
-      const { showDatePicker, ...filtersToEmit } = resetFilters;
-      onFiltersChange(filtersToEmit);
+    try {
+      const resetFilters = {
+        startDate: today,
+        endDate: nextMonth,
+        categories: [],
+        features: {
+          onSiteGrading: false,
+          autographGuests: false
+        },
+        priceRange: [0, 100],
+        showDatePicker: null
+      };
+      
+      setFilters(resetFilters);
+      
+      // Notify parent of filter changes
+      if (onFiltersChange) {
+        const { showDatePicker, ...filtersToEmit } = resetFilters;
+        onFiltersChange(filtersToEmit);
+      }
+    } catch (error) {
+      console.error("Error resetting filters:", error);
     }
   };
   
@@ -176,6 +218,20 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
     if (value >= 100) return '$100+';
     return `$${value}`;
   };
+  
+  // Sync with initialFilters if they change externally
+  useEffect(() => {
+    if (initialFilters && Object.keys(initialFilters).length > 0) {
+      setFilters(prev => ({
+        ...prev,
+        startDate: getValidDate(initialFilters.startDate) || prev.startDate,
+        endDate: getValidDate(initialFilters.endDate) || prev.endDate,
+        categories: Array.isArray(initialFilters.categories) ? initialFilters.categories : prev.categories,
+        features: initialFilters.features || prev.features,
+        priceRange: Array.isArray(initialFilters.priceRange) ? initialFilters.priceRange : prev.priceRange
+      }));
+    }
+  }, [initialFilters]);
   
   return (
     <View style={styles.container}>
@@ -215,11 +271,13 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
           
           {filters.showDatePicker && (
             <DateTimePicker
+              testID={filters.showDatePicker === 'start' ? "startDatePicker" : "endDatePicker"}
               value={filters.showDatePicker === 'start' ? filters.startDate : filters.endDate}
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
               onChange={handleDateChange}
               minimumDate={filters.showDatePicker === 'end' ? filters.startDate : undefined}
+              style={Platform.OS === 'ios' ? styles.datePickerIOS : undefined}
             />
           )}
         </View>
@@ -236,6 +294,7 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
                   filters.categories.includes(category) && styles.selectedCategory
                 ]}
                 onPress={() => toggleCategory(category)}
+                accessibilityLabel={`Toggle ${category} category`}
               >
                 <Text
                   style={[
@@ -258,10 +317,11 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
             <View key={feature.id} style={styles.featureRow}>
               <Text style={styles.featureText}>{feature.label}</Text>
               <Switch
-                value={filters.features[feature.id]}
+                value={filters.features[feature.id] || false}
                 onValueChange={() => toggleFeature(feature.id)}
                 trackColor={{ false: '#e9ecef', true: '#bde0fe' }}
                 thumbColor={filters.features[feature.id] ? '#3498db' : '#f4f3f4'}
+                accessibilityLabel={`Toggle ${feature.label} feature`}
               />
             </View>
           ))}
@@ -285,7 +345,8 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
             minimumTrackTintColor="#3498db"
             maximumTrackTintColor="#e9ecef"
             thumbTintColor="#3498db"
-            onValueChange={(value) => handlePriceChange([0, value])}
+            onValueChange={handlePriceChange}
+            accessibilityLabel="Adjust maximum price"
           />
           
           <Text style={styles.currentPrice}>
@@ -367,6 +428,11 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 16,
     color: '#212529',
+  },
+  datePickerIOS: {
+    marginTop: 10,
+    marginBottom: 10,
+    height: 200,
   },
   categoriesContainer: {
     flexDirection: 'row',

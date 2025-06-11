@@ -1,5 +1,5 @@
 // src/services/paymentService.js
-import { initStripe, useStripe } from '@stripe/stripe-react-native';
+import { initStripe } from '@stripe/stripe-react-native';
 import { upgradeToPromoter } from './authService';
 
 // Replace with your actual Stripe publishable key
@@ -44,9 +44,12 @@ export const fetchPaymentIntentFromServer = async (userId, amount = 1999) => {
   }
 };
 
-// Initialize the payment sheet
-export const initializePaymentSheet = async (userId) => {
-  const { presentPaymentSheet } = useStripe();
+// Initialize the payment sheet - now accepts stripe object as parameter
+export const initializePaymentSheet = async (userId, stripe) => {
+  if (!stripe) {
+    console.error('Stripe object is required');
+    return { success: false, error: 'Stripe not initialized' };
+  }
   
   try {
     // Fetch payment intent from server (or mock)
@@ -58,7 +61,7 @@ export const initializePaymentSheet = async (userId) => {
     }
     
     // Initialize the payment sheet
-    const { error: initError } = await presentPaymentSheet({
+    const { error: initError } = await stripe.initPaymentSheet({
       setupIntentClientSecret: clientSecret,
       customerId,
       customerEphemeralKeySecret: ephemeralKey,
@@ -77,13 +80,16 @@ export const initializePaymentSheet = async (userId) => {
   }
 };
 
-// Present the payment sheet to the user
-export const presentPromoterUpgradePayment = async (userId) => {
-  const { presentPaymentSheet } = useStripe();
+// Present the payment sheet to the user - now accepts stripe object as parameter
+export const presentPromoterUpgradePayment = async (userId, stripe) => {
+  if (!stripe) {
+    console.error('Stripe object is required');
+    return { success: false, error: 'Stripe not initialized' };
+  }
   
   try {
     // Present the payment sheet
-    const { error } = await presentPaymentSheet();
+    const { error } = await stripe.presentPaymentSheet();
     
     if (error) {
       console.error('Payment sheet error:', error);
@@ -105,19 +111,24 @@ export const presentPromoterUpgradePayment = async (userId) => {
   }
 };
 
-// Complete implementation for promoter subscription
-export const handlePromoterUpgrade = async (userId) => {
+// Complete implementation for promoter subscription - now accepts stripe object as parameter
+export const handlePromoterUpgrade = async (userId, stripe) => {
+  if (!stripe) {
+    console.error('Stripe object is required');
+    return { success: false, error: 'Stripe not initialized' };
+  }
+  
   try {
     // Step 1: Initialize the payment sheet
     const { success: initSuccess, error: initError } = 
-      await initializePaymentSheet(userId);
+      await initializePaymentSheet(userId, stripe);
     
     if (!initSuccess) {
       return { success: false, error: initError };
     }
     
     // Step 2: Present the payment sheet and process payment
-    const { success, error } = await presentPromoterUpgradePayment(userId);
+    const { success, error } = await presentPromoterUpgradePayment(userId, stripe);
     
     return { success, error };
   } catch (error) {

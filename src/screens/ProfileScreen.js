@@ -16,11 +16,13 @@ import { useNavigation } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
 import { logoutUser, updateUserProfile } from '../services/authService';
 import { handlePromoterUpgrade } from '../services/paymentService';
+import { useStripe } from '@stripe/stripe-react-native';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const { currentUser, userProfile, refreshUserProfile } = useUser();
   const [upgrading, setUpgrading] = useState(false);
+  const stripe = useStripe();
   
   const [settings, setSettings] = useState({
     notifications: true,
@@ -64,7 +66,7 @@ const ProfileScreen = () => {
   const handleUpgrade = async () => {
     try {
       setUpgrading(true);
-      const { success, error } = await handlePromoterUpgrade(currentUser.uid);
+      const { success, error } = await handlePromoterUpgrade(currentUser.uid, stripe);
       
       if (!success) {
         Alert.alert('Upgrade Failed', error || 'Failed to process payment');

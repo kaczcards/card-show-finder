@@ -113,9 +113,15 @@ const HomeScreen = () => {
   // Load saved filter preferences
   useEffect(() => {
     const loadSavedFilters = async () => {
-      const savedFilters = await loadFilterPreferences();
-      if (savedFilters) {
-        setActiveFilters(savedFilters);
+      try {
+        console.log("Loading saved filter preferences...");
+        const savedFilters = await loadFilterPreferences();
+        if (savedFilters) {
+          console.log("Loaded filters:", JSON.stringify(savedFilters));
+          setActiveFilters(savedFilters);
+        }
+      } catch (error) {
+        console.error("Error loading filter preferences:", error);
       }
     };
     
@@ -124,72 +130,132 @@ const HomeScreen = () => {
   
   // Handle filter changes
   const handleFiltersChange = (newFilters) => {
-    setActiveFilters(newFilters);
-    // Save filter preferences locally
-    saveFilterPreferences(newFilters);
-    // Apply filters
-    applyFilters(cardShows, newFilters);
+    try {
+      console.log("Filter changed to:", JSON.stringify(newFilters));
+      setActiveFilters(newFilters);
+      // Save filter preferences locally
+      saveFilterPreferences(newFilters);
+      // Apply filters
+      applyFilters(cardShows, newFilters);
+    } catch (error) {
+      console.error("Error handling filter changes:", error);
+    }
   };
   
   // Apply filters to shows
   const applyFilters = (shows, filters = activeFilters) => {
-    if (!shows || shows.length === 0) return;
-    
-    const filtered = shows.filter(show => {
-      // Filter by date range
-      if (show.date) {
-        const showDate = new Date(show.date);
-        if (showDate < filters.startDate || showDate > filters.endDate) {
+    try {
+      console.log("Applying filters to", shows?.length || 0, "shows");
+      
+      if (!shows || !Array.isArray(shows) || shows.length === 0) {
+        console.log("No shows to filter");
+        setFilteredShows([]);
+        return;
+      }
+      
+      const filtered = shows.filter(show => {
+        // Filter by date range
+        if (show.date) {
+          // Ensure we're working with Date objects
+          const showDate = show.date instanceof Date ? 
+            show.date : 
+            new Date(show.date);
+          
+          const startDate = filters.startDate instanceof Date ?
+            filters.startDate :
+            new Date(filters.startDate);
+            
+          const endDate = filters.endDate instanceof Date ?
+            filters.endDate :
+            new Date(filters.endDate);
+          
+          console.log(`Comparing dates: Show ${showDate.toISOString()}, Filter range: ${startDate.toISOString()} - ${endDate.toISOString()}`);
+          
+          // Check if date is valid before comparing
+          if (isNaN(showDate.getTime())) {
+            console.log(`Invalid show date for ${show.title}`);
+            return false;
+          }
+          
+          if (showDate < startDate || showDate > endDate) {
+            console.log(`${show.title} filtered out by date range`);
+            return false;
+          }
+        }
+        
+        // Filter by categories
+        if (filters.categories && filters.categories.length > 0) {
+          if (!show.categories || !Array.isArray(show.categories)) {
+            console.log(`${show.title} has no categories`);
+            return false;
+          }
+          
+          // Check if show has at least one of the selected categories
+          const hasMatchingCategory = filters.categories.some(category => 
+            show.categories.includes(category)
+          );
+          
+          if (!hasMatchingCategory) {
+            console.log(`${show.title} filtered out by categories`);
+            return false;
+          }
+        }
+        
+        // Filter by features
+        if (filters.features.onSiteGrading && !show.hasOnsiteGrading) {
+          console.log(`${show.title} filtered out by onSiteGrading`);
           return false;
         }
-      }
-      
-      // Filter by categories
-      if (filters.categories.length > 0) {
-        if (!show.categories) return false;
         
-        // Check if show has at least one of the selected categories
-        const hasMatchingCategory = filters.categories.some(category => 
-          show.categories.includes(category)
-        );
-        
-        if (!hasMatchingCategory) return false;
-      }
-      
-      // Filter by features
-      if (filters.features.onSiteGrading && !show.hasOnsiteGrading) {
-        return false;
-      }
-      
-      if (filters.features.autographGuests && !show.hasAutographGuests) {
-        return false;
-      }
-      
-      // Filter by price
-      if (show.entryFee) {
-        // Convert price string to number (remove $ and parse)
-        const price = parseFloat(show.entryFee.replace('$', ''));
-        if (price > filters.priceRange[1]) {
+        if (filters.features.autographGuests && !show.hasAutographGuests) {
+          console.log(`${show.title} filtered out by autographGuests`);
           return false;
         }
-      }
+        
+        // Filter by price
+        if (show.entryFee) {
+          // Convert price string to number (remove $ and parse)
+          const priceString = typeof show.entryFee === 'string' ? show.entryFee.replace('$', '') : '0';
+          const price = parseFloat(priceString);
+          
+          if (!isNaN(price) && price > filters.priceRange[1]) {
+            console.log(`${show.title} filtered out by price: ${price} > ${filters.priceRange[1]}`);
+            return false;
+          }
+        }
+        
+        return true;
+      });
       
-      return true;
-    });
-    
-    setFilteredShows(filtered);
+      console.log(`Filtering complete: ${filtered.length} shows match filters out of ${shows.length}`);
+      setFilteredShows(filtered);
+    } catch (error) {
+      console.error("Error applying filters:", error);
+      // If filtering fails, show all shows
+      setFilteredShows(shows || []);
+    }
   };
   
   // Move fetchShows outside useEffect to make it accessible for retry button
   const fetchShows = async () => {
     try {
       setLoading(true);
-      const { shows, error } = await getCardShows();
+      console.log("Fetching card shows...");
+      const { shows, error: fetchError } = await getCardShows();
       
-      if (error) {
-        setError(error);
+      if (fetchError) {
+        console.error("Error fetching shows:", fetchError);
+        setError(fetchError);
         return;
       }
+      
+      if (!shows || !Array.isArray(shows)) {
+        console.error("Invalid shows data returned:", shows);
+        setError("Invalid data format received");
+        return;
+      }
+      
+      console.log(`Fetched ${shows.length} shows`);
       
       // Add mock categories and features if they don't exist
       const enhancedShows = shows.map(show => ({
@@ -204,8 +270,8 @@ const HomeScreen = () => {
       // Apply any active filters
       applyFilters(enhancedShows);
     } catch (err) {
+      console.error("Unexpected error fetching shows:", err);
       setError('Failed to load card shows');
-      console.error(err);
     } finally {
       setLoading(false);
     }
