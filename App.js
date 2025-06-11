@@ -47,11 +47,12 @@ function MainTabNavigator() {
           
           return <Ionicons name={iconName} size={size} color={color} />;
         },
+        tabBarActiveTintColor: '#3498db',
+        tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          display: 'flex'
+        }
       })}
-      tabBarOptions={{
-        activeTintColor: '#3498db',
-        inactiveTintColor: 'gray',
-      }}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Map" component={MapScreen} />

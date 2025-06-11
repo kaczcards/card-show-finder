@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Animated,
   Platform
 } from 'react-native';
 import { useUser } from '../context/UserContext';
@@ -49,9 +48,6 @@ const HomeScreen = () => {
     },
     priceRange: [0, 100]
   });
-  
-  // Animation for filter panel
-  const filterPanelHeight = new Animated.Value(0);
   
   // Set up header button
   useEffect(() => {
@@ -101,13 +97,8 @@ const HomeScreen = () => {
   // Toggle filter panel visibility
   const toggleFilterPanel = () => {
     const newValue = !showFilterPanel;
+    console.log(`Toggle filter panel: ${showFilterPanel} -> ${newValue}`);
     setShowFilterPanel(newValue);
-    
-    Animated.timing(filterPanelHeight, {
-      toValue: newValue ? 1 : 0,
-      duration: 300,
-      useNativeDriver: false
-    }).start();
   };
   
   // Load saved filter preferences
@@ -325,24 +316,14 @@ const HomeScreen = () => {
         </Text>
       )}
       
-      {/* Filter panel */}
+      {/* Filter panel - replaced Animated.View with regular View */}
       {showFilterPanel && (
-        <Animated.View 
-          style={[
-            styles.filterPanelContainer,
-            {
-              maxHeight: filterPanelHeight.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 500]
-              })
-            }
-          ]}
-        >
+        <View style={styles.filterPanelContainer}>
           <FilterPanel 
             onFiltersChange={handleFiltersChange}
             initialFilters={activeFilters}
           />
-        </Animated.View>
+        </View>
       )}
       
       {/* Results count */}
@@ -457,8 +438,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   filterPanelContainer: {
-    overflow: 'hidden',
-    marginBottom: 10,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 100,
   },
   resultsHeader: {
     flexDirection: 'row',

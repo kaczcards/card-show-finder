@@ -80,19 +80,37 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
     }
   };
   
+  // Toggle date picker visibility
+  const toggleDatePicker = (pickerType) => {
+    console.log(`Toggling date picker: ${filters.showDatePicker} -> ${pickerType}`);
+    setFilters(prev => ({
+      ...prev,
+      showDatePicker: prev.showDatePicker === pickerType ? null : pickerType
+    }));
+  };
+  
   // Handle date change
   const handleDateChange = (event, selectedDate) => {
     try {
-      // On Android, the picker is dismissed automatically
-      if (Platform.OS === 'android') {
+      console.log(`Date change event: ${event?.type}, selected date: ${selectedDate}`);
+      
+      // On Android, the picker is dismissed automatically on selection
+      // On iOS, we keep it open until user explicitly dismisses it
+      const shouldDismissPicker = Platform.OS === 'android' || event?.type === 'dismissed';
+      
+      if (shouldDismissPicker) {
         setFilters(prev => ({ ...prev, showDatePicker: null }));
       }
       
-      if (!selectedDate) return; // User canceled
+      if (!selectedDate) {
+        console.log("No date selected, keeping current value");
+        return; // User canceled
+      }
       
       const updatedFilters = { ...filters };
       
       if (filters.showDatePicker === 'start') {
+        console.log(`Updating start date: ${filters.startDate} -> ${selectedDate}`);
         updatedFilters.startDate = selectedDate;
         // Ensure start date is not after end date
         if (selectedDate > filters.endDate) {
@@ -100,6 +118,7 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
           updatedFilters.endDate.setDate(selectedDate.getDate() + 7);
         }
       } else {
+        console.log(`Updating end date: ${filters.endDate} -> ${selectedDate}`);
         updatedFilters.endDate = selectedDate;
         // Ensure end date is not before start date
         if (selectedDate < filters.startDate) {
@@ -108,7 +127,13 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
         }
       }
       
-      updatedFilters.showDatePicker = Platform.OS === 'ios' ? filters.showDatePicker : null;
+      // Keep picker open on iOS unless dismissed
+      if (!shouldDismissPicker) {
+        updatedFilters.showDatePicker = filters.showDatePicker;
+      } else {
+        updatedFilters.showDatePicker = null;
+      }
+      
       setFilters(updatedFilters);
       
       // Notify parent of filter changes
@@ -233,6 +258,48 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
     }
   }, [initialFilters]);
   
+  // Render date picker based on platform
+  const renderDatePicker = () => {
+    if (!filters.showDatePicker) return null;
+    
+    console.log(`Rendering DateTimePicker for ${filters.showDatePicker} on ${Platform.OS}`);
+    
+    const currentDate = filters.showDatePicker === 'start' ? filters.startDate : filters.endDate;
+    
+    if (Platform.OS === 'ios') {
+      return (
+        <View style={styles.datePickerIOSContainer}>
+          <DateTimePicker
+            testID={filters.showDatePicker === 'start' ? "startDatePicker" : "endDatePicker"}
+            value={currentDate}
+            mode="date"
+            display="inline"
+            onChange={handleDateChange}
+            minimumDate={filters.showDatePicker === 'end' ? filters.startDate : undefined}
+            style={styles.datePickerIOS}
+          />
+          <TouchableOpacity 
+            style={styles.datePickerDoneButton}
+            onPress={() => setFilters(prev => ({ ...prev, showDatePicker: null }))}
+          >
+            <Text style={styles.datePickerDoneButtonText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    } else {
+      return (
+        <DateTimePicker
+          testID={filters.showDatePicker === 'start' ? "startDatePicker" : "endDatePicker"}
+          value={currentDate}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+          minimumDate={filters.showDatePicker === 'end' ? filters.startDate : undefined}
+        />
+      );
+    }
+  };
+  
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -251,7 +318,7 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
             <Text style={styles.dateLabel}>From</Text>
             <TouchableOpacity 
               style={styles.dateButton}
-              onPress={() => setFilters({ ...filters, showDatePicker: 'start' })}
+              onPress={() => toggleDatePicker('start')}
             >
               <Text style={styles.dateText}>{formatDate(filters.startDate)}</Text>
               <Ionicons name="calendar-outline" size={20} color="#3498db" />
@@ -262,24 +329,15 @@ const FilterPanel = ({ onFiltersChange, initialFilters = {} }) => {
             <Text style={styles.dateLabel}>To</Text>
             <TouchableOpacity 
               style={styles.dateButton}
-              onPress={() => setFilters({ ...filters, showDatePicker: 'end' })}
+              onPress={() => toggleDatePicker('end')}
             >
               <Text style={styles.dateText}>{formatDate(filters.endDate)}</Text>
               <Ionicons name="calendar-outline" size={20} color="#3498db" />
             </TouchableOpacity>
           </View>
           
-          {filters.showDatePicker && (
-            <DateTimePicker
-              testID={filters.showDatePicker === 'start' ? "startDatePicker" : "endDatePicker"}
-              value={filters.showDatePicker === 'start' ? filters.startDate : filters.endDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              onChange={handleDateChange}
-              minimumDate={filters.showDatePicker === 'end' ? filters.startDate : undefined}
-              style={Platform.OS === 'ios' ? styles.datePickerIOS : undefined}
-            />
-          )}
+          {/* Render date picker */}
+          {renderDatePicker()}
         </View>
         
         {/* Categories Section */}
@@ -368,7 +426,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     margin: 10,
-    maxHeight: '80%',
+    maxHeight: Platform.OS === 'ios' ? '80%' : '90%',
   },
   header: {
     flexDirection: 'row',
@@ -429,10 +487,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#212529',
   },
+  datePickerIOSContainer: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    zIndex: 1000,
+  },
   datePickerIOS: {
+    height: 200,
     marginTop: 10,
     marginBottom: 10,
-    height: 200,
+  },
+  datePickerDoneButton: {
+    backgroundColor: '#3498db',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginTop: 10,
+  },
+  datePickerDoneButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   categoriesContainer: {
     flexDirection: 'row',
