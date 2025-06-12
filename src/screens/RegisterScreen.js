@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   ScrollView,
   ActivityIndicator,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
 import { registerUser } from '../services/authService';
 
@@ -54,7 +55,7 @@ const RegisterScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Join Card Show Finder to discover trading card events near you</Text>
+      <Text style={styles.subtitle}>The easiest way to find trading card shows near you</Text>
       
       <TextInput
         style={styles.input}
@@ -84,8 +85,7 @@ const RegisterScreen = ({ navigation }) => {
       <View style={styles.roleSection}>
         <Text style={styles.roleTitle}>I am a:</Text>
         <Text style={styles.roleDescription}>
-          Dealers can add and promote card shows (free).
-          Collectors can browse and favorite shows (also free).
+          Collectors, for those that attend, Dealers for those that setup and promote
         </Text>
         
         <View style={styles.roleToggleContainer}>
@@ -116,6 +116,12 @@ const RegisterScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Top Banner */}
+      <Image
+        source={require('../../assets/top_banner.png')}
+        style={styles.banner}
+      />
       
       <TouchableOpacity 
         style={styles.button}
@@ -136,6 +142,12 @@ const RegisterScreen = ({ navigation }) => {
           Already have an account? <Text style={styles.loginLink}>Login</Text>
         </Text>
       </TouchableOpacity>
+
+      {/* Bottom Banner */}
+      <Image
+        source={require('../../assets/bottom_banner.png')}
+        style={[styles.banner, { marginTop: 20 }]}
+      />
     </ScrollView>
   );
 };
@@ -226,6 +238,16 @@ const styles = StyleSheet.create({
   loginLink: {
     color: '#3498db',
     fontWeight: 'bold',
+  },
+  /* Banner images that appear above the “Create Account” button
+     and below the “Already have an account” section. They should
+     stretch the full width of the screen while maintaining aspect
+     ratio. */
+  banner: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'contain',
+    marginVertical: 10,
   },
 });
 
