@@ -1,6 +1,6 @@
 // src/services/paymentService.js
 import { initStripe } from '@stripe/stripe-react-native';
-import { upgradeToPromoter } from './authService';
+import { upgradeToDealer } from './authService';
 import { createPremiumListingPaymentIntent } from './stripeBackendApi';
 import { updateShowPremiumStatus } from './firebaseApi';
 
@@ -82,8 +82,9 @@ export const initializePaymentSheet = async (userId, stripe) => {
   }
 };
 
-// Present the payment sheet to the user - now accepts stripe object as parameter
-export const presentPromoterUpgradePayment = async (userId, stripe) => {
+// Present the payment sheet to the user so they can upgrade to DEALER
+// (formerly “promoter”). Accepts a useStripe() object.
+export const presentDealerUpgradePayment = async (userId, stripe) => {
   if (!stripe) {
     console.error('Stripe object is required');
     return { success: false, error: 'Stripe not initialized' };
@@ -98,8 +99,8 @@ export const presentPromoterUpgradePayment = async (userId, stripe) => {
       return { success: false, error: error.message };
     }
     
-    // Payment successful, upgrade the user to promoter
-    const { success, error: upgradeError } = await upgradeToPromoter(userId);
+    // Payment successful, upgrade the user to dealer
+    const { success, error: upgradeError } = await upgradeToDealer(userId);
     
     if (upgradeError) {
       console.error('Error upgrading user:', upgradeError);
@@ -113,8 +114,9 @@ export const presentPromoterUpgradePayment = async (userId, stripe) => {
   }
 };
 
-// Complete implementation for promoter subscription - now accepts stripe object as parameter
-export const handlePromoterUpgrade = async (userId, stripe) => {
+// Entry-point helper to initialise + present the PaymentSheet for a
+// DEALER account upgrade (previously “promoter”)
+export const handleDealerUpgrade = async (userId, stripe) => {
   if (!stripe) {
     console.error('Stripe object is required');
     return { success: false, error: 'Stripe not initialized' };
@@ -130,7 +132,7 @@ export const handlePromoterUpgrade = async (userId, stripe) => {
     }
     
     // Step 2: Present the payment sheet and process payment
-    const { success, error } = await presentPromoterUpgradePayment(userId, stripe);
+    const { success, error } = await presentDealerUpgradePayment(userId, stripe);
     
     return { success, error };
   } catch (error) {

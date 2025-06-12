@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
 import { logoutUser, updateUserProfile } from '../services/authService';
-import { handlePromoterUpgrade } from '../services/paymentService';
+import { handleDealerUpgrade } from '../services/paymentService';
 import { useStripe } from '@stripe/stripe-react-native';
 
 const ProfileScreen = () => {
@@ -62,11 +62,11 @@ const ProfileScreen = () => {
     }
   };
   
-  // Handle upgrading to promoter account
+  // Handle upgrading to dealer account
   const handleUpgrade = async () => {
     try {
       setUpgrading(true);
-      const { success, error } = await handlePromoterUpgrade(currentUser.uid, stripe);
+      const { success, error } = await handleDealerUpgrade(currentUser.uid, stripe);
       
       if (!success) {
         Alert.alert('Upgrade Failed', error || 'Failed to process payment');
@@ -75,7 +75,7 @@ const ProfileScreen = () => {
       
       // Refresh user profile to show updated role
       await refreshUserProfile();
-      Alert.alert('Success', 'Your account has been upgraded to Promoter!');
+      Alert.alert('Success', 'Your account has been upgraded to Dealer!');
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred during upgrade.');
       console.error(error);
@@ -219,25 +219,25 @@ const ProfileScreen = () => {
           <View>
             <View style={styles.accountTypeRow}>
               <Text style={styles.accountTypeTitle}>
-                {userProfile?.role === 'promoter' ? 'Promoter Account' : 'Attendee Account'}
+                {userProfile?.role === 'dealer' ? 'Dealer Account' : 'Collector Account'}
               </Text>
               
-              {userProfile?.role === 'promoter' && (
+              {userProfile?.role === 'dealer' && (
                 <View style={styles.promoterBadge}>
                   <Ionicons name="star" size={14} color="#fff" />
-                  <Text style={styles.promoterBadgeText}>PROMOTER</Text>
+                  <Text style={styles.promoterBadgeText}>DEALER</Text>
                 </View>
               )}
             </View>
             
             <Text style={styles.accountTypeDescription}>
-              {userProfile?.role === 'promoter' 
+              {userProfile?.role === 'dealer' 
                 ? 'You can add and manage your card shows in the app.'
-                : 'Upgrade to a promoter account to add your card shows to the app.'}
+                : 'Upgrade to a dealer account to add your card shows to the app.'}
             </Text>
           </View>
           
-          {userProfile?.role !== 'promoter' && (
+          {userProfile?.role !== 'dealer' && (
             <TouchableOpacity 
               style={styles.upgradeButton}
               onPress={handleUpgrade}
@@ -246,13 +246,13 @@ const ProfileScreen = () => {
               {upgrading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={styles.upgradeButtonText}>Upgrade to Promoter</Text>
+                <Text style={styles.upgradeButtonText}>Upgrade to Dealer</Text>
               )}
             </TouchableOpacity>
           )}
         </View>
         
-        {userProfile?.role === 'promoter' && (
+        {userProfile?.role === 'dealer' && (
           <>
             <View style={styles.promoterFeatures}>
               <View style={styles.featureItem}>

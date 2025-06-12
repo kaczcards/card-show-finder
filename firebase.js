@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { getApps, initializeApp } from 'firebase/app';
 import { 
   getFirestore, 
   collection, 
@@ -11,20 +11,28 @@ import {
   GeoPoint,
   limit
 } from 'firebase/firestore';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Your Firebase configuration object from step 2
+// Your Firebase configuration object
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyBlEYZEDfYydaQw2FysfQIeroR_i6V5zuY",
   authDomain: "YOUR_DOMAIN.firebaseapp.com", 
-  projectId: "YOUR_PROJECT_ID",
+  projectId: "card-show-finder",
   storageBucket: "YOUR_BUCKET.appspot.com",
   messagingSenderId: "YOUR_MESSAGING_ID",
   appId: "YOUR_APP_ID",
   measurementId: "YOUR_MEASUREMENT_ID" 
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase only if not already initialized
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Initialize Auth with AsyncStorage persistence
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});
+
 const db = getFirestore(app);
 
 // Collection reference
@@ -116,4 +124,5 @@ export const getCardShowDetails = async (showId) => {
   }
 };
 
-export { db };
+// Export both auth and db
+export { db, auth };

@@ -1,11 +1,37 @@
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase'; // Import db from your firebase.js file
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
-const auth = getAuth(); // This uses the existing Firebase app instance
+// Initialize Firebase (use your actual Firebase config)
+const firebaseConfig = {
+  apiKey: "AIzaSyBlEYZEDfYydaQw2FysfQIeroR_i6V5zuY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "card-show-finder",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase app if not already initialized
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  // App already initialized
+  console.log("Firebase already initialized");
+}
+
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Register new user
-export const registerUser = async (email, password, userData, role = 'attendee') => {
+export const registerUser = async (email, password, userData, role = 'collector') => {
   try {
     // Create authentication record
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -22,8 +48,8 @@ export const registerUser = async (email, password, userData, role = 'attendee')
         upcomingShows: userData.notificationPreferences?.upcomingShows || true,
         newShowsInArea: userData.notificationPreferences?.newShowsInArea || true
       },
-      role: role, // Add user role
-      isPremium: role === 'promoter', // Promoters are premium by default
+      role: role, // Add user role (collector or dealer)
+      isPremium: role === 'dealer', // Dealers are premium by default
       createdAt: new Date(),
       favoriteShows: []
     });
@@ -81,12 +107,12 @@ export const updateUserProfile = async (userId, profileData) => {
   }
 };
 
-// Upgrade user to promoter (will be integrated with Stripe)
-export const upgradeToPromoter = async (userId) => {
+// Upgrade user to dealer (placeholder for Stripe integration)
+export const upgradeToDealer = async (userId) => {
   try {
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, {
-      role: 'promoter',
+      role: 'dealer',
       isPremium: true,
       upgradedAt: new Date()
     });

@@ -16,7 +16,8 @@ const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('attendee');
+  // Default to Collector
+  const [role, setRole] = useState('collector');
   const [loading, setLoading] = useState(false);
   
   const handleRegister = async () => {
@@ -83,35 +84,35 @@ const RegisterScreen = ({ navigation }) => {
       <View style={styles.roleSection}>
         <Text style={styles.roleTitle}>I am a:</Text>
         <Text style={styles.roleDescription}>
-          Promoters can add card shows to the app (requires payment).
-          Attendees can browse and favorite shows for free.
+          Dealers can add and promote card shows (free).
+          Collectors can browse and favorite shows (also free).
         </Text>
         
         <View style={styles.roleToggleContainer}>
           <TouchableOpacity 
             style={[
               styles.roleButton, 
-              role === 'attendee' && styles.roleButtonActive
+              role === 'collector' && styles.roleButtonActive
             ]}
-            onPress={() => setRole('attendee')}
+            onPress={() => setRole('collector')}
           >
             <Text style={[
               styles.roleButtonText,
-              role === 'attendee' && styles.roleButtonTextActive
-            ]}>Attendee</Text>
+              role === 'collector' && styles.roleButtonTextActive
+            ]}>Collector</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[
               styles.roleButton, 
-              role === 'promoter' && styles.roleButtonActive
+              role === 'dealer' && styles.roleButtonActive
             ]}
-            onPress={() => setRole('promoter')}
+            onPress={() => setRole('dealer')}
           >
             <Text style={[
               styles.roleButtonText,
-              role === 'promoter' && styles.roleButtonTextActive
-            ]}>Promoter</Text>
+              role === 'dealer' && styles.roleButtonTextActive
+            ]}>Dealer</Text>
           </TouchableOpacity>
         </View>
       </View>
