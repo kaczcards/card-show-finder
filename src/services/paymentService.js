@@ -1,6 +1,8 @@
 // src/services/paymentService.js
 import { initStripe } from '@stripe/stripe-react-native';
 import { upgradeToPromoter } from './authService';
+import { createPremiumListingPaymentIntent } from './stripeBackendApi';
+import { updateShowPremiumStatus } from './firebaseApi';
 
 // Replace with your actual Stripe publishable key
 const STRIPE_PUBLISHABLE_KEY = 'pk_test_yourStripePublishableKey';
@@ -135,4 +137,106 @@ export const handlePromoterUpgrade = async (userId, stripe) => {
     console.error('Error in promoter upgrade process:', error);
     return { success: false, error: error.message };
   }
+};
+
+// -----------------------------------------------------------------------
+//  PREMIUM LISTING PAYMENT FLOW  (show-specific one-time payment)
+// -----------------------------------------------------------------------
+
+/**
+ * Initialise a PaymentSheet for a premium listing purchase
+ * @param {string} showId  Firestore document id for the show
+ * @param {string} userId  Promoter uid
+ * @param {object} stripe  useStripe() object
+ */
+export const initializePremiumPaymentSheet = async (showId, userId, stripe) => {
+  if (!stripe) {
+    console.error('Stripe object is required');
+    return { success: false, error: 'Stripe not initialized' };
+  }
+
+  try {
+    // Ask our backend for a new PaymentIntent + customer details
+    const {
+      success,
+      clientSecret,
+      customerId,
+      ephemeralKey,
+      error
+    } = await createPremiumListingPaymentIntent(showId, userId);
+
+    if (!success) {
+      return { success: false, error };
+    }
+
+    // Init the payment sheet with the returned intent
+    const { error: initError } = await stripe.initPaymentSheet({
+      paymentIntentClientSecret: clientSecret,
+      customerId,
+      customerEphemeralKeySecret: ephemeralKey,
+      merchantDisplayName: 'Card Show Finder'
+    });
+
+    if (initError) {
+      console.error('Error initializing premium PaymentSheet:', initError);
+      return { success: false, error: initError.message };
+    }
+
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('Unexpected error setting up premium listing payment:', err);
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Present the PaymentSheet to pay for premium listing
+ * Updates the show document on success.
+ */
+export const presentPremiumListingPayment = async (showId, userId, stripe) => {
+  if (!stripe) {
+    console.error('Stripe object is required');
+    return { success: false, error: 'Stripe not initialized' };
+  }
+
+  try {
+    const { error } = await stripe.presentPaymentSheet();
+
+    if (error) {
+      console.error('Premium listing payment error:', error);
+      return { success: false, error: error.message };
+    }
+
+    // Mark the show as premium / paid
+    const { success, error: updateErr } = await updateShowPremiumStatus(
+      showId,
+      true,
+      'paid'
+    );
+
+    if (!success) {
+      return { success: false, error: updateErr };
+    }
+
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('Unexpected error completing premium payment:', err);
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Orchestrates initialization + presentation of premium listing payment
+ */
+export const handlePremiumListingPayment = async (showId, userId, stripe) => {
+  // Step 1: init PaymentSheet
+  const { success: initSuccess, error: initError } =
+    await initializePremiumPaymentSheet(showId, userId, stripe);
+
+  if (!initSuccess) {
+    return { success: false, error: initError };
+  }
+
+  // Step 2: present sheet
+  return await presentPremiumListingPayment(showId, userId, stripe);
 };

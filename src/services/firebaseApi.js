@@ -149,6 +149,20 @@ const parseFirestoreDoc = (doc) => {
     }
   });
   
+  // Parse boolean that may have come in as string
+  if (typeof data.isPremium === 'string') {
+    data.isPremium = data.isPremium === 'true';
+  }
+
+  // Convert categories back from JSON string (if saved that way)
+  if (typeof data.categories === 'string') {
+    try {
+      data.categories = JSON.parse(data.categories);
+    } catch {
+      /* ignore – leave as-is */
+    }
+  }
+
   // Handle date specially
   if (data.date && typeof data.date === 'string') {
     data.date = new Date(data.date);
@@ -167,8 +181,21 @@ export const getCardShows = async () => {
     const shows = response.data.documents 
       ? response.data.documents.map(parseFirestoreDoc) 
       : [];
-    
-    return { shows, error: null };
+
+    // Show must be approved to be visible to attendees
+    const approvedShows = shows.filter((s) => s.status === 'approved');
+
+    // Premium listings first, then by date asc
+    approvedShows.sort((a, b) => {
+      if (a.isPremium === b.isPremium) {
+        const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+        const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+        return dateA - dateB;
+      }
+      return a.isPremium ? -1 : 1;
+    });
+
+    return { shows: approvedShows, error: null };
   } catch (error) {
     console.error('Error fetching card shows:', error);
     console.log('Falling back to mock data');
@@ -206,7 +233,8 @@ export const getCardShowsByLocation = async (latitude, longitude, radiusInMiles 
       
       return distance <= radiusInMiles;
     });
-    
+
+    // preserve premium-first order coming from getCardShows()
     return { shows: filteredShows, error: null };
   } catch (error) {
     console.error("Error filtering shows by location:", error);
@@ -291,7 +319,15 @@ const toFirestoreFields = (data) => {
 // Create a new card show
 export const createCardShow = async (showData) => {
   try {
-    const payload = toFirestoreFields(showData);
+    // Ensure required default fields exist
+    const payloadData = {
+      isPremium: false,
+      status: 'pending',      // pending review
+      paymentStatus: 'unpaid',
+      ...showData
+    };
+
+    const payload = toFirestoreFields(payloadData);
     const res = await axios.post(
       `${BASE_URL}/${COLLECTION_NAME}?key=${API_KEY}`,
       payload
@@ -315,6 +351,30 @@ export const updateCardShow = async (showId, updateData) => {
     return { success: true, error: null };
   } catch (error) {
     console.error('Error updating card show:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Update premium status & payment state for a show
+export const updateShowPremiumStatus = async (
+  showId,
+  isPremium = true,
+  paymentStatus = 'paid'
+) => {
+  try {
+    const partial = {
+      isPremium,
+      paymentStatus,
+      status: 'approved' // once paid we mark approved automatically
+    };
+    const payload = toFirestoreFields(partial);
+    await axios.patch(
+      `${BASE_URL}/${COLLECTION_NAME}/${showId}?key=${API_KEY}&updateMask.fieldPaths=isPremium&updateMask.fieldPaths=paymentStatus&updateMask.fieldPaths=status`,
+      payload
+    );
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating premium status:', error);
     return { success: false, error: error.message };
   }
 };
