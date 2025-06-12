@@ -16,6 +16,7 @@ const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('attendee');
   const [loading, setLoading] = useState(false);
   
   const handleRegister = async () => {
@@ -33,7 +34,7 @@ const RegisterScreen = ({ navigation }) => {
     setLoading(true);
     
     try {
-      const { user, error } = await registerUser(email, password, {});
+      const { user, error } = await registerUser(email, password, {}, role);
       
       if (error) {
         Alert.alert('Registration Error', error);
@@ -78,6 +79,42 @@ const RegisterScreen = ({ navigation }) => {
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
+      
+      <View style={styles.roleSection}>
+        <Text style={styles.roleTitle}>I am a:</Text>
+        <Text style={styles.roleDescription}>
+          Promoters can add card shows to the app (requires payment).
+          Attendees can browse and favorite shows for free.
+        </Text>
+        
+        <View style={styles.roleToggleContainer}>
+          <TouchableOpacity 
+            style={[
+              styles.roleButton, 
+              role === 'attendee' && styles.roleButtonActive
+            ]}
+            onPress={() => setRole('attendee')}
+          >
+            <Text style={[
+              styles.roleButtonText,
+              role === 'attendee' && styles.roleButtonTextActive
+            ]}>Attendee</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.roleButton, 
+              role === 'promoter' && styles.roleButtonActive
+            ]}
+            onPress={() => setRole('promoter')}
+          >
+            <Text style={[
+              styles.roleButtonText,
+              role === 'promoter' && styles.roleButtonTextActive
+            ]}>Promoter</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       
       <TouchableOpacity 
         style={styles.button}
@@ -128,6 +165,44 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     fontSize: 16,
+  },
+  roleSection: {
+    marginBottom: 20,
+  },
+  roleTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
+  },
+  roleDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  roleToggleContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  roleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  roleButtonActive: {
+    backgroundColor: '#3498db',
+  },
+  roleButtonText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  roleButtonTextActive: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   button: {
     backgroundColor: '#3498db',

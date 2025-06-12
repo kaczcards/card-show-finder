@@ -8,16 +8,21 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
 import { logoutUser, updateUserProfile } from '../services/authService';
+import { handlePromoterUpgrade } from '../services/paymentService';
+import { useStripe } from '@stripe/stripe-react-native';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const { currentUser, userProfile, refreshUserProfile } = useUser();
+  const [upgrading, setUpgrading] = useState(false);
+  const stripe = useStripe();
   
   const [settings, setSettings] = useState({
     notifications: true,
@@ -54,6 +59,28 @@ const ProfileScreen = () => {
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred.');
       console.error(error);
+    }
+  };
+  
+  // Handle upgrading to promoter account
+  const handleUpgrade = async () => {
+    try {
+      setUpgrading(true);
+      const { success, error } = await handlePromoterUpgrade(currentUser.uid, stripe);
+      
+      if (!success) {
+        Alert.alert('Upgrade Failed', error || 'Failed to process payment');
+        return;
+      }
+      
+      // Refresh user profile to show updated role
+      await refreshUserProfile();
+      Alert.alert('Success', 'Your account has been upgraded to Promoter!');
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred during upgrade.');
+      console.error(error);
+    } finally {
+      setUpgrading(false);
     }
   };
   
@@ -184,6 +211,96 @@ const ProfileScreen = () => {
         </View>
       </View>
       
+      {/* Account Type Section */}
+      <View style={styles.accountContainer}>
+        <Text style={styles.sectionTitle}>Account Type</Text>
+        
+        <View style={styles.accountTypeInfo}>
+          <View>
+            <View style={styles.accountTypeRow}>
+              <Text style={styles.accountTypeTitle}>
+                {userProfile?.role === 'promoter' ? 'Promoter Account' : 'Attendee Account'}
+              </Text>
+              
+              {userProfile?.role === 'promoter' && (
+                <View style={styles.promoterBadge}>
+                  <Ionicons name="star" size={14} color="#fff" />
+                  <Text style={styles.promoterBadgeText}>PROMOTER</Text>
+                </View>
+              )}
+            </View>
+            
+            <Text style={styles.accountTypeDescription}>
+              {userProfile?.role === 'promoter' 
+                ? 'You can add and manage your card shows in the app.'
+                : 'Upgrade to a promoter account to add your card shows to the app.'}
+            </Text>
+          </View>
+          
+          {userProfile?.role !== 'promoter' && (
+            <TouchableOpacity 
+              style={styles.upgradeButton}
+              onPress={handleUpgrade}
+              disabled={upgrading}
+            >
+              {upgrading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.upgradeButtonText}>Upgrade to Promoter</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {userProfile?.role === 'promoter' && (
+          <>
+            <View style={styles.promoterFeatures}>
+              <View style={styles.featureItem}>
+                <Ionicons
+                  name="add-circle-outline"
+                  size={24}
+                  color="#3498db"
+                  style={styles.featureIcon}
+                />
+                <Text style={styles.featureText}>Add your card shows</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Ionicons
+                  name="analytics-outline"
+                  size={24}
+                  color="#3498db"
+                  style={styles.featureIcon}
+                />
+                <Text style={styles.featureText}>View attendance analytics</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Ionicons
+                  name="megaphone-outline"
+                  size={24}
+                  color="#3498db"
+                  style={styles.featureIcon}
+                />
+                <Text style={styles.featureText}>Promote to targeted collectors</Text>
+              </View>
+            </View>
+
+            {/* Manage My Shows button */}
+            <TouchableOpacity
+              style={styles.manageButton}
+              onPress={() => navigation.navigate('MyShows')}
+            >
+              <Ionicons
+                name="albums-outline"
+                size={20}
+                color="#fff"
+                style={styles.manageIcon}
+              />
+              <Text style={styles.manageButtonText}>Manage My Shows</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+      
       {/* Support Section */}
       <View style={styles.supportContainer}>
         <Text style={styles.sectionTitle}>Support</Text>
@@ -307,6 +424,100 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  accountContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  accountTypeInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  accountTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  accountTypeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#212529',
+    marginRight: 10,
+  },
+  accountTypeDescription: {
+    fontSize: 14,
+    color: '#6c757d',
+    maxWidth: 250,
+  },
+  promoterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3498db',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  promoterBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  upgradeButton: {
+    backgroundColor: '#3498db',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+  },
+  upgradeButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  promoterFeatures: {
+    marginTop: 15,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  featureIcon: {
+    marginRight: 15,
+  },
+  featureText: {
+    fontSize: 14,
+    color: '#212529',
+  },
+  /* Manage My Shows button */
+  manageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3498db',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  manageIcon: {
+    marginRight: 6,
+  },
+  manageButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   sectionTitle: {
     fontSize: 18,

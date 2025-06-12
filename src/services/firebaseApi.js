@@ -24,7 +24,11 @@ const MOCK_CARD_SHOWS = [
     coordinate: {
       latitude: 41.8781,
       longitude: -87.6298
-    }
+    },
+    categories: ['Sports Cards', 'Baseball Cards', 'Basketball Cards', 'Football Cards', 'Hockey Cards', 'Memorabilia'],
+    hasOnsiteGrading: true,
+    hasAutographGuests: true,
+    description: 'The largest sports collectibles show in the nation featuring hundreds of dealers, authentication services, and special athlete appearances.'
   },
   {
     id: '2',
@@ -37,7 +41,11 @@ const MOCK_CARD_SHOWS = [
     coordinate: {
       latitude: 42.0451,
       longitude: -87.6877
-    }
+    },
+    categories: ['Sports Cards', 'Pokemon Cards', 'Yu-Gi-Oh!', 'Magic: The Gathering'],
+    hasOnsiteGrading: false,
+    hasAutographGuests: false,
+    description: 'A family-friendly card trading event focusing on both sports and gaming cards.'
   },
   {
     id: '3',
@@ -50,7 +58,62 @@ const MOCK_CARD_SHOWS = [
     coordinate: {
       latitude: 41.8850,
       longitude: -87.7845
-    }
+    },
+    categories: ['Sports Cards', 'Baseball Cards', 'Vintage Cards'],
+    hasOnsiteGrading: true,
+    hasAutographGuests: false,
+    description: 'Specializing in pre-1980 baseball cards with expert dealers and appraisers on site.'
+  },
+  {
+    id: '4',
+    title: 'Modern Basketball Showcase',
+    location: 'United Center Annex',
+    address: '1901 W Madison St, Chicago, IL 60612',
+    date: new Date(2025, 7, 18),
+    image: 'https://via.placeholder.com/150',
+    entryFee: '$15.00',
+    coordinate: {
+      latitude: 41.8807,
+      longitude: -87.6742
+    },
+    categories: ['Sports Cards', 'Basketball Cards', 'Modern Cards'],
+    hasOnsiteGrading: true,
+    hasAutographGuests: true,
+    description: 'Featuring the latest basketball card releases, autograph sessions with current NBA players, and on-site grading.'
+  },
+  {
+    id: '5',
+    title: 'Pokemon & TCG Festival',
+    location: 'Gaming Paradise',
+    address: '555 Gamer Blvd, Schaumburg, IL 60173',
+    date: new Date(2025, 8, 10),
+    image: 'https://via.placeholder.com/150',
+    entryFee: 'Free',
+    coordinate: {
+      latitude: 42.0334,
+      longitude: -88.0834
+    },
+    categories: ['Pokemon Cards', 'Magic: The Gathering', 'Yu-Gi-Oh!', 'Other TCGs'],
+    hasOnsiteGrading: false,
+    hasAutographGuests: false,
+    description: 'A trading card game festival with tournaments, trading areas, and new release showcases.'
+  },
+  {
+    id: '6',
+    title: 'Autograph Collectors Expo',
+    location: 'Signature Hall',
+    address: '222 Celebrity Way, Rosemont, IL 60018',
+    date: new Date(2025, 8, 25),
+    image: 'https://via.placeholder.com/150',
+    entryFee: '$25.00',
+    coordinate: {
+      latitude: 41.9865,
+      longitude: -87.8612
+    },
+    categories: ['Autographs', 'Memorabilia', 'Sports Cards'],
+    hasOnsiteGrading: false,
+    hasAutographGuests: true,
+    description: 'Premium show featuring dozens of athletes and celebrities signing autographs throughout the weekend.'
   }
 ];
 
@@ -86,6 +149,20 @@ const parseFirestoreDoc = (doc) => {
     }
   });
   
+  // Parse boolean that may have come in as string
+  if (typeof data.isPremium === 'string') {
+    data.isPremium = data.isPremium === 'true';
+  }
+
+  // Convert categories back from JSON string (if saved that way)
+  if (typeof data.categories === 'string') {
+    try {
+      data.categories = JSON.parse(data.categories);
+    } catch {
+      /* ignore – leave as-is */
+    }
+  }
+
   // Handle date specially
   if (data.date && typeof data.date === 'string') {
     data.date = new Date(data.date);
@@ -104,8 +181,21 @@ export const getCardShows = async () => {
     const shows = response.data.documents 
       ? response.data.documents.map(parseFirestoreDoc) 
       : [];
-    
-    return { shows, error: null };
+
+    // Show must be approved to be visible to attendees
+    const approvedShows = shows.filter((s) => s.status === 'approved');
+
+    // Premium listings first, then by date asc
+    approvedShows.sort((a, b) => {
+      if (a.isPremium === b.isPremium) {
+        const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+        const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+        return dateA - dateB;
+      }
+      return a.isPremium ? -1 : 1;
+    });
+
+    return { shows: approvedShows, error: null };
   } catch (error) {
     console.error('Error fetching card shows:', error);
     console.log('Falling back to mock data');
@@ -143,7 +233,8 @@ export const getCardShowsByLocation = async (latitude, longitude, radiusInMiles 
       
       return distance <= radiusInMiles;
     });
-    
+
+    // preserve premium-first order coming from getCardShows()
     return { shows: filteredShows, error: null };
   } catch (error) {
     console.error("Error filtering shows by location:", error);
@@ -180,5 +271,167 @@ export const getCardShowDetails = async (showId) => {
     }
     
     return { show: null, error: "Show not found" };
+  }
+};
+
+// ----------------------------- CRUD HELPERS ----------------------------- //
+
+// Helper: convert plain JS object to Firestore REST "fields" representation
+const toFirestoreFields = (data) => {
+  const fields = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+
+    switch (typeof value) {
+      case 'string':
+        fields[key] = { stringValue: value };
+        break;
+      case 'number':
+        // Firestore distinguishes int vs double, but doubleValue works for both
+        fields[key] = { doubleValue: value };
+        break;
+      case 'boolean':
+        fields[key] = { booleanValue: value };
+        break;
+      case 'object':
+        if (value instanceof Date) {
+          fields[key] = { timestampValue: value.toISOString() };
+        } else if (Array.isArray(value)) {
+          // Store arrays as comma-separated strings for simplicity
+          fields[key] = { stringValue: JSON.stringify(value) };
+        } else {
+          // Map (e.g., coordinate)
+          const mapFields = {};
+          Object.entries(value).forEach(([k, v]) => {
+            mapFields[k] =
+              typeof v === 'number'
+                ? { doubleValue: v }
+                : { stringValue: String(v) };
+          });
+          fields[key] = { mapValue: { fields: mapFields } };
+        }
+        break;
+    }
+  });
+  return { fields };
+};
+
+// Create a new card show
+export const createCardShow = async (showData) => {
+  try {
+    // Ensure required default fields exist
+    const payloadData = {
+      isPremium: false,
+      status: 'pending',      // pending review
+      paymentStatus: 'unpaid',
+      ...showData
+    };
+
+    const payload = toFirestoreFields(payloadData);
+    const res = await axios.post(
+      `${BASE_URL}/${COLLECTION_NAME}?key=${API_KEY}`,
+      payload
+    );
+    const show = parseFirestoreDoc(res.data);
+    return { success: true, showId: show.id, error: null };
+  } catch (error) {
+    console.error('Error creating card show:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Update existing card show
+export const updateCardShow = async (showId, updateData) => {
+  try {
+    const payload = toFirestoreFields(updateData);
+    await axios.patch(
+      `${BASE_URL}/${COLLECTION_NAME}/${showId}?key=${API_KEY}&updateMask.fieldPaths=*`,
+      payload
+    );
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating card show:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Update premium status & payment state for a show
+export const updateShowPremiumStatus = async (
+  showId,
+  isPremium = true,
+  paymentStatus = 'paid'
+) => {
+  try {
+    const partial = {
+      isPremium,
+      paymentStatus,
+      status: 'approved' // once paid we mark approved automatically
+    };
+    const payload = toFirestoreFields(partial);
+    await axios.patch(
+      `${BASE_URL}/${COLLECTION_NAME}/${showId}?key=${API_KEY}&updateMask.fieldPaths=isPremium&updateMask.fieldPaths=paymentStatus&updateMask.fieldPaths=status`,
+      payload
+    );
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating premium status:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Delete a card show
+export const deleteCardShow = async (showId) => {
+  try {
+    await axios.delete(
+      `${BASE_URL}/${COLLECTION_NAME}/${showId}?key=${API_KEY}`
+    );
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error deleting card show:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Fetch shows created by a specific promoter
+export const getPromoterShows = async (promoterId) => {
+  try {
+    const res = await axios.get(
+      `${BASE_URL}/${COLLECTION_NAME}?key=${API_KEY}&pageSize=1000`
+    );
+    const all = res.data.documents
+      ? res.data.documents.map(parseFirestoreDoc)
+      : [];
+    const shows = all.filter((s) => s.promoterId === promoterId);
+    return { shows, error: null };
+  } catch (error) {
+    console.error('Error fetching promoter shows:', error);
+    return { shows: [], error: error.message };
+  }
+};
+
+// Increment analytics metric (e.g., views, favorites)
+export const incrementShowMetric = async (showId, metricField = 'views', amount = 1) => {
+  try {
+    const payload = {
+      fields: {},
+      updateMask: { fieldPaths: [ `analytics.${metricField}` ] },
+      currentDocument: { exists: true },
+      /* Use fieldTransforms for increment */
+      fieldTransforms: [
+        {
+          fieldPath: `analytics.${metricField}`,
+          increment: { integerValue: amount }
+        }
+      ]
+    };
+
+    await axios.patch(
+      `${BASE_URL}/${COLLECTION_NAME}/${showId}:commit?key=${API_KEY}`,
+      { writes: [payload] }
+    );
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error incrementing metric:', error);
+    return { success: false, error: error.message };
   }
 };
