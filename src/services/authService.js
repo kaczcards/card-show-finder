@@ -1,34 +1,8 @@
-import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-} from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebase'; // Import db from your firebase.js file
 
-// Initialize Firebase (use your actual Firebase config)
-const firebaseConfig = {
-  apiKey: "AIzaSyBlEYZEDfYydaQw2FysfQIeroR_i6V5zuY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "card-show-finder",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase app if not already initialized
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (error) {
-  // App already initialized
-  console.log("Firebase already initialized");
-}
-
-const auth = getAuth(app);
-const db = getFirestore(app);
+const auth = getAuth(); // This uses the existing Firebase app instance
 
 // Register new user
 export const registerUser = async (email, password, userData, role = 'attendee') => {
