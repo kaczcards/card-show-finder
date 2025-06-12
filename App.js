@@ -108,6 +108,12 @@ const MainStack = () => (
       component={MainTabNavigator}
       options={{ headerShown: false }}
     />
+    {/* Profile setup / edit screen (accessible after login as well) */}
+    <Stack.Screen
+      name="ProfileSetup"
+      component={ProfileSetupScreen}
+      options={{ headerShown: false }}
+    />
     <Stack.Screen
       name="ShowDetails"
       component={ShowDetailsScreen}

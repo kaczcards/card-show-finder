@@ -154,8 +154,16 @@ const ProfileScreen = () => {
             <Text style={styles.profileEmail}>
               {currentUser?.email || 'user@example.com'}
             </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('ProfileSetup', { userId: currentUser.uid })}>
-              <Text style={styles.editProfileText}>Edit Profile</Text>
+            {/* 
+              Navigates to ProfileSetup screen so the user can update
+              existing profile details such as name, ZIP code, interests, etc.
+            */}
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('ProfileSetup', { userId: currentUser.uid })
+              }
+            >
+              <Text style={styles.editProfileText}>Edit My Profile</Text>
             </TouchableOpacity>
           </View>
         </View>
