@@ -245,3 +245,133 @@ export const getCardShowDetails = async (showId) => {
     return { show: null, error: "Show not found" };
   }
 };
+
+// ----------------------------- CRUD HELPERS ----------------------------- //
+
+// Helper: convert plain JS object to Firestore REST "fields" representation
+const toFirestoreFields = (data) => {
+  const fields = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+
+    switch (typeof value) {
+      case 'string':
+        fields[key] = { stringValue: value };
+        break;
+      case 'number':
+        // Firestore distinguishes int vs double, but doubleValue works for both
+        fields[key] = { doubleValue: value };
+        break;
+      case 'boolean':
+        fields[key] = { booleanValue: value };
+        break;
+      case 'object':
+        if (value instanceof Date) {
+          fields[key] = { timestampValue: value.toISOString() };
+        } else if (Array.isArray(value)) {
+          // Store arrays as comma-separated strings for simplicity
+          fields[key] = { stringValue: JSON.stringify(value) };
+        } else {
+          // Map (e.g., coordinate)
+          const mapFields = {};
+          Object.entries(value).forEach(([k, v]) => {
+            mapFields[k] =
+              typeof v === 'number'
+                ? { doubleValue: v }
+                : { stringValue: String(v) };
+          });
+          fields[key] = { mapValue: { fields: mapFields } };
+        }
+        break;
+    }
+  });
+  return { fields };
+};
+
+// Create a new card show
+export const createCardShow = async (showData) => {
+  try {
+    const payload = toFirestoreFields(showData);
+    const res = await axios.post(
+      `${BASE_URL}/${COLLECTION_NAME}?key=${API_KEY}`,
+      payload
+    );
+    const show = parseFirestoreDoc(res.data);
+    return { success: true, showId: show.id, error: null };
+  } catch (error) {
+    console.error('Error creating card show:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Update existing card show
+export const updateCardShow = async (showId, updateData) => {
+  try {
+    const payload = toFirestoreFields(updateData);
+    await axios.patch(
+      `${BASE_URL}/${COLLECTION_NAME}/${showId}?key=${API_KEY}&updateMask.fieldPaths=*`,
+      payload
+    );
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating card show:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Delete a card show
+export const deleteCardShow = async (showId) => {
+  try {
+    await axios.delete(
+      `${BASE_URL}/${COLLECTION_NAME}/${showId}?key=${API_KEY}`
+    );
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error deleting card show:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Fetch shows created by a specific promoter
+export const getPromoterShows = async (promoterId) => {
+  try {
+    const res = await axios.get(
+      `${BASE_URL}/${COLLECTION_NAME}?key=${API_KEY}&pageSize=1000`
+    );
+    const all = res.data.documents
+      ? res.data.documents.map(parseFirestoreDoc)
+      : [];
+    const shows = all.filter((s) => s.promoterId === promoterId);
+    return { shows, error: null };
+  } catch (error) {
+    console.error('Error fetching promoter shows:', error);
+    return { shows: [], error: error.message };
+  }
+};
+
+// Increment analytics metric (e.g., views, favorites)
+export const incrementShowMetric = async (showId, metricField = 'views', amount = 1) => {
+  try {
+    const payload = {
+      fields: {},
+      updateMask: { fieldPaths: [ `analytics.${metricField}` ] },
+      currentDocument: { exists: true },
+      /* Use fieldTransforms for increment */
+      fieldTransforms: [
+        {
+          fieldPath: `analytics.${metricField}`,
+          increment: { integerValue: amount }
+        }
+      ]
+    };
+
+    await axios.patch(
+      `${BASE_URL}/${COLLECTION_NAME}/${showId}:commit?key=${API_KEY}`,
+      { writes: [payload] }
+    );
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error incrementing metric:', error);
+    return { success: false, error: error.message };
+  }
+};

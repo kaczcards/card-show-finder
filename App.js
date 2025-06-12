@@ -11,6 +11,8 @@ import MapScreen from './src/screens/MapScreen';
 import ShowDetailsScreen from './src/screens/ShowDetailsScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import MyShowsScreen from './src/screens/MyShowsScreen';
+import CreateShowScreen from './src/screens/CreateShowScreen';
 
 // Import new auth screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -19,6 +21,7 @@ import ProfileSetupScreen from './src/screens/ProfileSetupScreen';
 
 // Import the UserProvider
 import { UserProvider } from './src/context/UserContext';
+import { useUser } from './src/context/UserContext';
 
 // Import the StripeProvider
 import StripeProvider from './src/components/StripeProvider';
@@ -29,6 +32,8 @@ const Tab = createBottomTabNavigator();
 
 // Main tab navigator
 function MainTabNavigator() {
+  // Access user profile to determine promoter role
+  const { userProfile } = useUser();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -43,6 +48,8 @@ function MainTabNavigator() {
             iconName = focused ? 'heart' : 'heart-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'MyShows') {
+            iconName = focused ? 'albums' : 'albums-outline';
           }
           
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -58,6 +65,14 @@ function MainTabNavigator() {
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      {/* Promoter-only tab */}
+      {userProfile?.role === 'promoter' && (
+        <Tab.Screen
+          name="MyShows"
+          component={MyShowsScreen}
+          options={{ title: 'My Shows' }}
+        />
+      )}
     </Tab.Navigator>
   );
 }
@@ -99,6 +114,12 @@ export default function App() {
                 name="ShowDetails" 
                 component={ShowDetailsScreen}
                 options={{ title: "Show Details" }}
+              />
+              {/* Show creation / edit */}
+              <Stack.Screen 
+                name="CreateShow" 
+                component={CreateShowScreen}
+                options={{ title: "Create / Edit Show" }}
               />
             </Stack.Navigator>
           </NavigationContainer>

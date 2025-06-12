@@ -253,20 +253,51 @@ const ProfileScreen = () => {
         </View>
         
         {userProfile?.role === 'promoter' && (
-          <View style={styles.promoterFeatures}>
-            <View style={styles.featureItem}>
-              <Ionicons name="add-circle-outline" size={24} color="#3498db" style={styles.featureIcon} />
-              <Text style={styles.featureText}>Add your card shows</Text>
+          <>
+            <View style={styles.promoterFeatures}>
+              <View style={styles.featureItem}>
+                <Ionicons
+                  name="add-circle-outline"
+                  size={24}
+                  color="#3498db"
+                  style={styles.featureIcon}
+                />
+                <Text style={styles.featureText}>Add your card shows</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Ionicons
+                  name="analytics-outline"
+                  size={24}
+                  color="#3498db"
+                  style={styles.featureIcon}
+                />
+                <Text style={styles.featureText}>View attendance analytics</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Ionicons
+                  name="megaphone-outline"
+                  size={24}
+                  color="#3498db"
+                  style={styles.featureIcon}
+                />
+                <Text style={styles.featureText}>Promote to targeted collectors</Text>
+              </View>
             </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="analytics-outline" size={24} color="#3498db" style={styles.featureIcon} />
-              <Text style={styles.featureText}>View attendance analytics</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="megaphone-outline" size={24} color="#3498db" style={styles.featureIcon} />
-              <Text style={styles.featureText}>Promote to targeted collectors</Text>
-            </View>
-          </View>
+
+            {/* Manage My Shows button */}
+            <TouchableOpacity
+              style={styles.manageButton}
+              onPress={() => navigation.navigate('MyShows')}
+            >
+              <Ionicons
+                name="albums-outline"
+                size={20}
+                color="#fff"
+                style={styles.manageIcon}
+              />
+              <Text style={styles.manageButtonText}>Manage My Shows</Text>
+            </TouchableOpacity>
+          </>
         )}
       </View>
       
@@ -469,6 +500,24 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 14,
     color: '#212529',
+  },
+  /* Manage My Shows button */
+  manageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3498db',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  manageIcon: {
+    marginRight: 6,
+  },
+  manageButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   sectionTitle: {
     fontSize: 18,
