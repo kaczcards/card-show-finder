@@ -100,9 +100,6 @@ const ProfileSetupScreen = ({ navigation, route }) => {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Help us personalize your home page</Text>
-      <Text style={styles.subtitle}>
-        We’ll show card shows within 25&nbsp;miles of your ZIP&nbsp;code in the next 30&nbsp;days.
-      </Text>
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>About You</Text>
@@ -235,6 +232,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
+    marginTop: 20, // Added margin to move the title further down
     color: '#212529',
   },
   subtitle: {
