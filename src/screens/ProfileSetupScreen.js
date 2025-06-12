@@ -99,11 +99,9 @@ const ProfileSetupScreen = ({ navigation, route }) => {
   
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Complete Your Profile</Text>
-      {/* Updated subtitle to reference Collector / Dealer terminology and nearby-shows personalization */}
+      <Text style={styles.title}>Help us personalize your home page</Text>
       <Text style={styles.subtitle}>
-        Tell us a bit about yourself so we can greet you by name and show card
-        shows within 25&nbsp;miles of your ZIP code over the next 30&nbsp;days.
+        We’ll show card shows within 25&nbsp;miles of your ZIP&nbsp;code in the next 30&nbsp;days.
       </Text>
       
       <View style={styles.section}>
