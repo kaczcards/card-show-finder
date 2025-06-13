@@ -11,7 +11,7 @@ import {
   GeoPoint,
   limit
 } from 'firebase/firestore';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Your Firebase configuration object
@@ -28,10 +28,36 @@ const firebaseConfig = {
 // Initialize Firebase only if not already initialized
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Initialize Auth with AsyncStorage persistence
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage)
-});
+console.log('[firebase] Firebase app initialized');
+
+// ---------------------------------------------------------------------------
+// Initialize Auth with AsyncStorage persistence (React-Native)
+// If Auth has already been initialised elsewhere we fall back to getAuth(app)
+// ---------------------------------------------------------------------------
+// We first attempt to get an existing Auth instance (if another module already
+// created one). If none exists *or* if it was created without persistence,
+// we initialise a new instance with AsyncStorage persistence which is required
+// for React-Native environments so the user session survives app restarts.
+let auth;
+try {
+  // Will succeed if an Auth instance (web‐only by default) already exists.
+  auth = getAuth(app);
+
+  if (!auth._persistor) {
+    // No persistence configured – re-initialise so we get RN persistence.
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+    console.log('[firebase] Auth re-initialised with AsyncStorage persistence');
+  } else {
+    console.log('[firebase] Using existing Auth instance');
+  }
+} catch (err) {
+  // If getAuth failed (shouldn't happen) or initializeAuth throws for any
+  // other reason, fall back to an in-memory instance so app still runs.
+  console.warn('[firebase] Auth initialisation fallback (memory only):', err);
+  auth = initializeAuth(app, { persistence: undefined });
+}
 
 const db = getFirestore(app);
 
@@ -125,4 +151,11 @@ export const getCardShowDetails = async (showId) => {
 };
 
 // Export both auth and db
-export { db, auth };
+export {
+  db,
+  auth,
+  // re-export helpers so they can be imported from this file as well
+  getCardShows,
+  getCardShowsByLocation,
+  getCardShowDetails
+};
