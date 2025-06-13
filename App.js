@@ -14,6 +14,7 @@ import FavoritesScreen from './src/screens/FavoritesScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import MyShowsScreen from './src/screens/MyShowsScreen';
 import CreateShowScreen from './src/screens/CreateShowScreen';
+import MyCollectionScreen from './src/screens/MyCollectionScreen';
 
 // Auth screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -34,7 +35,7 @@ const Tab = createBottomTabNavigator();
 function MainTabNavigator() {
   // Access user profile to determine dealer role
   const { userProfile } = useUser();
-  
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -64,7 +65,24 @@ function MainTabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Map" component={MapScreen} />
-      <Tab.Screen name="Favorites" component={FavoritesScreen} />
+      <Tab.Screen 
+          name="Favorites" 
+          component={FavoritesScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="heart-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="My Collection" 
+          component={MyCollectionScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="albums-outline" size={size} color={color} />
+            ),
+          }}
+        />
       <Tab.Screen name="Profile" component={ProfileScreen} />
       {/* Dealer-only tab (previously Promoter) */}
       {userProfile?.role === 'dealer' && (

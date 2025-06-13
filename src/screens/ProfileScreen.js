@@ -309,6 +309,49 @@ const ProfileScreen = () => {
         )}
       </View>
       
+      {/* Show History & Badges */}
+      <View style={styles.historyContainer}>
+        <Text style={styles.sectionTitle}>My Show History</Text>
+        
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>8</Text>
+            <Text style={styles.statLabel}>Shows Attended</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statLabel}>Reviews Written</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>4.6</Text>
+            <Text style={styles.statLabel}>Avg Rating Given</Text>
+          </View>
+        </View>
+
+        <View style={styles.badgesSection}>
+          <Text style={styles.badgesTitle}>Achievements</Text>
+          <View style={styles.badgesRow}>
+            <View style={styles.badge}>
+              <Ionicons name="trophy" size={24} color="#ffc107" />
+              <Text style={styles.badgeText}>First Show</Text>
+            </View>
+            <View style={styles.badge}>
+              <Ionicons name="star" size={24} color="#3498db" />
+              <Text style={styles.badgeText}>5 Shows</Text>
+            </View>
+            <View style={[styles.badge, styles.lockedBadge]}>
+              <Ionicons name="lock-closed" size={24} color="#adb5bd" />
+              <Text style={styles.lockedBadgeText}>10 Shows</Text>
+            </View>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.historyButton}>
+          <Text style={styles.historyButtonText}>View Complete History</Text>
+          <Ionicons name="chevron-forward" size={20} color="#3498db" />
+        </TouchableOpacity>
+      </View>
+
       {/* Support Section */}
       <View style={styles.supportContainer}>
         <Text style={styles.sectionTitle}>Support</Text>
@@ -524,6 +567,86 @@ const styles = StyleSheet.create({
   },
   manageButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  historyContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+    paddingVertical: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3498db',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6c757d',
+    textAlign: 'center',
+  },
+  badgesSection: {
+    marginBottom: 20,
+  },
+  badgesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#212529',
+    marginBottom: 12,
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  badge: {
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    minWidth: 80,
+  },
+  lockedBadge: {
+    opacity: 0.5,
+  },
+  badgeText: {
+    fontSize: 12,
+    color: '#212529',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  lockedBadgeText: {
+    fontSize: 12,
+    color: '#adb5bd',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  historyButtonText: {
+    color: '#3498db',
     fontSize: 16,
     fontWeight: 'bold',
   },
