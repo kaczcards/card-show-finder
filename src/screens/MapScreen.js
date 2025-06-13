@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { getCardShowsByLocation } from '../services/firebaseApi';
+import { useUser } from '../context/UserContext';
 
 // Get screen dimensions for aspect ratio calculation
 const { width, height } = Dimensions.get('window');
@@ -24,12 +25,14 @@ const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 const MapScreen = () => {
   const navigation = useNavigation();
   const mapRef = useRef(null);
+  const { userProfile } = useUser();
   
   // State declarations
   const [cardShows, setCardShows] = useState([]);
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // map pull-to-refresh
   const [selectedShow, setSelectedShow] = useState(null);
   const [region, setRegion] = useState({
     latitude: 41.8781, // Default to Chicago
@@ -45,41 +48,78 @@ const MapScreen = () => {
   };
 
   // Request location permissions and get current location + nearby shows
-  useEffect(() => {
-    const fetchShowsByLocation = async () => {
+  // -------------------------------------------------------------
+  // Helper: convert US ZIP → lat/lon via Zippopotam.us
+  // (duplicated here to avoid circular imports; could be extracted)
+  const zipToCoords = async (zip) => {
+    if (!zip) return null;
+    try {
+      const res = await fetch(`https://api.zippopotam.us/us/${zip}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const place = data.places?.[0];
+      if (!place) return null;
+      return {
+        latitude: parseFloat(place.latitude),
+        longitude: parseFloat(place.longitude),
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  // Main fetcher so we can reuse for refresh
+  const fetchShowsByLocation = async () => {
       try {
         setLoading(true);
-        
-        // Request location permission
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setErrorMsg('Permission to access location was denied');
-          setLoading(false);
-          return;
+        let determinedLocation = null;
+
+        // --- 1) Try zip code ------------------------------------------------
+        if (userProfile?.zipCode) {
+          const coords = await zipToCoords(userProfile.zipCode);
+          if (coords) {
+            determinedLocation = {
+              coords,
+            };
+          }
         }
 
-        // Get current location
-        let currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        
-        setLocation(currentLocation);
-        
-        // Update region to center on user's location
-        const userRegion = {
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
+        // --- 2) Fallback to device GPS -------------------------------------
+        if (!determinedLocation) {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status === 'granted') {
+            const gpsLoc = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+            determinedLocation = gpsLoc;
+          }
+        }
+
+        // --- 3) Final fallback: Chicago default ----------------------------
+        if (!determinedLocation) {
+          determinedLocation = {
+            coords: { latitude: 41.8781, longitude: -87.6298 },
+          };
+          setErrorMsg(
+            'Using default location (Chicago) – enable location services or add ZIP in profile for better results.'
+          );
+        }
+
+        setLocation(determinedLocation);
+
+        // Center map
+        setRegion({
+          latitude: determinedLocation.coords.latitude,
+          longitude: determinedLocation.coords.longitude,
           latitudeDelta: LATITUDE_DELTA,
           longitudeDelta: LONGITUDE_DELTA,
-        };
-        
-        setRegion(userRegion);
-        
-        // Fetch card shows near user location
+        });
+
+        // Fetch nearby shows (25-mile default)
         const { shows, error } = await getCardShowsByLocation(
-          currentLocation.coords.latitude,
-          currentLocation.coords.longitude,
-          50 // radius in miles
+          determinedLocation.coords.latitude,
+          determinedLocation.coords.longitude,
+          25
         );
         
         if (error) {
@@ -100,9 +140,22 @@ const MapScreen = () => {
         setLoading(false);
       }
     };
-    
+
+  useEffect(() => {
     fetchShowsByLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Refresh handler
+  // Manual refresh (pull-to-refresh button)
+  const refreshMap = async () => {
+    try {
+      setRefreshing(true);
+      await fetchShowsByLocation();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Function to calculate distance between two coordinates in miles
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -288,6 +341,19 @@ const MapScreen = () => {
       
       {/* Map Controls */}
       <View style={styles.mapControls}>
+        {/* Refresh Button */}
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={refreshMap}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" color="#3498db" />
+          ) : (
+            <Ionicons name="refresh" size={24} color="#3498db" />
+          )}
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.controlButton}
           onPress={showAllMarkers}

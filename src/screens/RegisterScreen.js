@@ -8,8 +8,7 @@ import {
   TouchableOpacity, 
   ScrollView,
   ActivityIndicator,
-  Alert,
-  Image
+  Alert
 } from 'react-native';
 import { registerUser } from '../services/authService';
 
@@ -117,12 +116,6 @@ const RegisterScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Top Banner */}
-      <Image
-        source={require('../../assets/top_banner.png')}
-        style={styles.banner}
-      />
-      
       <TouchableOpacity 
         style={styles.button}
         onPress={handleRegister}
@@ -143,11 +136,6 @@ const RegisterScreen = ({ navigation }) => {
         </Text>
       </TouchableOpacity>
 
-      {/* Bottom Banner */}
-      <Image
-        source={require('../../assets/bottom_banner.png')}
-        style={[styles.banner, { marginTop: 20 }]}
-      />
     </ScrollView>
   );
 };
@@ -238,16 +226,6 @@ const styles = StyleSheet.create({
   loginLink: {
     color: '#3498db',
     fontWeight: 'bold',
-  },
-  /* Banner images that appear above the “Create Account” button
-     and below the “Already have an account” section. They should
-     stretch the full width of the screen while maintaining aspect
-     ratio. */
-  banner: {
-    width: '100%',
-    height: 150,
-    resizeMode: 'contain',
-    marginVertical: 10,
   },
 });
 
