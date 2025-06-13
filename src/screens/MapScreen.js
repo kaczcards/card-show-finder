@@ -133,8 +133,20 @@ const MapScreen = () => {
           return;
         }
         
+        // ---- Filter to next 30 days ------------------------------------
+        const filterUpcomingShows = (list) => {
+          const now = new Date();
+          const end = new Date();
+          end.setDate(end.getDate() + 30);
+          return list.filter((s) => {
+            const d = s.date instanceof Date ? s.date : new Date(s.date);
+            return d >= now && d <= end;
+          });
+        };
+
         if (shows && Array.isArray(shows)) {
-          setCardShows(shows);
+          const upcoming = filterUpcomingShows(shows);
+          setCardShows(upcoming);
           // ensure map fits all pins once data is rendered
           setTimeout(showAllMarkers, 500);
         } else {
@@ -395,7 +407,7 @@ const MapScreen = () => {
       {/* Info Card */}
       <View style={styles.infoContainer}>
         <Text style={styles.infoText}>
-          {cardShows.length} card {cardShows.length === 1 ? 'show' : 'shows'} found within 25 miles
+          {cardShows.length} card {cardShows.length === 1 ? 'show' : 'shows'} found within 25 miles in the next 30 days
         </Text>
         <Text style={styles.infoSubtext}>
           Tap on a marker to see details
