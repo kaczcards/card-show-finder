@@ -9,7 +9,12 @@ import {
   Platform,
   Alert
 } from 'react-native';
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, {
+  Marker,
+  Callout,
+  PROVIDER_GOOGLE,
+  Circle,
+} from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -19,7 +24,8 @@ import { useUser } from '../context/UserContext';
 // Get screen dimensions for aspect ratio calculation
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
-const LATITUDE_DELTA = 0.0922;
+// Widen default view so 25-mi radius is visible
+const LATITUDE_DELTA = 0.5;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
 const MapScreen = () => {
@@ -129,6 +135,8 @@ const MapScreen = () => {
         
         if (shows && Array.isArray(shows)) {
           setCardShows(shows);
+          // ensure map fits all pins once data is rendered
+          setTimeout(showAllMarkers, 500);
         } else {
           setCardShows([]);
         }
@@ -270,12 +278,26 @@ const MapScreen = () => {
         style={styles.map}
         provider={PROVIDER_GOOGLE}
         initialRegion={region}
+        region={region}
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={true}
         rotateEnabled={true}
         onMapReady={showAllMarkers}
       >
+        {/* 25-mile radius circle */}
+        {location?.coords && (
+          <Circle
+            center={{
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude
+            }}
+            radius={40233.6}           /* 25 miles in metres */
+            strokeWidth={1}
+            strokeColor="rgba(52,152,219,0.4)"
+            fillColor="rgba(52,152,219,0.15)"
+          />
+        )}
         {cardShows.map((show) => (
           show.coordinate && show.coordinate.latitude && show.coordinate.longitude ? (
             <Marker
@@ -284,6 +306,7 @@ const MapScreen = () => {
                 latitude: show.coordinate.latitude,
                 longitude: show.coordinate.longitude
               }}
+              tracksViewChanges={false}
               title={show.title}
               description={show.location}
               onPress={() => handleMarkerPress(show)}
@@ -372,7 +395,7 @@ const MapScreen = () => {
       {/* Info Card */}
       <View style={styles.infoContainer}>
         <Text style={styles.infoText}>
-          {cardShows.length} card {cardShows.length === 1 ? 'show' : 'shows'} found
+          {cardShows.length} card {cardShows.length === 1 ? 'show' : 'shows'} found within 25 miles
         </Text>
         <Text style={styles.infoSubtext}>
           Tap on a marker to see details
