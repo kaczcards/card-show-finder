@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
 import MapView, {
   Marker,
@@ -18,7 +19,10 @@ import MapView, {
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { getCardShowsByLocation } from '../services/firebaseApi';
+import {
+  getCardShowsByLocation,
+  getCardShows,
+} from '../services/firebaseApi';
 import { useUser } from '../context/UserContext';
 
 // Get screen dimensions for aspect ratio calculation
@@ -27,6 +31,12 @@ const ASPECT_RATIO = width / height;
 // Widen default view so 25-mi radius is visible
 const LATITUDE_DELTA = 0.5;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+// ---------------------------------------------------------------------------
+// Shared constants so radius / date-window stay in sync everywhere we use them
+// ---------------------------------------------------------------------------
+const RADIUS_MILES = 25;          // search radius
+const MS_IN_DAY   = 24 * 60 * 60 * 1000;
 
 const MapScreen = () => {
   const navigation = useNavigation();
@@ -80,13 +90,18 @@ const MapScreen = () => {
         setLoading(true);
         let determinedLocation = null;
 
+        console.log('MapScreen: starting fetch of shows …');
+
         // --- 1) Try zip code ------------------------------------------------
         if (userProfile?.zipCode) {
           const coords = await zipToCoords(userProfile.zipCode);
           if (coords) {
+            console.log(`MapScreen: zip ${userProfile.zipCode} resolved to`, coords);
             determinedLocation = {
               coords,
             };
+          } else {
+            console.log('MapScreen: zip lookup failed – will fall back to GPS/default');
           }
         }
 
@@ -121,25 +136,76 @@ const MapScreen = () => {
           longitudeDelta: LONGITUDE_DELTA,
         });
 
-        // Fetch nearby shows (25-mile default)
+        // ------------------------------------------------------------------
+        //  Fetch nearby shows
+        // ------------------------------------------------------------------
+        console.log(
+          '[MapScreen] fetching shows within',
+          RADIUS_MILES,
+          'miles of',
+          determinedLocation.coords
+        );
+
         const { shows, error } = await getCardShowsByLocation(
           determinedLocation.coords.latitude,
           determinedLocation.coords.longitude,
-          25
+          RADIUS_MILES
         );
         
         if (error) {
           setErrorMsg(`Error fetching card shows: ${error}`);
           return;
         }
-        
-        if (shows && Array.isArray(shows)) {
-          setCardShows(shows);
-          // ensure map fits all pins once data is rendered
-          setTimeout(showAllMarkers, 500);
-        } else {
-          setCardShows([]);
+
+        console.log('[MapScreen] raw shows returned:', shows?.length || 0);
+
+        // -------------- date filter (next 30 days) ------------------------
+        const today    = new Date();
+        const endDate  = new Date(today.getTime() + 30 * MS_IN_DAY);
+
+        let filtered = (shows || []).filter((s) => {
+          if (!s.date) return false;
+          const d = s.date instanceof Date ? s.date : new Date(s.date);
+          return d >= today && d <= endDate;
+        });
+
+        // -------------- coordinate validation -----------------------------
+        filtered = filtered.filter(
+          (s) =>
+            s.coordinate &&
+            typeof s.coordinate.latitude === 'number' &&
+            typeof s.coordinate.longitude === 'number'
+        );
+
+        console.log('[MapScreen] after date/coord filter:', filtered.length);
+
+        // -------------- fallback: use global list if none found -----------
+        if (filtered.length === 0) {
+          console.log(
+            '[MapScreen] no local results – falling back to all approved shows'
+          );
+          const { shows: allShows } = await getCardShows();
+
+          filtered = (allShows || [])
+            .filter((s) => {
+              if (!s.date) return false;
+              const d = s.date instanceof Date ? s.date : new Date(s.date);
+              return d >= today && d <= endDate;
+            })
+            .filter(
+              (s) =>
+                s.coordinate &&
+                typeof s.coordinate.latitude === 'number' &&
+                typeof s.coordinate.longitude === 'number'
+            );
+
+          console.log('[MapScreen] fallback results:', filtered.length);
         }
+
+        // save to state
+        setCardShows(filtered);
+        // ensure map fits all pins once data is rendered
+        setTimeout(showAllMarkers, 500);
         
       } catch (error) {
         console.error("Map location error:", error);
@@ -292,7 +358,7 @@ const MapScreen = () => {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude
             }}
-            radius={40233.6}           /* 25 miles in metres */
+            radius={RADIUS_MILES * 1609.344}   /* miles → metres */
             strokeWidth={1}
             strokeColor="rgba(52,152,219,0.4)"
             fillColor="rgba(52,152,219,0.15)"

@@ -38,10 +38,10 @@ const LoginScreen = ({ navigation }) => {
       }
 
       // Success - Navigate to main app
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
-      });
+      // Use replace instead of reset to avoid navigation errors
+      if (user) {
+        navigation.replace('Main');
+      }
     } catch (error) {
       Alert.alert('Error', error.message);
       setLoading(false);
