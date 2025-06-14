@@ -31,7 +31,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Register new user
-export const registerUser = async (email, password, userData) => {
+export const registerUser = async (email, password, userData, role = 'attendee') => {
   try {
     // Create authentication record
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -48,6 +48,8 @@ export const registerUser = async (email, password, userData) => {
         upcomingShows: userData.notificationPreferences?.upcomingShows || true,
         newShowsInArea: userData.notificationPreferences?.newShowsInArea || true
       },
+      role: role, // Add user role (attendee or dealer)
+      isPremium: role === 'dealer', // Dealers are premium by default
       createdAt: new Date(),
       favoriteShows: []
     });
@@ -99,6 +101,38 @@ export const updateUserProfile = async (userId, profileData) => {
   try {
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, profileData);
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Upgrade user to dealer (placeholder for Stripe integration)
+export const upgradeToDealer = async (userId) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      role: 'dealer',
+      isPremium: true,
+      upgradedAt: new Date()
+    });
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Upgrade dealer to Show Organizer
+// Verification (matching name/phone) should be handled at the UI/server level;
+// this function only updates the Firestore document once verification is complete.
+export const upgradeToShowOrganizer = async (userId) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      role: 'showOrganizer',
+      isPremium: true,
+      upgradedAt: new Date()
+    });
     return { success: true, error: null };
   } catch (error) {
     return { success: false, error: error.message };

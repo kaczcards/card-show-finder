@@ -1,5 +1,5 @@
 // src/screens/LoginScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,43 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Switch
 } from 'react-native';
 import { loginUser } from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  // On mount, attempt auto-login if credentials are saved
+  useEffect(() => {
+    const tryAutoLogin = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('csf_credentials');
+        if (!stored) return;
+        const creds = JSON.parse(stored);
+        if (creds?.email && creds?.password) {
+          setEmail(creds.email);
+          setPassword(creds.password);
+          setLoading(true);
+          const { user, error } = await loginUser(creds.email, creds.password);
+          if (!error && user) {
+            navigation.replace('Main');
+          }
+        }
+      } catch (e) {
+        console.log('Auto-login failed:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    tryAutoLogin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -38,10 +67,23 @@ const LoginScreen = ({ navigation }) => {
       }
 
       // Success - Navigate to main app
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
-      });
+      // Use replace instead of reset to avoid navigation errors
+      if (user) {
+        // Store or clear credentials based on rememberMe
+        try {
+          if (rememberMe) {
+            await AsyncStorage.setItem(
+              'csf_credentials',
+              JSON.stringify({ email, password })
+            );
+          } else {
+            await AsyncStorage.removeItem('csf_credentials');
+          }
+        } catch (e) {
+          console.log('Persist credentials error:', e);
+        }
+        navigation.replace('Main');
+      }
     } catch (error) {
       Alert.alert('Error', error.message);
       setLoading(false);
@@ -78,6 +120,17 @@ const LoginScreen = ({ navigation }) => {
             secureTextEntry
             autoCompleteType="password"
           />
+
+        {/* Remember Me */}
+        <View style={styles.rememberRow}>
+          <Text style={styles.rememberLabel}>Remember me</Text>
+          <Switch
+            value={rememberMe}
+            onValueChange={setRememberMe}
+            trackColor={{ false: '#e9ecef', true: '#bde0fe' }}
+            thumbColor={rememberMe ? '#3498db' : '#f4f3f4'}
+          />
+        </View>
 
           <TouchableOpacity
             style={styles.forgotPassword}
@@ -184,6 +237,17 @@ const styles = StyleSheet.create({
   dividerText: {
     paddingHorizontal: 15,
     color: '#7f8c8d',
+  },
+  /* ---- Remember Me ---- */
+  rememberRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  rememberLabel: {
+    fontSize: 14,
+    color: '#333',
   },
   registerButton: {
     borderWidth: 1,

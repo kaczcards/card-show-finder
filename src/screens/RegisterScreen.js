@@ -8,15 +8,21 @@ import {
   TouchableOpacity, 
   ScrollView,
   ActivityIndicator,
-  Alert
+  Alert,
+  Switch
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerUser } from '../services/authService';
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  // Default to Attendee
+  const [role, setRole] = useState('attendee');
   const [loading, setLoading] = useState(false);
+  // Remember-me toggle
+  const [rememberMe, setRememberMe] = useState(true);
   
   const handleRegister = async () => {
     // Basic validation
@@ -33,13 +39,25 @@ const RegisterScreen = ({ navigation }) => {
     setLoading(true);
     
     try {
-      const { user, error } = await registerUser(email, password, {});
+      const { user, error } = await registerUser(email, password, {}, role);
       
       if (error) {
         Alert.alert('Registration Error', error);
         return;
       }
       
+      // Persist credentials if user opted-in
+      if (rememberMe) {
+        try {
+          await AsyncStorage.setItem(
+            'csf_credentials',
+            JSON.stringify({ email, password })
+          );
+        } catch (e) {
+          console.log('Failed to save credentials locally:', e);
+        }
+      }
+
       // Navigate to profile setup
       navigation.navigate('ProfileSetup', { userId: user.uid });
     } catch (error) {
@@ -52,7 +70,7 @@ const RegisterScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Join Card Show Finder to discover trading card events near you</Text>
+      <Text style={styles.subtitle}>The easiest way to find trading card shows near you</Text>
       
       <TextInput
         style={styles.input}
@@ -79,6 +97,52 @@ const RegisterScreen = ({ navigation }) => {
         secureTextEntry
       />
       
+      {/* Remember-me switch */}
+      <View style={styles.rememberRow}>
+        <Text style={styles.rememberLabel}>Remember me</Text>
+        <Switch
+          value={rememberMe}
+          onValueChange={setRememberMe}
+          trackColor={{ false: '#e9ecef', true: '#bde0fe' }}
+          thumbColor={rememberMe ? '#3498db' : '#f4f3f4'}
+        />
+      </View>
+      
+      <View style={styles.roleSection}>
+        <Text style={styles.roleTitle}>I am a:</Text>
+        <Text style={styles.roleDescription}>
+          Collectors, for those that attend, Dealers for those that setup and promote
+        </Text>
+        
+        <View style={styles.roleToggleContainer}>
+          <TouchableOpacity 
+            style={[
+            styles.roleButton, 
+            role === 'attendee' && styles.roleButtonActive
+            ]}
+          onPress={() => setRole('attendee')}
+          >
+            <Text style={[
+              styles.roleButtonText,
+            role === 'attendee' && styles.roleButtonTextActive
+          ]}>Attendee</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.roleButton, 
+              role === 'dealer' && styles.roleButtonActive
+            ]}
+            onPress={() => setRole('dealer')}
+          >
+            <Text style={[
+              styles.roleButtonText,
+              role === 'dealer' && styles.roleButtonTextActive
+            ]}>Dealer</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <TouchableOpacity 
         style={styles.button}
         onPress={handleRegister}
@@ -98,6 +162,7 @@ const RegisterScreen = ({ navigation }) => {
           Already have an account? <Text style={styles.loginLink}>Login</Text>
         </Text>
       </TouchableOpacity>
+
     </ScrollView>
   );
 };
@@ -128,6 +193,55 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     fontSize: 16,
+  },
+  roleSection: {
+    marginBottom: 20,
+  },
+  roleTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
+  },
+  roleDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  roleToggleContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  roleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  roleButtonActive: {
+    backgroundColor: '#3498db',
+  },
+  roleButtonText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  roleButtonTextActive: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  /* ------------ Remember-me styles ------------ */
+  rememberRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  rememberLabel: {
+    fontSize: 16,
+    color: '#333',
   },
   button: {
     backgroundColor: '#3498db',
