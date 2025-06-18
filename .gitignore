@@ -32,6 +32,12 @@ yarn-error.*
 
 # local env files
 .env*.local
+# primary env file (contains Supabase keys, etc.)
+.env
+
+# mobile service credentials (never commit)
+google-services.json
+GoogleService-Info.plist
 
 # typescript
 *.tsbuildinfo
