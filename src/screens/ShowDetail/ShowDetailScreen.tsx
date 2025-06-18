@@ -30,14 +30,22 @@ type MainStackParamList = {
 type Props = NativeStackScreenProps<MainStackParamList, 'ShowDetail'>;
 
 const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
-  // Get the show ID from route params
-  const { showId } = route.params;
+  // Safely get the show ID from route params
+  const showId = route.params?.showId;
 
   // State
   const [show, setShow] = useState<Show | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoritingInProgress, setFavoritingInProgress] = useState(false);
+
+  // Guard against missing showId
+  useEffect(() => {
+    if (!showId) {
+      Alert.alert('Error', 'Show information unavailable.');
+      navigation.goBack();
+    }
+  }, [showId, navigation]);
 
   // Get auth context
   const { authState, addFavoriteShow, removeFavoriteShow } = useAuth();
@@ -48,6 +56,7 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     const fetchShowDetails = async () => {
       try {
         setLoading(true);
+        if (!showId) return;
         const showData = await getShowById(showId);
         
         if (!showData) {
