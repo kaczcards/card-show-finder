@@ -6,20 +6,18 @@ import { Ionicons } from '@expo/vector-icons';
 // Import screen components
 import { HomeScreen } from '../screens/Home';
 import { MapScreen } from '../screens/Map';
+import CollectionScreen from '../screens/Collection';
+import BadgesScreen from '../screens/Badges';
+import NotificationsScreen from '../screens/Notifications';
 import { ProfileScreen } from '../screens/Profile';
-
-// TODO: Replace with real implementation when ready
-const FavoritesScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Favorites Screen (Coming Soon)</Text>
-  </View>
-);
 
 // Define navigation types for main tabs
 export type MainTabParamList = {
   Home: undefined;
   Map: undefined;
-  Favorites: undefined;
+  Collection: undefined;
+  Badges: undefined;
+  Notifications: undefined;
   Profile: undefined;
 };
 
@@ -41,8 +39,12 @@ const MainTabNavigator: React.FC = () => {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Map') {
             iconName = focused ? 'map' : 'map-outline';
-          } else if (route.name === 'Favorites') {
-            iconName = focused ? 'heart' : 'heart-outline';
+          } else if (route.name === 'Collection') {
+            iconName = focused ? 'images' : 'images-outline';
+          } else if (route.name === 'Badges') {
+            iconName = focused ? 'trophy' : 'trophy-outline';
+          } else if (route.name === 'Notifications') {
+            iconName = focused ? 'notifications' : 'notifications-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -68,10 +70,20 @@ const MainTabNavigator: React.FC = () => {
         component={MapScreen} 
         options={{ title: 'Map View' }}
       />
-      <MainTab.Screen 
-        name="Favorites" 
-        component={FavoritesScreen} 
-        options={{ title: 'My Favorites' }}
+      <MainTab.Screen
+        name="Collection"
+        component={CollectionScreen}
+        options={{ title: 'My Collection' }}
+      />
+      <MainTab.Screen
+        name="Badges"
+        component={BadgesScreen}
+        options={{ title: 'Badges' }}
+      />
+      <MainTab.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ title: 'Alerts' }}
       />
       <MainTab.Screen 
         name="Profile" 
