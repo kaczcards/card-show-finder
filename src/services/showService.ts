@@ -57,9 +57,12 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
         // Use PostGIS ST_DWithin for distance filtering
         query = query.filter(
-          'coordinates',
+          // Supabase PostGIS helper signature:
+          // (columnOrOperator, operatorOrColumn, geometry, distance)
+          // Putting the operator first avoids the “failed to parse filter” error.
           'st_dwithin',
-          `POINT(${filters.longitude} ${filters.latitude})::geography`,
+          'coordinates',
+          `POINT(${filters.longitude} ${filters.latitude})`,
           radiusInMeters
         );
       } else {
