@@ -35,9 +35,6 @@ export const registerUser = async (
     if (authError) throw authError;
     if (!authData.user) throw new Error('Registration failed');
 
-    // Create a user profile in the profiles table
-    // Note: This might be redundant if you have a database trigger that creates profiles,
-    // but it's safer to include it here in case the trigger fails
     const userData: User = {
       id: authData.user.id,
       email,
@@ -51,27 +48,13 @@ export const registerUser = async (
       favoriteShows: [],
       attendedShows: [],
     };
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert([{
-        id: userData.id,
-        email: userData.email,
-        first_name: userData.firstName,
-        last_name: userData.lastName || '',
-        home_zip_code: userData.homeZipCode,
-        role: userData.role,
-        created_at: userData.createdAt,
-        updated_at: userData.updatedAt,
-        favorite_shows: [],
-        attended_shows: [],
-      }]);
-
-    if (profileError) throw profileError;
+    
+    // Give the database trigger a short moment to create the profile row
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     return userData;
   } catch (error: any) {
-    console.error('Error registering user:', error);
+    console.error('Error registering user via Supabase signUp:', error);
     throw new Error(error.message || 'Failed to register user');
   }
 };
