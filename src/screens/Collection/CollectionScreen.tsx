@@ -1,0 +1,1 @@
+// Collection Screen placeholder

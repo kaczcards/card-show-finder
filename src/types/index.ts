@@ -24,6 +24,11 @@ export interface User {
   isEmailVerified: boolean;
   favoriteShows?: string[]; // Array of show IDs
   attendedShows?: string[]; // Array of show IDs for past shows
+  /**
+   * Running counter of shows the user has attended.
+   * This is incremented automatically when a user submits a post-show review.
+   */
+  showAttendanceCount?: number;
 }
 
 // Authentication types
@@ -99,6 +104,11 @@ export interface Review {
   rating: number; // 1-5
   comment: string;
   date: Date | string;
+  /**
+   * Favorite dealer information captured in the post-show review.
+   */
+  favoriteDealer?: string;
+  favoriteDealerReason?: string;
   organizerResponse?: {
     comment: string;
     date: Date | string;
@@ -149,7 +159,67 @@ export interface Badge {
   description: string;
   imageUrl: string;
   requirement: string;
+  /**
+   * Tier of the badge (e.g., bronze, silver, gold, platinum).
+   */
+  tier: BadgeTier;
   dateEarned?: Date | string;
+}
+
+export enum BadgeTier {
+  BRONZE = 'bronze',
+  SILVER = 'silver',
+  GOLD = 'gold',
+  PLATINUM = 'platinum',
+}
+
+// My Collection – Card images
+export interface UserCard {
+  id: string;
+  userId: string;
+  imageUrl: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  /**
+   * Indicates whether the uploaded image has been compressed
+   * before being stored in Supabase Storage.
+   */
+  isCompressed?: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+// My Collection – Want list
+export interface WantList {
+  id: string;
+  userId: string;
+  content: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+// Notifications (e.g., review requests, badge earned)
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  /**
+   * notification type, e.g., 'review_request', 'badge_earned'
+   */
+  type: string;
+  referenceId?: string; // Show ID, Badge ID, etc.
+  isRead: boolean;
+  createdAt: Date | string;
+}
+
+// Tracking planned attendance
+export interface PlannedAttendance {
+  id: string;
+  showId: string;
+  userId: string;
+  createdAt: Date | string;
 }
 
 // Utility types

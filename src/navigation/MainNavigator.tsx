@@ -3,12 +3,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import navigators and screens
 import MainTabNavigator from './MainTabNavigator';
-import { ShowDetailScreen } from '../screens/ShowDetail';
+import ShowDetailScreen from '../screens/ShowDetail';
 
 // Define navigation types for main stack
 export type MainStackParamList = {
   MainTabs: undefined;
-  ShowDetail: { showId: string };
+  ShowDetail: { showId: string; showReviewForm?: boolean };
 };
 
 // Create navigation stack
