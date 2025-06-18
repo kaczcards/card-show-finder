@@ -317,7 +317,11 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           
           <View style={styles.infoContent}>
             <Text style={styles.entryFee}>
-              {show.entryFee === 0 ? 'FREE' : `$${show.entryFee.toFixed(2)}`}
+              {show.entryFee === 0
+                ? 'FREE'
+                : show.entryFee != null
+                ? `$${show.entryFee.toFixed(2)}`
+                : 'Price not available'}
             </Text>
           </View>
         </View>
@@ -409,7 +413,7 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         </View> */}
 
         {/* Rating (if available) */}
-        {show.rating !== undefined && (
+        {show.rating !== null && show.rating !== undefined && (
           <View style={styles.infoSection}>
             <View style={styles.infoHeader}>
               <Ionicons name="star-half-outline" size={22} color="#007AFF" />
@@ -434,7 +438,7 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
                 ))}
               </View>
               <Text style={styles.ratingText}>
-                {show.rating.toFixed(1)}
+                {show.rating != null ? show.rating.toFixed(1) : 'N/A'}
               </Text>
             </View>
           </View>
