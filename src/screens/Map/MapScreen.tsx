@@ -16,9 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
-import { getShows } from '../../services/showService';
-import { getCurrentLocation, getZipCodeCoordinates } from '../../services/locationService';
-import { Show, ShowFilters, Coordinates } from '../../types';
+import { supabase } from '../../supabase';
+import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -52,43 +51,15 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     const setupInitialRegion = async () => {
       try {
-        let coordinates: Coordinates | null = null;
+        // Default to US center
+        const defaultRegion = {
+          latitude: 39.8283,
+          longitude: -98.5795,
+          latitudeDelta: 40, // Zoomed out to show most of US
+          longitudeDelta: 40,
+        };
 
-        // If user has a home ZIP code, use that
-        if (user?.homeZipCode) {
-          const zipData = await getZipCodeCoordinates(user.homeZipCode);
-          if (zipData) {
-            coordinates = zipData.coordinates;
-          }
-        }
-
-        // If no ZIP code or couldn't get coordinates from ZIP, try current location
-        if (!coordinates) {
-          coordinates = await getCurrentLocation();
-        }
-
-        // If we have coordinates, set the initial region
-        if (coordinates) {
-          setUserLocation(coordinates);
-          setInitialRegion({
-            latitude: coordinates.latitude,
-            longitude: coordinates.longitude,
-            latitudeDelta: 0.1, // Zoom level
-            longitudeDelta: 0.1, // Zoom level
-          });
-        } else {
-          // Default to US center if no location available
-          setInitialRegion({
-            latitude: 39.8283,
-            longitude: -98.5795,
-            latitudeDelta: 40, // Zoomed out to show most of US
-            longitudeDelta: 40,
-          });
-          Alert.alert(
-            'Location Not Available',
-            'Unable to determine your location. Please enable location access or set your home ZIP code in your profile.'
-          );
-        }
+        setInitialRegion(defaultRegion);
       } catch (error) {
         console.error('Error setting up initial region:', error);
         // Default to US center if error
@@ -104,30 +75,74 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     setupInitialRegion();
   }, [user]);
 
+  // Manually fetch shows directly from Supabase as fallback
+  const fetchShowsFallback = async () => {
+    try {
+      console.log("Using direct Supabase query fallback");
+      const { data, error } = await supabase
+        .from('shows')
+        .select('*')
+        .eq('status', 'ACTIVE')
+        .order('start_date');
+
+      if (error) {
+        console.error("Supabase error:", error);
+        return [];
+      }
+
+      console.log(`Fetched ${data?.length || 0} shows directly from Supabase`);
+      
+      return data?.map(row => ({
+        id: row.id,
+        title: row.title,
+        location: row.location,
+        address: row.address,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        entryFee: row.entry_fee,
+        description: row.description || undefined,
+        imageUrl: row.image_url || undefined,
+        rating: row.rating || undefined,
+        coordinates: row.coordinates
+          ? {
+              latitude: row.coordinates.coordinates[1],
+              longitude: row.coordinates.coordinates[0],
+            }
+          : undefined,
+        status: row.status as ShowStatus,
+        organizerId: row.organizer_id,
+        features: row.features || {},
+        categories: row.categories || [],
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      })) || [];
+    } catch (err) {
+      console.error("Fallback fetch error:", err);
+      return [];
+    }
+  };
+
   // Fetch shows based on location or ZIP code
   const fetchShows = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Our getShows function in showService.ts does not accept filters.
-      // It fetches all active shows. If filtering is needed, it should be
-      // implemented within getShows or a new function like getShowsWithFilters.
-      const { data, error } = await getShows(); 
-
-      if (error) {
-        throw new Error(error);
-      }
-
-      setShows(data || []); // Ensure shows is an array
+      console.log("Fetching shows directly from Supabase");
+      const shows = await fetchShowsFallback();
+      
+      // Always ensure we're setting an array
+      setShows(Array.isArray(shows) ? shows : []);
     } catch (error: any) {
       console.error('Error fetching shows:', error);
+      // Set empty array to prevent map errors
+      setShows([]);
       Alert.alert('Error', 'Failed to load card shows. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [user, userLocation, filters]);
+  }, []);
 
-  // Load shows when screen is focused or filters change
+  // Load shows when screen is focused
   useFocusEffect(
     useCallback(() => {
       if (initialRegion) {
@@ -150,42 +165,38 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   // Center map on user location
   const centerOnUserLocation = async () => {
     try {
-      const location = await getCurrentLocation();
-      if (location && mapRef.current) {
-        setUserLocation(location);
-        mapRef.current.animateToRegion({
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.1,
-          longitudeDelta: 0.1,
-        }, 1000);
-      } else {
-        Alert.alert(
-          'Location Not Available',
-          'Unable to determine your location. Please enable location access.'
-        );
-      }
+      Alert.alert('Note', 'This feature will be implemented in a future update.');
     } catch (error) {
       console.error('Error centering on user location:', error);
-      Alert.alert('Error', 'Failed to get your current location.');
     }
   };
 
   // Format date for callout
   const formatDate = (dateValue: Date | string) => {
-    const date = new Date(dateValue);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    try {
+      const date = new Date(dateValue);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch (err) {
+      return 'Unknown date';
+    }
   };
 
-  // Render map markers
+  // Render map markers - with defensive coding
   const renderMarkers = () => {
-    return shows.map((show) => (
-      show.coordinates && (
+    if (!shows || !Array.isArray(shows) || shows.length === 0) {
+      return null;
+    }
+
+    return shows
+      .filter(show => show && show.coordinates && 
+               typeof show.coordinates.latitude === 'number' && 
+               typeof show.coordinates.longitude === 'number')
+      .map((show) => (
         <Marker
           key={show.id}
           coordinate={{
-            latitude: show.coordinates.latitude,
-            longitude: show.coordinates.longitude,
+            latitude: show.coordinates!.latitude,
+            longitude: show.coordinates!.longitude,
           }}
           title={show.title}
           description={`${formatDate(show.startDate)} • ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`}
@@ -196,7 +207,8 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.calloutTitle}>{show.title}</Text>
               <Text style={styles.calloutDetail}>
                 {formatDate(show.startDate)}
-                {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && ` - ${formatDate(show.endDate)}`}
+                {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
+                  ` - ${formatDate(show.endDate)}`}
               </Text>
               <Text style={styles.calloutDetail}>
                 {show.address}
@@ -210,8 +222,7 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           </Callout>
         </Marker>
-      )
-    ));
+      ));
   };
 
   return (
