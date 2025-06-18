@@ -4,71 +4,111 @@ import { supabase } from '../supabase';
 import { Show, ShowFilters } from '../types';
 
 /**
+ * Safely convert a PostGIS point (as returned by Supabase) into
+ * an app-level `{ latitude, longitude }` object.
+ * Returns `undefined` when the structure is missing or invalid.
+ */
+const dbPointToCoordinates = (
+  point: any
+): { latitude: number; longitude: number } | undefined => {
+  if (
+    !point ||
+    !Array.isArray(point.coordinates) ||
+    point.coordinates.length < 2
+  ) {
+    return undefined;
+  }
+
+  const [lng, lat] = point.coordinates;
+
+  if (
+    typeof lat !== 'number' ||
+    typeof lng !== 'number' ||
+    Number.isNaN(lat) ||
+    Number.isNaN(lng)
+  ) {
+    return undefined;
+  }
+
+  return { latitude: lat, longitude: lng };
+};
+
+/**
  * Get all shows with optional filtering
  * @param filters Optional filters to apply
  * @returns Promise with array of shows
  */
 export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
   try {
-    let query = supabase
-      .from('shows')
-      .select('*');
-    
-    // Apply radius filter if location (coordinates) is provided
+    let data: any[] = [];
+    let error: any = null;
+
+    /* ──────────────────────────────
+     * 1️⃣  Spatial search via RPC
+     * ────────────────────────────── */
     if (filters.latitude && filters.longitude && filters.radius) {
-      // Convert radius from miles to meters
-      const radiusInMeters = filters.radius * 1609.34;
-      
-      // Use PostGIS ST_DWithin for distance filtering
-      query = query.filter(
-        'coordinates',
-        'st_dwithin',
-        `POINT(${filters.longitude} ${filters.latitude})::geography`,
-        radiusInMeters
-      );
+      if (
+        isFinite(filters.latitude) &&
+        isFinite(filters.longitude) &&
+        isFinite(filters.radius)
+      ) {
+        console.log(
+          `[showService] Spatial search @ (${filters.latitude}, ${filters.longitude}) r=${filters.radius}mi`
+        );
+
+        const { data: rpcData, error: rpcErr } = await supabase.rpc(
+          'find_shows_within_radius',
+          {
+            center_lat: filters.latitude,
+            center_lng: filters.longitude,
+            radius_miles: filters.radius,
+          }
+        );
+
+        data = rpcData || [];
+        error = rpcErr;
+      } else {
+        console.warn(
+          '[showService] Invalid coords for spatial search – returning empty list.'
+        );
+        return [];
+      }
+    } else {
+      /* ──────────────────────────────
+       * 2️⃣  Non-spatial query builder
+       * ────────────────────────────── */
+      let query = supabase.from('shows').select('*');
+
+      if (filters.startDate) {
+        query = query.gte('start_date', filters.startDate.toISOString());
+      }
+      if (filters.endDate) {
+        query = query.lte('end_date', filters.endDate.toISOString());
+      }
+      if (filters.categories && filters.categories.length > 0) {
+        query = query.contains('categories', filters.categories);
+      }
+      if (filters.features && filters.features.length > 0) {
+        filters.features.forEach((feature) => {
+          query = query.contains('features', { [feature]: true });
+        });
+      }
+      if (filters.maxEntryFee !== undefined) {
+        query = query.lte('entry_fee', filters.maxEntryFee);
+      }
+
+      query = query.eq('status', filters.status || 'ACTIVE');
+      query = query.order('start_date', { ascending: true });
+
+      const { data: queryData, error: queryErr } = await query;
+      data = queryData || [];
+      error = queryErr;
     }
-    
-    // Apply date filters
-    if (filters.startDate) {
-      query = query.gte('start_date', filters.startDate.toISOString());
-    }
-    
-    if (filters.endDate) {
-      query = query.lte('end_date', filters.endDate.toISOString());
-    }
-    
-    // Apply category filters
-    if (filters.categories && filters.categories.length > 0) {
-      // Overlap operator checks if any categories match
-      query = query.contains('categories', filters.categories);
-    }
-    
-    // Apply features filters
-    if (filters.features && filters.features.length > 0) {
-      filters.features.forEach(feature => {
-        // Check if feature exists in JSONB features column
-        query = query.contains('features', { [feature]: true });
-      });
-    }
-    
-    // Apply entry fee filter
-    if (filters.maxEntryFee !== undefined) {
-      query = query.lte('entry_fee', filters.maxEntryFee);
-    }
-    
-    // Apply status filter (default to ACTIVE)
-    query = query.eq('status', filters.status || 'ACTIVE');
-    
-    // Apply ordering (default to start date ascending)
-    query = query.order('start_date', { ascending: true });
-    
-    // Execute query
-    const { data, error } = await query;
     
     if (error) throw error;
     
-    // Convert from database format to app format
-    return (data || []).map(item => ({
+    // Convert from database format to app format (with defensive coord parsing)
+    return data.map((item) => ({
       id: item.id,
       title: item.title,
       location: item.location,
@@ -79,10 +119,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       description: item.description,
       imageUrl: item.image_url,
       rating: item.rating,
-      coordinates: item.coordinates ? {
-        latitude: item.coordinates.coordinates[1],
-        longitude: item.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(item.coordinates),
       status: item.status,
       organizerId: item.organizer_id,
       features: item.features || {},
@@ -123,10 +160,7 @@ export const getShowById = async (showId: string): Promise<Show | null> => {
       description: data.description,
       imageUrl: data.image_url,
       rating: data.rating,
-      coordinates: data.coordinates ? {
-        latitude: data.coordinates.coordinates[1],
-        longitude: data.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(data.coordinates),
       status: data.status,
       organizerId: data.organizer_id,
       features: data.features || {},
@@ -188,10 +222,7 @@ export const createShow = async (showData: Omit<Show, 'id' | 'createdAt' | 'upda
       description: data.description,
       imageUrl: data.image_url,
       rating: data.rating,
-      coordinates: data.coordinates ? {
-        latitude: data.coordinates.coordinates[1],
-        longitude: data.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(data.coordinates),
       status: data.status,
       organizerId: data.organizer_id,
       features: data.features || {},
@@ -259,10 +290,7 @@ export const updateShow = async (showId: string, showData: Partial<Show>): Promi
       description: data.description,
       imageUrl: data.image_url,
       rating: data.rating,
-      coordinates: data.coordinates ? {
-        latitude: data.coordinates.coordinates[1],
-        longitude: data.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(data.coordinates),
       status: data.status,
       organizerId: data.organizer_id,
       features: data.features || {},
@@ -334,10 +362,7 @@ export const getFavoriteShows = async (userId: string): Promise<Show[]> => {
       description: item.description,
       imageUrl: item.image_url,
       rating: item.rating,
-      coordinates: item.coordinates ? {
-        latitude: item.coordinates.coordinates[1],
-        longitude: item.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(item.coordinates),
       status: item.status,
       organizerId: item.organizer_id,
       features: item.features || {},

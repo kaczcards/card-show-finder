@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { resendEmailVerification } from '../../services/supabaseAuthService';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {
@@ -31,6 +32,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [verificationRequired, setVerificationRequired] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   // Get auth context
   const { authState, login, clearError } = useAuth();
@@ -48,14 +51,37 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       // If successful, the AuthContext will update isAuthenticated
       // and the RootNavigator will switch to MainNavigator
     } catch (err: any) {
-      // Error is already set in authState, just show alert
-      Alert.alert('Login Failed', error || 'Please check your credentials and try again');
+      const message = err?.message || '';
+      // Detect email verification errors (case-insensitive match)
+      if (message.toLowerCase().includes('verify') || message.toLowerCase().includes('confirmed')) {
+        setVerificationRequired(true);
+      } else {
+        Alert.alert('Login Failed', error || 'Please check your credentials and try again');
+      }
+    }
+  };
+
+  // Resend verification email
+  const handleResendVerification = async () => {
+    if (!email) {
+      Alert.alert('Email Required', 'Enter your email first so we know where to send the verification link.');
+      return;
+    }
+    try {
+      setIsResending(true);
+      await resendEmailVerification(email);
+      Alert.alert('Verification Email Sent', 'Please check your inbox for the confirmation link.');
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Unable to resend verification email.');
+    } finally {
+      setIsResending(false);
     }
   };
 
   // Clear any existing errors when navigating
   const handleNavigate = (screen: keyof AuthStackParamList) => {
     clearError();
+    setVerificationRequired(false);
     navigation.navigate(screen);
   };
 
@@ -82,9 +108,29 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to continue</Text>
 
-            {error ? (
+            {error || verificationRequired ? (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
+                {verificationRequired ? (
+                  <>
+                    <Text style={styles.errorText}>
+                      Your email has not been verified. Please check your inbox for the
+                      verification link.
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.resendButton}
+                      onPress={handleResendVerification}
+                      disabled={isResending}
+                    >
+                      {isResending ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.resendButtonText}>Resend verification email</Text>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <Text style={styles.errorText}>{error}</Text>
+                )}
               </View>
             ) : null}
 
@@ -272,6 +318,19 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     color: '#007AFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  resendButton: {
+    backgroundColor: '#DC2626',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resendButtonText: {
+    color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
   },
