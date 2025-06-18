@@ -4,6 +4,36 @@ import { supabase } from '../supabase';
 import { Show, ShowFilters } from '../types';
 
 /**
+ * Safely convert a PostGIS point (as returned by Supabase) into
+ * an app-level `{ latitude, longitude }` object.
+ * Returns `undefined` when the structure is missing or invalid.
+ */
+const dbPointToCoordinates = (
+  point: any
+): { latitude: number; longitude: number } | undefined => {
+  if (
+    !point ||
+    !Array.isArray(point.coordinates) ||
+    point.coordinates.length < 2
+  ) {
+    return undefined;
+  }
+
+  const [lng, lat] = point.coordinates;
+
+  if (
+    typeof lat !== 'number' ||
+    typeof lng !== 'number' ||
+    Number.isNaN(lat) ||
+    Number.isNaN(lng)
+  ) {
+    return undefined;
+  }
+
+  return { latitude: lat, longitude: lng };
+};
+
+/**
  * Get all shows with optional filtering
  * @param filters Optional filters to apply
  * @returns Promise with array of shows
@@ -16,16 +46,30 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     
     // Apply radius filter if location (coordinates) is provided
     if (filters.latitude && filters.longitude && filters.radius) {
-      // Convert radius from miles to meters
-      const radiusInMeters = filters.radius * 1609.34;
-      
-      // Use PostGIS ST_DWithin for distance filtering
-      query = query.filter(
-        'coordinates',
-        'st_dwithin',
-        `POINT(${filters.longitude} ${filters.latitude})::geography`,
-        radiusInMeters
-      );
+      // Ensure all numeric parts are valid numbers
+      if (
+        isFinite(filters.latitude) &&
+        isFinite(filters.longitude) &&
+        isFinite(filters.radius)
+      ) {
+        // Convert radius from miles to meters
+        const radiusInMeters = filters.radius * 1609.34;
+
+        // Use PostGIS ST_DWithin for distance filtering
+        query = query.filter(
+          'coordinates',
+          'st_dwithin',
+          `POINT(${filters.longitude} ${filters.latitude})::geography`,
+          radiusInMeters
+        );
+      } else {
+        console.warn(
+          '[showService] Invalid coordinates provided for radius filter – skipping filter.'
+        );
+        // If the caller *expected* filtering (radius present) but coords invalid,
+        // it is safer to return an empty list than all shows.
+        return [];
+      }
     }
     
     // Apply date filters
@@ -67,7 +111,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     
     if (error) throw error;
     
-    // Convert from database format to app format
+    // Convert from database format to app format (with defensive coord parsing)
     return (data || []).map(item => ({
       id: item.id,
       title: item.title,
@@ -79,10 +123,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       description: item.description,
       imageUrl: item.image_url,
       rating: item.rating,
-      coordinates: item.coordinates ? {
-        latitude: item.coordinates.coordinates[1],
-        longitude: item.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(item.coordinates),
       status: item.status,
       organizerId: item.organizer_id,
       features: item.features || {},
@@ -123,10 +164,7 @@ export const getShowById = async (showId: string): Promise<Show | null> => {
       description: data.description,
       imageUrl: data.image_url,
       rating: data.rating,
-      coordinates: data.coordinates ? {
-        latitude: data.coordinates.coordinates[1],
-        longitude: data.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(data.coordinates),
       status: data.status,
       organizerId: data.organizer_id,
       features: data.features || {},
@@ -188,10 +226,7 @@ export const createShow = async (showData: Omit<Show, 'id' | 'createdAt' | 'upda
       description: data.description,
       imageUrl: data.image_url,
       rating: data.rating,
-      coordinates: data.coordinates ? {
-        latitude: data.coordinates.coordinates[1],
-        longitude: data.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(data.coordinates),
       status: data.status,
       organizerId: data.organizer_id,
       features: data.features || {},
@@ -259,10 +294,7 @@ export const updateShow = async (showId: string, showData: Partial<Show>): Promi
       description: data.description,
       imageUrl: data.image_url,
       rating: data.rating,
-      coordinates: data.coordinates ? {
-        latitude: data.coordinates.coordinates[1],
-        longitude: data.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(data.coordinates),
       status: data.status,
       organizerId: data.organizer_id,
       features: data.features || {},
@@ -334,10 +366,7 @@ export const getFavoriteShows = async (userId: string): Promise<Show[]> => {
       description: item.description,
       imageUrl: item.image_url,
       rating: item.rating,
-      coordinates: item.coordinates ? {
-        latitude: item.coordinates.coordinates[1],
-        longitude: item.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: dbPointToCoordinates(item.coordinates),
       status: item.status,
       organizerId: item.organizer_id,
       features: item.features || {},

@@ -159,18 +159,16 @@ export const getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeDat
       coordinates,
     };
 
-    // Save to database for future use
-    const { error: insertError } = await supabase
-      .from('zip_codes')
-      .insert({
-        zip_code: newZipCodeData.zipCode,
-        city: newZipCodeData.city,
-        state: newZipCodeData.state,
-        latitude: newZipCodeData.coordinates.latitude,
-        longitude: newZipCodeData.coordinates.longitude,
-      });
-
-    if (insertError) throw insertError;
+    /**
+     * NOTE:
+     * We intentionally **skip inserting** the newly-geocoded ZIP code into the
+     * `zip_codes` table because the table is protected by an RLS policy that
+     * only allows inserts from server-side (service-role) contexts.  
+     * Trying to insert here would raise error 42501.
+     */
+    console.info(
+      `[locationService] ZIP code ${zipCode} geocoded on-device – not cached in DB due to RLS.`
+    );
 
     return newZipCodeData;
   } catch (error: any) {
