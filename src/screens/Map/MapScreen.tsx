@@ -108,30 +108,18 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   const fetchShows = useCallback(async () => {
     try {
       setLoading(true);
-      let showsData: Show[] = [];
-      let locationCoords: Coordinates | null = null;
+      
+      // Our getShows function in showService.ts does not accept filters.
+      // It fetches all active shows. If filtering is needed, it should be
+      // implemented within getShows or a new function like getShowsWithFilters.
+      const { data, error } = await getShows(); 
 
-      // If user has a home ZIP code, use that
-      if (user?.homeZipCode) {
-        const zipData = await getZipCodeCoordinates(user.homeZipCode);
-        if (zipData) {
-          locationCoords = zipData.coordinates;
-        }
-      } else {
-        // Otherwise, try to get current location
-        locationCoords = await getCurrentLocation();
+      if (error) {
+        throw new Error(error);
       }
 
-      const currentFilters: ShowFilters = { ...filters };
-      if (locationCoords) {
-        currentFilters.latitude = locationCoords.latitude;
-        currentFilters.longitude = locationCoords.longitude;
-      }
-
-      showsData = await getShows(currentFilters);
-
-      setShows(showsData);
-    } catch (error) {
+      setShows(data || []); // Ensure shows is an array
+    } catch (error: any) {
       console.error('Error fetching shows:', error);
       Alert.alert('Error', 'Failed to load card shows. Please try again.');
     } finally {
