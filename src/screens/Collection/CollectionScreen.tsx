@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,6 +18,23 @@ enum TabType {
 const CollectionScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>(TabType.CARDS);
 
+  // Button handlers
+  const handleAddCard = () => {
+    Alert.alert(
+      "Add Card",
+      "This feature will allow you to add a card to your collection. Coming soon!",
+      [{ text: "OK", onPress: () => console.log("Add Card pressed") }]
+    );
+  };
+
+  const handleCreateWantList = () => {
+    Alert.alert(
+      "Create Want List",
+      "This feature will allow you to create a want list. Coming soon!",
+      [{ text: "OK", onPress: () => console.log("Create Want List pressed") }]
+    );
+  };
+
   // Render cards tab content
   const renderCardsTab = () => (
     <View style={styles.tabContent}>
@@ -27,7 +45,7 @@ const CollectionScreen: React.FC = () => {
           <Text style={styles.emptyText}>
             Add your favorite cards to your collection.
           </Text>
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity style={styles.addButton} onPress={handleAddCard}>
             <Ionicons name="add-circle-outline" size={20} color="white" />
             <Text style={styles.addButtonText}>Add Card</Text>
           </TouchableOpacity>
@@ -46,7 +64,7 @@ const CollectionScreen: React.FC = () => {
           <Text style={styles.emptyText}>
             Create a list of cards you're looking to add to your collection.
           </Text>
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity style={styles.addButton} onPress={handleCreateWantList}>
             <Ionicons name="create-outline" size={20} color="white" />
             <Text style={styles.addButtonText}>Create Want List</Text>
           </TouchableOpacity>
