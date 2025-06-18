@@ -1,12 +1,7 @@
 /**
  * Show Service
  *
- * This file contains the minimal set of helpers the front-end currently
- * expects for fetching shows from Supabase.  The HomeScreen is calling
- * `getShows`, so that function (plus a small helper for fetching a single
- * show) is provided below.  If more advanced filtering / geo-queries are
- * needed they can be added later, but this implementation un-blocks the
- * runtime error.
+ * This file contains helpers for fetching shows from Supabase.
  */
 
 import { supabase } from '../supabase';
@@ -98,15 +93,23 @@ export const getShowById = async (
   }
 };
 
-// Additional helper stubs (can be implemented later if needed by UI)
+/**
+ * Create a new show (stub)
+ */
 export const createShow = () => {
   throw new Error('createShow not implemented');
 };
 
+/**
+ * Update an existing show (stub)
+ */
 export const updateShow = () => {
   throw new Error('updateShow not implemented');
 };
 
+/**
+ * Delete a show (stub)
+ */
 export const deleteShow = () => {
   throw new Error('deleteShow not implemented');
 };
