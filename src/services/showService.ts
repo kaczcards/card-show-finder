@@ -40,82 +40,75 @@ const dbPointToCoordinates = (
  */
 export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
   try {
-    let query = supabase
-      .from('shows')
-      .select('*');
-    
-    // Apply radius filter if location (coordinates) is provided
+    let data: any[] = [];
+    let error: any = null;
+
+    /* ──────────────────────────────
+     * 1️⃣  Spatial search via RPC
+     * ────────────────────────────── */
     if (filters.latitude && filters.longitude && filters.radius) {
-      // Ensure all numeric parts are valid numbers
       if (
         isFinite(filters.latitude) &&
         isFinite(filters.longitude) &&
         isFinite(filters.radius)
       ) {
-        // Convert radius from miles to meters
-        const radiusInMeters = filters.radius * 1609.34;
-
-        // Use PostGIS ST_DWithin for distance filtering
-        query = query.filter(
-          // Supabase PostGIS helper signature:
-          // (columnOrOperator, operatorOrColumn, geometry, distance)
-          // Putting the operator first avoids the “failed to parse filter” error.
-          'st_dwithin',
-          'coordinates',
-          `POINT(${filters.longitude} ${filters.latitude})`,
-          radiusInMeters
+        console.log(
+          `[showService] Spatial search @ (${filters.latitude}, ${filters.longitude}) r=${filters.radius}mi`
         );
+
+        const { data: rpcData, error: rpcErr } = await supabase.rpc(
+          'find_shows_within_radius',
+          {
+            center_lat: filters.latitude,
+            center_lng: filters.longitude,
+            radius_miles: filters.radius,
+          }
+        );
+
+        data = rpcData || [];
+        error = rpcErr;
       } else {
         console.warn(
-          '[showService] Invalid coordinates provided for radius filter – skipping filter.'
+          '[showService] Invalid coords for spatial search – returning empty list.'
         );
-        // If the caller *expected* filtering (radius present) but coords invalid,
-        // it is safer to return an empty list than all shows.
         return [];
       }
+    } else {
+      /* ──────────────────────────────
+       * 2️⃣  Non-spatial query builder
+       * ────────────────────────────── */
+      let query = supabase.from('shows').select('*');
+
+      if (filters.startDate) {
+        query = query.gte('start_date', filters.startDate.toISOString());
+      }
+      if (filters.endDate) {
+        query = query.lte('end_date', filters.endDate.toISOString());
+      }
+      if (filters.categories && filters.categories.length > 0) {
+        query = query.contains('categories', filters.categories);
+      }
+      if (filters.features && filters.features.length > 0) {
+        filters.features.forEach((feature) => {
+          query = query.contains('features', { [feature]: true });
+        });
+      }
+      if (filters.maxEntryFee !== undefined) {
+        query = query.lte('entry_fee', filters.maxEntryFee);
+      }
+
+      query = query.eq('status', filters.status || 'ACTIVE');
+      query = query.order('start_date', { ascending: true });
+
+      const { data: queryData, error: queryErr } = await query;
+      data = queryData || [];
+      error = queryErr;
     }
-    
-    // Apply date filters
-    if (filters.startDate) {
-      query = query.gte('start_date', filters.startDate.toISOString());
-    }
-    
-    if (filters.endDate) {
-      query = query.lte('end_date', filters.endDate.toISOString());
-    }
-    
-    // Apply category filters
-    if (filters.categories && filters.categories.length > 0) {
-      // Overlap operator checks if any categories match
-      query = query.contains('categories', filters.categories);
-    }
-    
-    // Apply features filters
-    if (filters.features && filters.features.length > 0) {
-      filters.features.forEach(feature => {
-        // Check if feature exists in JSONB features column
-        query = query.contains('features', { [feature]: true });
-      });
-    }
-    
-    // Apply entry fee filter
-    if (filters.maxEntryFee !== undefined) {
-      query = query.lte('entry_fee', filters.maxEntryFee);
-    }
-    
-    // Apply status filter (default to ACTIVE)
-    query = query.eq('status', filters.status || 'ACTIVE');
-    
-    // Apply ordering (default to start date ascending)
-    query = query.order('start_date', { ascending: true });
-    
-    // Execute query
-    const { data, error } = await query;
     
     if (error) throw error;
     
     // Convert from database format to app format (with defensive coord parsing)
-    return (data || []).map(item => ({
+    return data.map((item) => ({
       id: item.id,
       title: item.title,
       location: item.location,
