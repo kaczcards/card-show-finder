@@ -3,9 +3,10 @@
 ## ✨ What’s New
 | Area | Type | Description |
 |------|------|-------------|
-| `src/services/showService.ts` | **Fix** | Re-wrote the `st_dwithin` filter call to use the correct PostGIS argument order, eliminating `PGRST100` syntax errors. |
+| `src/services/showService.ts` | **Fix** | Replaced brittle `st_dwithin` filter with a call to a dedicated **RPC** (`find_shows_within_radius`) eliminating `PGRST100` syntax errors. |
 | `src/services/locationService.ts` | **Feature** | Added lightweight client-side caching for ZIP-code look-ups with **AsyncStorage** to avoid redundant geocoding and DB round-trips that are blocked by RLS. |
 | `src/services/locationService.ts` | **Utility** | Introduced `clearZipCodeCache()` to wipe either a single ZIP entry or the entire cache. |
+| `db_functions.sql` | **Feature** | New SQL script that creates the `find_shows_within_radius` function (and placeholder for richer `find_filtered_shows`). This powers the RPC used by the app. |
 
 ---
 
@@ -22,19 +23,18 @@ query.filter(
 ```
 *Supabase translated the above to* `st_dwithin.POINT(...` *which Postgres rejected.*
 
-### After  
+### After — now using an RPC  
 ```ts
-query.filter(
-  'st_dwithin',                  // operator **first**
-  'coordinates',                 // column
-  `POINT(${lng} ${lat})`,        // geometry
-  radiusMeters                   // distance (m)
-);
+const { data, error } = await supabase.rpc('find_shows_within_radius', {
+  center_lat: lat,
+  center_lng: lng,
+  radius_miles: radius
+});
 ```
 Key changes  
-1. **Operator-first signature** matches Supabase PostGIS helper contract.  
-2. Point no longer cast inline; Postgres auto-casts in the helper.  
-3. Radius converted from miles → meters (`* 1609.34`).
+1. All heavy geospatial work is handled **inside Postgres** via a reusable SQL function.  
+2. The client no longer needs to build fragile PostgREST filter strings.  
+3. Easier to extend in the future (`find_filtered_shows` already scaffolded).  
 
 Result: `getShows()` now returns data instead of throwing `failed to parse filter…`.
 
@@ -88,7 +88,7 @@ clearZipCodeCache(zip?: string): Promise<void>
 
 ## 🔄 Migration / Config
 
-No DB migrations required.  
+Run `db_functions.sql` (or copy the statements into Supabase SQL editor) to create the new function(s).  
 Ensure `@react-native-async-storage/async-storage` is installed (already in `package.json`).
 
 ---
