@@ -1,6 +1,7 @@
 import * as Location from 'expo-location';
 import { supabase } from '../supabase';
 import { Coordinates, ZipCodeData } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Request location permissions from the user
@@ -108,12 +109,79 @@ export const reverseGeocodeCoordinates = async (
 };
 
 /**
+ * AsyncStorage key prefix for caching ZIP code lookups
+ */
+const ZIP_CACHE_KEY_PREFIX = '@zip_cache:';
+
+/**
+ * Retrieve ZIP code data from AsyncStorage cache
+ */
+const getZipFromCache = async (zipCode: string): Promise<ZipCodeData | null> => {
+  try {
+    const raw = await AsyncStorage.getItem(`${ZIP_CACHE_KEY_PREFIX}${zipCode}`);
+    return raw ? (JSON.parse(raw) as ZipCodeData) : null;
+  } catch (err) {
+    console.warn('[locationService] Failed to read ZIP cache', err);
+    return null;
+  }
+};
+
+/**
+ * Save ZIP code data to AsyncStorage cache
+ */
+const setZipCache = async (data: ZipCodeData): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(
+      `${ZIP_CACHE_KEY_PREFIX}${data.zipCode}`,
+      JSON.stringify(data)
+    );
+  } catch (err) {
+    console.warn('[locationService] Failed to write ZIP cache', err);
+  }
+};
+
+/**
+ * Clear ZIP code cache from AsyncStorage
+ * @param zipCode Optional specific ZIP code to clear, if not provided all ZIP caches will be cleared
+ * @returns Promise<void>
+ */
+export const clearZipCodeCache = async (zipCode?: string): Promise<void> => {
+  try {
+    if (zipCode) {
+      // Clear specific ZIP code
+      await AsyncStorage.removeItem(`${ZIP_CACHE_KEY_PREFIX}${zipCode}`);
+      console.info(`[locationService] Cleared cache for ZIP code ${zipCode}`);
+    } else {
+      // Get all keys and clear only ZIP code caches
+      const keys = await AsyncStorage.getAllKeys();
+      const zipKeys = keys.filter(key => key.startsWith(ZIP_CACHE_KEY_PREFIX));
+      if (zipKeys.length > 0) {
+        await AsyncStorage.multiRemove(zipKeys);
+        console.info(
+          `[locationService] Cleared all ZIP code caches (${zipKeys.length} entries)`
+        );
+      }
+    }
+  } catch (error: any) {
+    console.error('Error clearing ZIP code cache:', error);
+  }
+};
+
+/**
  * Get coordinates for a ZIP code
  * @param zipCode ZIP code string
  * @returns Promise with ZipCodeData or null if not found
  */
 export const getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeData | null> => {
   try {
+    /* ---------------------------------
+     * 1. Check client-side cache first
+     * --------------------------------- */
+    const cached = await getZipFromCache(zipCode);
+    if (cached) {
+      return cached;
+    }
+
     // First check if we have the ZIP code in our database
     const { data: zipCodeDataFromDb, error: fetchError } = await supabase
       .from('zip_codes') // Assuming a 'zip_codes' table
@@ -159,18 +227,19 @@ export const getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeDat
       coordinates,
     };
 
-    // Save to database for future use
-    const { error: insertError } = await supabase
-      .from('zip_codes')
-      .insert({
-        zip_code: newZipCodeData.zipCode,
-        city: newZipCodeData.city,
-        state: newZipCodeData.state,
-        latitude: newZipCodeData.coordinates.latitude,
-        longitude: newZipCodeData.coordinates.longitude,
-      });
+    /**
+     * NOTE:
+     * We intentionally **skip inserting** the newly-geocoded ZIP code into the
+     * `zip_codes` table because the table is protected by an RLS policy that
+     * only allows inserts from server-side (service-role) contexts.  
+     * Trying to insert here would raise error 42501.
+     */
+    console.info(
+      `[locationService] ZIP code ${zipCode} geocoded on-device – not cached in DB due to RLS.`
+    );
 
-    if (insertError) throw insertError;
+    // Cache newly geocoded result for future requests
+    await setZipCache(newZipCodeData);
 
     return newZipCodeData;
   } catch (error: any) {
