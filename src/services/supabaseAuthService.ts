@@ -74,7 +74,16 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
       password,
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      // Check for specific "Email not confirmed" error
+      if (authError.message?.toLowerCase().includes('email not confirmed')) {
+        throw new Error(
+          'Your email address has not been verified. Please check your inbox for a verification email or use the "Resend verification" button.'
+        );
+      }
+      throw authError;
+    }
+
     if (!authData.user) throw new Error('Login failed');
 
     // Get user profile from the profiles table
@@ -107,7 +116,26 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
     return userData;
   } catch (error: any) {
     console.error('Error signing in:', error);
-    throw new Error(error.message || 'Failed to sign in');
+    throw error; // Pass through the error with our enhanced message
+  }
+};
+
+/**
+ * Resend verification email to a user who hasn't confirmed their email
+ * @param email Email address to send verification to
+ * @returns Promise<void>
+ */
+export const resendEmailVerification = async (email: string): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+    
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('Error resending verification email:', error);
+    throw new Error(error.message || 'Failed to resend verification email');
   }
 };
 
