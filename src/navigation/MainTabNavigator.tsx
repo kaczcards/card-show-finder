@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import screen components
 import { HomeScreen } from '../screens/Home';
-import { MapScreen } from '../screens/Map';
 import CollectionScreen from '../screens/Collection';
 import BadgesScreen from '../screens/Badges';
 import NotificationsScreen from '../screens/Notifications';
@@ -16,7 +15,6 @@ import { useAuth } from '../contexts/AuthContext';
 // Define navigation types for main tabs
 export type MainTabParamList = {
   Home: undefined;
-  Map: undefined;
   Collection: undefined;
   Badges: undefined;
   Notifications: undefined;
@@ -45,8 +43,6 @@ const MainTabNavigator: React.FC = () => {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Map') {
-            iconName = focused ? 'map' : 'map-outline';
           } else if (route.name === 'Collection') {
             iconName = focused ? 'images' : 'images-outline';
           } else if (route.name === 'Badges') {
@@ -72,11 +68,6 @@ const MainTabNavigator: React.FC = () => {
         name="Home" 
         component={HomeScreen} 
         options={{ title: homeTitle }}
-      />
-      <MainTab.Screen 
-        name="Map" 
-        component={MapScreen} 
-        options={{ title: 'Map View' }}
       />
       <MainTab.Screen
         name="Collection"
