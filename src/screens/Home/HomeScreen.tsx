@@ -50,6 +50,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
   // Fetch shows based on location or ZIP code
   const fetchShows = useCallback(async () => {
+    console.log('[HomeScreen] Starting fetchShows()');
     try {
       setLoading(true);
       let showsData: Show[] = [];
@@ -57,30 +58,80 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
       // If user has a home ZIP code, use that
       if (user?.homeZipCode) {
-        const zipData = await getZipCodeCoordinates(user.homeZipCode);
-        if (zipData) {
-          locationCoords = zipData.coordinates;
+        console.log('[HomeScreen] Using home ZIP code', user.homeZipCode);
+        try {
+          const zipData = await getZipCodeCoordinates(user.homeZipCode);
+          if (zipData) {
+            locationCoords = zipData.coordinates;
+            console.log('[HomeScreen] Coordinates resolved from ZIP:', locationCoords);
+          } else {
+            console.warn('[HomeScreen] Failed to get coordinates for ZIP code', user.homeZipCode);
+          }
+        } catch (zipError) {
+          console.error('[HomeScreen] Error getting ZIP coordinates:', zipError);
+          // Continue with null coordinates - will use basic query
         }
       } else {
         // Otherwise, try to get current location
-        locationCoords = await getCurrentLocation();
+        console.log('[HomeScreen] No home ZIP code, trying current location');
+        try {
+          locationCoords = await getCurrentLocation();
+          console.log('[HomeScreen] Current location coordinates:', locationCoords);
+        } catch (locationError) {
+          console.error('[HomeScreen] Error getting current location:', locationError);
+          // Continue with null coordinates - will use basic query
+        }
       }
 
-      const currentFilters: ShowFilters = { ...filters };
+      // Create a safe copy of filters with defaults
+      const currentFilters: ShowFilters = { 
+        ...filters,
+        radius: filters.radius || 25,
+        startDate: filters.startDate || new Date(),
+        endDate: filters.endDate || new Date(new Date().setDate(new Date().getDate() + 30))
+      };
+      
       if (locationCoords) {
         currentFilters.latitude = locationCoords.latitude;
         currentFilters.longitude = locationCoords.longitude;
       }
 
-      showsData = await getShows(currentFilters);
+      console.log('[HomeScreen] Final filters sent to getShows:', currentFilters);
 
-      setShows(showsData);
+      try {
+        showsData = await getShows(currentFilters);
+        console.log(`[HomeScreen] Got ${showsData.length} shows from getShows()`);
+        setShows(showsData);
+      } catch (showError: any) {
+        console.error('[HomeScreen] getShows() threw', showError);
+        console.error('[HomeScreen] Error fetching shows:', showError);
+        
+        // Try one more time with basic filters
+        try {
+          console.log('[HomeScreen] Attempting fallback with basic filters');
+          const basicFilters: ShowFilters = {
+            startDate: new Date(),
+            endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+          };
+          showsData = await getShows(basicFilters);
+          console.log(`[HomeScreen] Fallback got ${showsData.length} shows`);
+          setShows(showsData);
+        } catch (fallbackError) {
+          console.error('[HomeScreen] Fallback getShows() also failed:', fallbackError);
+          // Set empty array to prevent undefined errors
+          setShows([]);
+          Alert.alert('Error', 'Failed to load card shows. Please try again.');
+        }
+      }
     } catch (error) {
-      console.error('Error fetching shows:', error);
+      console.error('[HomeScreen] Unhandled error in fetchShows:', error);
       Alert.alert('Error', 'Failed to load card shows. Please try again.');
+      // Set empty array to prevent undefined errors
+      setShows([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
+      console.log('[HomeScreen] fetchShows() complete');
     }
   }, [user, filters]);
 
@@ -153,7 +204,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.showDetail}>
             <Ionicons name="cash-outline" size={16} color="#666" />
             <Text style={styles.showDetailText}>
-              {item.entryFee === 0 ? 'Free' : `$${item.entryFee.toFixed(2)}`}
+              {item.entryFee === 0
+                ? 'Free'
+                : item.entryFee == null
+                ? 'Varies'
+                : `$${Number(item.entryFee).toFixed(2)}`}
             </Text>
           </View>
           {displayFeatures && displayFeatures.length > 0 && (
@@ -193,6 +248,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   // Render header with filter info
   const renderHeader = () => (
     <View style={styles.headerContainer}>
+      {user?.firstName && (
+        <Text style={styles.welcomeMessage}>
+          {`Welcome Back, ${user.firstName}`}
+        </Text>
+      )}
       <Text style={styles.headerTitle}>
         {shows.length === 0
           ? 'No shows found'
@@ -286,6 +346,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  welcomeMessage: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    marginBottom: 16,
   },
   filterButton: {
     flexDirection: 'row',
