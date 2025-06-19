@@ -21,7 +21,10 @@ const mapDbShowToAppShow = (row: any): Show => ({
   description: row.description ?? undefined,
   imageUrl: row.image_url ?? undefined,
   rating: row.rating ?? undefined,
-  coordinates: row.coordinates
+  coordinates: row.coordinates && 
+    row.coordinates.coordinates && 
+    Array.isArray(row.coordinates.coordinates) && 
+    row.coordinates.coordinates.length >= 2
     ? {
         latitude: row.coordinates.coordinates[1],
         longitude: row.coordinates.coordinates[0],
@@ -50,14 +53,19 @@ import { ShowFilters } from '../types';
 
 export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
   try {
+    // Ensure filters is a valid object
+    filters = filters || {};
+    
     /* -----------------------------------------------------------
      * 1. Geo-aware query via RPC when lat/lng present
      * --------------------------------------------------------- */
     if (
       typeof filters.latitude === 'number' &&
-      typeof filters.longitude === 'number'
+      typeof filters.longitude === 'number' &&
+      !isNaN(filters.latitude) &&
+      !isNaN(filters.longitude)
     ) {
-      const radius = filters.radius ?? 25;
+      const radius = typeof filters.radius === 'number' ? filters.radius : 25;
 
       /* ---------- Sanity-check lat / lng values ---------- */
       if (Math.abs(filters.latitude) > 90 || Math.abs(filters.longitude) > 180) {
@@ -82,14 +90,14 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         'find_filtered_shows',
         {
           // Primary/filter-aware RPC parameters
-          center_lat: filters.latitude,
-          center_lng: filters.longitude,
-          radius_miles: radius,
-          start_date: filters.startDate ?? null,
-          end_date: filters.endDate ?? null,
-          max_entry_fee: filters.maxEntryFee ?? null,
-          show_categories: filters.categories ?? null,
-          show_features: filters.features ?? null,
+          center_lat: typeof filters.latitude === 'number' ? filters.latitude : null,
+          center_lng: typeof filters.longitude === 'number' ? filters.longitude : null,
+          radius_miles: typeof filters.radius === 'number' ? filters.radius : 25,
+          start_date: filters.startDate || null,
+          end_date: filters.endDate || null,
+          max_entry_fee: typeof filters.maxEntryFee === 'number' ? filters.maxEntryFee : null,
+          show_categories: Array.isArray(filters.categories) ? filters.categories : null,
+          show_features: filters.features || null,
         }
       );
 
@@ -100,9 +108,9 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         );
       } else {
         console.info(
-          `[showService] find_filtered_shows returned ${(rpcData ?? []).length} show(s)`
+          `[showService] find_filtered_shows returned ${((rpcData && Array.isArray(rpcData)) ? rpcData.length : 0)} show(s)`
         );
-        return (rpcData ?? []).map(mapDbShowToAppShow);
+        return Array.isArray(rpcData) ? rpcData.map(mapDbShowToAppShow) : [];
       }
 
       /* -------------------------------------------------------
@@ -111,9 +119,9 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       const { data: fbData, error: fbError } = await supabase.rpc(
         'find_shows_within_radius',
         {
-          center_lat: filters.latitude,
-          center_lng: filters.longitude,
-          radius_miles: radius,
+          center_lat: typeof filters.latitude === 'number' ? filters.latitude : null,
+          center_lng: typeof filters.longitude === 'number' ? filters.longitude : null,
+          radius_miles: typeof filters.radius === 'number' ? filters.radius : 25,
         }
       );
 
@@ -129,9 +137,9 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           { center_lat: filters.latitude, center_lng: filters.longitude, radius_miles: radius }
         );
         console.info(
-          `[showService] find_shows_within_radius returned ${(fbData ?? []).length} show(s)`
+          `[showService] find_shows_within_radius returned ${((fbData && Array.isArray(fbData)) ? fbData.length : 0)} show(s)`
         );
-        return (fbData ?? []).map(mapDbShowToAppShow);
+        return Array.isArray(fbData) ? fbData.map(mapDbShowToAppShow) : [];
       }
     }
 
@@ -153,7 +161,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     if (typeof filters.maxEntryFee === 'number') {
       query = query.lte('entry_fee', filters.maxEntryFee);
     }
-    if (filters.categories && filters.categories.length > 0) {
+    if (filters.categories && Array.isArray(filters.categories) && filters.categories.length > 0) {
       query = query.overlaps('categories', filters.categories);
     }
 
@@ -171,13 +179,16 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     if (error) throw error;
 
     console.info(
-      `[showService] basic query returned ${(data ?? []).length} show(s)`
+      `[showService] basic query returned ${((data && Array.isArray(data)) ? data.length : 0)} show(s)`
     );
-    return (data ?? []).map(mapDbShowToAppShow);
+    return Array.isArray(data) ? data.map(mapDbShowToAppShow) : [];
   } catch (err: any) {
     console.error('Error fetching shows:', err);
     throw new Error(err.message ?? 'Failed to fetch shows');
   }
+  
+  // Safety return if we somehow get here without data
+  return [];
 };
 
 /**
