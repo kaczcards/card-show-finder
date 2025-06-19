@@ -16,8 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../supabase';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
+import { getShows } from '../../services/showService';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -75,72 +75,42 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     setupInitialRegion();
   }, [user]);
 
-  // Manually fetch shows directly from Supabase as fallback
-  const fetchShowsFallback = async () => {
-    try {
-      console.log("Using direct Supabase query fallback");
-      const { data, error } = await supabase
-        .from('shows')
-        .select('*')
-        .eq('status', 'ACTIVE')
-        .order('start_date');
-
-      if (error) {
-        console.error("Supabase error:", error);
-        return [];
-      }
-
-      console.log(`Fetched ${data?.length || 0} shows directly from Supabase`);
-      
-      return data?.map(row => ({
-        id: row.id,
-        title: row.title,
-        location: row.location,
-        address: row.address,
-        startDate: row.start_date,
-        endDate: row.end_date,
-        entryFee: row.entry_fee,
-        description: row.description || undefined,
-        imageUrl: row.image_url || undefined,
-        rating: row.rating || undefined,
-        coordinates: row.coordinates
-          ? {
-              latitude: row.coordinates.coordinates[1],
-              longitude: row.coordinates.coordinates[0],
-            }
-          : undefined,
-        status: row.status as ShowStatus,
-        organizerId: row.organizer_id,
-        features: row.features || {},
-        categories: row.categories || [],
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-      })) || [];
-    } catch (err) {
-      console.error("Fallback fetch error:", err);
-      return [];
-    }
-  };
-
   // Fetch shows based on location or ZIP code
   const fetchShows = useCallback(async () => {
     try {
       setLoading(true);
       
-      console.log("Fetching shows directly from Supabase");
-      const shows = await fetchShowsFallback();
+      console.log('[MapScreen] Fetching shows using showService');
+      
+      // Create a copy of the filters to modify
+      const currentFilters: ShowFilters = { ...filters };
+      
+      // If we have user location, use it
+      if (userLocation) {
+        currentFilters.latitude = userLocation.latitude;
+        currentFilters.longitude = userLocation.longitude;
+      }
+      
+      console.log('[MapScreen] Filters being used:', currentFilters);
+      
+      // Use the improved getShows function from showService
+      const showsData = await getShows(currentFilters);
       
       // Always ensure we're setting an array
-      setShows(Array.isArray(shows) ? shows : []);
+      setShows(Array.isArray(showsData) ? showsData : []);
+      console.log(`[MapScreen] Successfully fetched ${showsData.length} shows`);
     } catch (error: any) {
-      console.error('Error fetching shows:', error);
+      console.error('[MapScreen] Error fetching shows:', error);
       // Set empty array to prevent map errors
       setShows([]);
-      Alert.alert('Error', 'Failed to load card shows. Please try again.');
+      Alert.alert(
+        'Error', 
+        `Failed to load card shows. ${error?.message ? `\n\nDetails: ${error.message}` : 'Please try again.'}`
+      );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters, userLocation]);
 
   // Load shows when screen is focused
   useFocusEffect(
