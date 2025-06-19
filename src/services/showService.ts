@@ -38,30 +38,79 @@ const mapDbShowToAppShow = (row: any): Show => ({
 /**
  * Fetch a list of active shows.
  *
- * @param limit  Max number of records to return (default 50)
- * @param offset Pagination offset  (default 0)
+ * The caller supplies a `ShowFilters` object that may contain:
+ *   • latitude / longitude / radius → geo-filtered RPC
+ *   • startDate / endDate / maxEntryFee / categories / features, etc.
+ *
+ * The function always returns an **array of Show objects** (may be empty) and
+ * throws on error – this aligns with `HomeScreen.tsx`, which expects a plain
+ * array.
  */
-export const getShows = async (
-  limit: number = 50,
-  offset: number = 0
-): Promise<{ data: Show[] | null; error: string | null }> => {
+import { ShowFilters } from '../types';
+
+export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
   try {
-    const { data, error } = await supabase
+    /* -----------------------------------------------------------
+     * 1. Geo-aware query via RPC when lat/lng present
+     * --------------------------------------------------------- */
+    if (
+      typeof filters.latitude === 'number' &&
+      typeof filters.longitude === 'number'
+    ) {
+      const radius = filters.radius ?? 25;
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'find_filtered_shows',
+        {
+          center_lat: filters.latitude,
+          center_lng: filters.longitude,
+          radius_miles: radius,
+          start_date: filters.startDate ?? null,
+          end_date: filters.endDate ?? null,
+          max_entry_fee: filters.maxEntryFee ?? null,
+          show_categories: filters.categories ?? null,
+          show_features: filters.features ?? null,
+        }
+      );
+
+      if (rpcError) {
+        console.warn('[showService] RPC failed – falling back to basic query', rpcError.message);
+        // fall through to non-spatial query below
+      } else {
+        return (rpcData ?? []).map(mapDbShowToAppShow);
+      }
+    }
+
+    /* -----------------------------------------------------------
+     * 2. Basic (non-spatial) SELECT with optional filters
+     * --------------------------------------------------------- */
+    let query = supabase
       .from('shows')
       .select('*')
       .eq('status', 'ACTIVE')
-      .order('start_date', { ascending: true })
-      .range(offset, offset + limit - 1);
+      .order('start_date', { ascending: true });
 
-    if (error) {
-      throw error;
+    if (filters.startDate) {
+      query = query.gte('start_date', filters.startDate as any);
+    }
+    if (filters.endDate) {
+      query = query.lte('end_date', filters.endDate as any);
+    }
+    if (typeof filters.maxEntryFee === 'number') {
+      query = query.lte('entry_fee', filters.maxEntryFee);
+    }
+    if (filters.categories && filters.categories.length > 0) {
+      query = query.overlaps('categories', filters.categories);
     }
 
-    const shows: Show[] = (data ?? []).map(mapDbShowToAppShow);
-    return { data: shows, error: null };
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data ?? []).map(mapDbShowToAppShow);
   } catch (err: any) {
     console.error('Error fetching shows:', err);
-    return { data: null, error: err.message ?? 'Unknown error fetching shows' };
+    throw new Error(err.message ?? 'Failed to fetch shows');
   }
 };
 

@@ -55,14 +55,18 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       let showsData: Show[] = [];
       let locationCoords: Coordinates | null = null;
 
+      console.log('[HomeScreen] Starting fetchShows()');
+
       // If user has a home ZIP code, use that
       if (user?.homeZipCode) {
+        console.log('[HomeScreen] Using home ZIP code', user.homeZipCode);
         const zipData = await getZipCodeCoordinates(user.homeZipCode);
         if (zipData) {
           locationCoords = zipData.coordinates;
         }
       } else {
         // Otherwise, try to get current location
+        console.log('[HomeScreen] No home ZIP – requesting device location');
         locationCoords = await getCurrentLocation();
       }
 
@@ -72,15 +76,34 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         currentFilters.longitude = locationCoords.longitude;
       }
 
-      showsData = await getShows(currentFilters);
+      if (!locationCoords) {
+        console.warn(
+          '[HomeScreen] Location coordinates could not be determined – falling back to non-spatial query'
+        );
+      }
+
+      console.log('[HomeScreen] Final filters sent to getShows:', currentFilters);
+
+      try {
+        showsData = await getShows(currentFilters);
+      } catch (svcErr: any) {
+        console.error('[HomeScreen] getShows() threw', svcErr);
+        throw svcErr; // re-throw so outer catch handles alert / state reset
+      }
 
       setShows(showsData);
     } catch (error) {
-      console.error('Error fetching shows:', error);
-      Alert.alert('Error', 'Failed to load card shows. Please try again.');
+      console.error('[HomeScreen] Error fetching shows:', error);
+      Alert.alert(
+        'Error',
+        `Failed to load card shows. ${
+          error?.message ? `\n\nDetails: ${error.message}` : ''
+        }`
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
+      console.log('[HomeScreen] fetchShows() complete');
     }
   }, [user, filters]);
 
