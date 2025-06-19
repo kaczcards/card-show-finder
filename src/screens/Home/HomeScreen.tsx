@@ -38,6 +38,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
+  /**
+   * When true it means we already attempted a second fetch with a larger
+   * radius (100 mi). This prevents an infinite retry loop.
+   */
+  const [hasExpandedRadius, setHasExpandedRadius] = useState(false);
   const [filters, setFilters] = useState<ShowFilters>({
     radius: 25, // Default radius: 25 miles
     startDate: new Date(), // Default start date: today
@@ -52,6 +57,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const fetchShows = useCallback(async () => {
     try {
       setLoading(true);
+      // Reset expansion flag for a brand-new fetch cycle
+      setHasExpandedRadius(false);
       let showsData: Show[] = [];
       let locationCoords: Coordinates | null = null;
 
@@ -63,11 +70,21 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         const zipData = await getZipCodeCoordinates(user.homeZipCode);
         if (zipData) {
           locationCoords = zipData.coordinates;
+          console.log(
+            '[HomeScreen] Coordinates resolved from ZIP:',
+            locationCoords
+          );
         }
       } else {
         // Otherwise, try to get current location
         console.log('[HomeScreen] No home ZIP – requesting device location');
         locationCoords = await getCurrentLocation();
+        if (locationCoords) {
+          console.log(
+            '[HomeScreen] Device location acquired:',
+            locationCoords
+          );
+        }
       }
 
       const currentFilters: ShowFilters = { ...filters };
@@ -86,12 +103,49 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
       try {
         showsData = await getShows(currentFilters);
+        console.log(
+          `[HomeScreen] getShows() returned ${showsData.length} show(s)`,
+          showsData
+        );
+
+        /* ------------------------------------------------------------
+         * If we found nothing on the first pass and we have NOT yet
+         * expanded the radius, try again with 100 mi.
+         * ---------------------------------------------------------- */
+        if (
+          showsData.length === 0 &&
+          !hasExpandedRadius &&
+          (currentFilters.radius ?? 25) < 100
+        ) {
+          console.log(
+            '[HomeScreen] No shows with default radius – retrying with 100 miles'
+          );
+          const expandedFilters: ShowFilters = {
+            ...currentFilters,
+            radius: 100,
+          };
+          const expandedResults = await getShows(expandedFilters);
+          setHasExpandedRadius(true);
+          console.log(
+            `[HomeScreen] Expanded radius fetch returned ${expandedResults.length} show(s)`
+          );
+          showsData = expandedResults;
+        }
       } catch (svcErr: any) {
         console.error('[HomeScreen] getShows() threw', svcErr);
         throw svcErr; // re-throw so outer catch handles alert / state reset
       }
 
       setShows(showsData);
+
+      // If still nothing after expansion, inform the user
+      if (showsData.length === 0 && hasExpandedRadius) {
+        Alert.alert(
+          'No Nearby Shows',
+          'We couldn’t find any card shows within 100 miles over the next 30 days. ' +
+            'Know of a show that’s missing? Help the community by adding it!'
+        );
+      }
     } catch (error) {
       console.error('[HomeScreen] Error fetching shows:', error);
       Alert.alert(

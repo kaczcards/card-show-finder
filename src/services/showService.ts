@@ -59,9 +59,29 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     ) {
       const radius = filters.radius ?? 25;
 
+      /* ---------- Sanity-check lat / lng values ---------- */
+      if (Math.abs(filters.latitude) > 90 || Math.abs(filters.longitude) > 180) {
+        console.warn(
+          '[showService] Suspicious coordinates detected – latitude / longitude might be swapped:',
+          { latitude: filters.latitude, longitude: filters.longitude }
+        );
+      }
+
+      console.debug('[showService] Calling find_filtered_shows with params:', {
+        center_lat: filters.latitude,
+        center_lng: filters.longitude,
+        radius_miles: radius,
+        start_date: filters.startDate ?? null,
+        end_date: filters.endDate ?? null,
+        max_entry_fee: filters.maxEntryFee ?? null,
+        show_categories: filters.categories ?? null,
+        show_features: filters.features ?? null,
+      });
+
       const { data: rpcData, error: rpcError } = await supabase.rpc(
         'find_filtered_shows',
         {
+          // Primary/filter-aware RPC parameters
           center_lat: filters.latitude,
           center_lng: filters.longitude,
           radius_miles: radius,
@@ -74,10 +94,44 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       );
 
       if (rpcError) {
-        console.warn('[showService] RPC failed – falling back to basic query', rpcError.message);
+        console.warn(
+          '[showService] find_filtered_shows RPC failed – attempting fallback',
+          rpcError.message
+        );
+      } else {
+        console.info(
+          `[showService] find_filtered_shows returned ${(rpcData ?? []).length} show(s)`
+        );
+        return (rpcData ?? []).map(mapDbShowToAppShow);
+      }
+
+      /* -------------------------------------------------------
+       * 1b. Fallback to simple radius-only RPC if the above fails
+       * ----------------------------------------------------- */
+      const { data: fbData, error: fbError } = await supabase.rpc(
+        'find_shows_within_radius',
+        {
+          center_lat: filters.latitude,
+          center_lng: filters.longitude,
+          radius_miles: radius,
+        }
+      );
+
+      if (fbError) {
+        console.warn(
+          '[showService] find_shows_within_radius fallback failed – will use basic query',
+          fbError.message
+        );
         // fall through to non-spatial query below
       } else {
-        return (rpcData ?? []).map(mapDbShowToAppShow);
+        console.debug(
+          '[showService] find_shows_within_radius params:',
+          { center_lat: filters.latitude, center_lng: filters.longitude, radius_miles: radius }
+        );
+        console.info(
+          `[showService] find_shows_within_radius returned ${(fbData ?? []).length} show(s)`
+        );
+        return (fbData ?? []).map(mapDbShowToAppShow);
       }
     }
 
@@ -103,10 +157,22 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       query = query.overlaps('categories', filters.categories);
     }
 
+    /* ---------- Log basic-query filters for debugging ---------- */
+    console.debug('[showService] Executing basic query with filters:', {
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      maxEntryFee: filters.maxEntryFee,
+      categories: filters.categories,
+      status: 'ACTIVE',
+    });
+
     const { data, error } = await query;
 
     if (error) throw error;
 
+    console.info(
+      `[showService] basic query returned ${(data ?? []).length} show(s)`
+    );
     return (data ?? []).map(mapDbShowToAppShow);
   } catch (err: any) {
     console.error('Error fetching shows:', err);
