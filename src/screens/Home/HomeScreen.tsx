@@ -204,7 +204,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.showDetail}>
             <Ionicons name="cash-outline" size={16} color="#666" />
             <Text style={styles.showDetailText}>
-              {item.entryFee === 0 ? 'Free' : `$${item.entryFee.toFixed(2)}`}
+              {item.entryFee === 0
+                ? 'Free'
+                : item.entryFee == null
+                ? 'Varies'
+                : `$${Number(item.entryFee).toFixed(2)}`}
             </Text>
           </View>
           {displayFeatures && displayFeatures.length > 0 && (
