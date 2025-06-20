@@ -135,8 +135,10 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     if (!show) return;
     
     try {
-      const startDate = new Date(show.startDate);
-      const formattedDate = startDate.toLocaleDateString('en-US', {
+    // Ensure correct date regardless of local timezone
+    const date = new Date(show.startDate);
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const formattedDate = utcDate.toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
@@ -154,11 +156,13 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   // Format date with safety check
   const formatDate = (dateValue: Date | string) => {
     try {
-      const date = new Date(dateValue);
-      if (isNaN(date.getTime())) {
+    // Parse and adjust for timezone to avoid off-by-one-day display
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) {
         return 'Date not available';
       }
-      return date.toLocaleDateString('en-US', {
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    return utcDate.toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',

@@ -18,12 +18,25 @@ export const getUserCards = async (userId: string): Promise<{ data: UserCard[] |
     const { data, error } = await supabase
       .from('user_cards')
       .select('*')
-      .eq('userId', userId)
-      .order('createdAt', { ascending: false });
+      .eq('userid', userId)
+      .order('createdat', { ascending: false });
     
     if (error) throw error;
     
-    return { data, error: null };
+    // Transform lowercase column names to camelCase for our app
+    const transformedData = data?.map(card => ({
+      id: card.id,
+      userId: card.userid,
+      imageUrl: card.imageurl,
+      title: card.title,
+      description: card.description,
+      category: card.category,
+      isCompressed: card.iscompressed,
+      createdAt: card.createdat,
+      updatedAt: card.updatedat
+    }));
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error fetching user cards:', error);
     return { data: null, error };
@@ -74,25 +87,38 @@ export const addUserCard = async (
       imageUrl = publicUrlData.publicUrl;
     }
     
-    // Add the card to the database
+    // Add the card to the database using lowercase column names
     const { data, error } = await supabase
       .from('user_cards')
       .insert([{
-        userId,
-        imageUrl,
+        userid: userId,
+        imageurl: imageUrl,
         title: cardData.title || '',
         description: cardData.description || '',
         category: cardData.category || '',
-        isCompressed: cardData.isCompressed || false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        iscompressed: cardData.isCompressed || false,
+        createdat: new Date().toISOString(),
+        updatedat: new Date().toISOString()
       }])
       .select()
       .single();
     
     if (error) throw error;
     
-    return { data, error: null };
+    // Transform to camelCase for our app
+    const transformedData = data ? {
+      id: data.id,
+      userId: data.userid,
+      imageUrl: data.imageurl,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      isCompressed: data.iscompressed,
+      createdAt: data.createdat,
+      updatedAt: data.updatedat
+    } : null;
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error adding user card:', error);
     return { data: null, error };
@@ -113,9 +139,9 @@ export const deleteUserCard = async (
     // Verify the card belongs to the user
     const { data: card, error: fetchError } = await supabase
       .from('user_cards')
-      .select('imageUrl')
+      .select('imageurl')
       .eq('id', cardId)
-      .eq('userId', userId)
+      .eq('userid', userId)
       .single();
     
     if (fetchError) throw fetchError;
@@ -129,13 +155,13 @@ export const deleteUserCard = async (
       .from('user_cards')
       .delete()
       .eq('id', cardId)
-      .eq('userId', userId);
+      .eq('userid', userId);
     
     if (error) throw error;
     
     // Delete the image from storage if it's stored in Supabase
-    if (card.imageUrl && card.imageUrl.includes('card_images')) {
-      const fileName = card.imageUrl.split('/').pop();
+    if (card.imageurl && card.imageurl.includes('card_images')) {
+      const fileName = card.imageurl.split('/').pop();
       if (fileName) {
         await supabase.storage
           .from('card_images')
@@ -168,7 +194,7 @@ export const updateUserCard = async (
       .from('user_cards')
       .select('*')
       .eq('id', cardId)
-      .eq('userId', userId)
+      .eq('userid', userId)
       .single();
     
     if (fetchError) throw fetchError;
@@ -178,11 +204,11 @@ export const updateUserCard = async (
     }
     
     // Handle image update if provided
-    let imageUrl = updates.imageUrl || existingCard.imageUrl;
+    let imageUrl = updates.imageUrl || existingCard.imageurl;
     if (updates.imageUrl && updates.imageUrl.startsWith('data:image')) {
       // Delete old image if it's in our storage
-      if (existingCard.imageUrl && existingCard.imageUrl.includes('card_images')) {
-        const oldFileName = existingCard.imageUrl.split('/').pop();
+      if (existingCard.imageurl && existingCard.imageurl.includes('card_images')) {
+        const oldFileName = existingCard.imageurl.split('/').pop();
         if (oldFileName) {
           await supabase.storage
             .from('card_images')
@@ -208,22 +234,41 @@ export const updateUserCard = async (
       imageUrl = publicUrlData.publicUrl;
     }
     
-    // Update the card
+    // Update the card with lowercase column names
+    const updateData: any = {
+      updatedat: new Date().toISOString()
+    };
+    
+    if (imageUrl !== undefined) updateData.imageurl = imageUrl;
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.isCompressed !== undefined) updateData.iscompressed = updates.isCompressed;
+    
     const { data, error } = await supabase
       .from('user_cards')
-      .update({
-        ...updates,
-        imageUrl,
-        updatedAt: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', cardId)
-      .eq('userId', userId)
+      .eq('userid', userId)
       .select()
       .single();
     
     if (error) throw error;
     
-    return { data, error: null };
+    // Transform to camelCase for our app
+    const transformedData = data ? {
+      id: data.id,
+      userId: data.userid,
+      imageUrl: data.imageurl,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      isCompressed: data.iscompressed,
+      createdAt: data.createdat,
+      updatedAt: data.updatedat
+    } : null;
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error updating user card:', error);
     return { data: null, error };
@@ -242,14 +287,23 @@ export const getUserWantList = async (userId: string): Promise<{ data: WantList 
     const { data, error } = await supabase
       .from('want_lists')
       .select('*')
-      .eq('userId', userId)
+      .eq('userid', userId)
       .single();
     
     if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
       throw error;
     }
     
-    return { data: data || null, error: null };
+    // Transform to camelCase for our app
+    const transformedData = data ? {
+      id: data.id,
+      userId: data.userid,
+      content: data.content,
+      createdAt: data.createdat,
+      updatedAt: data.updatedat
+    } : null;
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error fetching want list:', error);
     return { data: null, error };
@@ -275,21 +329,30 @@ export const createWantList = async (
       return updateWantList(existingList.id, userId, content);
     }
     
-    // Create new want list
+    // Create new want list with lowercase column names
     const { data, error } = await supabase
       .from('want_lists')
       .insert([{
-        userId,
+        userid: userId,
         content,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdat: new Date().toISOString(),
+        updatedat: new Date().toISOString()
       }])
       .select()
       .single();
     
     if (error) throw error;
     
-    return { data, error: null };
+    // Transform to camelCase for our app
+    const transformedData = data ? {
+      id: data.id,
+      userId: data.userid,
+      content: data.content,
+      createdAt: data.createdat,
+      updatedAt: data.updatedat
+    } : null;
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error creating want list:', error);
     return { data: null, error };
@@ -313,16 +376,25 @@ export const updateWantList = async (
       .from('want_lists')
       .update({
         content,
-        updatedAt: new Date().toISOString()
+        updatedat: new Date().toISOString()
       })
       .eq('id', wantListId)
-      .eq('userId', userId)
+      .eq('userid', userId)
       .select()
       .single();
     
     if (error) throw error;
     
-    return { data, error: null };
+    // Transform to camelCase for our app
+    const transformedData = data ? {
+      id: data.id,
+      userId: data.userid,
+      content: data.content,
+      createdAt: data.createdat,
+      updatedAt: data.updatedat
+    } : null;
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error updating want list:', error);
     return { data: null, error };
@@ -353,10 +425,10 @@ export const shareWantList = async (
     const { error } = await supabase
       .from('shared_want_lists')
       .upsert([{
-        userId,
-        showId,
-        wantListId: wantList.id,
-        sharedAt: new Date().toISOString()
+        userid: userId,
+        showid: showId,
+        wantlistid: wantList.id,
+        sharedat: new Date().toISOString()
       }]);
     
     if (error) throw error;
@@ -381,8 +453,8 @@ export const getDealersForShow = async (showId: string): Promise<{
     // This query assumes there's a 'show_participants' table that tracks who's attending which show
     const { data, error } = await supabase
       .from('show_participants')
-      .select('users:userId(id, firstName, lastName, role)')
-      .eq('showId', showId)
+      .select('users:userid(id, firstName, lastName, role)')
+      .eq('showid', showId)
       .eq('users.role', UserRole.MVP_DEALER);
     
     if (error) throw error;
@@ -429,15 +501,27 @@ export const getSharedWantListsForDealer = async (
       .from('shared_want_lists')
       .select(`
         id,
-        sharedAt,
-        users:userId(id, firstName, lastName),
-        wantLists:wantListId(id, content, updatedAt)
+        sharedat,
+        users:userid(id, firstName, lastName),
+        wantLists:wantlistid(id, content, updatedat)
       `)
-      .eq('showId', showId);
+      .eq('showid', showId);
     
     if (error) throw error;
     
-    return { data, error: null };
+    // Transform the data to have camelCase keys
+    const transformedData = data?.map(item => ({
+      id: item.id,
+      sharedAt: item.sharedat,
+      user: item.users,
+      wantList: item.wantLists ? {
+        id: item.wantLists.id,
+        content: item.wantLists.content,
+        updatedAt: item.wantLists.updatedat
+      } : null
+    }));
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error fetching shared want lists:', error);
     return { data: null, error };

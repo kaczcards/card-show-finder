@@ -252,8 +252,9 @@ export const getUpcomingShows = async (params: {
      * --------------------------------------------------------- */
     const { data: participantRows, error: participantError } = await supabase
       .from('show_participants')
-      .select('showId')
-      .eq('userId', userId);
+      // use lowercase column names in db
+      .select('showid')
+      .eq('userid', userId);
 
     if (participantError) {
       throw participantError;
@@ -264,7 +265,9 @@ export const getUpcomingShows = async (params: {
       return { data: [], error: null };
     }
 
-    const showIds = participantRows.map((row: any) => row.showId).filter(Boolean);
+    const showIds = participantRows
+      .map((row: any) => row.showid)
+      .filter(Boolean);
 
     /* -----------------------------------------------------------
      * 2. Fetch shows matching those IDs + date filters

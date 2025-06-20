@@ -107,9 +107,10 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
     const isShared = sharedShows.includes(item.id);
     const isSharing = sharingShowId === item.id;
     
-    // Format the date for display
-    const startDate = new Date(item.startDate);
-    const formattedDate = startDate.toLocaleDateString('en-US', {
+    // Format the date for display (timezone-safe)
+    const date = new Date(item.startDate);
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const formattedDate = utcDate.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

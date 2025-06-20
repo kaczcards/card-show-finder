@@ -96,6 +96,23 @@ const MyShowsScreen: React.FC = () => {
 
   /* -------------------------  Renderers  ---------------------------- */
 
+  /**
+   * Format date with timezone adjustment to avoid off-by-one-day issues.
+   * Converts the incoming ISO string to a Date, then shifts it by the
+   * local timezone offset so the calendar day shown matches the value
+   * stored in the database (which is assumed to be UTC).
+   */
+  const formatDate = (dateString: string | Date): string => {
+    if (!dateString) return '';
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+
+    // shift by the timezone offset so we display the true calendar day
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    return utcDate.toLocaleDateString();
+  };
+
   // FlatList item renderer for upcoming shows
   const renderUpcomingItem = ({ item }: { item: Show }) => (
     <View style={styles.card}>
@@ -106,7 +123,7 @@ const MyShowsScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
       <Text style={styles.cardSubtitle}>
-        {new Date(item.startDate).toLocaleDateString()} • {item.location}
+        {formatDate(item.startDate)} • {item.location}
       </Text>
     </View>
   );
@@ -125,7 +142,7 @@ const MyShowsScreen: React.FC = () => {
           )}
         </View>
         <Text style={styles.cardSubtitle}>
-          {new Date(item.startDate).toLocaleDateString()} • {item.location}
+          {formatDate(item.startDate)} • {item.location}
         </Text>
         {alreadyReviewed && (
           <ReviewsList

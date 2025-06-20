@@ -141,11 +141,18 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  // Format date for callout
+  // Format date for callout with timezone correction
   const formatDate = (dateValue: Date | string) => {
     try {
       const date = new Date(dateValue);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (isNaN(date.getTime())) {
+        return 'Unknown date';
+      }
+
+      // Adjust for timezone offset to ensure correct date display
+      const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+
+      return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     } catch (err) {
       return 'Unknown date';
     }

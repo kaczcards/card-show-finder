@@ -305,7 +305,14 @@ const ProfileScreen: React.FC = () => {
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Member Since</Text>
                 <Text style={styles.infoValue}>
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {(() => {
+                    // Ensure the day shown matches the value in the DB
+                    const date = new Date(user.createdAt);
+                    const utcDate = new Date(
+                      date.getTime() + date.getTimezoneOffset() * 60 * 1000
+                    );
+                    return utcDate.toLocaleDateString();
+                  })()}
                 </Text>
               </View>
             </View>
