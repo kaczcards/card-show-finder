@@ -227,6 +227,79 @@ export const createShow = () => {
 };
 
 /**
+ * Fetch upcoming (or otherwise date-filtered) shows a user is planning to attend.
+ *
+ * Looks up the `show_participants` table for the supplied `userId` and then
+ * fetches matching shows from `shows`, with optional date-range constraints.
+ *
+ * @param params - { userId, startDate, endDate? }
+ * @returns { data, error } shape – `data` will be an array of `Show`s.
+ */
+export const getUpcomingShows = async (params: {
+  userId: string;
+  startDate: Date | string;
+  endDate?: Date | string;
+}): Promise<{ data: Show[] | null; error: string | null }> => {
+  try {
+    const { userId, startDate, endDate } = params;
+
+    if (!userId) {
+      return { data: null, error: 'Invalid userId' };
+    }
+
+    /* -----------------------------------------------------------
+     * 1. Fetch show IDs the user plans to attend
+     * --------------------------------------------------------- */
+    const { data: participantRows, error: participantError } = await supabase
+      .from('show_participants')
+      .select('showId')
+      .eq('userId', userId);
+
+    if (participantError) {
+      throw participantError;
+    }
+
+    if (!participantRows || participantRows.length === 0) {
+      // User is not signed up for any shows
+      return { data: [], error: null };
+    }
+
+    const showIds = participantRows.map((row: any) => row.showId).filter(Boolean);
+
+    /* -----------------------------------------------------------
+     * 2. Fetch shows matching those IDs + date filters
+     * --------------------------------------------------------- */
+    let showQuery = supabase
+      .from('shows')
+      .select('*')
+      .in('id', showIds)
+      .order('start_date', { ascending: true });
+
+    if (startDate) {
+      showQuery = showQuery.gte('start_date', startDate as any);
+    }
+    if (endDate) {
+      showQuery = showQuery.lte('end_date', endDate as any);
+    }
+
+    const { data: showRows, error: showError } = await showQuery;
+
+    if (showError) {
+      throw showError;
+    }
+
+    const mapped = Array.isArray(showRows)
+      ? showRows.map(mapDbShowToAppShow)
+      : [];
+
+    return { data: mapped, error: null };
+  } catch (err: any) {
+    console.error('Error fetching upcoming shows for user:', err);
+    return { data: null, error: err.message ?? 'Unknown error' };
+  }
+};
+
+/**
  * Update an existing show (stub)
  */
 export const updateShow = () => {
