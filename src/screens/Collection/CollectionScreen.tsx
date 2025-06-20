@@ -4,11 +4,28 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   SafeAreaView,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+
+// Domain / context / services
+import { useAuth } from '../../contexts/AuthContext';
+import {
+  getUserCards,
+  addUserCard,
+  updateUserCard,
+  deleteUserCard,
+  getUserWantList,
+} from '../../services/collectionService';
+import { getUpcomingShows } from '../../services/showService';
+import { UserCard, WantList, Show } from '../../types';
+
+// UI components
+import CardGrid from '../../components/CardGrid';
+import CardDetailModal from '../../components/CardDetailModal';
+import WantListEditor from '../../components/WantListEditor';
 
 enum TabType {
   CARDS = 'cards',
@@ -18,58 +35,168 @@ enum TabType {
 const CollectionScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>(TabType.CARDS);
 
+  // ===== Auth =====
+  const {
+    authState: { user },
+  } = useAuth();
+  const userId = user?.id ?? '';
+
+  // ===== Card Collection State =====
+  const [cards, setCards] = useState<UserCard[]>([]);
+  const [loadingCards, setLoadingCards] = useState<boolean>(true);
+
+  // Modal for add / edit
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalCard, setModalCard] = useState<UserCard | null>(null);
+  const isNewCard = modalCard == null;
+
+  // ===== Want List State =====
+  const [wantList, setWantList] = useState<WantList | null>(null);
+  const [loadingWantList, setLoadingWantList] = useState<boolean>(true);
+  
+  // ===== Upcoming Shows State =====
+  const [upcomingShows, setUpcomingShows] = useState<Show[]>([]);
+  const [loadingShows, setLoadingShows] = useState<boolean>(true);
+
   // Button handlers
   const handleAddCard = () => {
-    Alert.alert(
-      "Add Card",
-      "This feature will allow you to add a card to your collection. Coming soon!",
-      [{ text: "OK", onPress: () => console.log("Add Card pressed") }]
-    );
+    setModalCard(null);
+    setModalVisible(true);
   };
 
   const handleCreateWantList = () => {
-    Alert.alert(
-      "Create Want List",
-      "This feature will allow you to create a want list. Coming soon!",
-      [{ text: "OK", onPress: () => console.log("Create Want List pressed") }]
-    );
+    // handled inside WantListEditor
+  };
+
+  /* ------------------------------------------------------------------
+   * Data Loading
+   * ------------------------------------------------------------------ */
+  const loadCards = async () => {
+    if (!userId) return;
+    setLoadingCards(true);
+    const { data, error } = await getUserCards(userId);
+    if (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to load your cards.');
+    } else if (data) {
+      setCards(data);
+    }
+    setLoadingCards(false);
+  };
+
+  const loadWantList = async () => {
+    if (!userId) return;
+    setLoadingWantList(true);
+    const { data, error } = await getUserWantList(userId);
+    if (error) {
+      console.error(error);
+    } else {
+      setWantList(data);
+    }
+    setLoadingWantList(false);
+  };
+  
+  const loadUpcomingShows = async () => {
+    if (!userId) return;
+    setLoadingShows(true);
+    try {
+      // Get shows the user is planning to attend
+      const { data, error } = await getUpcomingShows({
+        userId,
+        // Filter for upcoming shows only
+        startDate: new Date().toISOString(),
+        // Optional: limit to next 30 days or similar
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+      
+      if (error) {
+        console.error('Error fetching upcoming shows:', error);
+      } else if (data) {
+        setUpcomingShows(data);
+      }
+    } catch (error) {
+      console.error('Error in loadUpcomingShows:', error);
+    } finally {
+      setLoadingShows(false);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Refresh each time screen comes into focus
+      loadCards();
+      loadWantList();
+      loadUpcomingShows();
+    }, [userId])
+  );
+
+  /* ------------------------------------------------------------------
+   * Card CRUD helpers
+   * ------------------------------------------------------------------ */
+  const saveCard = async (updated: Partial<UserCard>) => {
+    if (!userId) return;
+    if (isNewCard) {
+      const { data, error } = await addUserCard(userId, updated as any);
+      if (error) {
+        Alert.alert('Error', error.message ?? 'Could not add card');
+      } else if (data) {
+        setCards((prev) => [data, ...prev]);
+      }
+    } else if (modalCard) {
+      const { data, error } = await updateUserCard(modalCard.id, userId, updated);
+      if (error) {
+        Alert.alert('Error', error.message ?? 'Could not update card');
+      } else if (data) {
+        setCards((prev) => prev.map((c) => (c.id === data.id ? data : c)));
+      }
+    }
+  };
+
+  const removeCard = async (card: UserCard) => {
+    if (!userId) return;
+    const { success, error } = await deleteUserCard(card.id, userId);
+    if (error || !success) {
+      Alert.alert('Error', error?.message ?? 'Could not delete card');
+      return;
+    }
+    setCards((prev) => prev.filter((c) => c.id !== card.id));
   };
 
   // Render cards tab content
   const renderCardsTab = () => (
     <View style={styles.tabContent}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.emptyContainer}>
-          <Ionicons name="images-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyTitle}>No Cards Yet</Text>
-          <Text style={styles.emptyText}>
-            Add your favorite cards to your collection.
-          </Text>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddCard}>
-            <Ionicons name="add-circle-outline" size={20} color="white" />
-            <Text style={styles.addButtonText}>Add Card</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      <CardGrid
+        cards={cards}
+        onAddCard={handleAddCard}
+        onCardPress={(card) => {
+          setModalCard(card);
+          setModalVisible(true);
+        }}
+        onCardLongPress={removeCard}
+        isLoading={loadingCards}
+      />
+
+      {/* Add / Edit Modal */}
+      <CardDetailModal
+        visible={modalVisible}
+        card={modalCard}
+        onClose={() => setModalVisible(false)}
+        onSave={saveCard}
+        isNewCard={isNewCard}
+      />
     </View>
   );
 
   // Render want list tab content
   const renderWantListTab = () => (
     <View style={styles.tabContent}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.emptyContainer}>
-          <Ionicons name="list-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyTitle}>No Want List Yet</Text>
-          <Text style={styles.emptyText}>
-            Create a list of cards you're looking to add to your collection.
-          </Text>
-          <TouchableOpacity style={styles.addButton} onPress={handleCreateWantList}>
-            <Ionicons name="create-outline" size={20} color="white" />
-            <Text style={styles.addButtonText}>Create Want List</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      <WantListEditor
+        wantList={wantList}
+        userId={userId}
+        upcomingShows={upcomingShows}
+        onSave={(list) => setWantList(list)}
+        isLoading={loadingWantList || loadingShows}
+      />
     </View>
   );
 
