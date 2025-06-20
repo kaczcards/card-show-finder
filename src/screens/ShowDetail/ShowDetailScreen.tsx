@@ -57,10 +57,12 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       try {
         setLoading(true);
         if (!showId) return;
-        const showData = await getShowById(showId);
         
-        if (!showData) {
-          Alert.alert('Error', 'Show not found');
+        // getShowById returns { data, error }
+        const { data: showData, error: showError } = await getShowById(showId);
+        
+        if (showError || !showData) {
+          Alert.alert('Error', showError || 'Show not found');
           navigation.goBack();
           return;
         }
@@ -149,15 +151,23 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
-  // Format date
+  // Format date with safety check
   const formatDate = (dateValue: Date | string) => {
-    const date = new Date(dateValue);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    try {
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) {
+        return 'Date not available';
+      }
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return 'Date not available';
+    }
   };
 
   // Get status badge color
@@ -291,10 +301,14 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           </View>
           
           <View style={styles.infoContent}>
-            {show.location && (
+            {show.location ? (
               <Text style={styles.venueName}>{show.location}</Text>
+            ) : (
+              <Text style={styles.venueName}>Location not specified</Text>
             )}
-            <Text style={styles.infoText}>{show.address}</Text>
+            <Text style={styles.infoText}>
+              {show.address || 'Address not available'}
+            </Text>
             
             {show.coordinates && (
               <TouchableOpacity 
@@ -317,11 +331,9 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           
           <View style={styles.infoContent}>
             <Text style={styles.entryFee}>
-              {show.entryFee === 0
+              {show.entryFee === 0 || show.entryFee == null
                 ? 'FREE'
-                : show.entryFee != null
-                ? `$${show.entryFee.toFixed(2)}`
-                : 'Price not available'}
+                : `$${Number(show.entryFee).toFixed(2)}`}
             </Text>
           </View>
         </View>
@@ -375,42 +387,6 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           </View>
         )}
-
-        {/* Organizer (if available) */}
-        {/* Note: Organizer details are not directly in the 'shows' table in Supabase,
-            but linked via organizer_id. You'd fetch organizer details from 'profiles'
-            table using show.organizerId if needed. For now, we'll omit direct display
-            unless fetched separately. */}
-        {/* <View style={styles.infoSection}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="person-outline" size={22} color="#007AFF" />
-            <Text style={styles.infoHeaderText}>Organizer</Text>
-          </View>
-          
-          <View style={styles.infoContent}>
-            <Text style={styles.organizerName}>{show.organizer.name}</Text>
-            
-            {show.organizer.phoneNumber && (
-              <TouchableOpacity 
-                style={styles.contactButton}
-                onPress={() => Linking.openURL(`tel:${show.organizer.phoneNumber}`)}
-              >
-                <Ionicons name="call-outline" size={16} color="#007AFF" />
-                <Text style={styles.contactButtonText}>{show.organizer.phoneNumber}</Text>
-              </TouchableOpacity>
-            )}
-            
-            {show.organizer.email && (
-              <TouchableOpacity 
-                style={styles.contactButton}
-                onPress={() => Linking.openURL(`mailto:${show.organizer.email}`)}
-              >
-                <Ionicons name="mail-outline" size={16} color="#007AFF" />
-                <Text style={styles.contactButtonText}>{show.organizer.email}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View> */}
 
         {/* Rating (if available) */}
         {show.rating !== null && show.rating !== undefined && (
