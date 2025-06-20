@@ -1,0 +1,1 @@
+const test = async () => { try { const { supabase } = await import('./src/supabase'); const result = await supabase.from('shows').select('*'); console.log('Test result:', result); } catch (error) { console.error('Test error:', error); }}; test();
