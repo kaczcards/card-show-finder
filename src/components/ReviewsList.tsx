@@ -26,10 +26,16 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews, emptyMessage }) => {
   };
 
   const renderReviewItem = ({ item }: { item: Review }) => {
-    const reviewDate = new Date(item.date).toLocaleDateString('en-US', {
-      year: 'numeric',
+    /* ---------------------------------------------------------------
+     * Fix timezone-offset issue so the calendar day shown matches
+     * the value stored in the DB (assumed UTC).
+     * ------------------------------------------------------------- */
+    const date        = new Date(item.date);
+    const utcDate     = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const reviewDate  = utcDate.toLocaleDateString('en-US', {
+      year : 'numeric',
       month: 'long',
-      day: 'numeric',
+      day  : 'numeric',
     });
 
     return (
