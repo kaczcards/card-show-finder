@@ -48,7 +48,8 @@ const MainTabNavigator: React.FC = () => {
           } else if (route.name === 'Badges') {
             iconName = focused ? 'trophy' : 'trophy-outline';
           } else if (route.name === 'Notifications') {
-            iconName = focused ? 'notifications' : 'notifications-outline';
+            // Rename "Notifications" visual elements to use calendar icons
+            iconName = focused ? 'calendar-sharp' : 'calendar-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -82,7 +83,7 @@ const MainTabNavigator: React.FC = () => {
       <MainTab.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ title: 'Alerts' }}
+        options={{ title: 'My Shows' }}
       />
       <MainTab.Screen 
         name="Profile" 

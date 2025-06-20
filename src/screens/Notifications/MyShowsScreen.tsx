@@ -94,7 +94,9 @@ const MyShowsScreen: React.FC = () => {
     }
   };
 
-  /* --------------------  FlatList Item Renderers  ------------------- */
+  /* -------------------------  Renderers  ---------------------------- */
+
+  // FlatList item renderer for upcoming shows
   const renderUpcomingItem = ({ item }: { item: Show }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -109,6 +111,7 @@ const MyShowsScreen: React.FC = () => {
     </View>
   );
 
+  // FlatList item renderer for past shows
   const renderPastItem = ({ item }: { item: Show }) => {
     const alreadyReviewed = reviews.some((r) => r.showId === item.id);
     return (
