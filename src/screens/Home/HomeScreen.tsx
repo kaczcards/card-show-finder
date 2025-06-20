@@ -34,6 +34,9 @@ const stockImages = [
   require('../../../assets/stock/home_show_10.jpg'),
 ];
 
+// Always-safe fallback
+const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
+
 const HomeScreen = () => {
   const navigation = useNavigation();
   const { authState } = useAuth();
@@ -43,6 +46,15 @@ const HomeScreen = () => {
   const [coordinates, setCoordinates] = useState(null);
   const radius = 25; // Default 25 miles
   const dateRange = 30; // Default 30 days
+
+  // Get stock image based on show index or ID to ensure consistency
+  const getStockImage = (index: number, id?: string) => {
+    if (!id) return stockImages[index % stockImages.length];
+    
+    // Use a hash-like approach to consistently map show IDs to images
+    const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return stockImages[hash % stockImages.length] || fallbackImage;
+  };
 
   // Fetch shows based on user's home zip code
   useEffect(() => {
@@ -145,13 +157,6 @@ const HomeScreen = () => {
     navigation.navigate('Filter');
   };
 
-  // Get stock image based on show index or ID
-  const getStockImage = (index, id) => {
-    // Use a combination of index and id to pick an image
-    const imageIndex = (index + (id ? parseInt(id.toString().slice(-1), 10) : 0)) % stockImages.length;
-    return stockImages[imageIndex];
-  };
-
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -175,12 +180,12 @@ const HomeScreen = () => {
     >
       <Image
         source={
-          item.imageUrl
+          item.imageUrl && typeof item.imageUrl === 'string'
             ? { uri: item.imageUrl }
             : getStockImage(index, item.id)
         }
         style={styles.showImage}
-        defaultSource={require('../../../assets/stock/home_show_01.jpg')}
+        defaultSource={fallbackImage}
       />
       <View style={styles.showInfo}>
         <Text style={styles.showTitle}>{item.title}</Text>
