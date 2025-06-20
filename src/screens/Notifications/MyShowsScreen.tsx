@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
@@ -95,60 +95,47 @@ const MyShowsScreen: React.FC = () => {
   };
 
   /* -------------------------  Renderers  ---------------------------- */
-  const renderUpcoming = () =>
-    upcomingShows.length === 0 ? (
-      renderEmptyState(
-        "You haven't added any upcoming shows to your list.",
-        'calendar-outline'
-      )
-    ) : (
-      upcomingShows.map((show) => (
-        <View key={show.id} style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>{show.title}</Text>
-            <TouchableOpacity onPress={() => removeUpcoming(show.id)}>
-              <Ionicons name="remove-circle-outline" size={22} color="#FF3B30" />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.cardSubtitle}>
-            {new Date(show.startDate).toLocaleDateString()} • {show.location}
-          </Text>
-        </View>
-      ))
-    );
 
-  const renderPast = () =>
-    pastShows.length === 0 ? (
-      renderEmptyState(
-        'No past shows yet. Shows you attend will appear here.',
-        'time-outline'
-      )
-    ) : (
-      pastShows.map((show) => {
-        const alreadyReviewed = reviews.some((r) => r.showId === show.id);
-        return (
-          <View key={show.id} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{show.title}</Text>
-              {!alreadyReviewed && (
-                <TouchableOpacity onPress={() => openReviewForm(show)}>
-                  <Ionicons name="create-outline" size={22} color="#007AFF" />
-                </TouchableOpacity>
-              )}
-            </View>
-            <Text style={styles.cardSubtitle}>
-              {new Date(show.startDate).toLocaleDateString()} • {show.location}
-            </Text>
-            {alreadyReviewed && (
-              <ReviewsList
-                reviews={reviews.filter((r) => r.showId === show.id)}
-                emptyMessage="No reviews yet."
-              />
-            )}
-          </View>
-        );
-      })
+  // FlatList item renderer for upcoming shows
+  const renderUpcomingItem = ({ item }: { item: Show }) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{item.title}</Text>
+        <TouchableOpacity onPress={() => removeUpcoming(item.id)}>
+          <Ionicons name="remove-circle-outline" size={22} color="#FF3B30" />
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.cardSubtitle}>
+        {new Date(item.startDate).toLocaleDateString()} • {item.location}
+      </Text>
+    </View>
+  );
+
+  // FlatList item renderer for past shows
+  const renderPastItem = ({ item }: { item: Show }) => {
+    const alreadyReviewed = reviews.some((r) => r.showId === item.id);
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          {!alreadyReviewed && (
+            <TouchableOpacity onPress={() => openReviewForm(item)}>
+              <Ionicons name="create-outline" size={22} color="#007AFF" />
+            </TouchableOpacity>
+          )}
+        </View>
+        <Text style={styles.cardSubtitle}>
+          {new Date(item.startDate).toLocaleDateString()} • {item.location}
+        </Text>
+        {alreadyReviewed && (
+          <ReviewsList
+            reviews={reviews.filter((r) => r.showId === item.id)}
+            emptyMessage="No reviews yet."
+          />
+        )}
+      </View>
     );
+  };
 
   /* -----------------------------  UI  ------------------------------- */
   return (
@@ -189,9 +176,24 @@ const MyShowsScreen: React.FC = () => {
       </View>
 
       {/* Content */}
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {currentTab === 'upcoming' ? renderUpcoming() : renderPast()}
-      </ScrollView>
+      <FlatList
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        data={currentTab === 'upcoming' ? upcomingShows : pastShows}
+        keyExtractor={(item) => item.id}
+        renderItem={currentTab === 'upcoming' ? renderUpcomingItem : renderPastItem}
+        ListEmptyComponent={
+          currentTab === 'upcoming'
+            ? renderEmptyState(
+                "You haven't added any upcoming shows to your list.",
+                'calendar-outline'
+              )
+            : renderEmptyState(
+                'No past shows yet. Shows you attend will appear here.',
+                'time-outline'
+              )
+        }
+      />
 
       {reviewFormVisible && selectedShow && (
         <ReviewForm
