@@ -20,8 +20,8 @@ import { getShows } from '../../services/showService';
 import { getCurrentLocation, getZipCodeCoordinates } from '../../services/locationService';
 import { Show, ShowFilters, Coordinates } from '../../types';
 
-// Import components (to be created later)
-// import FilterSheet from '../../components/FilterSheet';
+// Import components
+import FilterSheet from '../../components/FilterSheet';
 // import ShowCard from '../../components/ShowCard';
 
 // Define the main stack param list type
@@ -101,6 +101,15 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       try {
         showsData = await getShows(currentFilters);
         console.log(`[HomeScreen] Got ${showsData.length} shows from getShows()`);
+        
+        // Sort shows by start date (closest to today first)
+        showsData.sort((a, b) => {
+          const dateA = new Date(a.startDate).getTime();
+          const dateB = new Date(b.startDate).getTime();
+          return dateA - dateB;
+        });
+        console.log('[HomeScreen] Shows sorted by date (closest first)');
+        
         setShows(showsData);
       } catch (showError: any) {
         console.error('[HomeScreen] getShows() threw', showError);
@@ -115,6 +124,15 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           };
           showsData = await getShows(basicFilters);
           console.log(`[HomeScreen] Fallback got ${showsData.length} shows`);
+          
+          // Sort fallback result by start date as well
+          showsData.sort((a, b) => {
+            const dateA = new Date(a.startDate).getTime();
+            const dateB = new Date(b.startDate).getTime();
+            return dateA - dateB;
+          });
+          console.log('[HomeScreen] Shows sorted by date (closest first)');
+          
           setShows(showsData);
         } catch (fallbackError) {
           console.error('[HomeScreen] Fallback getShows() also failed:', fallbackError);
@@ -300,13 +318,13 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         />
       )}
 
-      {/* Filter Sheet - To be implemented later */}
-      {/* <FilterSheet
+      {/* Filter Sheet */}
+      <FilterSheet
         visible={filterVisible}
         onClose={() => setFilterVisible(false)}
         filters={filters}
         onApplyFilters={handleFilterChange}
-      /> */}
+      />
     </SafeAreaView>
   );
 };
