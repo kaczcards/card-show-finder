@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,64 +8,201 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Show, Review } from '../../types';
+import ReviewForm from '../../components/ReviewForm';
+import ReviewsList from '../../components/ReviewsList';
 
-const NotificationsScreen: React.FC = () => {
-  // Sample empty state - in a real implementation, this would be controlled by state
-  const hasNotifications = false;
+/**
+ * MyShowsScreen – replaces the old Notifications screen.
+ * Displays Upcoming shows the user plans to attend, and Past shows the user attended.
+ * Past shows allow leaving a review (opens ReviewForm modal).
+ */
+const MyShowsScreen: React.FC = () => {
+  /* ------------------------------------------------------------------
+   * Placeholder data – replace with real data via context / API later
+   * ------------------------------------------------------------------ */
+  const dummyUpcoming: Show[] = [
+    {
+      id: '1',
+      title: 'Indy Card Expo',
+      location: 'Fairgrounds Hall',
+      address: '123 Main St, Indianapolis, IN',
+      startDate: new Date().toISOString(),
+      endDate: new Date().toISOString(),
+      entryFee: 5,
+      status: 0 as any,
+      organizerId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+  const dummyPast: Show[] = [
+    {
+      id: '2',
+      title: 'East Coast Card Show',
+      location: 'Boston Convention Ctr.',
+      address: '1 Seaport Ln, Boston, MA',
+      startDate: new Date(Date.now() - 864e5 * 5).toISOString(),
+      endDate: new Date(Date.now() - 864e5 * 4).toISOString(),
+      entryFee: 0,
+      status: 0 as any,
+      organizerId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
 
-  // Render empty state when there are no notifications
-  const renderEmptyState = () => (
+  /* ------------------------------------------------------------------ */
+  const [currentTab, setCurrentTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [upcomingShows, setUpcomingShows] = useState<Show[]>(dummyUpcoming);
+  const [pastShows] = useState<Show[]>(dummyPast);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [selectedShow, setSelectedShow] = useState<Show | null>(null);
+  const [reviewFormVisible, setReviewFormVisible] = useState(false);
+
+  /* -------------------------  Helpers  ----------------------------- */
+  const renderEmptyState = (message: string, icon: keyof typeof Ionicons.glyphMap) => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="notifications-off-outline" size={64} color="#ccc" />
-      <Text style={styles.emptyTitle}>No Notifications</Text>
-      <Text style={styles.emptyText}>
-        You don't have any notifications yet. We'll notify you about important updates,
-        new badges earned, and when it's time to review shows you've attended.
-      </Text>
+      <Ionicons name={icon} size={64} color="#ccc" />
+      <Text style={styles.emptyTitle}>No Shows Found</Text>
+      <Text style={styles.emptyText}>{message}</Text>
     </View>
   );
 
-  // Render a sample notification item (placeholder)
-  const renderNotificationItem = () => (
-    <TouchableOpacity style={styles.notificationItem}>
-      <View style={styles.notificationIcon}>
-        <Ionicons name="star-outline" size={24} color="#FFD700" />
-      </View>
-      <View style={styles.notificationContent}>
-        <Text style={styles.notificationTitle}>How was the show?</Text>
-        <Text style={styles.notificationMessage}>
-          Please rate and review the East Coast Card Show to help other collectors!
-        </Text>
-        <Text style={styles.notificationTime}>2 hours ago</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const removeUpcoming = (id: string) =>
+    setUpcomingShows((prev) => prev.filter((s) => s.id !== id));
 
+  const openReviewForm = (show: Show) => {
+    setSelectedShow(show);
+    setReviewFormVisible(true);
+  };
+
+  const submitReview = (rating: number, comment: string) => {
+    if (selectedShow) {
+      const newReview: Review = {
+        id: Date.now().toString(),
+        showId: selectedShow.id,
+        userId: 'currentUser',
+        userName: 'You',
+        rating,
+        comment,
+        date: new Date().toISOString(),
+      };
+      setReviews((prev) => [...prev, newReview]);
+      setReviewFormVisible(false);
+      setSelectedShow(null);
+    }
+  };
+
+  /* -------------------------  Renderers  ---------------------------- */
+  const renderUpcoming = () =>
+    upcomingShows.length === 0 ? (
+      renderEmptyState(
+        "You haven't added any upcoming shows to your list.",
+        'calendar-outline'
+      )
+    ) : (
+      upcomingShows.map((show) => (
+        <View key={show.id} style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>{show.title}</Text>
+            <TouchableOpacity onPress={() => removeUpcoming(show.id)}>
+              <Ionicons name="remove-circle-outline" size={22} color="#FF3B30" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.cardSubtitle}>
+            {new Date(show.startDate).toLocaleDateString()} • {show.location}
+          </Text>
+        </View>
+      ))
+    );
+
+  const renderPast = () =>
+    pastShows.length === 0 ? (
+      renderEmptyState(
+        'No past shows yet. Shows you attend will appear here.',
+        'time-outline'
+      )
+    ) : (
+      pastShows.map((show) => {
+        const alreadyReviewed = reviews.some((r) => r.showId === show.id);
+        return (
+          <View key={show.id} style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>{show.title}</Text>
+              {!alreadyReviewed && (
+                <TouchableOpacity onPress={() => openReviewForm(show)}>
+                  <Ionicons name="create-outline" size={22} color="#007AFF" />
+                </TouchableOpacity>
+              )}
+            </View>
+            <Text style={styles.cardSubtitle}>
+              {new Date(show.startDate).toLocaleDateString()} • {show.location}
+            </Text>
+            {alreadyReviewed && (
+              <ReviewsList
+                reviews={reviews.filter((r) => r.showId === show.id)}
+                emptyMessage="No reviews yet."
+              />
+            )}
+          </View>
+        );
+      })
+    );
+
+  /* -----------------------------  UI  ------------------------------- */
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        {hasNotifications && (
-          <TouchableOpacity style={styles.markAllButton}>
-            <Text style={styles.markAllText}>Mark All Read</Text>
-          </TouchableOpacity>
-        )}
+        <Text style={styles.headerTitle}>My Shows</Text>
+      </View>
+
+      {/* Segmented Control */}
+      <View style={styles.segmentedControl}>
+        <TouchableOpacity
+          style={[styles.segmentButton, currentTab === 'upcoming' && styles.segmentSelected]}
+          onPress={() => setCurrentTab('upcoming')}
+        >
+          <Text
+            style={[
+              styles.segmentText,
+              currentTab === 'upcoming' && styles.segmentTextSelected,
+            ]}
+          >
+            Upcoming
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.segmentButton, currentTab === 'past' && styles.segmentSelected]}
+          onPress={() => setCurrentTab('past')}
+        >
+          <Text
+            style={[
+              styles.segmentText,
+              currentTab === 'past' && styles.segmentTextSelected,
+            ]}
+          >
+            Past Shows
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Content */}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {hasNotifications ? (
-          <View>
-            {/* This would be a FlatList in a real implementation */}
-            {renderNotificationItem()}
-            {renderNotificationItem()}
-            {renderNotificationItem()}
-          </View>
-        ) : (
-          renderEmptyState()
-        )}
+        {currentTab === 'upcoming' ? renderUpcoming() : renderPast()}
       </ScrollView>
+
+      {reviewFormVisible && selectedShow && (
+        <ReviewForm
+          showId={selectedShow.id}
+          onSubmit={submitReview}
+          onCancel={() => {
+            setReviewFormVisible(false);
+            setSelectedShow(null);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -89,16 +226,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  markAllButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#f0f7ff',
-    borderRadius: 16,
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    margin: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  markAllText: {
-    fontSize: 14,
-    color: '#007AFF',
+  segmentButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  segmentSelected: {
+    backgroundColor: '#007AFF',
+  },
+  segmentText: {
+    fontSize: 16,
     fontWeight: '500',
+    color: '#666',
+  },
+  segmentTextSelected: {
+    color: 'white',
   },
   scrollView: {
     flex: 1,
@@ -106,6 +257,32 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 32,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#666',
   },
   emptyContainer: {
     flex: 1,
@@ -127,46 +304,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 20,
   },
-  notificationItem: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  notificationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  notificationMessage: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  notificationTime: {
-    fontSize: 12,
-    color: '#999',
-  },
 });
 
-export default NotificationsScreen;
+export default MyShowsScreen;
