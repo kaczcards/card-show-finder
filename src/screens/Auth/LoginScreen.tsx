@@ -97,7 +97,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         >
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../../assets/icon.png')}
+              source={require('../../../assets/splash-icon.png')}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -204,6 +204,15 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Mini logo at bottom */}
+          <View style={styles.miniLogoContainer}>
+            <Image
+              source={require('../../../assets/splash-icon.png')}
+              style={styles.miniLogo}
+              resizeMode="contain"
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -225,17 +234,25 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 50,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 120,
     marginBottom: 10,
   },
   appName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#FF6A00',
+  },
+  miniLogoContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  miniLogo: {
+    width: 60,
+    height: 60,
   },
   formContainer: {
     width: '100%',
