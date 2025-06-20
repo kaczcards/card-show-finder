@@ -114,7 +114,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         >
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../../assets/icon.png')}
+              source={require('../../../assets/splash-icon.png')}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -251,6 +251,15 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Mini logo at bottom */}
+          <View style={styles.miniLogoContainer}>
+            <Image
+              source={require('../../../assets/splash-icon.png')}
+              style={styles.miniLogo}
+              resizeMode="contain"
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -271,17 +280,29 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginBottom: 50,
+    marginTop: 20,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 100,
+    height: 100,
     marginBottom: 10,
   },
   appName: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#FF6A00',
+  },
+
+  /* ----------  Mini-logo (bottom) ---------- */
+  miniLogoContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 10,
+  },
+  miniLogo: {
+    width: 60,
+    height: 60,
   },
   formContainer: {
     width: '100%',
