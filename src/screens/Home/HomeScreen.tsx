@@ -1,417 +1,324 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
+  FlatList,
   Image,
-  Alert,
-  Dimensions,
+  ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import * as locationService from '../../services/locationService';
 import { getShows } from '../../services/showService';
-import { getCurrentLocation, getZipCodeCoordinates } from '../../services/locationService';
-import { Show, ShowFilters, Coordinates } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
-// Import components
-import FilterSheet from '../../components/FilterSheet';
-// import ShowCard from '../../components/ShowCard';
+// Constants
+const PRIMARY_COLOR = '#FF6A00'; // Orange
+const SECONDARY_COLOR = '#0057B8'; // Blue
 
-// Define the main stack param list type
-type MainStackParamList = {
-  MainTabs: undefined;
-  ShowDetail: { showId: string };
-};
+// Stock images for show items
+const stockImages = [
+  require('../../../assets/stock/home_show_01.jpg'),
+  require('../../../assets/stock/home_show_02.jpg'),
+  require('../../../assets/stock/home_show_03.jpg'),
+  require('../../../assets/stock/home_show_04.jpg'),
+  require('../../../assets/stock/home_show_05.jpg'),
+  require('../../../assets/stock/home_show_06.jpg'),
+  require('../../../assets/stock/home_show_07.jpg'),
+  require('../../../assets/stock/home_show_08.jpg'),
+  require('../../../assets/stock/home_show_09.jpg'),
+  require('../../../assets/stock/home_show_10.jpg'),
+];
 
-type Props = NativeStackScreenProps<MainStackParamList>;
-
-const HomeScreen: React.FC<Props> = ({ navigation }) => {
-  // State
-  const [shows, setShows] = useState<Show[]>([]);
+const HomeScreen = () => {
+  const navigation = useNavigation();
+  const { authState } = useAuth();
+  const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filterVisible, setFilterVisible] = useState(false);
-  const [filters, setFilters] = useState<ShowFilters>({
-    radius: 25, // Default radius: 25 miles
-    startDate: new Date(), // Default start date: today
-    endDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default end date: 30 days from now
-  });
+  const [coordinates, setCoordinates] = useState(null);
+  const radius = 25; // Default 25 miles
+  const dateRange = 30; // Default 30 days
 
-  // Get auth context
-  const { authState } = useAuth();
-  const { user } = authState;
-
-  // Fetch shows based on location or ZIP code
-  const fetchShows = useCallback(async () => {
-    console.log('[HomeScreen] Starting fetchShows()');
-    try {
-      setLoading(true);
-      let showsData: Show[] = [];
-      let locationCoords: Coordinates | null = null;
-
-      // If user has a home ZIP code, use that
-      if (user?.homeZipCode) {
-        console.log('[HomeScreen] Using home ZIP code', user.homeZipCode);
-        try {
-          const zipData = await getZipCodeCoordinates(user.homeZipCode);
-          if (zipData) {
-            locationCoords = zipData.coordinates;
-            console.log('[HomeScreen] Coordinates resolved from ZIP:', locationCoords);
-          } else {
-            console.warn('[HomeScreen] Failed to get coordinates for ZIP code', user.homeZipCode);
-          }
-        } catch (zipError) {
-          console.error('[HomeScreen] Error getting ZIP coordinates:', zipError);
-          // Continue with null coordinates - will use basic query
-        }
-      } else {
-        // Otherwise, try to get current location
-        console.log('[HomeScreen] No home ZIP code, trying current location');
-        try {
-          locationCoords = await getCurrentLocation();
-          console.log('[HomeScreen] Current location coordinates:', locationCoords);
-        } catch (locationError) {
-          console.error('[HomeScreen] Error getting current location:', locationError);
-          // Continue with null coordinates - will use basic query
-        }
-      }
-
-      // Create a safe copy of filters with defaults
-      const currentFilters: ShowFilters = { 
-        ...filters,
-        radius: filters.radius || 25,
-        startDate: filters.startDate || new Date(),
-        endDate: filters.endDate || new Date(new Date().setDate(new Date().getDate() + 30))
-      };
-      
-      if (locationCoords) {
-        currentFilters.latitude = locationCoords.latitude;
-        currentFilters.longitude = locationCoords.longitude;
-      }
-
-      console.log('[HomeScreen] Final filters sent to getShows:', currentFilters);
-
+  // Fetch shows based on user's home zip code
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        showsData = await getShows(currentFilters);
-        console.log(`[HomeScreen] Got ${showsData.length} shows from getShows()`);
+        setLoading(true);
         
-        // Sort shows by start date (closest to today first)
-        showsData.sort((a, b) => {
-          const dateA = new Date(a.startDate).getTime();
-          const dateB = new Date(b.startDate).getTime();
-          return dateA - dateB;
-        });
-        console.log('[HomeScreen] Shows sorted by date (closest first)');
-        
-        setShows(showsData);
-      } catch (showError: any) {
-        console.error('[HomeScreen] getShows() threw', showError);
-        console.error('[HomeScreen] Error fetching shows:', showError);
-        
-        // Try one more time with basic filters
-        try {
-          console.log('[HomeScreen] Attempting fallback with basic filters');
-          const basicFilters: ShowFilters = {
-            startDate: new Date(),
-            endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-          };
-          showsData = await getShows(basicFilters);
-          console.log(`[HomeScreen] Fallback got ${showsData.length} shows`);
+        // Get coordinates from user's home zip code
+        if (authState.user && authState.user.homeZipCode) {
+          console.log(`Using zip code from user profile: ${authState.user.homeZipCode}`);
           
-          // Sort fallback result by start date as well
-          showsData.sort((a, b) => {
-            const dateA = new Date(a.startDate).getTime();
-            const dateB = new Date(b.startDate).getTime();
-            return dateA - dateB;
-          });
-          console.log('[HomeScreen] Shows sorted by date (closest first)');
+          const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
           
-          setShows(showsData);
-        } catch (fallbackError) {
-          console.error('[HomeScreen] Fallback getShows() also failed:', fallbackError);
-          // Set empty array to prevent undefined errors
-          setShows([]);
-          Alert.alert('Error', 'Failed to load card shows. Please try again.');
+          if (zipData && zipData.coordinates) {
+            setCoordinates(zipData.coordinates);
+            
+            // Create date range for the next X days
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(startDate.getDate() + dateRange);
+            
+            // Format dates as ISO strings for the API
+            const formattedStartDate = startDate.toISOString();
+            const formattedEndDate = endDate.toISOString();
+            
+            console.log(`Fetching shows within ${radius} miles of ${authState.user.homeZipCode} for the next ${dateRange} days`);
+            
+            const nearbyShows = await getShows({
+              latitude: zipData.coordinates.latitude,
+              longitude: zipData.coordinates.longitude,
+              radius: radius,
+              startDate: formattedStartDate,
+              endDate: formattedEndDate,
+            });
+            
+            console.log(`Found ${nearbyShows.length} shows`);
+            // Sort shows by startDate in ascending order before setting state
+            const sortedShows = [...nearbyShows].sort(
+              (a, b) =>
+                new Date(a.startDate).getTime() -
+                new Date(b.startDate).getTime()
+            );
+            setShows(sortedShows);
+          } else {
+            console.error(`Could not get coordinates for zip code: ${authState.user.homeZipCode}`);
+          }
+        } else {
+          console.warn('No home zip code found in user profile');
         }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [authState.user]);
+
+  // Handle pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      if (coordinates) {
+        // Create date range for the next X days
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(startDate.getDate() + dateRange);
+        
+        const nearbyShows = await getShows({
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+          radius: radius,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        });
+
+        // Sort shows by startDate in ascending order before updating state
+        const sortedShows = [...nearbyShows].sort(
+          (a, b) =>
+            new Date(a.startDate).getTime() -
+            new Date(b.startDate).getTime()
+        );
+        setShows(sortedShows);
       }
     } catch (error) {
-      console.error('[HomeScreen] Unhandled error in fetchShows:', error);
-      Alert.alert('Error', 'Failed to load card shows. Please try again.');
-      // Set empty array to prevent undefined errors
-      setShows([]);
+      console.error('Error refreshing data:', error);
     } finally {
-      setLoading(false);
       setRefreshing(false);
-      console.log('[HomeScreen] fetchShows() complete');
     }
-  }, [user, filters]);
-
-  // Load shows when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      fetchShows();
-    }, [fetchShows])
-  );
-
-  // Handle refresh
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchShows();
   };
 
-  // Handle filter changes
-  const handleFilterChange = (newFilters: Partial<ShowFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-    setFilterVisible(false);
-  };
-
-  // Navigate to show detail
-  const handleShowPress = (showId: string) => {
+  // Navigate to show detail screen
+  const handleShowPress = (showId) => {
     navigation.navigate('ShowDetail', { showId });
   };
 
-  // Render a show item
-  const renderShowItem = ({ item }: { item: Show }) => {
-    // Format date
-    const startDate = new Date(item.startDate);
-    const endDate = new Date(item.endDate);
-    const isSameDay = startDate.toDateString() === endDate.toDateString();
-    
-    const dateString = isSameDay
-      ? startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      : `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-
-    // Convert features object to array for display
-    const displayFeatures = item.features ? Object.keys(item.features).filter(key => item.features![key]) : [];
-
-    return (
-      <TouchableOpacity
-        style={styles.showCard}
-        onPress={() => handleShowPress(item.id)}
-      >
-        <View style={styles.showImageContainer}>
-          {item.imageUrl ? (
-            <Image source={{ uri: item.imageUrl }} style={styles.showImage} />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Ionicons name="images-outline" size={40} color="#ccc" />
-            </View>
-          )}
-        </View>
-        <View style={styles.showInfo}>
-          <Text style={styles.showTitle} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <View style={styles.showDetail}>
-            <Ionicons name="calendar-outline" size={16} color="#666" />
-            <Text style={styles.showDetailText}>{dateString}</Text>
-          </View>
-          <View style={styles.showDetail}>
-            <Ionicons name="location-outline" size={16} color="#666" />
-            <Text style={styles.showDetailText} numberOfLines={1}>
-              {item.address}
-            </Text>
-          </View>
-          <View style={styles.showDetail}>
-            <Ionicons name="cash-outline" size={16} color="#666" />
-            <Text style={styles.showDetailText}>
-              {item.entryFee === 0 || item.entryFee == null
-                ? 'Free'
-                : `$${Number(item.entryFee).toFixed(2)}`}
-            </Text>
-          </View>
-          {displayFeatures && displayFeatures.length > 0 && (
-            <View style={styles.featuresContainer}>
-              {displayFeatures.slice(0, 2).map((feature, index) => (
-                <View key={index} style={styles.featureTag}>
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
-              {displayFeatures.length > 2 && (
-                <View style={styles.featureTag}>
-                  <Text style={styles.featureText}>+{displayFeatures.length - 2}</Text>
-                </View>
-              )}
-            </View>
-          )}
-        </View>
-        <Ionicons name="chevron-forward" size={24} color="#ccc" style={styles.chevron} />
-      </TouchableOpacity>
-    );
+  // Navigate to filter screen
+  const handleFilterPress = () => {
+    navigation.navigate('Filter');
   };
 
-  // Render empty state
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons name="calendar-outline" size={60} color="#ccc" />
-      <Text style={styles.emptyStateTitle}>No Shows Found</Text>
-      <Text style={styles.emptyStateText}>
-        There are no card shows matching your filters. Try adjusting your filters or checking back later.
-      </Text>
-      <TouchableOpacity style={styles.emptyStateButton} onPress={fetchShows}>
-        <Text style={styles.emptyStateButtonText}>Refresh</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // Get stock image based on show index or ID
+  const getStockImage = (index, id) => {
+    // Use a combination of index and id to pick an image
+    const imageIndex = (index + (id ? parseInt(id.toString().slice(-1), 10) : 0)) % stockImages.length;
+    return stockImages[imageIndex];
+  };
 
-  // Render header with filter info
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      {user?.firstName && (
-        <Text style={styles.welcomeMessage}>
-          {`Welcome Back, ${user.firstName}`}
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    // Parse the date string and adjust for timezone issues
+    // This ensures the correct date is shown regardless of local timezone
+    const date = new Date(dateString);
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+
+    return utcDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  // Render show item
+  const renderShowItem = ({ item, index }) => (
+    <TouchableOpacity
+      style={styles.showCard}
+      onPress={() => handleShowPress(item.id)}
+    >
+      <Image
+        source={
+          item.imageUrl
+            ? { uri: item.imageUrl }
+            : getStockImage(index, item.id)
+        }
+        style={styles.showImage}
+        defaultSource={require('../../../assets/stock/home_show_01.jpg')}
+      />
+      <View style={styles.showInfo}>
+        <Text style={styles.showTitle}>{item.title}</Text>
+        <Text style={styles.showDate}>
+          {formatDate(item.startDate)}
+          {item.startDate !== item.endDate ? ` - ${formatDate(item.endDate)}` : ''}
         </Text>
-      )}
-      <Text style={styles.headerTitle}>
-        {shows.length === 0
-          ? 'No shows found'
-          : shows.length === 1
-          ? '1 show found'
-          : `${shows.length} shows found`}
-      </Text>
-      <Text style={styles.headerSubtitle}>
-        Within {filters.radius} miles
-        {filters.startDate && filters.endDate
-          ? ` • ${new Date(filters.startDate).toLocaleDateString()} - ${new Date(filters.endDate).toLocaleDateString()}`
-          : ''}
-      </Text>
-      <TouchableOpacity
-        style={styles.filterButton}
-        onPress={() => setFilterVisible(true)}
-      >
-        <Ionicons name="options-outline" size={20} color="#007AFF" />
-        <Text style={styles.filterButtonText}>Filter</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.showLocation}>
+          <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
+          <Text style={styles.showLocationText}>{item.location}</Text>
+        </View>
+        {item.entryFee > 0 && (
+          <View style={styles.showFeeBadge}>
+            <Text style={styles.showFeeText}>${item.entryFee}</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      {loading && !refreshing ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading card shows...</Text>
+    <View style={styles.container}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Filter Options */}
+        <View style={styles.filterContainer}>
+          <View style={styles.filterOptions}>
+            <TouchableOpacity
+              style={[styles.filterButton, { backgroundColor: SECONDARY_COLOR }]}
+              onPress={handleFilterPress}
+            >
+              <Ionicons name="options" size={18} color="white" />
+              <Text style={styles.filterButtonText}>Filters</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      ) : (
-        <FlatList
-          data={shows}
-          renderItem={renderShowItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={renderEmptyState}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              colors={['#007AFF']}
-              tintColor="#007AFF"
-            />
-          }
-        />
-      )}
 
-      {/* Filter Sheet */}
-      <FilterSheet
-        visible={filterVisible}
-        onClose={() => setFilterVisible(false)}
-        filters={filters}
-        onApplyFilters={handleFilterChange}
-      />
-    </SafeAreaView>
+        {/* Upcoming Shows Section */}
+        <View style={styles.showsContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Upcoming Shows</Text>
+          </View>
+
+          {loading ? (
+            <ActivityIndicator size="large" color={PRIMARY_COLOR} style={styles.loader} />
+          ) : shows.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={50} color={SECONDARY_COLOR} />
+              <Text style={styles.emptyStateText}>No upcoming shows found</Text>
+              <Text style={styles.emptyStateSubtext}>Try adjusting your filters</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={shows}
+              renderItem={renderShowItem}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+              contentContainerStyle={styles.showsList}
+            />
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 };
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  filterContainer: {
+    padding: 15,
+    backgroundColor: 'white',
+    marginBottom: 10,
   },
-  loadingText: {
+  filterOptions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
     marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 100, // Extra padding at bottom for better UX
-  },
-  headerContainer: {
-    marginBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  welcomeMessage: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 16,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e6f2ff',
-    paddingHorizontal: 12,
+    justifyContent: 'center',
     paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 20,
-    alignSelf: 'flex-start',
-    marginTop: 12,
+    minWidth: 90,
   },
   filterButtonText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
+    color: 'white',
+    fontWeight: '600',
     marginLeft: 4,
+  },
+  showsContainer: {
+    padding: 15,
+    backgroundColor: 'white',
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1C1C1E',
+  },
+  viewAllText: {
+    color: PRIMARY_COLOR,
+    fontWeight: '600',
+  },
+  showsList: {
+    paddingBottom: 10,
   },
   showCard: {
     flexDirection: 'row',
     backgroundColor: 'white',
     borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 15,
     overflow: 'hidden',
-  },
-  showImageContainer: {
-    width: 100,
-    height: 120,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   showImage: {
-    width: '100%',
-    height: '100%',
+    width: 100,
+    height: 100,
     resizeMode: 'cover',
-  },
-  placeholderImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   showInfo: {
     flex: 1,
@@ -421,69 +328,55 @@ const styles = StyleSheet.create({
   showTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  showDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  showDetailText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 6,
-  },
-  featuresContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 4,
-  },
-  featureTag: {
-    backgroundColor: '#e6f2ff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 6,
+    color: '#1C1C1E',
     marginBottom: 4,
   },
-  featureText: {
-    fontSize: 12,
-    color: '#007AFF',
+  showDate: {
+    fontSize: 14,
+    color: '#636366',
+    marginBottom: 4,
   },
-  chevron: {
-    alignSelf: 'center',
-    marginRight: 12,
+  showLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  showLocationText: {
+    fontSize: 14,
+    color: '#636366',
+    marginLeft: 4,
+  },
+  showFeeBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: PRIMARY_COLOR,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  showFeeText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  loader: {
+    marginVertical: 20,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
-    marginTop: 40,
-  },
-  emptyStateTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 16,
-    marginBottom: 8,
+    padding: 30,
   },
   emptyStateText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  emptyStateButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  emptyStateButtonText: {
-    color: 'white',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    color: '#1C1C1E',
+    marginTop: 10,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#636366',
+    marginTop: 5,
   },
 });
 
