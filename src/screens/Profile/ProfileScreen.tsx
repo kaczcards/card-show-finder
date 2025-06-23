@@ -16,10 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
+import { useNavigation } from '@react-navigation/native';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError } = useAuth();
   const { user, isLoading, error } = authState;
+  const navigation = useNavigation();
   
   // State for edit mode
   const [isEditMode, setIsEditMode] = useState(false);
@@ -360,13 +362,20 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Actions</Text>
           
-          {user.role === UserRole.ATTENDEE && (
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="star-outline" size={20} color="#007AFF" />
-              <Text style={styles.actionButtonText}>Upgrade to Dealer</Text>
-              <Ionicons name="chevron-forward" size={20} color="#ccc" style={styles.actionButtonIcon} />
-            </TouchableOpacity>
-          )}
+          {/* Subscription management (available to all users) */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('SubscriptionScreen' as never)}
+          >
+            <Ionicons name="star-outline" size={20} color="#007AFF" />
+            <Text style={styles.actionButtonText}>Manage Subscription</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#ccc"
+              style={styles.actionButtonIcon}
+            />
+          </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="lock-closed-outline" size={20} color="#007AFF" />

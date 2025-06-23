@@ -8,9 +8,7 @@ import { HomeScreen } from '../screens/Home';
 import CollectionScreen from '../screens/Collection';
 import BadgesScreen from '../screens/Badges';
 import NotificationsScreen from '../screens/Notifications';
-import { ProfileScreen } from '../screens/Profile';
-// Auth context for dynamic user data
-import { useAuth } from '../contexts/AuthContext';
+import ProfileNavigator from './ProfileNavigator';
 
 // Define navigation types for main tabs
 export type MainTabParamList = {
@@ -29,12 +27,6 @@ const MainTab = createBottomTabNavigator<MainTabParamList>();
  * Includes Home, Map, Favorites, and Profile screens
  */
 const MainTabNavigator: React.FC = () => {
-  // Grab first name for personalised header
-  const { authState } = useAuth();
-  const firstName = authState.user?.firstName?.trim();
-
-  const homeTitle = firstName ? `Hi, ${firstName}` : 'Card Shows';
-
   return (
     <MainTab.Navigator
       screenOptions={({ route }) => ({
@@ -65,10 +57,10 @@ const MainTabNavigator: React.FC = () => {
         },
       })}
     >
-      <MainTab.Screen 
-        name="Home" 
-        component={HomeScreen} 
-        options={{ title: homeTitle }}
+      <MainTab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ title: 'Home' }}
       />
       <MainTab.Screen
         name="Collection"
@@ -87,8 +79,11 @@ const MainTabNavigator: React.FC = () => {
       />
       <MainTab.Screen 
         name="Profile" 
-        component={ProfileScreen} 
-        options={{ title: 'My Profile' }}
+        component={ProfileNavigator} 
+        options={{ 
+          title: 'My Profile',
+          headerShown: false, // ProfileNavigator manages its own headers
+        }}
       />
     </MainTab.Navigator>
   );
