@@ -42,6 +42,10 @@ export const registerUser = async (
       lastName: lastName || undefined,
       homeZipCode,
       role: UserRole.ATTENDEE,
+      // new subscription-related defaults for freshly registered users
+      accountType: 'collector',
+      subscriptionStatus: 'none',
+      subscriptionExpiry: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isEmailVerified: false,
@@ -104,6 +108,9 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
       lastName: profileData.last_name || undefined,
       homeZipCode: profileData.home_zip_code,
       role: profileData.role as UserRole,
+      accountType: profileData.account_type,
+      subscriptionStatus: profileData.subscription_status,
+      subscriptionExpiry: profileData.subscription_expiry,
       createdAt: profileData.created_at,
       updatedAt: profileData.updated_at,
       isEmailVerified: authData.user.email_confirmed_at !== null,
@@ -199,6 +206,9 @@ export const getCurrentUser = async (uid: string): Promise<User | null> => {
       lastName: profileData.last_name || undefined,
       homeZipCode: profileData.home_zip_code,
       role: profileData.role as UserRole,
+      accountType: profileData.account_type,
+      subscriptionStatus: profileData.subscription_status,
+      subscriptionExpiry: profileData.subscription_expiry,
       createdAt: profileData.created_at,
       updatedAt: profileData.updated_at,
       isEmailVerified: authUser?.email_confirmed_at !== null, // Use authUser for verification status
@@ -235,6 +245,9 @@ export const updateUserProfile = async (
         home_zip_code: userData.homeZipCode,
         phone_number: userData.phoneNumber,
         profile_image_url: userData.profileImageUrl,
+        account_type: userData.accountType,
+        subscription_status: userData.subscriptionStatus,
+        subscription_expiry: userData.subscriptionExpiry,
         updated_at: new Date().toISOString(),
       })
       .eq('id', uid);
