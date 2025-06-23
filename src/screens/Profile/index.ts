@@ -1,6 +1,4 @@
 import ProfileScreen from './ProfileScreen';
+import SubscriptionScreen from './SubscriptionScreen';
 
-export { ProfileScreen };
-
-// Default export for convenience when importing the main screen
-export default ProfileScreen;
+export { ProfileScreen, SubscriptionScreen };
