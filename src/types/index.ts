@@ -22,6 +22,23 @@ export interface User {
   phoneNumber?: string;
   profileImageUrl?: string;
   isEmailVerified: boolean;
+  /**
+   * Tier of account the user currently has.
+   * - 'collector': free attendee account
+   * - 'dealer'   : paid dealer subscription
+   * - 'organizer': paid show–organizer subscription
+   */
+  accountType: 'collector' | 'dealer' | 'organizer';
+  /**
+   * Current subscription status for dealer / organizer accounts.
+   * Collectors will typically have 'none'.
+   */
+  subscriptionStatus: 'active' | 'expired' | 'none';
+  /**
+   * Timestamp indicating when the paid subscription expires.
+   * Null for free collector accounts or when there is no active subscription.
+   */
+  subscriptionExpiry: Date | string | null;
   favoriteShows?: string[]; // Array of show IDs
   attendedShows?: string[]; // Array of show IDs for past shows
   /**
