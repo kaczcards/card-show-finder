@@ -20,6 +20,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getShowById } from '../../services/showService';
 import { getDirectionsUrl } from '../../services/locationService';
 import { Show, ShowStatus } from '../../types';
+import {
+  getDealersForShow,
+  DealerShowParticipation,
+} from '../../services/dealerService';
+import DealerDetailModal from '../../components/DealerDetailModal';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -38,6 +43,14 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoritingInProgress, setFavoritingInProgress] = useState(false);
+
+  /* ---------- Dealers state ---------- */
+  const [dealers, setDealers] = useState<DealerShowParticipation[]>([]);
+  const [dealersLoading, setDealersLoading] = useState<boolean>(false);
+  const [dealersError, setDealersError] = useState<string | null>(null);
+  const [selectedDealer, setSelectedDealer] =
+    useState<DealerShowParticipation | null>(null);
+  const [dealerModalVisible, setDealerModalVisible] = useState<boolean>(false);
 
   // Guard against missing showId
   useEffect(() => {
@@ -83,6 +96,34 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
     fetchShowDetails();
   }, [showId, user, navigation]);
+
+  /* ---------- Fetch dealers for show ---------- */
+  useEffect(() => {
+    const fetchDealers = async () => {
+      if (!showId) return;
+      try {
+        setDealersLoading(true);
+        setDealersError(null);
+        const { data, error } = await getDealersForShow(showId);
+        if (error) {
+          setDealersError(error);
+          return;
+        }
+        // sort alphabetically
+        const sorted =
+          data?.sort((a, b) =>
+            (a.dealerName || '').localeCompare(b.dealerName || ''),
+          ) || [];
+        setDealers(sorted as DealerShowParticipation[]);
+      } catch (err: any) {
+        setDealersError(err.message || 'Failed to load dealers');
+      } finally {
+        setDealersLoading(false);
+      }
+    };
+
+    fetchDealers();
+  }, [showId]);
 
   // Handle favorite/unfavorite
   const toggleFavorite = async () => {
@@ -151,6 +192,17 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     } catch (error) {
       console.error('Error sharing:', error);
     }
+  };
+
+  /* ---------- Dealer modal handlers ---------- */
+  const handleDealerPress = (dealer: DealerShowParticipation) => {
+    setSelectedDealer(dealer);
+    setDealerModalVisible(true);
+  };
+
+  const closeDealerModal = () => {
+    setDealerModalVisible(false);
+    setSelectedDealer(null);
   };
 
   // Format date with safety check
@@ -423,7 +475,49 @@ const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           </View>
         )}
+
+        {/* ---------- Registered Dealers ---------- */}
+        <View style={styles.infoSection}>
+          <View style={styles.infoHeader}>
+            <Ionicons name="people-outline" size={22} color="#007AFF" />
+            <Text style={styles.infoHeaderText}>Registered Dealers</Text>
+          </View>
+
+          {dealersLoading ? (
+            <View style={styles.loadingDealersContainer}>
+              <ActivityIndicator size="small" color="#007AFF" />
+            </View>
+          ) : dealersError ? (
+            <Text style={[styles.infoText, styles.errorText]}>{dealersError}</Text>
+          ) : dealers.length === 0 ? (
+            <Text style={styles.infoText}>No dealers have registered yet.</Text>
+          ) : (
+            <View style={styles.dealerList}>
+              {dealers.map((dealer) => (
+                <TouchableOpacity
+                  key={dealer.id}
+                  style={styles.dealerItem}
+                  onPress={() => handleDealerPress(dealer)}
+                >
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={18}
+                    color="#007AFF"
+                  />
+                  <Text style={styles.dealerName}>{dealer.dealerName}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
       </ScrollView>
+
+      {/* ---------- Dealer Detail Modal ---------- */}
+      <DealerDetailModal
+        visible={dealerModalVisible}
+        onClose={closeDealerModal}
+        dealer={selectedDealer as any}
+      />
     </SafeAreaView>
   );
 };
@@ -632,6 +726,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '600',
+  },
+  /* ---------- Dealers styles ---------- */
+  dealerList: {
+    paddingLeft: 30,
+  },
+  dealerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dealerName: {
+    fontSize: 16,
+    color: '#007AFF',
+    marginLeft: 6,
+  },
+  loadingDealersContainer: {
+    paddingLeft: 30,
+  },
+  errorText: {
+    color: '#F44336',
   },
 });
 
