@@ -1,1 +1,10 @@
-export { default as DealerProfileScreen } from './DealerProfileScreen';
+import ShowParticipationScreen from './ShowParticipationScreen';
+
+export {
+  ShowParticipationScreen
+};
+
+// Export default for direct import
+export default {
+  ShowParticipationScreen
+};
