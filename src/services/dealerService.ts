@@ -1,0 +1,488 @@
+/**
+ * Dealer Service
+ *
+ * This file contains helpers for dealer-specific operations related to show participation.
+ */
+
+import { supabase } from '../supabase';
+import { Show, UserRole } from '../types';
+
+/**
+ * Types for dealer show participation
+ */
+export interface DealerShowParticipation {
+  id: string;
+  userId: string;
+  showId: string;
+  cardTypes: string[];
+  specialty?: string;
+  priceRange?: 'budget' | 'mid-range' | 'high-end';
+  notableItems?: string;
+  boothLocation?: string;
+  paymentMethods: string[];
+  openToTrades: boolean;
+  buyingCards: boolean;
+  status: 'registered' | 'confirmed' | 'cancelled' | 'completed';
+  createdAt: Date | string;
+}
+
+/**
+ * Input for registering or updating dealer participation
+ */
+export interface DealerParticipationInput {
+  showId: string;
+  cardTypes?: string[];
+  specialty?: string;
+  priceRange?: 'budget' | 'mid-range' | 'high-end';
+  notableItems?: string;
+  boothLocation?: string;
+  paymentMethods?: string[];
+  openToTrades?: boolean;
+  buyingCards?: boolean;
+}
+
+/**
+ * Convert a raw Supabase row into a DealerShowParticipation object
+ */
+const mapDbParticipationToAppParticipation = (row: any): DealerShowParticipation => ({
+  id: row.id,
+  userId: row.userid,
+  showId: row.showid,
+  cardTypes: row.card_types || [],
+  specialty: row.specialty || undefined,
+  priceRange: row.price_range || undefined,
+  notableItems: row.notable_items || undefined,
+  boothLocation: row.booth_location || undefined,
+  paymentMethods: row.payment_methods || [],
+  openToTrades: row.open_to_trades || false,
+  buyingCards: row.buying_cards || false,
+  status: row.status || 'registered',
+  createdAt: row.createdat,
+});
+
+/**
+ * Get all shows a dealer is participating in
+ * 
+ * @param userId - The dealer's user ID
+ * @param status - Optional filter for participation status
+ * @returns Array of shows with participation details
+ */
+export const getDealerShows = async (
+  userId: string,
+  status?: 'registered' | 'confirmed' | 'cancelled' | 'completed'
+): Promise<{ data: Array<Show & { participation: DealerShowParticipation }> | null; error: string | null }> => {
+  try {
+    if (!userId) {
+      return { data: null, error: 'Invalid userId' };
+    }
+
+    let query = supabase
+      .from('show_participants')
+      .select(`
+        *,
+        shows:showid (*)
+      `)
+      .eq('userid', userId);
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Transform the data to match our expected format
+    const transformedData = data.map(item => {
+      const show = item.shows;
+      const participation = mapDbParticipationToAppParticipation(item);
+      
+      return {
+        id: show.id,
+        title: show.title,
+        description: show.description,
+        location: show.location,
+        address: show.address,
+        startDate: show.start_date,
+        endDate: show.end_date,
+        entryFee: show.entry_fee,
+        imageUrl: show.image_url,
+        rating: show.rating,
+        coordinates: show.coordinates && {
+          latitude: show.coordinates.coordinates[1],
+          longitude: show.coordinates.coordinates[0],
+        },
+        status: show.status,
+        organizerId: show.organizer_id,
+        features: show.features || {},
+        categories: show.categories || [],
+        createdAt: show.created_at,
+        updatedAt: show.updated_at,
+        participation,
+      };
+    });
+
+    return { data: transformedData, error: null };
+  } catch (err: any) {
+    console.error('Error fetching dealer shows:', err);
+    return { data: null, error: err.message || 'Failed to fetch dealer shows' };
+  }
+};
+
+/**
+ * Register a dealer for a show
+ * 
+ * @param userId - The dealer's user ID
+ * @param participationData - Dealer participation details
+ * @returns The created participation record or error
+ */
+export const registerForShow = async (
+  userId: string,
+  participationData: DealerParticipationInput
+): Promise<{ data: DealerShowParticipation | null; error: string | null }> => {
+  try {
+    if (!userId || !participationData.showId) {
+      return { data: null, error: 'Invalid userId or showId' };
+    }
+
+    // Check if user has dealer role
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      throw userError;
+    }
+
+    if (!userData || (userData.role !== 'dealer' && userData.role !== 'mvp_dealer')) {
+      return { data: null, error: 'User is not a dealer' };
+    }
+
+    // Check if dealer is already registered for this show
+    const { data: existingReg, error: checkError } = await supabase
+      .from('show_participants')
+      .select('id')
+      .eq('userid', userId)
+      .eq('showid', participationData.showId)
+      .maybeSingle();
+
+    if (checkError) {
+      throw checkError;
+    }
+
+    if (existingReg) {
+      return { data: null, error: 'Already registered for this show' };
+    }
+
+    // Insert new participation record
+    const { data, error } = await supabase
+      .from('show_participants')
+      .insert({
+        userid: userId,
+        showid: participationData.showId,
+        card_types: participationData.cardTypes || [],
+        specialty: participationData.specialty || null,
+        price_range: participationData.priceRange || null,
+        notable_items: participationData.notableItems || null,
+        booth_location: participationData.boothLocation || null,
+        payment_methods: participationData.paymentMethods || [],
+        open_to_trades: participationData.openToTrades || false,
+        buying_cards: participationData.buyingCards || false,
+        status: 'registered'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return { data: mapDbParticipationToAppParticipation(data), error: null };
+  } catch (err: any) {
+    console.error('Error registering for show:', err);
+    return { data: null, error: err.message || 'Failed to register for show' };
+  }
+};
+
+/**
+ * Update dealer participation details for a show
+ * 
+ * @param userId - The dealer's user ID
+ * @param participationId - The participation record ID
+ * @param participationData - Updated dealer participation details
+ * @returns The updated participation record or error
+ */
+export const updateShowParticipation = async (
+  userId: string,
+  participationId: string,
+  participationData: Partial<DealerParticipationInput>
+): Promise<{ data: DealerShowParticipation | null; error: string | null }> => {
+  try {
+    if (!userId || !participationId) {
+      return { data: null, error: 'Invalid userId or participationId' };
+    }
+
+    // Verify ownership of the participation record
+    const { data: existingReg, error: checkError } = await supabase
+      .from('show_participants')
+      .select('id')
+      .eq('id', participationId)
+      .eq('userid', userId)
+      .maybeSingle();
+
+    if (checkError) {
+      throw checkError;
+    }
+
+    if (!existingReg) {
+      return { data: null, error: 'Participation record not found or unauthorized' };
+    }
+
+    // Prepare update data - convert camelCase to snake_case for DB
+    const updateData: Record<string, any> = {};
+    if (participationData.cardTypes !== undefined) updateData.card_types = participationData.cardTypes;
+    if (participationData.specialty !== undefined) updateData.specialty = participationData.specialty;
+    if (participationData.priceRange !== undefined) updateData.price_range = participationData.priceRange;
+    if (participationData.notableItems !== undefined) updateData.notable_items = participationData.notableItems;
+    if (participationData.boothLocation !== undefined) updateData.booth_location = participationData.boothLocation;
+    if (participationData.paymentMethods !== undefined) updateData.payment_methods = participationData.paymentMethods;
+    if (participationData.openToTrades !== undefined) updateData.open_to_trades = participationData.openToTrades;
+    if (participationData.buyingCards !== undefined) updateData.buying_cards = participationData.buyingCards;
+
+    // Update the participation record
+    const { data, error } = await supabase
+      .from('show_participants')
+      .update(updateData)
+      .eq('id', participationId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return { data: mapDbParticipationToAppParticipation(data), error: null };
+  } catch (err: any) {
+    console.error('Error updating show participation:', err);
+    return { data: null, error: err.message || 'Failed to update show participation' };
+  }
+};
+
+/**
+ * Cancel dealer participation in a show
+ * 
+ * @param userId - The dealer's user ID
+ * @param participationId - The participation record ID
+ * @returns Success or error message
+ */
+export const cancelShowParticipation = async (
+  userId: string,
+  participationId: string
+): Promise<{ success: boolean; error: string | null }> => {
+  try {
+    if (!userId || !participationId) {
+      return { success: false, error: 'Invalid userId or participationId' };
+    }
+
+    // Verify ownership of the participation record
+    const { data: existingReg, error: checkError } = await supabase
+      .from('show_participants')
+      .select('id')
+      .eq('id', participationId)
+      .eq('userid', userId)
+      .maybeSingle();
+
+    if (checkError) {
+      throw checkError;
+    }
+
+    if (!existingReg) {
+      return { success: false, error: 'Participation record not found or unauthorized' };
+    }
+
+    // Update the status to cancelled
+    const { error } = await supabase
+      .from('show_participants')
+      .update({ status: 'cancelled' })
+      .eq('id', participationId);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, error: null };
+  } catch (err: any) {
+    console.error('Error cancelling show participation:', err);
+    return { success: false, error: err.message || 'Failed to cancel show participation' };
+  }
+};
+
+/**
+ * Get dealer information for a specific show
+ * 
+ * @param showId - The show ID
+ * @returns Array of dealer participation records for the show
+ */
+export const getDealersForShow = async (
+  showId: string
+): Promise<{ data: Array<DealerShowParticipation> | null; error: string | null }> => {
+  try {
+    if (!showId) {
+      return { data: null, error: 'Invalid showId' };
+    }
+
+    const { data, error } = await supabase
+      .from('show_participants')
+      .select(`
+        *,
+        profiles:userid (first_name, last_name, email, profile_image_url)
+      `)
+      .eq('showid', showId)
+      .in('status', ['registered', 'confirmed'])
+      .order('createdat', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Transform the data to include dealer profile information
+    const transformedData = data.map(item => {
+      const participation = mapDbParticipationToAppParticipation(item);
+      
+      // Add dealer profile info
+      return {
+        ...participation,
+        dealerName: item.profiles ? `${item.profiles.first_name} ${item.profiles.last_name || ''}`.trim() : 'Unknown Dealer',
+        dealerEmail: item.profiles?.email,
+        dealerProfileImage: item.profiles?.profile_image_url
+      };
+    });
+
+    return { data: transformedData, error: null };
+  } catch (err: any) {
+    console.error('Error fetching dealers for show:', err);
+    return { data: null, error: err.message || 'Failed to fetch dealers for show' };
+  }
+};
+
+/**
+ * Get upcoming shows available for dealer registration
+ * 
+ * @param userId - The dealer's user ID
+ * @param filters - Optional filters for shows
+ * @returns Array of shows available for registration
+ */
+export const getAvailableShowsForDealer = async (
+  userId: string,
+  filters: {
+    startDate?: Date | string;
+    endDate?: Date | string;
+    radius?: number;
+    latitude?: number;
+    longitude?: number;
+  } = {}
+): Promise<{ data: Show[] | null; error: string | null }> => {
+  try {
+    if (!userId) {
+      return { data: null, error: 'Invalid userId' };
+    }
+
+    // Get shows the dealer is already registered for
+    const { data: participations, error: partError } = await supabase
+      .from('show_participants')
+      .select('showid')
+      .eq('userid', userId);
+
+    if (partError) {
+      throw partError;
+    }
+
+    // Extract show IDs the dealer is already registered for
+    const registeredShowIds = participations ? participations.map(p => p.showid) : [];
+
+    // Build the query for available shows
+    let query = supabase
+      .from('shows')
+      .select('*')
+      .eq('status', 'ACTIVE')
+      .gt('start_date', new Date().toISOString());
+
+    // Apply filters
+    if (filters.startDate) {
+      query = query.gte('start_date', filters.startDate as any);
+    }
+    if (filters.endDate) {
+      query = query.lte('end_date', filters.endDate as any);
+    }
+
+    // Exclude shows the dealer is already registered for
+    if (registeredShowIds.length > 0) {
+      query = query.not('id', 'in', `(${registeredShowIds.join(',')})`);
+    }
+
+    // Order by start date
+    query = query.order('start_date', { ascending: true });
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    // If we have lat/lng and radius, filter results by distance
+    // This is a client-side filter since we already have the data
+    let filteredData = data || [];
+    
+    if (
+      filters.latitude && 
+      filters.longitude && 
+      filters.radius && 
+      filteredData.length > 0
+    ) {
+      // This would ideally use the server-side PostGIS functions,
+      // but for simplicity we'll do basic filtering here
+      console.log('Filtering by distance is not implemented in this version');
+    }
+
+    return { 
+      data: filteredData.map(show => ({
+        id: show.id,
+        title: show.title,
+        description: show.description,
+        location: show.location,
+        address: show.address,
+        startDate: show.start_date,
+        endDate: show.end_date,
+        entryFee: show.entry_fee,
+        imageUrl: show.image_url,
+        rating: show.rating,
+        coordinates: show.coordinates && {
+          latitude: show.coordinates.coordinates[1],
+          longitude: show.coordinates.coordinates[0],
+        },
+        status: show.status,
+        organizerId: show.organizer_id,
+        features: show.features || {},
+        categories: show.categories || [],
+        createdAt: show.created_at,
+        updatedAt: show.updated_at,
+      })), 
+      error: null 
+    };
+  } catch (err: any) {
+    console.error('Error fetching available shows for dealer:', err);
+    return { data: null, error: err.message || 'Failed to fetch available shows' };
+  }
+};

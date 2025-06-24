@@ -374,14 +374,14 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Actions</Text>
           
-          {/* Dealer Profile (visible only for dealer-tier roles) */}
+          {/* Dealer Show Participation (visible only for dealer-tier roles) */}
           {isDealer() && (
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigation.navigate('DealerProfileScreen' as never)}
+              onPress={() => navigation.navigate('ShowParticipationScreen' as never)}
             >
-              <Ionicons name="business-outline" size={20} color="#007AFF" />
-              <Text style={styles.actionButtonText}>Dealer Profile</Text>
+              <Ionicons name="storefront-outline" size={20} color="#007AFF" />
+              <Text style={styles.actionButtonText}>Manage Show Participation</Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
