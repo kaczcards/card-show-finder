@@ -116,6 +116,18 @@ const ProfileScreen: React.FC = () => {
     return phone;
   };
   
+  // Check if user is a dealer (using current user directly)
+  const isDealer = () => {
+    if (!user) return false;
+    return (
+      user.role === UserRole.DEALER ||
+      user.role === UserRole.MVP_DEALER ||
+      user.role === UserRole.SHOW_ORGANIZER ||
+      user.accountType === 'dealer' ||
+      user.accountType === 'organizer'
+    );
+  };
+  
   // Get role display name
   const getRoleDisplayName = (role: UserRole) => {
     switch (role) {
@@ -362,7 +374,24 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Actions</Text>
           
-          {/* Subscription management (available to all users) */}
+          {/* Dealer Profile (visible only for dealer-tier roles) */}
+          {isDealer() && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('DealerProfileScreen' as never)}
+            >
+              <Ionicons name="business-outline" size={20} color="#007AFF" />
+              <Text style={styles.actionButtonText}>Dealer Profile</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#ccc"
+                style={styles.actionButtonIcon}
+              />
+            </TouchableOpacity>
+          )}
+          
+          {/* Subscription management */}
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => navigation.navigate('SubscriptionScreen' as never)}
