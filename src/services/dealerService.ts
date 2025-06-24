@@ -374,9 +374,10 @@ export const getDealersForShow = async (
     const userIds = participantsData.map(participant => participant.userid);
 
     // Step 3: Fetch profiles for these user IDs
+    // Only select columns that definitely exist in the schema
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, email, profile_image_url')
+      .select('id, first_name, last_name, email')
       .in('id', userIds);
 
     if (profilesError) {
@@ -403,7 +404,7 @@ export const getDealersForShow = async (
           ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() 
           : 'Unknown Dealer',
         dealerEmail: profile?.email,
-        dealerProfileImage: profile?.profile_image_url
+        dealerProfileImage: undefined // Profile image URL is not available in the schema
       };
     });
 
