@@ -205,7 +205,7 @@ export const registerForShow = async (
     // Insert new participation record
     const { data, error } = await supabase
       .from('show_participants')
-      // Insert only the base columns that are guaranteed to exist.
+      // Insert only the base columns that are guaranteed to exist
       .insert({
         userid: userId,
         showid: participationData.showId,
@@ -320,11 +320,11 @@ export const cancelShowParticipation = async (
       return { success: false, error: 'Participation record not found or unauthorized' };
     }
 
-    // Update the status to cancelled
-    // If the optional `status` column does not exist in the current DB
-    // schema, fallback to deleting the record entirely.  This keeps the
-    // code functional regardless of whether the migration adding the
-    // `status` field has been applied.
+    // Cancellation strategy:
+    // We simply remove the participation row, which has the same practical
+    // effect as setting a "cancelled" status.  This avoids relying on the
+    // optional `status` column that may not be present in every deployed
+    // database schema.
     const { error } = await supabase
       .from('show_participants')
       .delete()
@@ -360,7 +360,6 @@ export const getDealersForShow = async (
       .from('show_participants')
       .select('*')
       .eq('showid', showId)
-      .in('status', ['registered', 'confirmed'])
       .order('createdat', { ascending: true });
 
     if (participantsError) {
