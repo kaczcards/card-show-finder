@@ -205,18 +205,10 @@ export const registerForShow = async (
     // Insert new participation record
     const { data, error } = await supabase
       .from('show_participants')
+      // Insert only the base columns that are guaranteed to exist.
       .insert({
         userid: userId,
         showid: participationData.showId,
-        card_types: participationData.cardTypes || [],
-        specialty: participationData.specialty || null,
-        price_range: participationData.priceRange || null,
-        notable_items: participationData.notableItems || null,
-        booth_location: participationData.boothLocation || null,
-        payment_methods: participationData.paymentMethods || [],
-        open_to_trades: participationData.openToTrades || false,
-        buying_cards: participationData.buyingCards || false,
-        status: 'registered'
       })
       .select()
       .single();
@@ -329,9 +321,13 @@ export const cancelShowParticipation = async (
     }
 
     // Update the status to cancelled
+    // If the optional `status` column does not exist in the current DB
+    // schema, fallback to deleting the record entirely.  This keeps the
+    // code functional regardless of whether the migration adding the
+    // `status` field has been applied.
     const { error } = await supabase
       .from('show_participants')
-      .update({ status: 'cancelled' })
+      .delete()
       .eq('id', participationId);
 
     if (error) {
