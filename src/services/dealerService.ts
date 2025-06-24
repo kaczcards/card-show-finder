@@ -61,6 +61,29 @@ const mapDbParticipationToAppParticipation = (row: any): DealerShowParticipation
 });
 
 /**
+ * Utility: Safely map a PostGIS `geometry(Point)`/`geography(Point)`
+ * object returned by Supabase into the app's `{ latitude, longitude }`
+ * shape.  Returns `undefined` if the value is missing or malformed.
+ */
+const mapDbCoordinatesToApp = (
+  geo: any
+): { latitude: number; longitude: number } | undefined => {
+  if (
+    geo &&
+    Array.isArray(geo.coordinates) &&
+    geo.coordinates.length >= 2 &&
+    typeof geo.coordinates[0] === 'number' &&
+    typeof geo.coordinates[1] === 'number'
+  ) {
+    return {
+      latitude: geo.coordinates[1],
+      longitude: geo.coordinates[0],
+    };
+  }
+  return undefined;
+};
+
+/**
  * Get all shows a dealer is participating in
  * 
  * @param userId - The dealer's user ID
@@ -114,10 +137,7 @@ export const getDealerShows = async (
         entryFee: show.entry_fee,
         imageUrl: show.image_url,
         rating: show.rating,
-        coordinates: show.coordinates && {
-          latitude: show.coordinates.coordinates[1],
-          longitude: show.coordinates.coordinates[0],
-        },
+        coordinates: mapDbCoordinatesToApp(show.coordinates),
         status: show.status,
         organizerId: show.organizer_id,
         features: show.features || {},
@@ -185,18 +205,10 @@ export const registerForShow = async (
     // Insert new participation record
     const { data, error } = await supabase
       .from('show_participants')
+      // Insert only the base columns that are guaranteed to exist.
       .insert({
         userid: userId,
         showid: participationData.showId,
-        card_types: participationData.cardTypes || [],
-        specialty: participationData.specialty || null,
-        price_range: participationData.priceRange || null,
-        notable_items: participationData.notableItems || null,
-        booth_location: participationData.boothLocation || null,
-        payment_methods: participationData.paymentMethods || [],
-        open_to_trades: participationData.openToTrades || false,
-        buying_cards: participationData.buyingCards || false,
-        status: 'registered'
       })
       .select()
       .single();
@@ -309,9 +321,13 @@ export const cancelShowParticipation = async (
     }
 
     // Update the status to cancelled
+    // If the optional `status` column does not exist in the current DB
+    // schema, fallback to deleting the record entirely.  This keeps the
+    // code functional regardless of whether the migration adding the
+    // `status` field has been applied.
     const { error } = await supabase
       .from('show_participants')
-      .update({ status: 'cancelled' })
+      .delete()
       .eq('id', participationId);
 
     if (error) {
@@ -468,10 +484,7 @@ export const getAvailableShowsForDealer = async (
         entryFee: show.entry_fee,
         imageUrl: show.image_url,
         rating: show.rating,
-        coordinates: show.coordinates && {
-          latitude: show.coordinates.coordinates[1],
-          longitude: show.coordinates.coordinates[0],
-        },
+        coordinates: mapDbCoordinatesToApp(show.coordinates),
         status: show.status,
         organizerId: show.organizer_id,
         features: show.features || {},

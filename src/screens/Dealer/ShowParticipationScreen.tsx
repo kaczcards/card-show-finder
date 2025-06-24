@@ -204,14 +204,14 @@ const ShowParticipationScreen: React.FC = () => {
     setSelectedParticipation(show.participation);
     setFormData({
       showId: show.id,
-      cardTypes: show.participation.cardTypes || [],
-      specialty: show.participation.specialty || '',
-      priceRange: show.participation.priceRange,
-      notableItems: show.participation.notableItems || '',
-      boothLocation: show.participation.boothLocation || '',
-      paymentMethods: show.participation.paymentMethods || [],
-      openToTrades: show.participation.openToTrades || false,
-      buyingCards: show.participation.buyingCards || false
+      cardTypes: show.participation?.cardTypes || [],
+      specialty: show.participation?.specialty || '',
+      priceRange: show.participation?.priceRange,
+      notableItems: show.participation?.notableItems || '',
+      boothLocation: show.participation?.boothLocation || '',
+      paymentMethods: show.participation?.paymentMethods || [],
+      openToTrades: show.participation?.openToTrades || false,
+      buyingCards: show.participation?.buyingCards || false
     });
     setEditModalVisible(true);
   };
@@ -258,13 +258,14 @@ const ShowParticipationScreen: React.FC = () => {
     if (!user || !selectedShow) return;
     
     try {
-      // Basic validation
-      if (!formData.cardTypes || formData.cardTypes.length === 0) {
+      // Basic validation - only if we're using the fields in the database
+      // If the migration hasn't been run, we'll skip this validation
+      if (formData.cardTypes && formData.cardTypes.length === 0) {
         Alert.alert('Error', 'Please select at least one card type');
         return;
       }
       
-      if (!formData.paymentMethods || formData.paymentMethods.length === 0) {
+      if (formData.paymentMethods && formData.paymentMethods.length === 0) {
         Alert.alert('Error', 'Please select at least one payment method');
         return;
       }
@@ -291,12 +292,12 @@ const ShowParticipationScreen: React.FC = () => {
     
     try {
       // Basic validation
-      if (!formData.cardTypes || formData.cardTypes.length === 0) {
+      if (formData.cardTypes && formData.cardTypes.length === 0) {
         Alert.alert('Error', 'Please select at least one card type');
         return;
       }
       
-      if (!formData.paymentMethods || formData.paymentMethods.length === 0) {
+      if (formData.paymentMethods && formData.paymentMethods.length === 0) {
         Alert.alert('Error', 'Please select at least one payment method');
         return;
       }
@@ -400,6 +401,9 @@ const ShowParticipationScreen: React.FC = () => {
   const renderShowItem = ({ item }: { item: Show & { participation?: any } }) => {
     const isRegistered = activeTab === 'myShows';
     
+    // Determine status for badge display - default to 'registered' if undefined
+    const participationStatus = item.participation?.status || 'registered';
+    
     return (
       <View style={styles.showCard}>
         <View style={styles.showHeader}>
@@ -426,12 +430,12 @@ const ShowParticipationScreen: React.FC = () => {
               <Text style={styles.participationTitle}>Your Booth Information</Text>
               <View style={[
                 styles.statusBadge,
-                item.participation.status === 'confirmed' ? styles.confirmedBadge : 
-                item.participation.status === 'cancelled' ? styles.cancelledBadge : 
+                participationStatus === 'confirmed' ? styles.confirmedBadge : 
+                participationStatus === 'cancelled' ? styles.cancelledBadge : 
                 styles.registeredBadge
               ]}>
                 <Text style={styles.statusText}>
-                  {item.participation.status.charAt(0).toUpperCase() + item.participation.status.slice(1)}
+                  {participationStatus.charAt(0).toUpperCase() + participationStatus.slice(1)}
                 </Text>
               </View>
             </View>
@@ -443,7 +447,7 @@ const ShowParticipationScreen: React.FC = () => {
               </View>
             )}
             
-            {item.participation.cardTypes && item.participation.cardTypes.length > 0 && (
+            {item.participation.cardTypes && Array.isArray(item.participation.cardTypes) && item.participation.cardTypes.length > 0 && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Card Types:</Text>
                 <Text style={styles.infoValue}>{item.participation.cardTypes.join(', ')}</Text>
@@ -470,13 +474,13 @@ const ShowParticipationScreen: React.FC = () => {
               <TouchableOpacity 
                 style={styles.editButton}
                 onPress={() => handleOpenEdit(item)}
-                disabled={item.participation.status === 'cancelled'}
+                disabled={participationStatus === 'cancelled'}
               >
                 <Ionicons name="create-outline" size={16} color="white" />
                 <Text style={styles.buttonText}>Edit Info</Text>
               </TouchableOpacity>
               
-              {item.participation.status !== 'cancelled' && (
+              {participationStatus !== 'cancelled' && (
                 <TouchableOpacity 
                   style={styles.cancelButton}
                   onPress={() => handleCancelParticipation(item.participation.id)}
