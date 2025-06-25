@@ -30,7 +30,12 @@ export interface DealerDetailModalProps {
     paymentMethods: string[];
     openToTrades: boolean;
     buyingCards: boolean;
-    status: 'registered' | 'confirmed' | 'cancelled' | 'completed';
+    /**
+     * Optional status of the dealer's participation.  This property may be
+     * absent if the database schema does not include the `status` column
+     * (e.g., when the migration adding it hasn't been applied yet).
+     */
+    status?: 'registered' | 'confirmed' | 'cancelled' | 'completed';
   } | null;
 }
 
