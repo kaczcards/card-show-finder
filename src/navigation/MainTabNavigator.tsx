@@ -1,5 +1,4 @@
 import React from 'react';
-import { View, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -7,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/Home';
 import CollectionScreen from '../screens/Collection';
 import BadgesScreen from '../screens/Badges';
+import DirectMessagesScreen from '../screens/Messages/DirectMessagesScreen';
 import NotificationsScreen from '../screens/Notifications';
 import ProfileNavigator from './ProfileNavigator';
 
@@ -15,6 +15,7 @@ export type MainTabParamList = {
   Home: undefined;
   Collection: undefined;
   Badges: undefined;
+  Messages: undefined;
   Notifications: undefined;
   Profile: undefined;
 };
@@ -39,6 +40,8 @@ const MainTabNavigator: React.FC = () => {
             iconName = focused ? 'images' : 'images-outline';
           } else if (route.name === 'Badges') {
             iconName = focused ? 'trophy' : 'trophy-outline';
+          } else if (route.name === 'Messages') {
+            iconName = focused ? 'mail' : 'mail-outline';
           } else if (route.name === 'Notifications') {
             // Rename "Notifications" visual elements to use calendar icons
             iconName = focused ? 'calendar-sharp' : 'calendar-outline';
@@ -71,6 +74,11 @@ const MainTabNavigator: React.FC = () => {
         name="Badges"
         component={BadgesScreen}
         options={{ title: 'Badges' }}
+      />
+      <MainTab.Screen
+        name="Messages"
+        component={DirectMessagesScreen}
+        options={{ title: 'Messages' }}
       />
       <MainTab.Screen
         name="Notifications"
