@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { supabase } from '../../supabase';
 import { Ionicons } from '@expo/vector-icons';
+import * as messagingService from '../../services/messagingService';
 
 // Function to generate a UUID without using crypto.randomUUID()
 const generateUUID = () => {
@@ -30,35 +31,6 @@ const generateUUID = () => {
 interface User {
   id: string;
   email?: string;
-}
-
-interface UserProfile {
-  id: string;
-  username?: string;
-  full_name?: string;
-  avatar_url?: string;
-  role?: string;
-}
-
-interface Message {
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  recipient_id: string;
-  content: string;
-  created_at: string;
-  read_at: string | null;
-  sender_profile?: UserProfile;
-  recipient_profile?: UserProfile;
-}
-
-interface Conversation {
-  id: string;
-  participant_id: string;
-  participant_profile?: UserProfile;
-  last_message?: string;
-  last_message_time?: string;
-  unread_count: number;
 }
 
 // Format date for display
@@ -94,18 +66,19 @@ const formatDate = (dateString?: string) => {
 const DirectMessagesScreen: React.FC = () => {
   // State for user and UI
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any[]>([]);
   
   // State for messages
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<messagingService.Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<messagingService.Conversation | null>(null);
+  const [messages, setMessages] = useState<messagingService.Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [recipientId, setRecipientId] = useState('');
+  const [showNewConversation, setShowNewConversation] = useState(false);
   
   // Add debug log
   const addDebugLog = (title: string, data: any) => {
@@ -128,10 +101,17 @@ const DirectMessagesScreen: React.FC = () => {
           // If message is for current conversation, add it to messages list
           if (selectedConversation && newMessage.conversation_id === selectedConversation.id) {
             setMessages(prev => [...prev, newMessage]);
+            
+            // Mark as read
+            if (currentUser) {
+              messagingService.markMessageAsRead(newMessage.id, currentUser.id);
+            }
           }
           
           // Refresh conversations list to update unread counts and last messages
-          fetchConversations();
+          if (currentUser) {
+            fetchConversations(currentUser.id);
+          }
         })
         .subscribe();
         
@@ -150,13 +130,12 @@ const DirectMessagesScreen: React.FC = () => {
   useEffect(() => {
     if (currentUser) {
       // Initial fetch
-      fetchConversations();
+      fetchConversations(currentUser.id);
       
       // Set up periodic refresh every 10 seconds
       const refreshInterval = setInterval(() => {
         if (currentUser) {
-          addDebugLog('Auto-refreshing conversations', null);
-          fetchConversations();
+          fetchConversations(currentUser.id);
         }
       }, 10000);
       
@@ -166,8 +145,9 @@ const DirectMessagesScreen: React.FC = () => {
 
   // Reload messages when selected conversation changes
   useEffect(() => {
-    if (selectedConversation) {
+    if (selectedConversation && currentUser) {
       fetchMessages(selectedConversation.id);
+      messagingService.markConversationAsRead(selectedConversation.id, currentUser.id);
     }
   }, [selectedConversation]);
 
@@ -196,7 +176,7 @@ const DirectMessagesScreen: React.FC = () => {
         await fetchUserProfile(data.user.id);
         
         // Get conversations
-        await fetchConversations();
+        await fetchConversations(data.user.id);
       } else {
         addDebugLog('No authenticated user', null);
       }
@@ -231,110 +211,24 @@ const DirectMessagesScreen: React.FC = () => {
     }
   };
 
-  // Fetch all messages to identify conversations
-  const fetchAllMessages = async () => {
-    if (!currentUser) return;
-    
-    try {
-      addDebugLog('Fetching all messages', { userId: currentUser.id });
-      
-      // Direct query approach
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
-        .order('created_at', { ascending: false });
-        
-      if (error) {
-        addDebugLog('Direct messages query failed', error);
-        return [];
-      }
-      
-      addDebugLog('All messages fetched', { count: data?.length || 0 });
-      return data || [];
-      
-    } catch (error) {
-      addDebugLog('Fetch all messages error', String(error));
-      return [];
-    }
-  };
-
   // Fetch user's conversations
-  const fetchConversations = async () => {
-    if (!currentUser) return;
-    
+  const fetchConversations = async (userId: string) => {
     try {
-      addDebugLog('Fetching conversations', { userId: currentUser.id });
+      addDebugLog('Fetching conversations', { userId });
       
-      // Try direct message query approach first (more reliable)
-      const messagesData = await fetchAllMessages();
+      // Use our service to fetch conversations
+      const conversationsData = await messagingService.getConversations(userId);
       
-      if (!messagesData || messagesData.length === 0) {
-        addDebugLog('No messages found', null);
-        setConversations([]);
-        return;
-      }
+      setConversations(conversationsData);
+      addDebugLog('Conversations fetched', { count: conversationsData.length });
       
-      // Group messages by conversation
-      const conversationMap = new Map<string, Conversation>();
-      
-      // Collect all user IDs for profile fetching
-      const userIds = new Set<string>();
-      
-      messagesData.forEach((message: Message) => {
-        const conversationId = message.conversation_id;
-        const otherUserId = message.sender_id === currentUser.id ? message.recipient_id : message.sender_id;
-        
-        userIds.add(otherUserId);
-        
-        if (!conversationMap.has(conversationId)) {
-          conversationMap.set(conversationId, {
-            id: conversationId,
-            participant_id: otherUserId,
-            last_message: message.content,
-            last_message_time: message.created_at,
-            unread_count: message.recipient_id === currentUser.id && !message.read_at ? 1 : 0
-          });
-        } else {
-          const conversation = conversationMap.get(conversationId)!;
-          
-          // Update unread count
-          if (message.recipient_id === currentUser.id && !message.read_at) {
-            conversation.unread_count += 1;
-          }
-          
-          // Update last message if this one is newer
-          if (!conversation.last_message_time || new Date(message.created_at) > new Date(conversation.last_message_time)) {
-            conversation.last_message = message.content;
-            conversation.last_message_time = message.created_at;
-          }
-        }
-      });
-      
-      // Fetch profiles for all users
-      if (userIds.size > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('*')
-          .in('id', Array.from(userIds));
-          
-        if (profiles) {
-          // Add profile information to conversations
-          conversationMap.forEach(conversation => {
-            conversation.participant_profile = profiles.find(p => p.id === conversation.participant_id);
-          });
+      // If we're viewing a conversation, update its data
+      if (selectedConversation) {
+        const updatedConversation = conversationsData.find(c => c.id === selectedConversation.id);
+        if (updatedConversation) {
+          setSelectedConversation(updatedConversation);
         }
       }
-      
-      const sortedConversations = Array.from(conversationMap.values())
-        .sort((a, b) => {
-          return new Date(b.last_message_time || '').getTime() - 
-                 new Date(a.last_message_time || '').getTime();
-        });
-      
-      setConversations(sortedConversations);
-      addDebugLog('Conversations processed', { count: sortedConversations.length });
-      
     } catch (error) {
       addDebugLog('Fetch conversations error', String(error));
     }
@@ -345,60 +239,12 @@ const DirectMessagesScreen: React.FC = () => {
     try {
       addDebugLog('Fetching messages', { conversationId });
       
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-        
-      if (error) {
-        addDebugLog('Fetch messages error', error);
-        return;
-      }
+      const messagesData = await messagingService.getMessages(conversationId);
       
-      setMessages(data || []);
-      addDebugLog('Messages fetched', { count: data?.length || 0 });
-      
-      // Mark messages as read
-      if (data && data.length > 0) {
-        markMessagesAsRead(conversationId);
-      }
-      
+      setMessages(messagesData);
+      addDebugLog('Messages fetched', { count: messagesData.length });
     } catch (error) {
       addDebugLog('Messages error', String(error));
-    }
-  };
-
-  // Mark messages as read
-  const markMessagesAsRead = async (conversationId: string) => {
-    if (!currentUser) return;
-    
-    try {
-      const now = new Date().toISOString();
-      
-      const { data, error } = await supabase
-        .from('messages')
-        .update({ read_at: now })
-        .eq('conversation_id', conversationId)
-        .eq('recipient_id', currentUser.id)
-        .is('read_at', null);
-        
-      if (error) {
-        addDebugLog('Mark as read error', error);
-      } else {
-        addDebugLog('Messages marked as read', { count: data?.length || 0 });
-        
-        // Update unread count in conversations
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === conversationId 
-              ? { ...conv, unread_count: 0 } 
-              : conv
-          )
-        );
-      }
-    } catch (error) {
-      addDebugLog('Mark as read exception', String(error));
     }
   };
 
@@ -411,73 +257,56 @@ const DirectMessagesScreen: React.FC = () => {
       const trimmedMessage = messageText.trim();
       setMessageText('');
       
-      let targetRecipientId: string;
-      let targetConversationId: string;
-      
       if (selectedConversation) {
         // Send in existing conversation
-        targetRecipientId = selectedConversation.participant_id;
-        targetConversationId = selectedConversation.id;
+        await messagingService.sendMessage(
+          selectedConversation.id,
+          currentUser.id,
+          trimmedMessage
+        );
+        
+        // Refresh messages
+        fetchMessages(selectedConversation.id);
       } else if (recipientId.trim()) {
-        // Send to specific recipient
-        targetRecipientId = recipientId.trim();
+        // Create new conversation with the recipient
+        const conversationId = await messagingService.createConversation(
+          'direct',
+          [currentUser.id, recipientId.trim()],
+          trimmedMessage
+        );
         
-        // Check if conversation already exists
-        const existingConversation = conversations.find(c => c.participant_id === targetRecipientId);
-        if (existingConversation) {
-          targetConversationId = existingConversation.id;
-        } else {
-          // Create new conversation ID
-          targetConversationId = generateUUID();
-        }
-      } else {
-        // Send to self if no conversation or recipient selected
-        targetRecipientId = currentUser.id;
-        targetConversationId = generateUUID();
-      }
-      
-      addDebugLog('Sending message', {
-        conversationId: targetConversationId,
-        recipientId: targetRecipientId,
-        content: trimmedMessage
-      });
-      
-      // Insert message
-      const { data, error } = await supabase
-        .from('messages')
-        .insert([{
-          conversation_id: targetConversationId,
-          sender_id: currentUser.id,
-          recipient_id: targetRecipientId,
-          content: trimmedMessage
-        }])
-        .select();
-        
-      if (error) {
-        addDebugLog('Send message error', error);
-        Alert.alert('Error', 'Failed to send message: ' + error.message);
-        // Restore message text if sending failed
-        setMessageText(trimmedMessage);
-      } else {
-        addDebugLog('Message sent', { messageId: data[0].id });
-        
-        // If sending to a new recipient, fetch their profile and update conversations
-        if (!selectedConversation) {
-          fetchConversations();
+        // Refresh conversations and select the new one
+        await fetchConversations(currentUser.id);
+        const newConversation = conversations.find(c => c.id === conversationId);
+        if (newConversation) {
+          setSelectedConversation(newConversation);
+          setShowNewConversation(false);
         }
       }
     } catch (error) {
       addDebugLog('Send message exception', String(error));
       Alert.alert('Error', 'Failed to send message: ' + String(error));
+      // Restore message text if sending failed
+      setMessageText(trimmedMessage);
     } finally {
       setIsSending(false);
     }
   };
 
   // Render a conversation list item
-  const renderConversationItem = ({ item }: { item: Conversation }) => {
-    const participant = item.participant_profile;
-    const displayName = participant?.full_name || participant?.username || 'User ' + item.participant_id.substring(0, 8);
+  const renderConversationItem = ({ item }: { item: messagingService.Conversation }) => {
+    // Get first participant for direct conversations
+    const otherParticipant = item.participants && item.participants.length > 0 
+      ? item.participants[0] 
+      : null;
+      
+    // For group chats, show count instead
+    const isGroupChat = item.type !== 'direct' || item.participant_count > 2;
+    const displayName = isGroupChat 
+      ? `Group (${item.participant_count})` 
+      : otherParticipant?.display_name || `User ${otherParticipant?.user_id.substring(0, 8)}`;
+      
+    const photoUrl = !isGroupChat && otherParticipant?.photo_url;
     
     return (
       <TouchableOpacity 
@@ -488,12 +317,12 @@ const DirectMessagesScreen: React.FC = () => {
         onPress={() => setSelectedConversation(item)}
       >
         <View style={styles.avatarContainer}>
-          {participant?.avatar_url ? (
-            <Image source={{ uri: participant.avatar_url }} style={styles.avatar} />
+          {photoUrl ? (
+            <Image source={{ uri: photoUrl }} style={styles.avatar} />
           ) : (
-            <View style={styles.avatarPlaceholder}>
+            <View style={[styles.avatarPlaceholder, isGroupChat && styles.groupAvatar]}>
               <Text style={styles.avatarText}>
-                {displayName.charAt(0).toUpperCase()}
+                {isGroupChat ? `${item.participant_count}` : displayName.charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
@@ -505,7 +334,7 @@ const DirectMessagesScreen: React.FC = () => {
               {displayName}
             </Text>
             <Text style={styles.timestamp}>
-              {formatDate(item.last_message_time)}
+              {formatDate(item.last_message_timestamp)}
             </Text>
           </View>
           
@@ -517,7 +346,7 @@ const DirectMessagesScreen: React.FC = () => {
               ]}
               numberOfLines={1}
             >
-              {item.last_message || 'No messages yet'}
+              {item.last_message_text || 'No messages yet'}
             </Text>
             
             {item.unread_count > 0 && (
@@ -534,8 +363,11 @@ const DirectMessagesScreen: React.FC = () => {
   };
 
   // Render a message bubble
-  const renderMessage = ({ item }: { item: Message }) => {
+  const renderMessage = ({ item }: { item: messagingService.Message }) => {
     const isSentByMe = currentUser && item.sender_id === currentUser.id;
+    const isRead = currentUser && item.read_by_user_ids && item.read_by_user_ids.some(
+      id => id !== currentUser.id
+    );
     
     return (
       <View style={[
@@ -550,14 +382,14 @@ const DirectMessagesScreen: React.FC = () => {
             styles.messageText,
             isSentByMe ? styles.sentMessageText : styles.receivedMessageText
           ]}>
-            {item.content}
+            {item.message_text}
           </Text>
           <Text style={[
             styles.messageTime,
             isSentByMe ? styles.sentMessageTime : styles.receivedMessageTime
           ]}>
             {formatDate(item.created_at)}
-            {isSentByMe && item.read_at && ' • Read'}
+            {isSentByMe && isRead && ' • Read'}
           </Text>
         </View>
       </View>
@@ -570,14 +402,17 @@ const DirectMessagesScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
           {selectedConversation 
-            ? selectedConversation.participant_profile?.full_name || 'Conversation'
-            : 'Messages'}
+            ? selectedConversation.participants?.[0]?.display_name || 'Conversation' 
+            : showNewConversation ? 'New Message' : 'Messages'}
         </Text>
         
-        {selectedConversation && (
+        {(selectedConversation || showNewConversation) && (
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => setSelectedConversation(null)}
+            onPress={() => {
+              setSelectedConversation(null);
+              setShowNewConversation(false);
+            }}
           >
             <Ionicons name="arrow-back" size={24} color="#0057B8" />
           </TouchableOpacity>
@@ -647,6 +482,55 @@ const DirectMessagesScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
+      ) : showNewConversation ? (
+        // New conversation form
+        <KeyboardAvoidingView 
+          style={styles.flex} 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <View style={styles.newMessageForm}>
+            <Text style={styles.formLabel}>Recipient ID</Text>
+            <TextInput
+              style={styles.recipientInput}
+              placeholder="Enter user UUID"
+              value={recipientId}
+              onChangeText={setRecipientId}
+            />
+            
+            <Text style={styles.formLabel}>Message</Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Type your message here..."
+              value={messageText}
+              onChangeText={setMessageText}
+              multiline
+              maxLength={500}
+            />
+            
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                (!recipientId.trim() || !messageText.trim() || isSending) && styles.disabledButton
+              ]}
+              disabled={!recipientId.trim() || !messageText.trim() || isSending}
+              onPress={sendMessage}
+            >
+              <Text style={styles.buttonText}>
+                {isSending ? 'Sending...' : 'Send Message'}
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => {
+                setRecipientId(currentUser.id);
+              }}
+            >
+              <Text style={styles.buttonText}>Use Self ID (Test)</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       ) : (
         // Conversations list view
         <View style={styles.flex}>
@@ -659,46 +543,14 @@ const DirectMessagesScreen: React.FC = () => {
             <View style={styles.centeredContainer}>
               <Text style={styles.noticeText}>No conversations yet</Text>
               <Text style={styles.subText}>
-                Send a message to start a conversation
+                Start a new conversation by pressing the + button
               </Text>
               
-              <View style={styles.newMessageForm}>
-                <Text style={styles.formLabel}>New Message</Text>
-                <TextInput
-                  style={styles.recipientInput}
-                  placeholder="Recipient ID (UUID)"
-                  value={recipientId}
-                  onChangeText={setRecipientId}
-                />
-                <TextInput
-                  style={styles.messageInput}
-                  placeholder="Message text..."
-                  value={messageText}
-                  onChangeText={setMessageText}
-                  multiline
-                />
-                <TouchableOpacity
-                  style={[
-                    styles.primaryButton,
-                    (!recipientId.trim() || !messageText.trim() || isSending) && styles.disabledButton
-                  ]}
-                  disabled={!recipientId.trim() || !messageText.trim() || isSending}
-                  onPress={sendMessage}
-                >
-                  <Text style={styles.buttonText}>
-                    {isSending ? 'Sending...' : 'Send Message'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
               <TouchableOpacity
-                style={[styles.secondaryButton, styles.selfMessageButton]}
-                onPress={() => {
-                  setRecipientId(currentUser.id);
-                  setMessageText(`Test message at ${new Date().toLocaleTimeString()}`);
-                }}
+                style={[styles.primaryButton, { marginTop: 20 }]}
+                onPress={() => setShowNewConversation(true)}
               >
-                <Text style={styles.buttonText}>Prepare Self-Message</Text>
+                <Text style={styles.buttonText}>New Message</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -708,32 +560,14 @@ const DirectMessagesScreen: React.FC = () => {
               keyExtractor={item => item.id}
               contentContainerStyle={styles.conversationsList}
               refreshing={isLoading}
-              onRefresh={fetchConversations}
+              onRefresh={() => currentUser && fetchConversations(currentUser.id)}
             />
           )}
           
-          {conversations.length > 0 && (
+          {!showNewConversation && (
             <TouchableOpacity
               style={styles.newConversationButton}
-              onPress={() => {
-                setSelectedConversation(null);
-                setRecipientId('');
-                setMessageText('');
-                Alert.alert(
-                  'New Message',
-                  'Enter recipient ID (UUID) and message text below.',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Create',
-                      onPress: () => {
-                        // Show the empty state form
-                        setConversations([]);
-                      }
-                    }
-                  ]
-                );
-              }}
+              onPress={() => setShowNewConversation(true)}
             >
               <Ionicons name="create" size={24} color="#fff" />
             </TouchableOpacity>
@@ -775,7 +609,7 @@ const DirectMessagesScreen: React.FC = () => {
         </View>
       )}
       
-      {isLoading && !selectedConversation && (
+      {isLoading && !selectedConversation && !showNewConversation && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#0057B8" />
         </View>
@@ -880,6 +714,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#0057B8',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  groupAvatar: {
+    backgroundColor: '#FF6A00',
   },
   avatarText: {
     fontSize: 18,
@@ -1017,30 +854,28 @@ const styles = StyleSheet.create({
   
   // New Message Form
   newMessageForm: {
-    width: '100%',
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+    flex: 1,
     padding: 16,
-    marginVertical: 20,
+    backgroundColor: '#FFF',
   },
   formLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 8,
+    marginTop: 16,
   },
   recipientInput: {
     backgroundColor: '#F0F0F0',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 8,
+    paddingVertical: 10,
   },
   messageInput: {
     backgroundColor: '#F0F0F0',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    height: 100,
+    paddingVertical: 10,
+    height: 150,
     textAlignVertical: 'top',
     marginBottom: 16,
   },
@@ -1049,17 +884,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
-    width: '100%',
+    marginTop: 8,
   },
   secondaryButton: {
     backgroundColor: '#4CAF50',
     borderRadius: 8,
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginTop: 12,
-  },
-  selfMessageButton: {
-    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    marginTop: 8,
   },
   buttonText: {
     color: '#FFF',
