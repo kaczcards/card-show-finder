@@ -205,7 +205,7 @@ export const registerForShow = async (
     // Insert new participation record
     const { data, error } = await supabase
       .from('show_participants')
-      // Insert only the base columns that are guaranteed to exist.
+      // Insert only the base columns that are guaranteed to exist
       .insert({
         userid: userId,
         showid: participationData.showId,
@@ -320,11 +320,11 @@ export const cancelShowParticipation = async (
       return { success: false, error: 'Participation record not found or unauthorized' };
     }
 
-    // Update the status to cancelled
-    // If the optional `status` column does not exist in the current DB
-    // schema, fallback to deleting the record entirely.  This keeps the
-    // code functional regardless of whether the migration adding the
-    // `status` field has been applied.
+    // Cancellation strategy:
+    // We simply remove the participation row, which has the same practical
+    // effect as setting a "cancelled" status.  This avoids relying on the
+    // optional `status` column that may not be present in every deployed
+    // database schema.
     const { error } = await supabase
       .from('show_participants')
       .delete()
@@ -355,34 +355,56 @@ export const getDealersForShow = async (
       return { data: null, error: 'Invalid showId' };
     }
 
-    const { data, error } = await supabase
+    // Step 1: Fetch show participants data
+    const { data: participantsData, error: participantsError } = await supabase
       .from('show_participants')
-      .select(`
-        *,
-        profiles:userid (first_name, last_name, email, profile_image_url)
-      `)
+      .select('*')
       .eq('showid', showId)
-      .in('status', ['registered', 'confirmed'])
       .order('createdat', { ascending: true });
 
-    if (error) {
-      throw error;
+    if (participantsError) {
+      throw participantsError;
     }
 
-    if (!data || data.length === 0) {
+    if (!participantsData || participantsData.length === 0) {
       return { data: [], error: null };
     }
 
-    // Transform the data to include dealer profile information
-    const transformedData = data.map(item => {
+    // Step 2: Extract user IDs from participants
+    const userIds = participantsData.map(participant => participant.userid);
+
+    // Step 3: Fetch profiles for these user IDs
+    // Only select columns that definitely exist in the schema
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email')
+      .in('id', userIds);
+
+    if (profilesError) {
+      throw profilesError;
+    }
+
+    // Create a map of user profiles for easy lookup
+    const profilesMap: Record<string, any> = {};
+    if (profilesData) {
+      profilesData.forEach(profile => {
+        profilesMap[profile.id] = profile;
+      });
+    }
+
+    // Step 4: Combine the data in JavaScript
+    const transformedData = participantsData.map(item => {
       const participation = mapDbParticipationToAppParticipation(item);
+      const profile = profilesMap[item.userid];
       
       // Add dealer profile info
       return {
         ...participation,
-        dealerName: item.profiles ? `${item.profiles.first_name} ${item.profiles.last_name || ''}`.trim() : 'Unknown Dealer',
-        dealerEmail: item.profiles?.email,
-        dealerProfileImage: item.profiles?.profile_image_url
+        dealerName: profile 
+          ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() 
+          : 'Unknown Dealer',
+        dealerEmail: profile?.email,
+        dealerProfileImage: undefined // Profile image URL is not available in the schema
       };
     });
 
@@ -445,7 +467,7 @@ export const getAvailableShowsForDealer = async (
 
     // Exclude shows the dealer is already registered for
     if (registeredShowIds.length > 0) {
-      query = query.not('id', 'in', `(${registeredShowIds.join(',')})`);
+      query = query.not('id', 'in', `(${registeredShowIds.join(',')})`)
     }
 
     // Order by start date
