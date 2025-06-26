@@ -18,6 +18,7 @@ import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
 import { UserRole } from '../../services/userRoleService';
 import GroupMessageComposer from '../../components/GroupMessageComposer';
+import DealerDetailModal from '../../components/DealerDetailModal';
 
 interface ShowDetailProps {
   route: any;
@@ -41,6 +42,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   // MVP Dealers state
   const [mvpDealers, setMvpDealers] = useState<any[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
+
+  /* ---------- Dealer-detail modal state ---------- */
+  const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
+  const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(
+    null
+  );
 
   useEffect(() => {
     if (!user || !userProfile) {
@@ -339,29 +346,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   /* Placeholder navigation / messaging handlers for MVP dealers    */
   /* -------------------------------------------------------------- */
   const handleViewDealerDetails = (dealerId: string) => {
-    // Reset navigation so root is MainTabs → Profile → DealerProfile
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [
-          {
-            name: 'MainTabs',
-            params: {
-              screen: 'Profile',
-              params: {
-                screen: 'DealerProfile',
-                // Pass both dealerId and showId so the profile screen
-                // can display booth-specific info for this show.
-                params: { 
-                  dealerId,
-                  showId, 
-                },
-              },
-            },
-          },
-        ],
-      })
-    );
+    // Open modal with booth-specific info instead of navigating away
+    setSelectedDealer({ id: dealerId, name: mvpDealers.find(d => d.id === dealerId)?.name || '' });
+    setShowDealerDetailModal(true);
   };
 
   const handleMessageDealer = (dealerId: string, dealerName: string) => {
@@ -532,7 +519,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
                   {/* Dealer Name (link-like button) */}
                   <TouchableOpacity
                     style={styles.dealerNameButton}
-                    onPress={() => handleViewDealerDetails(dealer.id)}
+                    onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
                   >
                     <Text style={styles.dealerName}>{dealer.name}</Text>
                   </TouchableOpacity>
@@ -565,6 +552,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           Alert.alert('Success', 'Broadcast message sent successfully');
         }}
       />
+
+      {/* Dealer Detail Modal */}
+      {selectedDealer && (
+        <DealerDetailModal
+          isVisible={showDealerDetailModal}
+          onClose={() => setShowDealerDetailModal(false)}
+          dealerId={selectedDealer.id}
+          showId={showId}
+          dealerName={selectedDealer.name}
+        />
+      )}
     </ScrollView>
   );
 };

@@ -1,230 +1,140 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+  Modal,
   View,
   Text,
-  StyleSheet,
-  Modal,
   TouchableOpacity,
-  ScrollView,
-  Image,
-  Platform,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 
-// Define the props type for the dealer participation data
-export interface DealerDetailModalProps {
-  visible: boolean;
+interface DealerDetailModalProps {
+  isVisible: boolean;
   onClose: () => void;
-  dealer: {
-    id: string;
-    userId: string;
-    showId: string;
-    dealerName: string;
-    dealerEmail?: string;
-    dealerProfileImage?: string;
-    cardTypes: string[];
-    specialty?: string;
-    priceRange?: 'budget' | 'mid-range' | 'high-end';
-    notableItems?: string;
-    boothLocation?: string;
-    paymentMethods: string[];
-    openToTrades: boolean;
-    buyingCards: boolean;
-    /**
-     * Optional status of the dealer's participation.  This property may be
-     * absent if the database schema does not include the `status` column
-     * (e.g., when the migration adding it hasn't been applied yet).
-     */
-    status?: 'registered' | 'confirmed' | 'cancelled' | 'completed';
-  } | null;
+  dealerId: string;
+  showId: string;
+  dealerName: string;
 }
 
-// Price range display mapping
-const PRICE_RANGE_LABELS: Record<string, string> = {
-  'budget': 'Budget-Friendly',
-  'mid-range': 'Mid-Range',
-  'high-end': 'High-End',
-};
-
 const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
-  visible,
+  isVisible,
   onClose,
-  dealer,
+  dealerId,
+  showId,
+  dealerName,
 }) => {
-  if (!dealer) return null;
+  const [boothInfo, setBoothInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    if (!isVisible || !dealerId || !showId) {
+      return;
+    }
+
+    const fetchBoothInfo = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { data, error: fetchError } = await supabase
+          .from('show_participants')
+          .select('*')
+          .eq('userid', dealerId)
+          .eq('showid', showId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching booth info:', fetchError);
+          setError('Failed to load booth information.');
+          setBoothInfo(null);
+          return;
+        }
+        setBoothInfo(data);
+      } catch (err: any) {
+        console.error('Unexpected error in fetchBoothInfo:', err);
+        setError(err.message || 'An unexpected error occurred.');
+        setBoothInfo(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBoothInfo();
+  }, [isVisible, dealerId, showId]);
+
+  const handleMessageDealer = () => {
+    onClose(); // Close the modal before navigating
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'MainTabs', // Assuming 'MainTabs' is the name of your tab navigator
+            params: {
+              screen: 'Messages', // Name of the tab screen for messages
+              params: {
+                recipientId: dealerId,
+                recipientName: dealerName,
+                isNewConversation: true,
+              },
+            },
+          },
+        ],
+      })
+    );
+  };
 
   return (
     <Modal
       animationType="slide"
       transparent={true}
-      visible={visible}
+      visible={isVisible}
       onRequestClose={onClose}
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          {/* Header with close button */}
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Dealer Information</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-            >
-              <Ionicons name="close" size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Ionicons name="close-circle" size={30} color="#666" />
+          </TouchableOpacity>
 
-          <ScrollView style={styles.scrollContent}>
-            {/* Dealer Profile */}
-            <View style={styles.dealerProfile}>
-              {dealer.dealerProfileImage ? (
-                <Image 
-                  source={{ uri: dealer.dealerProfileImage }} 
-                  style={styles.profileImage} 
-                />
-              ) : (
-                <View style={styles.profileImagePlaceholder}>
-                  <Ionicons name="person" size={40} color="#ccc" />
-                </View>
-              )}
-              <View style={styles.dealerInfo}>
-                <Text style={styles.dealerName}>{dealer.dealerName}</Text>
-                {dealer.status && (
-                  <View style={[
-                    styles.statusBadge,
-                    dealer.status === 'confirmed' ? styles.confirmedBadge : 
-                    dealer.status === 'cancelled' ? styles.cancelledBadge : 
-                    styles.registeredBadge
-                  ]}>
-                    <Text style={styles.statusText}>
-                      {dealer.status.charAt(0).toUpperCase() + dealer.status.slice(1)}
-                    </Text>
-                  </View>
-                )}
+          <Text style={styles.modalTitle}>{dealerName}'s Booth Info</Text>
+
+          {loading ? (
+            <ActivityIndicator size="large" color="#0057B8" style={styles.loadingIndicator} />
+          ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : boothInfo ? (
+            <View style={styles.infoContainer}>
+              <View style={styles.infoRow}>
+                <Ionicons name="grid" size={20} color="#666" style={styles.infoIcon} />
+                <Text style={styles.infoLabel}>Booth Number:</Text>
+                <Text style={styles.infoValue}>{boothInfo.booth_number || 'Not specified'}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons name="list" size={20} color="#666" style={styles.infoIcon} />
+                <Text style={styles.infoLabel}>Items for Sale:</Text>
+                <Text style={styles.infoValue}>{boothInfo.items_for_sale || 'Not specified'}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons name="information-circle" size={20} color="#666" style={styles.infoIcon} />
+                <Text style={styles.infoLabel}>Notes:</Text>
+                <Text style={styles.infoValue}>{boothInfo.notes || 'No additional notes'}</Text>
               </View>
             </View>
+          ) : (
+            <Text style={styles.noInfoText}>No booth information available for this show.</Text>
+          )}
 
-            {/* Booth Location */}
-            {dealer.boothLocation && (
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="location-outline" size={22} color="#0057B8" />
-                  <Text style={styles.infoHeaderText}>Booth Location</Text>
-                </View>
-                <Text style={styles.infoText}>{dealer.boothLocation}</Text>
-              </View>
-            )}
-
-            {/* Card Types */}
-            {dealer.cardTypes && dealer.cardTypes.length > 0 && (
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="card-outline" size={22} color="#0057B8" />
-                  <Text style={styles.infoHeaderText}>Card Types</Text>
-                </View>
-                <View style={styles.tagsContainer}>
-                  {dealer.cardTypes.map((type, index) => (
-                    <View key={index} style={styles.tag}>
-                      <Text style={styles.tagText}>{type}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Specialty */}
-            {dealer.specialty && (
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="star-outline" size={22} color="#0057B8" />
-                  <Text style={styles.infoHeaderText}>Specialty</Text>
-                </View>
-                <Text style={styles.infoText}>{dealer.specialty}</Text>
-              </View>
-            )}
-
-            {/* Price Range */}
-            {dealer.priceRange && (
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="cash-outline" size={22} color="#0057B8" />
-                  <Text style={styles.infoHeaderText}>Price Range</Text>
-                </View>
-                <Text style={styles.infoText}>
-                  {PRICE_RANGE_LABELS[dealer.priceRange] || dealer.priceRange}
-                </Text>
-              </View>
-            )}
-
-            {/* Notable Items */}
-            {dealer.notableItems && (
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="trophy-outline" size={22} color="#0057B8" />
-                  <Text style={styles.infoHeaderText}>Notable Items</Text>
-                </View>
-                <Text style={styles.infoText}>{dealer.notableItems}</Text>
-              </View>
-            )}
-
-            {/* Payment Methods */}
-            {dealer.paymentMethods && dealer.paymentMethods.length > 0 && (
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="wallet-outline" size={22} color="#0057B8" />
-                  <Text style={styles.infoHeaderText}>Payment Methods</Text>
-                </View>
-                <View style={styles.tagsContainer}>
-                  {dealer.paymentMethods.map((method, index) => (
-                    <View key={index} style={[styles.tag, styles.paymentTag]}>
-                      <Text style={styles.tagText}>{method}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Trading & Buying */}
-            <View style={styles.infoSection}>
-              <View style={styles.infoHeader}>
-                <Ionicons name="swap-horizontal-outline" size={22} color="#0057B8" />
-                <Text style={styles.infoHeaderText}>Trading & Buying</Text>
-              </View>
-              <View style={styles.flagsContainer}>
-                <View style={styles.flagItem}>
-                  <Ionicons 
-                    name={dealer.openToTrades ? "checkmark-circle" : "close-circle"} 
-                    size={22} 
-                    color={dealer.openToTrades ? "#4CAF50" : "#F44336"} 
-                  />
-                  <Text style={styles.flagText}>
-                    {dealer.openToTrades ? "Open to trades" : "Not trading"}
-                  </Text>
-                </View>
-                <View style={styles.flagItem}>
-                  <Ionicons 
-                    name={dealer.buyingCards ? "checkmark-circle" : "close-circle"} 
-                    size={22} 
-                    color={dealer.buyingCards ? "#4CAF50" : "#F44336"} 
-                  />
-                  <Text style={styles.flagText}>
-                    {dealer.buyingCards ? "Buying cards" : "Not buying"}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Contact Button - Only show if email is available */}
-            {dealer.dealerEmail && (
-              <TouchableOpacity
-                style={styles.contactButton}
-                // In a real implementation, this would open the email app
-                // or a contact form
-              >
-                <Ionicons name="mail-outline" size={20} color="white" />
-                <Text style={styles.contactButtonText}>Contact Dealer</Text>
-              </TouchableOpacity>
-            )}
-          </ScrollView>
+          <TouchableOpacity style={styles.messageButton} onPress={handleMessageDealer}>
+            <Ionicons name="chatbubbles" size={20} color="white" style={styles.messageButtonIcon} />
+            <Text style={styles.messageButtonText}>Message {dealerName}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -232,152 +142,102 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  centeredView: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-    minHeight: '50%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '90%',
+    maxHeight: '80%',
   },
   closeButton: {
-    padding: 4,
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
   },
-  scrollContent: {
-    padding: 16,
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+    textAlign: 'center',
   },
-  dealerProfile: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  loadingIndicator: {
+    marginVertical: 30,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  infoContainer: {
+    width: '100%',
     marginBottom: 20,
   },
-  profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 16,
-  },
-  profileImagePlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
+  infoRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    marginBottom: 10,
   },
-  dealerInfo: {
+  infoIcon: {
+    marginRight: 10,
+  },
+  infoLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#555',
+    width: 120, // Fixed width for labels for alignment
+  },
+  infoValue: {
+    fontSize: 16,
+    color: '#333',
     flex: 1,
   },
-  dealerName: {
+  noInfoText: {
+    fontSize: 16,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  messageButton: {
+    backgroundColor: '#4CAF50',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  messageButtonIcon: {
+    marginRight: 10,
+  },
+  messageButtonText: {
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  registeredBadge: {
-    backgroundColor: '#e6f2ff',
-  },
-  confirmedBadge: {
-    backgroundColor: '#e6ffe6',
-  },
-  cancelledBadge: {
-    backgroundColor: '#ffe6e6',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  infoSection: {
-    marginBottom: 20,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  infoHeaderText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginLeft: 8,
-  },
-  infoText: {
-    fontSize: 16,
-    color: '#333',
-    paddingLeft: 30,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingLeft: 30,
-  },
-  tag: {
-    backgroundColor: '#e6f2ff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  paymentTag: {
-    backgroundColor: '#f0f0f0',
-  },
-  tagText: {
-    fontSize: 14,
-    color: '#0057B8',
-  },
-  flagsContainer: {
-    paddingLeft: 30,
-  },
-  flagItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  flagText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 8,
-  },
-  contactButton: {
-    backgroundColor: '#FF6A00',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 16,
-    marginBottom: 20,
-  },
-  contactButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
   },
 });
 
