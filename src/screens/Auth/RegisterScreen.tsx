@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {
@@ -36,6 +37,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [homeZipCode, setHomeZipCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.ATTENDEE);
 
   // Get auth context
   const { register, error, clearError } = useAuth();
@@ -83,7 +85,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       setIsSubmitting(true);
-      await register(email, password, firstName, lastName, homeZipCode);
+      // TODO: update AuthContext.register signature to include role
+      // @ts-ignore – temporary until context/ service updated
+      await register(email, password, firstName, lastName, homeZipCode, selectedRole);
       Alert.alert(
         'Registration Successful',
         'Your account has been created. Please verify your email address.',
@@ -226,6 +230,62 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 editable={!isSubmitting}
               />
             </View>
+
+          {/* ----------  Role Selection ---------- */}
+          <View style={styles.roleContainer}>
+            {/* Attendee */}
+            <TouchableOpacity
+              style={styles.roleOption}
+              onPress={() => setSelectedRole(UserRole.ATTENDEE)}
+              disabled={isSubmitting}
+            >
+              <Ionicons name="person-outline" size={24} color="#666" style={styles.roleIcon} />
+              <View style={styles.roleTextContainer}>
+                <Text style={styles.roleLabel}>Attendee</Text>
+                <Text style={styles.roleDescription}>
+                  Free account for collectors to find shows, track their collection, and connect with
+                  other enthusiasts.
+                </Text>
+              </View>
+              <Ionicons
+                name={
+                  selectedRole === UserRole.ATTENDEE
+                    ? 'radio-button-on'
+                    : 'radio-button-off'
+                }
+                size={22}
+                color="#007AFF"
+              />
+            </TouchableOpacity>
+
+            {/* Dealer */}
+            <TouchableOpacity
+              style={styles.roleOption}
+              onPress={() => setSelectedRole(UserRole.DEALER)}
+              disabled={isSubmitting}
+            >
+              <Ionicons
+                name="briefcase-outline"
+                size={24}
+                color="#666"
+                style={styles.roleIcon}
+              />
+              <View style={styles.roleTextContainer}>
+                <Text style={styles.roleLabel}>Dealer</Text>
+                <Text style={styles.roleDescription}>
+                  Create listings for shows, manage inventory, and interact directly with collectors.
+                  Upgrade to MVP for advanced features.
+                </Text>
+              </View>
+              <Ionicons
+                name={
+                  selectedRole === UserRole.DEALER ? 'radio-button-on' : 'radio-button-off'
+                }
+                size={22}
+                color="#007AFF"
+              />
+            </TouchableOpacity>
+          </View>
 
             <Text style={styles.requiredFieldsNote}>* Required fields</Text>
 
@@ -386,6 +446,39 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  /* ----------  Role-selection styles ---------- */
+  roleContainer: {
+    marginTop: 10,
+    marginBottom: 24,
+  },
+  roleOption: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  roleIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  roleTextContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  roleLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  roleDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 18,
   },
 });
 
