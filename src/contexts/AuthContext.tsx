@@ -8,7 +8,14 @@ import * as supabaseAuthService from '../services/supabaseAuthService';
 interface AuthContextType {
   authState: AuthState;
   login: (credentials: AuthCredentials) => Promise<User>;
-  register: (email: string, password: string, firstName: string, lastName: string, homeZipCode: string) => Promise<User>;
+  register: (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    homeZipCode: string,
+    role: UserRole
+  ) => Promise<User>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<void>;
@@ -214,7 +221,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string,
     firstName: string,
     lastName: string,
-    homeZipCode: string
+    homeZipCode: string,
+    role: UserRole
   ): Promise<User> => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
@@ -224,7 +232,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
         firstName,
         lastName,
-        homeZipCode
+        homeZipCode,
+        role
       );
       
       setAuthState({
