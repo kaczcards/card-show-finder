@@ -338,13 +338,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   /* Placeholder navigation / messaging handlers for MVP dealers    */
   /* -------------------------------------------------------------- */
   const handleViewDealerDetails = (dealerId: string) => {
-    // TODO: integrate with navigation once Dealer detail screen exists
-    console.log('Navigating to dealer details for:', dealerId);
+    // Navigate to the dealer profile screen with the dealer's ID
+    navigation.navigate('DealerProfile', { dealerId });
   };
 
   const handleMessageDealer = (dealerId: string, dealerName: string) => {
-    // TODO: open message composer when messaging flow is wired in
-    console.log(`Opening chat with ${dealerName} (ID: ${dealerId})`);
+    // Navigate to the Direct Messages screen, initiating a new conversation
+    navigation.navigate('DirectMessages', {
+      recipientId: dealerId,
+      recipientName: dealerName,
+      isNewConversation: true,
+    });
   };
   
   if (loading) {
