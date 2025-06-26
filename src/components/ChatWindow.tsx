@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  Keyboard
+  Keyboard,
+  Alert,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as messagingService from '../services/messagingService';
 import { supabase } from '../supabase';
+import * as Haptics from 'expo-haptics';
 
 interface Message {
   id: string;
@@ -37,6 +40,7 @@ interface ChatWindowProps {
   recipientId?: string;
   onBack?: () => void;
   headerTitle?: string;
+  conversationType?: 'direct' | 'group' | 'show';
   onMessageSent?: () => void;
 }
 
@@ -46,14 +50,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   recipientId,
   onBack,
   headerTitle = 'Chat',
+  conversationType = 'direct',
   onMessageSent
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false); // For pull-to-refresh
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedMessages, setFailedMessages] = useState<{ text: string, retries: number }[]>([]);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [newMessageCount, setNewMessageCount] = useState(0);
   
+  // Animation for new message notification
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  
+  // Refs
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
   
@@ -73,50 +86,99 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     markAsRead();
     
     // Set up real-time subscription for new messages
-    const subscription = supabase
-      .channel(`messages:${conversationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${conversationId}`
-      }, (payload) => {
-        const newMessage = payload.new as Message;
-        
-        // Add the new message to state
-        setMessages(prevMessages => [...prevMessages, newMessage]);
-        
-        // Mark message as read if from another user
-        if (newMessage.sender_id !== userId) {
-          messagingService.markMessageAsRead(newMessage.id, userId);
-        }
-        
-        // Scroll to bottom
-        setTimeout(() => scrollToBottom(), 100);
-      })
-      .subscribe();
+    const subscription = messagingService.subscribeToMessages(
+      conversationId,
+      handleNewMessage
+    );
     
     return () => {
       supabase.removeChannel(subscription);
     };
   }, [conversationId, userId]);
   
+  // Handle new incoming message from subscription
+  const handleNewMessage = useCallback((newMessage: Message) => {
+    setMessages(prevMessages => {
+      // Check if message already exists (prevent duplicates)
+      const exists = prevMessages.some(m => m.id === newMessage.id);
+      if (exists) return prevMessages;
+      
+      const updatedMessages = [...prevMessages, newMessage];
+      
+      // If the new message is from someone else
+      if (newMessage.sender_id !== userId) {
+        // Mark it as read
+        messagingService.markMessageAsRead(newMessage.id, userId);
+        
+        // Trigger haptic feedback
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      }
+      
+      // Check if we're scrolled near the bottom to determine auto-scrolling
+      if (isNearBottom()) {
+        // Delay scrolling to ensure the new message is rendered
+        setTimeout(() => scrollToBottom(), 100);
+      } else {
+        // Show new message notification
+        setNewMessageCount(prev => prev + 1);
+        Animated.sequence([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(fadeAnim, {
+            toValue: 0.7,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+      
+      return updatedMessages;
+    });
+  }, [userId]);
+  
+  // Check if we're near the bottom of the message list
+  const isNearBottom = () => {
+    // Logic to determine if we're near the bottom
+    // This is a placeholder - in a real implementation you'd check the scroll position
+    return true;
+  };
+  
   // Fetch messages from the API
-  const fetchMessages = async () => {
+  const fetchMessages = async (isFetchingMore = false) => {
     try {
-      setIsLoading(true);
+      if (!isFetchingMore) {
+        setIsLoading(true);
+      } else {
+        setIsFetching(true);
+      }
       setError(null);
       
       const fetchedMessages = await messagingService.getMessages(conversationId);
       setMessages(fetchedMessages);
       
+      // Mark messages as read
+      if (fetchedMessages.length > 0) {
+        await messagingService.markConversationAsRead(conversationId, userId);
+      }
+      
       // Scroll to bottom after messages load
       setTimeout(() => scrollToBottom(), 100);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching messages:', error);
-      setError('Failed to load messages');
+      setError(`Failed to load messages: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
+      setIsFetching(false);
     }
   };
   
@@ -124,21 +186,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const handleSendMessage = async () => {
     if (!messageText.trim() || isSending) return;
     
+    // Store message text before clearing input
+    const trimmedMessage = messageText.trim();
+    setMessageText('');
+    
+    // Clear new message badge when sending a message
+    setNewMessageCount(0);
+    
+    // Hide keyboard after sending
+    Keyboard.dismiss();
+    
     try {
       setIsSending(true);
-      const trimmedMessage = messageText.trim();
-      setMessageText('');
-      Keyboard.dismiss();
       
-      if (recipientId) {
+      if (conversationType === 'direct' && recipientId) {
+        // Direct message
         await messagingService.sendMessage(userId, recipientId, trimmedMessage, conversationId);
       } else {
-        // If no explicit recipient ID provided, this is sending within an existing conversation
-        const recipient = messages.find(m => m.sender_id !== userId)?.sender_id;
-        if (!recipient) {
-          throw new Error('No recipient found in this conversation');
-        }
-        await messagingService.sendMessage(userId, recipient, trimmedMessage, conversationId);
+        // Group/show message
+        await messagingService.sendGroupMessage(userId, conversationId, trimmedMessage);
       }
       
       // Notify parent component that a message was sent
@@ -152,10 +218,61 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       inputRef.current?.focus();
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessageText(trimmedMessage); // Restore the message if sending failed
-      setError('Failed to send message. Please try again.');
+      
+      // Add to failed messages queue
+      setFailedMessages(prev => [...prev, { text: trimmedMessage, retries: 0 }]);
+      
+      // Show error toast
+      Alert.alert(
+        'Failed to Send',
+        'Your message was not sent. Tap "Retry" in the failed messages section to try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setIsSending(false);
+    }
+  };
+  
+  // Retry sending a failed message
+  const handleRetryMessage = async (index: number) => {
+    const failedMessage = failedMessages[index];
+    
+    // Remove from failed messages
+    setFailedMessages(prev => prev.filter((_, i) => i !== index));
+    
+    try {
+      if (conversationType === 'direct' && recipientId) {
+        // Direct message
+        await messagingService.sendMessage(userId, recipientId, failedMessage.text, conversationId);
+      } else {
+        // Group/show message
+        await messagingService.sendGroupMessage(userId, conversationId, failedMessage.text);
+      }
+      
+      // Notify parent component that a message was sent
+      if (onMessageSent) {
+        onMessageSent();
+      }
+    } catch (error) {
+      console.error('Error retrying message:', error);
+      
+      // Increment retry count and add back to queue
+      const newRetryCount = failedMessage.retries + 1;
+      
+      if (newRetryCount >= 3) {
+        Alert.alert(
+          'Send Failed',
+          'We could not send your message after multiple attempts. Please check your connection and try again later.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        setFailedMessages(prev => [...prev, { text: failedMessage.text, retries: newRetryCount }]);
+        Alert.alert(
+          'Retry Failed',
+          'Your message could not be sent. Please try again later.',
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
   
@@ -163,6 +280,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const scrollToBottom = () => {
     if (flatListRef.current && messages.length > 0) {
       flatListRef.current.scrollToEnd({ animated: true });
+      setShowScrollButton(false);
+      setNewMessageCount(0);
+    }
+  };
+  
+  // Handle scroll events
+  const handleScroll = (event) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const paddingToBottom = 20;
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+    
+    setShowScrollButton(!isCloseToBottom);
+    
+    if (isCloseToBottom) {
+      setNewMessageCount(0);
     }
   };
   
@@ -245,7 +377,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           styles.messageBubble,
           isSentByMe ? styles.sentBubble : styles.receivedBubble
         ]}>
-          {!isSentByMe && (
+          {!isSentByMe && conversationType !== 'direct' && (
             <Text style={styles.senderName}>
               {item.sender_profile?.full_name || 
                item.sender_profile?.username || 
@@ -258,14 +390,49 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           ]}>
             {item.message_text}
           </Text>
-          <Text style={[
-            styles.messageTime,
-            isSentByMe ? styles.sentMessageTime : styles.receivedMessageTime
-          ]}>
-            {formatTime(item.created_at)}
-            {isSentByMe && hasRead && ' • Read'}
-          </Text>
+          <View style={styles.messageFooter}>
+            <Text style={[
+              styles.messageTime,
+              isSentByMe ? styles.sentMessageTime : styles.receivedMessageTime
+            ]}>
+              {formatTime(item.created_at)}
+            </Text>
+            {isSentByMe && (
+              hasRead ? (
+                <Ionicons name="checkmark-done" size={14} color="#4CAF50" style={styles.readIcon} />
+              ) : (
+                <Ionicons name="checkmark" size={14} color="#8E8E93" style={styles.readIcon} />
+              )
+            )}
+          </View>
         </View>
+      </View>
+    );
+  };
+  
+  // Render failed messages
+  const renderFailedMessages = () => {
+    if (failedMessages.length === 0) return null;
+    
+    return (
+      <View style={styles.failedMessagesContainer}>
+        <Text style={styles.failedMessagesTitle}>Failed Messages</Text>
+        {failedMessages.map((message, index) => (
+          <View key={index} style={styles.failedMessageRow}>
+            <View style={styles.failedMessageBubble}>
+              <Text style={styles.failedMessageText}>
+                {message.text.length > 30 ? message.text.substring(0, 30) + '...' : message.text}
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => handleRetryMessage(index)}
+            >
+              <Text style={styles.retryText}>Retry</Text>
+              <Ionicons name="refresh" size={14} color="#FF6A00" />
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
     );
   };
@@ -283,8 +450,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     <View style={styles.centerContainer}>
       <Ionicons name="alert-circle" size={40} color="#FF3B30" />
       <Text style={styles.errorText}>{error}</Text>
-      <TouchableOpacity style={styles.retryButton} onPress={fetchMessages}>
-        <Text style={styles.retryText}>Retry</Text>
+      <TouchableOpacity style={styles.retryLoadButton} onPress={fetchMessages}>
+        <Text style={styles.retryLoadText}>Retry</Text>
       </TouchableOpacity>
     </View>
   );
@@ -310,7 +477,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             <Ionicons name="arrow-back" size={24} color="#0057B8" />
           </TouchableOpacity>
         )}
-        <Text style={styles.headerTitle}>{headerTitle}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{headerTitle}</Text>
       </View>
       
       <View style={styles.messagesList}>
@@ -333,11 +500,40 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 )}
                 onContentSizeChange={scrollToBottom}
                 onLayout={scrollToBottom}
+                onScroll={handleScroll}
+                scrollEventThrottle={400}
               />
             )
           )
         )}
+        
+        {/* Scroll to bottom button */}
+        {showScrollButton && (
+          <Animated.View 
+            style={[
+              styles.scrollToBottomButton,
+              { opacity: fadeAnim }
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.scrollToBottomButtonInner}
+              onPress={scrollToBottom}
+            >
+              <Ionicons name="arrow-down" size={20} color="white" />
+              {newMessageCount > 0 && (
+                <View style={styles.newMessageBadge}>
+                  <Text style={styles.newMessageCount}>
+                    {newMessageCount > 99 ? '99+' : newMessageCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </View>
+      
+      {/* Failed messages section */}
+      {renderFailedMessages()}
       
       <View style={styles.inputContainer}>
         <TextInput
@@ -394,7 +590,7 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     flex: 1,
-    padding: 16,
+    position: 'relative',
   },
   centerContainer: {
     flex: 1,
@@ -413,14 +609,14 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     textAlign: 'center',
   },
-  retryButton: {
+  retryLoadButton: {
     marginTop: 16,
     paddingVertical: 8,
     paddingHorizontal: 16,
     backgroundColor: '#FF6A00',
     borderRadius: 8,
   },
-  retryText: {
+  retryLoadText: {
     color: 'white',
     fontWeight: 'bold',
   },
@@ -451,6 +647,7 @@ const styles = StyleSheet.create({
   messageRow: {
     flexDirection: 'row',
     marginVertical: 4,
+    paddingHorizontal: 16,
   },
   sentMessageRow: {
     justifyContent: 'flex-end',
@@ -464,7 +661,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginRight: 8,
     alignSelf: 'flex-end',
-    marginBottom: 8,
+    marginBottom: 18, // Adjust to align with the bottom of the message
   },
   avatarPlaceholder: {
     width: 30,
@@ -472,7 +669,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginRight: 8,
     alignSelf: 'flex-end',
-    marginBottom: 8,
+    marginBottom: 18, // Adjust to align with the bottom of the message
     backgroundColor: '#0057B8',
     justifyContent: 'center',
     alignItems: 'center',
@@ -485,7 +682,8 @@ const styles = StyleSheet.create({
   messageBubble: {
     maxWidth: '70%',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 6,
     borderRadius: 18,
   },
   sentBubble: {
@@ -517,16 +715,106 @@ const styles = StyleSheet.create({
   receivedMessageText: {
     color: '#000000',
   },
+  messageFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 2,
+  },
   messageTime: {
     fontSize: 12,
-    marginTop: 4,
-    alignSelf: 'flex-end',
   },
   sentMessageTime: {
     color: 'rgba(255, 255, 255, 0.7)',
   },
   receivedMessageTime: {
     color: '#8E8E93',
+  },
+  readIcon: {
+    marginLeft: 4,
+  },
+  failedMessagesContainer: {
+    backgroundColor: '#FFF0F0',
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#FFD0D0',
+  },
+  failedMessagesTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FF3B30',
+    marginBottom: 8,
+  },
+  failedMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  failedMessageBubble: {
+    flex: 1,
+    backgroundColor: '#FFE5E5',
+    borderRadius: 8,
+    padding: 8,
+    marginRight: 8,
+  },
+  failedMessageText: {
+    fontSize: 14,
+    color: '#FF3B30',
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FF6A00',
+  },
+  retryText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FF6A00',
+    marginRight: 4,
+  },
+  scrollToBottomButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    zIndex: 10,
+  },
+  scrollToBottomButtonInner: {
+    backgroundColor: '#0057B8',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  newMessageBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF3B30',
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  newMessageCount: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   inputContainer: {
     flexDirection: 'row',

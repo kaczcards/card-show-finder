@@ -8,9 +8,11 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
-  TextInput
+  TextInput,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 export interface Participant {
   user_id: string;
@@ -78,6 +80,14 @@ const ChatList: React.FC<ChatListProps> = ({
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
   
+  // Trigger haptic feedback when selecting a conversation with unread messages
+  const handleConversationSelect = (conversation: Conversation) => {
+    if (conversation.unread_count > 0 && Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onSelectConversation(conversation);
+  };
+  
   // Filter conversations based on search query
   const filteredConversations = searchQuery.trim() === '' 
     ? conversations 
@@ -129,34 +139,51 @@ const ChatList: React.FC<ChatListProps> = ({
       displayName = `Conversation ${item.id.substring(0, 8)}`;
     }
     
+    // Determine if conversation has unread messages
+    const hasUnread = item.unread_count > 0;
+    
     return (
       <TouchableOpacity
-        style={styles.conversationItem}
-        onPress={() => onSelectConversation(item)}
+        style={[styles.conversationItem, hasUnread && styles.unreadConversationItem]}
+        onPress={() => handleConversationSelect(item)}
+        activeOpacity={0.7}
       >
-        {photoUrl ? (
-          <Image source={{ uri: photoUrl }} style={styles.avatar} />
-        ) : (
-          <View style={[
-            styles.avatarPlaceholder,
-            item.type !== 'direct' && styles.groupAvatarPlaceholder
-          ]}>
-            <Text style={styles.avatarText}>
-              {item.type === 'direct' 
-                ? displayName.charAt(0).toUpperCase() 
-                : item.type === 'group' 
-                  ? 'G'
-                  : 'S'}
-            </Text>
-          </View>
-        )}
+        <View style={styles.avatarContainer}>
+          {photoUrl ? (
+            <Image source={{ uri: photoUrl }} style={styles.avatar} />
+          ) : (
+            <View style={[
+              styles.avatarPlaceholder,
+              item.type !== 'direct' && styles.groupAvatarPlaceholder
+            ]}>
+              <Text style={styles.avatarText}>
+                {item.type === 'direct' 
+                  ? displayName.charAt(0).toUpperCase() 
+                  : item.type === 'group' 
+                    ? 'G'
+                    : 'S'}
+              </Text>
+            </View>
+          )}
+          
+          {/* Activity indicator dot for unread */}
+          {hasUnread && (
+            <View style={styles.activityIndicator} />
+          )}
+        </View>
         
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
-            <Text style={styles.nameText} numberOfLines={1}>
+            <Text style={[
+              styles.nameText, 
+              hasUnread && styles.unreadName
+            ]} numberOfLines={1}>
               {displayName}
             </Text>
-            <Text style={styles.timeText}>
+            <Text style={[
+              styles.timeText,
+              hasUnread && styles.unreadTime
+            ]}>
               {formatDate(item.last_message_timestamp)}
             </Text>
           </View>
@@ -164,13 +191,17 @@ const ChatList: React.FC<ChatListProps> = ({
           <View style={styles.previewRow}>
             <Text style={[
               styles.previewText,
-              item.unread_count > 0 && styles.unreadPreviewText
+              hasUnread && styles.unreadPreviewText
             ]} numberOfLines={1}>
               {item.last_message_text || 'No messages yet'}
             </Text>
             
             {item.unread_count > 0 && (
-              <View style={styles.unreadBadge}>
+              <View style={[
+                styles.unreadBadge,
+                item.unread_count > 9 && styles.widerBadge,
+                item.unread_count > 99 && styles.widestBadge
+              ]}>
                 <Text style={styles.unreadBadgeText}>
                   {item.unread_count > 99 ? '99+' : item.unread_count}
                 </Text>
@@ -247,6 +278,7 @@ const ChatList: React.FC<ChatListProps> = ({
               />
             }
             ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
           />
           
           <TouchableOpacity 
@@ -338,11 +370,19 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  unreadConversationItem: {
+    backgroundColor: '#FFF9F4', // Subtle tint for unread conversations
+    borderLeftWidth: 3,
+    borderLeftColor: '#FF6A00',
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 12,
   },
   avatarPlaceholder: {
     width: 50,
@@ -351,7 +391,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0057B8',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
   groupAvatarPlaceholder: {
     backgroundColor: '#FF6A00',
@@ -360,6 +399,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  activityIndicator: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#FF6A00',
+    borderWidth: 2,
+    borderColor: 'white',
   },
   contentContainer: {
     flex: 1,
@@ -371,14 +421,20 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#000000',
     flex: 1,
     marginRight: 8,
   },
+  unreadName: {
+    fontWeight: 'bold',
+  },
   timeText: {
     fontSize: 12,
     color: '#8E8E93',
+  },
+  unreadTime: {
+    color: '#FF6A00',
   },
   previewRow: {
     flexDirection: 'row',
@@ -391,8 +447,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   unreadPreviewText: {
-    color: '#000000',
-    fontWeight: 'bold',
+    color: '#333333',
+    fontWeight: '500',
   },
   unreadBadge: {
     backgroundColor: '#FF6A00',
@@ -402,6 +458,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 6,
+  },
+  widerBadge: {
+    minWidth: 24,
+  },
+  widestBadge: {
+    minWidth: 30,
   },
   unreadBadgeText: {
     color: 'white',
