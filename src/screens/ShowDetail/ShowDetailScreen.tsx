@@ -120,12 +120,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     try {
       setLoadingDealers(true);
       
-      // Query to find dealers registered for this show with MVP dealer role
+      // Query to find MVP dealers registered for this show
       const { data, error } = await supabase
-        .from('dealer_show_participation')
+        .from('show_participants')
         .select(`
-          dealer_id,
-          profiles:dealer_id (
+          user_id,
+          profiles:user_id (
             id,
             first_name,
             last_name,
@@ -145,7 +145,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       if (data && data.length > 0) {
         // Transform the data to a more usable format
         const dealers = data.map(item => ({
-          id: item.dealer_id,
+          id: item.user_id,
           name: item.profiles.username || 
                 `${item.profiles.first_name} ${item.profiles.last_name || ''}`.trim(),
           profileImageUrl: item.profiles.profile_image_url
