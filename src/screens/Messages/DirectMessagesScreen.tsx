@@ -455,6 +455,7 @@ const DirectMessagesScreen: React.FC = () => {
             keyExtractor={item => item.id}
             contentContainerStyle={styles.messagesList}
             inverted={false}
+            removeClippedSubviews={false}
           />
           
           <View style={styles.inputContainer}>
@@ -561,6 +562,7 @@ const DirectMessagesScreen: React.FC = () => {
               contentContainerStyle={styles.conversationsList}
               refreshing={isLoading}
               onRefresh={() => currentUser && fetchConversations(currentUser.id)}
+              removeClippedSubviews={false}
             />
           )}
           
@@ -593,7 +595,7 @@ const DirectMessagesScreen: React.FC = () => {
           
           <ScrollView style={styles.debugScroll}>
             {debugInfo.map((log, index) => (
-              <View key={index} style={styles.logItem}>
+              <View key={`${log.timestamp}-${index}`} style={styles.logItem}>
                 <Text style={styles.logTitle}>
                   {log.title} - {new Date(log.timestamp).toLocaleTimeString()}
                 </Text>
