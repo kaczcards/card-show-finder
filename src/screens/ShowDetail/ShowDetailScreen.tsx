@@ -141,6 +141,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         return;
       }
 
+      console.warn(`Found ${participants?.length || 0} participants for show ${showId}`);
+      console.log('Participants:', JSON.stringify(participants));
+
       if (!participants || participants.length === 0) {
         setMvpDealers([]);
         return;
@@ -151,13 +154,16 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         ...new Set(participants.map((p) => p.userid)),
       ];
 
+      console.warn(`Extracted ${participantUserIds.length} unique user IDs`);
+      console.log('User IDs:', JSON.stringify(participantUserIds));
+
       /* ---------------- Step 2: profiles ---------------- */
       const {
         data: dealerProfiles,
         error: profilesError,
       } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, username, profile_image_url')
+        .select('id, first_name, last_name, profile_image_url')
         .in('id', participantUserIds)
         .eq('role', 'mvp_dealer');
 
@@ -166,14 +172,18 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         return;
       }
 
+      console.warn(`Found ${dealerProfiles?.length || 0} MVP dealers`);
+      console.log('Dealer profiles:', JSON.stringify(dealerProfiles));
+
       if (dealerProfiles && dealerProfiles.length > 0) {
-        const dealers = dealerProfiles.map((profile) => ({
-          id: profile.id,
-          name:
-            profile.username ||
-            `${profile.first_name} ${profile.last_name || ''}`.trim(),
-          profileImageUrl: profile.profile_image_url,
-        }));
+        const dealers = dealerProfiles.map((profile) => {
+          const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim();
+          return {
+            id: profile.id,
+            name: fullName || profile.id.substring(0, 8),
+            profileImageUrl: profile.profile_image_url,
+          };
+        });
         setMvpDealers(dealers);
       } else {
         setMvpDealers([]);
@@ -255,17 +265,33 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     if (!show) return '';
     
     try {
-      const startDate = new Date(show.start_date);
-      const endDate = show.end_date ? new Date(show.end_date) : null;
-      
-      const options = { weekday: 'short', month: 'short', day: 'numeric' } as const;
-      
+      // Strip any time component and rebuild date at noon local time to
+      // avoid negative TZ offsets (e.g. UTC stored date displays previous day).
+      const startIso = (show.start_date as string).split('T')[0];
+      const endIso =
+        show.end_date && typeof show.end_date === 'string'
+          ? (show.end_date as string).split('T')[0]
+          : null;
+
+      const startDate = new Date(`${startIso}T12:00:00`);
+      const endDate = endIso ? new Date(`${endIso}T12:00:00`) : null;
+
+      const options = {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      } as const;
+
       if (endDate && startDate.toDateString() !== endDate.toDateString()) {
-        return `${startDate.toLocaleDateString(undefined, options)} - ${endDate.toLocaleDateString(undefined, options)}`;
+        return `${startDate.toLocaleDateString(
+          undefined,
+          options
+        )} - ${endDate.toLocaleDateString(undefined, options)}`;
       }
-      
+
       return startDate.toLocaleDateString(undefined, options);
     } catch (e) {
+      console.error('Error formatting date:', e);
       return show.start_date || 'Date unavailable';
     }
   };
