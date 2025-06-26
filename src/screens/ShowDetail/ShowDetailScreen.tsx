@@ -64,24 +64,43 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const fetchShowDetails = async () => {
     try {
       setLoading(true);
-      
+      /* ------------------------------------------------------------------
+       * 1. Fetch the show record itself (no implicit FK join)
+       * ------------------------------------------------------------------ */
       const { data, error } = await supabase
         .from('shows')
-        .select(`
-          *,
-          profiles:organizer_id(username, full_name, avatar_url)
-        `)
+        .select('*')
         .eq('id', showId)
         .single();
-      
+
       if (error) throw error;
-      
+
       if (data) {
+        /* ----------------------------------------------------------------
+         * 2. If the show has an organizer_id, fetch that user's profile
+         *    in a second query.  Attach as `profiles` so the rest of the
+         *    component can keep using the previous shape.
+         * ---------------------------------------------------------------- */
+        if (data.organizer_id) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('username, full_name, avatar_url')
+            .eq('id', data.organizer_id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching organizer profile:', profileError);
+          } else if (profileData) {
+            // Mimic the original foreign-table alias
+            (data as any).profiles = profileData;
+          }
+        }
+
         setShow(data);
-        
-        // Set navigation title
+
+        // Update navigation title
         navigation.setOptions({
-          title: data.title || 'Show Details'
+          title: data.title || 'Show Details',
         });
       }
     } catch (error) {
