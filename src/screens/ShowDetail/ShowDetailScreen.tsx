@@ -116,41 +116,64 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     }
   };
   
+  /**
+   * Fetch MVP dealers for a show using a two–step query that does NOT depend
+   * on Supabase's automatic FK joins (which were failing in production).
+   *
+   * 1.  Get all participants' user_ids from `show_participants`.
+   * 2.  Fetch those users' profiles where role = 'mvp_dealer'.
+   */
   const fetchMvpDealers = async (showId: string) => {
     try {
       setLoadingDealers(true);
-      
-      // Query to find MVP dealers registered for this show
-      const { data, error } = await supabase
+
+      /* ---------------- Step 1: participants ---------------- */
+      const {
+        data: participants,
+        error: participantsError,
+      } = await supabase
         .from('show_participants')
-        .select(`
-          user_id,
-          profiles:user_id (
-            id,
-            first_name,
-            last_name,
-            username,
-            role,
-            profile_image_url
-          )
-        `)
-        .eq('show_id', showId)
-        .eq('profiles.role', 'mvp_dealer');
-      
-      if (error) {
-        console.error('Error fetching MVP dealers:', error);
+        .select('user_id')
+        .eq('show_id', showId);
+
+      if (participantsError) {
+        console.error('Error fetching show participants:', participantsError);
         return;
       }
-      
-      if (data && data.length > 0) {
-        // Transform the data to a more usable format
-        const dealers = data.map(item => ({
-          id: item.user_id,
-          name: item.profiles.username || 
-                `${item.profiles.first_name} ${item.profiles.last_name || ''}`.trim(),
-          profileImageUrl: item.profiles.profile_image_url
+
+      if (!participants || participants.length === 0) {
+        setMvpDealers([]);
+        return;
+      }
+
+      // Extract distinct user IDs
+      const participantUserIds = [
+        ...new Set(participants.map((p) => p.user_id)),
+      ];
+
+      /* ---------------- Step 2: profiles ---------------- */
+      const {
+        data: dealerProfiles,
+        error: profilesError,
+      } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, username, profile_image_url')
+        .in('id', participantUserIds)
+        .eq('role', 'mvp_dealer');
+
+      if (profilesError) {
+        console.error('Error fetching dealer profiles:', profilesError);
+        return;
+      }
+
+      if (dealerProfiles && dealerProfiles.length > 0) {
+        const dealers = dealerProfiles.map((profile) => ({
+          id: profile.id,
+          name:
+            profile.username ||
+            `${profile.first_name} ${profile.last_name || ''}`.trim(),
+          profileImageUrl: profile.profile_image_url,
         }));
-        
         setMvpDealers(dealers);
       } else {
         setMvpDealers([]);
