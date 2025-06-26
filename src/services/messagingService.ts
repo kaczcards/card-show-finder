@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import * as userRoleService from './userRoleService';
+import { UserRole } from './userRoleService';
 
 // TypeScript interfaces for Messages and Conversations
 export interface Message {
@@ -30,6 +31,14 @@ export interface Conversation {
     display_name?: string;
     photo_url?: string;
   }[];
+}
+
+// Broadcast message parameters
+export interface BroadcastMessageParams {
+  senderId: string;
+  message: string;
+  recipientRoles: UserRole[];
+  showId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -175,6 +184,76 @@ export const createDirectConversation = async (
     return conversationId;
   } catch (error) {
     console.error('[messagingService/createDirectConversation] exception', error);
+    throw error;
+  }
+};
+
+/**
+ * Creates a group conversation for broadcasting messages.
+ * @param creatorId The ID of the user creating the group
+ * @param participants Array of user IDs to include in the group 
+ * @param showId Optional Show ID if this is a show-specific group
+ * @returns The conversation ID
+ */
+export const createGroupConversation = async (
+  creatorId: string,
+  participants: string[],
+  showId?: string
+): Promise<string> => {
+  try {
+    // Create a new group conversation
+    const { data: conversationData, error: conversationError } = await supabase
+      .from('conversations')
+      .insert({
+        type: showId ? 'show' : 'group',
+        show_id: showId || null,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (conversationError || !conversationData) {
+      console.error('[messagingService/createGroupConversation] conversation error', conversationError);
+      throw new Error('Failed to create group conversation');
+    }
+    
+    const conversationId = conversationData.id;
+    
+    // Always include the creator in the participants list
+    const allParticipantIds = [...new Set([creatorId, ...participants])];
+    
+    // Fetch user profiles for all participants
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url')
+      .in('id', allParticipantIds);
+    
+    // Create participant records
+    const participantRecords = allParticipantIds.map(userId => {
+      const profile = profiles?.find(p => p.id === userId);
+      return {
+        conversation_id: conversationId,
+        user_id: userId,
+        display_name: profile?.full_name,
+        photo_url: profile?.avatar_url,
+        // Only the creator has read all messages initially
+        unread_count: userId === creatorId ? 0 : 1
+      };
+    });
+    
+    // Insert all participants
+    const { error: participantsError } = await supabase
+      .from('conversation_participants')
+      .insert(participantRecords);
+    
+    if (participantsError) {
+      console.error('[messagingService/createGroupConversation] participants error', participantsError);
+      // Continue despite partial failure
+    }
+    
+    return conversationId;
+  } catch (error) {
+    console.error('[messagingService/createGroupConversation] exception', error);
     throw error;
   }
 };
@@ -429,6 +508,142 @@ export const sendMessage = async (
     return newMessage;
   } catch (error) {
     console.error('Error in sendMessage:', error);
+    throw error;
+  }
+};
+
+/**
+ * Send a message to a group conversation
+ * @param senderId The ID of the sender
+ * @param conversationId The ID of the group conversation
+ * @param messageText The message content
+ * @returns The newly created message
+ */
+export const sendGroupMessage = async (
+  senderId: string,
+  conversationId: string,
+  messageText: string
+): Promise<Message> => {
+  try {
+    // Check if the user is part of this conversation
+    const { data: participantCheck, error: participantCheckError } = await supabase
+      .from('conversation_participants')
+      .select('user_id')
+      .eq('conversation_id', conversationId)
+      .eq('user_id', senderId)
+      .single();
+    
+    if (participantCheckError || !participantCheck) {
+      throw new Error('You are not a participant in this conversation');
+    }
+    
+    // Insert the message
+    const { data: newMessage, error: messageError } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: senderId,
+        message_text: messageText,
+        read_by_user_ids: [senderId] // Sender has automatically read their own message
+      })
+      .select()
+      .single();
+      
+    if (messageError) {
+      console.error('Error sending group message:', messageError);
+      throw new Error('Failed to send message');
+    }
+    
+    // Update the conversation's last message info
+    await supabase
+      .from('conversations')
+      .update({
+        last_message_text: messageText,
+        last_message_timestamp: new Date().toISOString()
+      })
+      .eq('id', conversationId);
+      
+    // Increment unread count for all other participants
+    await supabase
+      .from('conversation_participants')
+      .update({ unread_count: supabase.rpc('increment_unread') })
+      .eq('conversation_id', conversationId)
+      .neq('user_id', senderId);
+    
+    return newMessage;
+  } catch (error) {
+    console.error('Error in sendGroupMessage:', error);
+    throw error;
+  }
+};
+
+/**
+ * Send a broadcast message to multiple recipients based on their roles.
+ * This creates a group conversation and sends the initial message.
+ * 
+ * @param params Object containing senderId, message, recipientRoles, and optional showId
+ * @returns The conversation ID of the newly created group
+ */
+export const sendBroadcastMessage = async (
+  params: BroadcastMessageParams
+): Promise<string> => {
+  const { senderId, message, recipientRoles, showId } = params;
+  
+  try {
+    // Check if sender has permission to broadcast
+    const senderProfile = await userRoleService.getUserProfile(senderId);
+    if (!senderProfile) {
+      throw new Error('Sender profile not found');
+    }
+    
+    const senderRole = senderProfile.role as UserRole;
+    const canBroadcast = userRoleService.IS_TEST_MODE || 
+                        senderRole === UserRole.SHOW_ORGANIZER || 
+                        senderRole === UserRole.MVP_DEALER;
+    
+    if (!canBroadcast) {
+      throw new Error('You do not have permission to send broadcast messages');
+    }
+    
+    // Find all users with the specified roles
+    const { data: recipients, error: recipientsError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .in('role', recipientRoles);
+    
+    if (recipientsError) {
+      throw new Error('Failed to find recipients');
+    }
+    
+    if (!recipients || recipients.length === 0) {
+      throw new Error('No recipients found for the selected roles');
+    }
+    
+    // Filter out the sender from recipients to avoid duplicates
+    const recipientIds = recipients
+      .filter(user => user.id !== senderId)
+      .map(user => user.id);
+    
+    if (recipientIds.length === 0) {
+      throw new Error('No recipients to broadcast to after excluding yourself');
+    }
+    
+    // Create a group conversation for the broadcast
+    const conversationType = showId ? 'show' : 'group';
+    const conversationName = showId ? 'Show Announcement' : 'Broadcast Message';
+    
+    const conversationId = await createGroupConversation(
+      senderId,
+      recipientIds,
+      showId
+    );
+    
+    // Send the initial message
+    await sendGroupMessage(senderId, conversationId, message);
+    
+    return conversationId;
+  } catch (error) {
+    console.error('Error in sendBroadcastMessage:', error);
     throw error;
   }
 };
