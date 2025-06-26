@@ -595,7 +595,7 @@ const DirectMessagesScreen: React.FC = () => {
           
           <ScrollView style={styles.debugScroll}>
             {debugInfo.map((log, index) => (
-              <View key={index} style={styles.logItem}>
+              <View key={`${log.timestamp}-${index}`} style={styles.logItem}>
                 <Text style={styles.logTitle}>
                   {log.title} - {new Date(log.timestamp).toLocaleTimeString()}
                 </Text>
