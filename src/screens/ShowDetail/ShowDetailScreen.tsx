@@ -37,6 +37,15 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [isShowOrganizer, setIsShowOrganizer] = useState(false);
   const [isMvpDealer, setIsMvpDealer] = useState(false);
   
+  /* ------------------------------------------------------------------ */
+  /* Dummy MVP Dealer data (replace with Supabase fetch in real build)  */
+  /* ------------------------------------------------------------------ */
+  const mvpDealers = [
+    { id: 'dealer-001', name: 'Elite Sports Cards' },
+    { id: 'dealer-002', name: 'TCG Emporium' },
+    { id: 'dealer-003', name: 'Vintage Vault' },
+  ];
+
   useEffect(() => {
     if (!user || !userProfile) {
       setIsShowOrganizer(false);
@@ -212,6 +221,19 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       }
     });
   };
+
+  /* -------------------------------------------------------------- */
+  /* Placeholder navigation / messaging handlers for MVP dealers    */
+  /* -------------------------------------------------------------- */
+  const handleViewDealerDetails = (dealerId: string) => {
+    // TODO: integrate with navigation once Dealer detail screen exists
+    console.log('Navigating to dealer details for:', dealerId);
+  };
+
+  const handleMessageDealer = (dealerId: string, dealerName: string) => {
+    // TODO: open message composer when messaging flow is wired in
+    console.log(`Opening chat with ${dealerName} (ID: ${dealerId})`);
+  };
   
   if (loading) {
     return (
@@ -343,7 +365,37 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           <Text style={styles.sectionTitle}>About this show</Text>
           <Text style={styles.description}>{show.description || 'No description available'}</Text>
         </View>
-        
+
+        {/* ---------------- MVP Dealers Section ---------------- */}        
+        <View style={styles.mvpDealersContainer}>
+          <Text style={styles.sectionTitle}>MVP Dealers</Text>
+          {mvpDealers.length > 0 ? (
+            <View style={styles.dealersList}>
+              {mvpDealers.map(dealer => (
+                <View key={dealer.id} style={styles.dealerItem}>
+                  {/* Dealer Name (link-like button) */}
+                  <TouchableOpacity
+                    style={styles.dealerNameButton}
+                    onPress={() => handleViewDealerDetails(dealer.id)}
+                  >
+                    <Text style={styles.dealerName}>{dealer.name}</Text>
+                  </TouchableOpacity>
+
+                  {/* Message Dealer */}
+                  <TouchableOpacity
+                    style={styles.messageDealerButton}
+                    onPress={() => handleMessageDealer(dealer.id, dealer.name)}
+                  >
+                    <Text style={styles.messageDealerButtonText}>Message Dealer</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.noDataText}>No MVP Dealers listed for this show yet.</Text>
+          )}
+        </View>
+
         {/* Show Features/Tags could be added here */}
       </View>
       
@@ -498,6 +550,58 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     lineHeight: 24,
+  },
+
+  /* ----------  MVP Dealers styles ---------- */
+  mvpDealersContainer: {
+    marginTop: 24,
+    padding: 12,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+  },
+  dealersList: {
+    marginTop: 8,
+  },
+  dealerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  dealerNameButton: {
+    flex: 1,
+  },
+  dealerName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#0057B8',
+  },
+  messageDealerButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
+  },
+  messageDealerButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#666666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 8,
   },
 });
 
