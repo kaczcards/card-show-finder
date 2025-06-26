@@ -9,6 +9,7 @@ import { User, UserRole, AuthCredentials, AuthState } from '../types';
  * @param firstName User's first name
  * @param lastName User's last name (optional)
  * @param homeZipCode User's home ZIP code
+ * @param role The desired role for the new user (defaults to ATTENDEE)
  * @returns Promise with the created user
  */
 export const registerUser = async (
@@ -16,7 +17,8 @@ export const registerUser = async (
   password: string,
   firstName: string,
   lastName: string = '',
-  homeZipCode: string
+  homeZipCode: string,
+  role: UserRole = UserRole.ATTENDEE
 ): Promise<User> => {
   try {
     // Register user with Supabase Auth
@@ -28,6 +30,7 @@ export const registerUser = async (
           firstName,
           lastName,
           homeZipCode,
+          role, // store role in user metadata for downstream triggers / RLS rules
         },
       },
     });
@@ -41,7 +44,7 @@ export const registerUser = async (
       firstName,
       lastName: lastName || undefined,
       homeZipCode,
-      role: UserRole.ATTENDEE,
+      role,
       // new subscription-related defaults for freshly registered users
       accountType: 'collector',
       subscriptionStatus: 'none',
