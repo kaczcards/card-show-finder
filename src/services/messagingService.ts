@@ -117,6 +117,42 @@ export const findDirectConversation = async (
  * @param userB Second user id
  * @returns The conversation ID
  */
+
+/**
+ * Generic conversation creation function that handles both direct and group conversations.
+ * @param {Object} params - The conversation parameters
+ * @param {string} params.userId - The ID of the user creating the conversation
+ * @param {string[]} params.participantIds - Array of user IDs to include (for direct conversations, should contain one ID)
+ * @param {boolean} params.isGroup - Whether this is a group conversation
+ * @param {string} [params.showId] - Optional show ID for show-specific groups
+ * @returns {Promise<string>} The conversation ID
+ */
+export const createConversation = async (params: { 
+  userId: string;
+  participantIds: string[];
+  isGroup?: boolean;
+  showId?: string;
+}): Promise<string> => {
+  try {
+    const { userId, participantIds, isGroup = false, showId } = params;
+    
+    // Direct conversation (between two users)
+    if (!isGroup && participantIds.length === 1) {
+      return await createDirectConversation(userId, participantIds[0]);
+    }
+    
+    // Group conversation
+    if (isGroup || participantIds.length > 1) {
+      return await createGroupConversation(userId, participantIds, showId);
+    }
+    
+    throw new Error('Invalid conversation parameters');
+  } catch (error) {
+    console.error('[messagingService/createConversation] exception', error);
+    throw error;
+  }
+};
+
 export const createDirectConversation = async (
   userA: string,
   userB: string

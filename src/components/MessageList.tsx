@@ -127,7 +127,7 @@ const MessageList: React.FC<MessageListProps> = ({
     <FlatList
       data={conversations}
       renderItem={renderItem}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) = removeClippedSubviews={false}> item.id}
       ListEmptyComponent={renderEmptyComponent}
       contentContainerStyle={conversations.length === 0 ? styles.listEmptyContent : styles.listContent}
       showsVerticalScrollIndicator={false}
