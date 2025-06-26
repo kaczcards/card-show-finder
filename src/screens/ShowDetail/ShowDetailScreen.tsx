@@ -4,748 +4,481 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
-  ActivityIndicator,
-  Alert,
+  TouchableOpacity,
   Linking,
   Share,
-  Platform,
-  Dimensions,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { getShowById } from '../../services/showService';
-import { getDirectionsUrl } from '../../services/locationService';
-import { Show, ShowStatus } from '../../types';
-import {
-  getDealersForShow,
-  DealerShowParticipation,
-} from '../../services/dealerService';
-import DealerDetailModal from '../../components/DealerDetailModal';
+import * as userRoleService from '../../services/userRoleService';
+import { UserRole } from '../../services/userRoleService';
+import GroupMessageComposer from '../../components/GroupMessageComposer';
 
-// Define the main stack param list type
-type MainStackParamList = {
-  MainTabs: undefined;
-  ShowDetail: { showId: string };
-};
+interface ShowDetailProps {
+  route: any;
+  navigation: any;
+}
 
-type Props = NativeStackScreenProps<MainStackParamList, 'ShowDetail'>;
-
-const ShowDetailScreen: React.FC<Props> = ({ route, navigation }) => {
-  // Safely get the show ID from route params
-  const showId = route.params?.showId;
-
-  // State
-  const [show, setShow] = useState<Show | null>(null);
+const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
+  const { showId } = route.params;
+  const { user, userProfile } = useAuth();
+  
+  const [show, setShow] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [favoritingInProgress, setFavoritingInProgress] = useState(false);
-
-  /* ---------- Dealers state ---------- */
-  const [dealers, setDealers] = useState<DealerShowParticipation[]>([]);
-  const [dealersLoading, setDealersLoading] = useState<boolean>(false);
-  const [dealersError, setDealersError] = useState<string | null>(null);
-  const [selectedDealer, setSelectedDealer] =
-    useState<DealerShowParticipation | null>(null);
-  const [dealerModalVisible, setDealerModalVisible] = useState<boolean>(false);
-
-  // Guard against missing showId
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  
+  // Check if user is show organizer
+  const [isShowOrganizer, setIsShowOrganizer] = useState(false);
+  const [isMvpDealer, setIsMvpDealer] = useState(false);
+  
   useEffect(() => {
-    if (!showId) {
-      Alert.alert('Error', 'Show information unavailable.');
-      navigation.goBack();
+    if (!user || !userProfile) {
+      setIsShowOrganizer(false);
+      setIsMvpDealer(false);
+      return;
     }
-  }, [showId, navigation]);
-
-  // Get auth context
-  const { authState, addFavoriteShow, removeFavoriteShow } = useAuth();
-  const { user } = authState;
-
-  // Fetch show details
+    
+    const userRole = userProfile.role as UserRole;
+    setIsShowOrganizer(userRole === UserRole.SHOW_ORGANIZER);
+    setIsMvpDealer(userRole === UserRole.MVP_DEALER);
+    
+    // In test mode, treat all authenticated users as organizers
+    if (userRoleService.IS_TEST_MODE) {
+      setIsShowOrganizer(true);
+    }
+  }, [user, userProfile]);
+  
   useEffect(() => {
-    const fetchShowDetails = async () => {
-      try {
-        setLoading(true);
-        if (!showId) return;
-        
-        // getShowById returns { data, error }
-        const { data: showData, error: showError } = await getShowById(showId);
-        
-        if (showError || !showData) {
-          Alert.alert('Error', showError || 'Show not found');
-          navigation.goBack();
-          return;
-        }
-        
-        setShow(showData);
-        
-        // Check if the show is in user's favorites
-        if (user?.favoriteShows) {
-          setIsFavorite(user.favoriteShows.includes(showId));
-        }
-      } catch (error) {
-        console.error('Error fetching show details:', error);
-        Alert.alert('Error', 'Failed to load show details. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchShowDetails();
-  }, [showId, user, navigation]);
-
-  /* ---------- Fetch dealers for show ---------- */
-  useEffect(() => {
-    const fetchDealers = async () => {
-      if (!showId) return;
-      try {
-        setDealersLoading(true);
-        setDealersError(null);
-        const { data, error } = await getDealersForShow(showId);
-        if (error) {
-          setDealersError(error);
-          return;
-        }
-        // sort alphabetically
-        const sorted =
-          data?.sort((a, b) =>
-            (a.dealerName || '').localeCompare(b.dealerName || ''),
-          ) || [];
-        setDealers(sorted as DealerShowParticipation[]);
-      } catch (err: any) {
-        setDealersError(err.message || 'Failed to load dealers');
-      } finally {
-        setDealersLoading(false);
+    if (user) {
+      checkIfFavorite();
+    }
+  }, [showId, user]);
+  
+  const fetchShowDetails = async () => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('shows')
+        .select(`
+          *,
+          profiles:organizer_id(username, full_name, avatar_url)
+        `)
+        .eq('id', showId)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setShow(data);
+        
+        // Set navigation title
+        navigation.setOptions({
+          title: data.title || 'Show Details'
+        });
       }
-    };
-
-    fetchDealers();
-  }, [showId]);
-
-  // Handle favorite/unfavorite
+    } catch (error) {
+      console.error('Error fetching show details:', error);
+      setError('Failed to load show details');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const checkIfFavorite = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_favorite_shows')
+        .select()
+        .eq('user_id', user.id)
+        .eq('show_id', showId)
+        .single();
+      
+      if (!error && data) {
+        setIsFavorite(true);
+      } else {
+        setIsFavorite(false);
+      }
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+    }
+  };
+  
   const toggleFavorite = async () => {
     if (!user) {
-      Alert.alert(
-        'Sign In Required',
-        'Please sign in to favorite shows',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Sign In', onPress: () => navigation.navigate('MainTabs') }
-        ]
-      );
+      Alert.alert('Sign In Required', 'Please sign in to save favorites');
       return;
     }
-
+    
     try {
-      setFavoritingInProgress(true);
-      
       if (isFavorite) {
-        await removeFavoriteShow(showId);
+        // Remove from favorites
+        await supabase
+          .from('user_favorite_shows')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('show_id', showId);
+        
+        setIsFavorite(false);
       } else {
-        await addFavoriteShow(showId);
+        // Add to favorites
+        await supabase
+          .from('user_favorite_shows')
+          .insert([{ user_id: user.id, show_id: showId }]);
+        
+        setIsFavorite(true);
       }
-      
-      setIsFavorite(!isFavorite);
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      Alert.alert('Error', 'Failed to update favorite status. Please try again.');
-    } finally {
-      setFavoritingInProgress(false);
+      Alert.alert('Error', 'Failed to update favorites');
     }
   };
-
-  // Open maps for directions
-  const getDirections = () => {
-    if (!show || !show.coordinates) {
-      Alert.alert('Error', 'Location coordinates not available for directions.');
-      return;
-    }
-    
-    const url = getDirectionsUrl(show.coordinates, show.title);
-    Linking.openURL(url).catch((err) => {
-      console.error('Error opening maps:', err);
-      Alert.alert('Error', 'Could not open maps application');
-    });
-  };
-
-  // Share the show
+  
   const shareShow = async () => {
-    if (!show) return;
-    
     try {
-    // Ensure correct date regardless of local timezone
-    const date = new Date(show.startDate);
-    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-    const formattedDate = utcDate.toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
+      if (!show) return;
+      
+      const message = `Check out this card show: ${show.title}\n\nWhen: ${formatShowDate(show)}\nWhere: ${show.location}\n\nShared from Card Show Finder app`;
       
       await Share.share({
-        title: show.title,
-        message: `Check out this card show: ${show.title} on ${formattedDate} in ${show.location}. Entry fee: ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`,
+        message,
+        title: show.title
       });
     } catch (error) {
       console.error('Error sharing:', error);
     }
   };
-
-  /* ---------- Dealer modal handlers ---------- */
-  const handleDealerPress = (dealer: DealerShowParticipation) => {
-    setSelectedDealer(dealer);
-    setDealerModalVisible(true);
-  };
-
-  const closeDealerModal = () => {
-    setDealerModalVisible(false);
-    setSelectedDealer(null);
-  };
-
-  // Format date with safety check
-  const formatDate = (dateValue: Date | string) => {
+  
+  const formatShowDate = (show: any) => {
+    if (!show) return '';
+    
     try {
-    // Parse and adjust for timezone to avoid off-by-one-day display
-    const date = new Date(dateValue);
-    if (isNaN(date.getTime())) {
-        return 'Date not available';
+      const startDate = new Date(show.start_date);
+      const endDate = show.end_date ? new Date(show.end_date) : null;
+      
+      const options = { weekday: 'short', month: 'short', day: 'numeric' } as const;
+      
+      if (endDate && startDate.toDateString() !== endDate.toDateString()) {
+        return `${startDate.toLocaleDateString(undefined, options)} - ${endDate.toLocaleDateString(undefined, options)}`;
       }
-    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-    return utcDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch (err) {
-      console.error('Error formatting date:', err);
-      return 'Date not available';
+      
+      return startDate.toLocaleDateString(undefined, options);
+    } catch (e) {
+      return show.start_date || 'Date unavailable';
     }
   };
-
-  // Get status badge color
-  const getStatusColor = (status: ShowStatus) => {
-    switch (status) {
-      case ShowStatus.UPCOMING:
-      case ShowStatus.ACTIVE: // Supabase default
-        return '#4CAF50'; // Green
-      case ShowStatus.ONGOING:
-        return '#2196F3'; // Blue
-      case ShowStatus.COMPLETED:
-        return '#9E9E9E'; // Gray
-      case ShowStatus.CANCELLED:
-        return '#F44336'; // Red
-      default:
-        return '#9E9E9E';
-    }
+  
+  const openMapLocation = () => {
+    if (!show) return;
+    
+    const address = encodeURIComponent(show.address || show.location);
+    const url = `https://maps.apple.com/?q=${address}`;
+    
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        // Fallback for Android
+        const googleUrl = `https://www.google.com/maps/search/?api=1&query=${address}`;
+        Linking.openURL(googleUrl);
+      }
+    });
   };
-
-  // Render loading state
+  
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF6A00" />
         <Text style={styles.loadingText}>Loading show details...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
-
-  // Render show not found
-  if (!show) {
-    return (
-      <SafeAreaView style={styles.notFoundContainer}>
-        <Ionicons name="alert-circle-outline" size={60} color="#666" />
-        <Text style={styles.notFoundText}>Show not found</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  // Format dates for display
-  const startDate = new Date(show.startDate);
-  const endDate = new Date(show.endDate);
-  const isSameDay = startDate.toDateString() === endDate.toDateString();
   
-  const dateString = isSameDay
-    ? formatDate(startDate)
-    : `${formatDate(startDate)} - ${formatDate(endDate)}`;
-
-  // Convert features object to array for display
-  const displayFeatures = show.features ? Object.keys(show.features).filter(key => show.features![key]) : [];
-
+  if (error || !show) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle-outline" size={60} color="#FF6A00" />
+        <Text style={styles.errorText}>{error || 'Show not found'}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={fetchShowDetails}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Show Image */}
-        <View style={styles.imageContainer}>
-          {show.imageUrl ? (
-            <Image source={{ uri: show.imageUrl }} style={styles.image} />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Ionicons name="images-outline" size={60} color="#ccc" />
-            </View>
-          )}
-          
-          {/* Status Badge */}
-          <View 
-            style={[
-              styles.statusBadge, 
-              { backgroundColor: getStatusColor(show.status) }
-            ]}
+    <ScrollView style={styles.container}>
+      {/* Show Image */}
+      {show.image ? (
+        <Image source={{ uri: show.image }} style={styles.image} />
+      ) : (
+        <View style={styles.imagePlaceholder}>
+          <Ionicons name="card" size={60} color="#CCCCCC" />
+          <Text style={styles.placeholderText}>No Image Available</Text>
+        </View>
+      )}
+      
+      {/* Header Actions */}
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={toggleFavorite}
+        >
+          <Ionicons
+            name={isFavorite ? 'heart' : 'heart-outline'}
+            size={24}
+            color={isFavorite ? '#FF6A00' : '#333333'}
+          />
+          <Text style={styles.actionText}>Save</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={openMapLocation}
+        >
+          <Ionicons name="location" size={24} color="#333333" />
+          <Text style={styles.actionText}>Map</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={shareShow}
+        >
+          <Ionicons name="share-outline" size={24} color="#333333" />
+          <Text style={styles.actionText}>Share</Text>
+        </TouchableOpacity>
+        
+        {/* Broadcast Message button for organizers */}
+        {(isShowOrganizer || isMvpDealer) && (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setShowBroadcastModal(true)}
           >
-            <Text style={styles.statusText}>{show.status}</Text>
-          </View>
+            <Ionicons name="megaphone-outline" size={24} color="#FF6A00" />
+            <Text style={[styles.actionText, { color: '#FF6A00' }]}>Broadcast</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {/* Show Details */}
+      <View style={styles.detailsContainer}>
+        <Text style={styles.title}>{show.title}</Text>
+        
+        <View style={styles.infoRow}>
+          <Ionicons name="calendar" size={20} color="#666666" style={styles.infoIcon} />
+          <Text style={styles.infoText}>{formatShowDate(show)}</Text>
         </View>
-
-        {/* Title and Actions */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{show.title}</Text>
-          
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={toggleFavorite}
-              disabled={favoritingInProgress}
-            >
-              {favoritingInProgress ? (
-                <ActivityIndicator size="small" color="#007AFF" />
-              ) : (
-                <Ionicons 
-                  name={isFavorite ? "heart" : "heart-outline"} 
-                  size={24} 
-                  color={isFavorite ? "#FF3B30" : "#007AFF"} 
-                />
-              )}
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={shareShow}
-            >
-              <Ionicons name="share-outline" size={24} color="#007AFF" />
-            </TouchableOpacity>
-          </View>
+        
+        <View style={styles.infoRow}>
+          <Ionicons name="time" size={20} color="#666666" style={styles.infoIcon} />
+          <Text style={styles.infoText}>{show.time || 'Time not specified'}</Text>
         </View>
-
-        {/* Date and Time */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="calendar-outline" size={22} color="#007AFF" />
-            <Text style={styles.infoHeaderText}>Date & Time</Text>
-          </View>
-          
-          <View style={styles.infoContent}>
-            <Text style={styles.infoText}>{dateString}</Text>
-            {show.startTime && show.endTime && (
-              <Text style={styles.infoText}>
-                {show.startTime} - {show.endTime}
-              </Text>
-            )}
-          </View>
+        
+        <View style={styles.infoRow}>
+          <Ionicons name="location" size={20} color="#666666" style={styles.infoIcon} />
+          <Text style={styles.infoText}>{show.address || show.location || 'Location not specified'}</Text>
         </View>
-
-        {/* Location */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="location-outline" size={22} color="#007AFF" />
-            <Text style={styles.infoHeaderText}>Location</Text>
-          </View>
-          
-          <View style={styles.infoContent}>
-            {show.location ? (
-              <Text style={styles.venueName}>{show.location}</Text>
-            ) : (
-              <Text style={styles.venueName}>Location not specified</Text>
-            )}
+        
+        {show.entry_fee && (
+          <View style={styles.infoRow}>
+            <Ionicons name="cash" size={20} color="#666666" style={styles.infoIcon} />
             <Text style={styles.infoText}>
-              {show.address || 'Address not available'}
-            </Text>
-            
-            {show.coordinates && (
-              <TouchableOpacity 
-                style={styles.directionsButton}
-                onPress={getDirections}
-              >
-                <Ionicons name="navigate-outline" size={18} color="white" />
-                <Text style={styles.directionsButtonText}>Get Directions</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Entry Fee */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="cash-outline" size={22} color="#007AFF" />
-            <Text style={styles.infoHeaderText}>Entry Fee</Text>
-          </View>
-          
-          <View style={styles.infoContent}>
-            <Text style={styles.entryFee}>
-              {show.entryFee === 0 || show.entryFee == null
-                ? 'FREE'
-                : `$${Number(show.entryFee).toFixed(2)}`}
+              Entry Fee: {typeof show.entry_fee === 'number' ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}
             </Text>
           </View>
-        </View>
-
-        {/* Features */}
-        {displayFeatures.length > 0 && (
-          <View style={styles.infoSection}>
-            <View style={styles.infoHeader}>
-              <Ionicons name="star-outline" size={22} color="#007AFF" />
-              <Text style={styles.infoHeaderText}>Features</Text>
-            </View>
-            
-            <View style={styles.tagsContainer}>
-              {displayFeatures.map((feature, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{feature}</Text>
+        )}
+        
+        {show.organizer_id && show.profiles && (
+          <View style={styles.organizerContainer}>
+            <Text style={styles.sectionTitle}>Organized by:</Text>
+            <View style={styles.organizer}>
+              {show.profiles.avatar_url ? (
+                <Image source={{ uri: show.profiles.avatar_url }} style={styles.organizerAvatar} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarText}>
+                    {show.profiles.full_name?.[0] || show.profiles.username?.[0] || 'O'}
+                  </Text>
                 </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Categories */}
-        {show.categories && show.categories.length > 0 && (
-          <View style={styles.infoSection}>
-            <View style={styles.infoHeader}>
-              <Ionicons name="pricetag-outline" size={22} color="#007AFF" />
-              <Text style={styles.infoHeaderText}>Categories</Text>
-            </View>
-            
-            <View style={styles.tagsContainer}>
-              {show.categories.map((category, index) => (
-                <View key={index} style={[styles.tag, styles.categoryTag]}>
-                  <Text style={styles.tagText}>{category}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Description */}
-        {show.description && (
-          <View style={styles.infoSection}>
-            <View style={styles.infoHeader}>
-              <Ionicons name="information-circle-outline" size={22} color="#007AFF" />
-              <Text style={styles.infoHeaderText}>Description</Text>
-            </View>
-            
-            <View style={styles.infoContent}>
-              <Text style={styles.descriptionText}>{show.description}</Text>
-            </View>
-          </View>
-        )}
-
-        {/* Rating (if available) */}
-        {show.rating !== null && show.rating !== undefined && (
-          <View style={styles.infoSection}>
-            <View style={styles.infoHeader}>
-              <Ionicons name="star-half-outline" size={22} color="#007AFF" />
-              <Text style={styles.infoHeaderText}>Rating</Text>
-            </View>
-            
-            <View style={styles.ratingContainer}>
-              <View style={styles.starsContainer}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Ionicons
-                    key={star}
-                    name={
-                      star <= Math.floor(show.rating)
-                        ? 'star'
-                        : star === Math.ceil(show.rating) && star > Math.floor(show.rating)
-                        ? 'star-half'
-                        : 'star-outline'
-                    }
-                    size={20}
-                    color="#FFD700"
-                  />
-                ))}
-              </View>
-              <Text style={styles.ratingText}>
-                {show.rating != null ? show.rating.toFixed(1) : 'N/A'}
+              )}
+              <Text style={styles.organizerName}>
+                {show.profiles.full_name || show.profiles.username || 'Unknown Organizer'}
               </Text>
             </View>
           </View>
         )}
-
-        {/* ---------- Registered Dealers ---------- */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="people-outline" size={22} color="#007AFF" />
-            <Text style={styles.infoHeaderText}>Registered Dealers</Text>
-          </View>
-
-          {dealersLoading ? (
-            <View style={styles.loadingDealersContainer}>
-              <ActivityIndicator size="small" color="#007AFF" />
-            </View>
-          ) : dealersError ? (
-            <Text style={[styles.infoText, styles.errorText]}>{dealersError}</Text>
-          ) : dealers.length === 0 ? (
-            <Text style={styles.infoText}>No dealers have registered yet.</Text>
-          ) : (
-            <View style={styles.dealerList}>
-              {dealers.map((dealer) => (
-                <TouchableOpacity
-                  key={dealer.id}
-                  style={styles.dealerItem}
-                  onPress={() => handleDealerPress(dealer)}
-                >
-                  <Ionicons
-                    name="person-circle-outline"
-                    size={18}
-                    color="#007AFF"
-                  />
-                  <Text style={styles.dealerName}>{dealer.dealerName}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+        
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.sectionTitle}>About this show</Text>
+          <Text style={styles.description}>{show.description || 'No description available'}</Text>
         </View>
-      </ScrollView>
-
-      {/* ---------- Dealer Detail Modal ---------- */}
-      <DealerDetailModal
-        visible={dealerModalVisible}
-        onClose={closeDealerModal}
-        dealer={selectedDealer as any}
+        
+        {/* Show Features/Tags could be added here */}
+      </View>
+      
+      {/* Broadcast Message Modal */}
+      <GroupMessageComposer
+        visible={showBroadcastModal}
+        onClose={() => setShowBroadcastModal(false)}
+        showId={showId}
+        showTitle={show.title}
+        onMessageSent={() => {
+          Alert.alert('Success', 'Broadcast message sent successfully');
+        }}
       />
-    </SafeAreaView>
+    </ScrollView>
   );
 };
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  scrollContent: {
-    paddingBottom: 30,
+    backgroundColor: '#F5F5F5',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+    padding: 20,
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: '#666666',
   },
-  notFoundContainer: {
+  errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
     padding: 20,
   },
-  notFoundText: {
+  errorText: {
+    marginTop: 16,
     fontSize: 18,
-    color: '#666',
-    marginTop: 10,
-    marginBottom: 20,
+    color: '#FF6A00',
+    textAlign: 'center',
   },
-  backButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
+  retryButton: {
+    marginTop: 16,
     paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#FF6A00',
     borderRadius: 8,
   },
-  backButtonText: {
+  retryButtonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  imageContainer: {
-    width: '100%',
-    height: 200,
-    position: 'relative',
+    fontWeight: 'bold',
   },
   image: {
     width: '100%',
-    height: '100%',
+    height: 200,
     resizeMode: 'cover',
   },
-  placeholderImage: {
+  imagePlaceholder: {
     width: '100%',
-    height: '100%',
-    backgroundColor: '#e1e1e1',
+    height: 200,
+    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  statusBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+  placeholderText: {
+    marginTop: 10,
+    color: '#999999',
   },
-  statusText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  titleContainer: {
-    padding: 16,
+  actionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
     backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderBottomColor: '#EEEEEE',
+  },
+  actionButton: {
     alignItems: 'center',
+  },
+  actionText: {
+    marginTop: 4,
+    fontSize: 12,
+  },
+  detailsContainer: {
+    padding: 16,
+    backgroundColor: 'white',
+    marginTop: 10,
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
+    marginBottom: 16,
   },
-  actionButtons: {
-    flexDirection: 'row',
-  },
-  actionButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  infoSection: {
-    backgroundColor: 'white',
-    marginTop: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  infoHeader: {
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
-  infoHeaderText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginLeft: 8,
-  },
-  infoContent: {
-    paddingLeft: 30,
+  infoIcon: {
+    marginRight: 10,
   },
   infoText: {
     fontSize: 16,
-    color: '#333',
-    marginBottom: 6,
+    flex: 1,
   },
-  venueName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+  organizerContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
   },
-  directionsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-    marginTop: 12,
-  },
-  directionsButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 6,
-  },
-  entryFee: {
+  sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingLeft: 30,
-  },
-  tag: {
-    backgroundColor: '#e6f2ff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
     marginBottom: 8,
   },
-  categoryTag: {
-    backgroundColor: '#f0f0f0',
+  organizer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  tagText: {
-    fontSize: 14,
-    color: '#007AFF',
+  organizerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
   },
-  descriptionText: {
+  avatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#0057B8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  avatarText: {
+    color: 'white',
+    fontWeight: 'bold',
     fontSize: 16,
-    color: '#333',
-    lineHeight: 22,
   },
   organizerName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontWeight: '500',
   },
-  contactButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+  descriptionContainer: {
+    marginTop: 16,
   },
-  contactButtonText: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginLeft: 8,
-  },
-  ratingContainer: {
-    paddingLeft: 30,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    marginRight: 8,
-  },
-  ratingText: {
+  description: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '600',
-  },
-  /* ---------- Dealers styles ---------- */
-  dealerList: {
-    paddingLeft: 30,
-  },
-  dealerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  dealerName: {
-    fontSize: 16,
-    color: '#007AFF',
-    marginLeft: 6,
-  },
-  loadingDealersContainer: {
-    paddingLeft: 30,
-  },
-  errorText: {
-    color: '#F44336',
+    lineHeight: 24,
   },
 });
 
