@@ -182,8 +182,11 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         .from('profiles')
         .select('id, first_name, last_name, profile_image_url')
         .in('id', participantUserIds)
-        // case-insensitive match for the role column
-        .ilike('role', '%mvp_dealer%');
+        // Include real MVP dealers (role contains 'mvp_dealer', case-insensitive)
+        // OR the specific paid MVP dealer who still has role 'dealer'
+        .or(
+          `role.ilike.%mvp_dealer%,id.eq.a3d8f808-1eaf-4f31-88ee-b93203d00176`
+        );
 
       if (profilesError) {
         console.error('Error fetching dealer profiles:', profilesError);
