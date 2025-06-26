@@ -37,14 +37,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [isShowOrganizer, setIsShowOrganizer] = useState(false);
   const [isMvpDealer, setIsMvpDealer] = useState(false);
   
-  /* ------------------------------------------------------------------ */
-  /* Dummy MVP Dealer data (replace with Supabase fetch in real build)  */
-  /* ------------------------------------------------------------------ */
-  const mvpDealers = [
-    { id: 'dealer-001', name: 'Elite Sports Cards' },
-    { id: 'dealer-002', name: 'TCG Emporium' },
-    { id: 'dealer-003', name: 'Vintage Vault' },
-  ];
+  // MVP Dealers state
+  const [mvpDealers, setMvpDealers] = useState<any[]>([]);
+  const [loadingDealers, setLoadingDealers] = useState(false);
 
   useEffect(() => {
     if (!user || !userProfile) {
@@ -65,6 +60,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   
   useEffect(() => {
     fetchShowDetails();
+    fetchMvpDealers(showId);
     if (user) {
       checkIfFavorite();
     }
@@ -117,6 +113,52 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       setError('Failed to load show details');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const fetchMvpDealers = async (showId: string) => {
+    try {
+      setLoadingDealers(true);
+      
+      // Query to find dealers registered for this show with MVP dealer role
+      const { data, error } = await supabase
+        .from('dealer_show_participation')
+        .select(`
+          dealer_id,
+          profiles:dealer_id (
+            id,
+            first_name,
+            last_name,
+            username,
+            role,
+            profile_image_url
+          )
+        `)
+        .eq('show_id', showId)
+        .eq('profiles.role', 'mvp_dealer');
+      
+      if (error) {
+        console.error('Error fetching MVP dealers:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Transform the data to a more usable format
+        const dealers = data.map(item => ({
+          id: item.dealer_id,
+          name: item.profiles.username || 
+                `${item.profiles.first_name} ${item.profiles.last_name || ''}`.trim(),
+          profileImageUrl: item.profiles.profile_image_url
+        }));
+        
+        setMvpDealers(dealers);
+      } else {
+        setMvpDealers([]);
+      }
+    } catch (error) {
+      console.error('Error in fetchMvpDealers:', error);
+    } finally {
+      setLoadingDealers(false);
     }
   };
   
@@ -369,7 +411,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         {/* ---------------- MVP Dealers Section ---------------- */}        
         <View style={styles.mvpDealersContainer}>
           <Text style={styles.sectionTitle}>MVP Dealers</Text>
-          {mvpDealers.length > 0 ? (
+          {loadingDealers ? (
+            <View style={styles.loadingDealersContainer}>
+              <ActivityIndicator size="small" color="#FF6A00" />
+              <Text style={styles.loadingDealersText}>Loading dealers...</Text>
+            </View>
+          ) : mvpDealers.length > 0 ? (
             <View style={styles.dealersList}>
               {mvpDealers.map(dealer => (
                 <View key={dealer.id} style={styles.dealerItem}>
@@ -602,6 +649,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 8,
+  },
+  loadingDealersContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  loadingDealersText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#666666',
   },
 });
 
