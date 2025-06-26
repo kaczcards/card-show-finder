@@ -134,7 +134,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       } = await supabase
         .from('show_participants')
         .select('userid')
-        .eq('show_id', showId);
+        .eq('showid', showId);
 
       if (participantsError) {
         console.error('Error fetching show participants:', participantsError);
