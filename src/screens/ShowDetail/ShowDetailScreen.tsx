@@ -338,20 +338,20 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   /* Placeholder navigation / messaging handlers for MVP dealers    */
   /* -------------------------------------------------------------- */
   const handleViewDealerDetails = (dealerId: string) => {
-    // Navigate to the dealer profile screen with the dealer's ID
-    navigation.navigate('DealerProfile', { dealerId });
+    // Navigate to the *Profile* tab then to its DealerProfile screen
+    navigation.navigate('Profile', {
+      screen: 'DealerProfile',
+      params: { dealerId },
+    });
   };
 
   const handleMessageDealer = (dealerId: string, dealerName: string) => {
-    // Navigate to the Messages stack first, then to DirectMessages inside it
-    // This follows React-Navigation’s pattern for nested navigators.
+    // The MainTab 'Messages' entry mounts DirectMessagesScreen directly,
+    // so we can navigate to it and pass the required params.
     navigation.navigate('Messages', {
-      screen: 'DirectMessages',
-      params: {
-        recipientId: dealerId,
-        recipientName: dealerName,
-        isNewConversation: true,
-      },
+      recipientId: dealerId,
+      recipientName: dealerName,
+      isNewConversation: true,
     });
   };
   
