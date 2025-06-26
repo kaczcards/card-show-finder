@@ -133,7 +133,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         error: participantsError,
       } = await supabase
         .from('show_participants')
-        .select('user_id')
+        .select('userid')
         .eq('show_id', showId);
 
       if (participantsError) {
@@ -148,7 +148,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
 
       // Extract distinct user IDs
       const participantUserIds = [
-        ...new Set(participants.map((p) => p.user_id)),
+        ...new Set(participants.map((p) => p.userid)),
       ];
 
       /* ---------------- Step 2: profiles ---------------- */
