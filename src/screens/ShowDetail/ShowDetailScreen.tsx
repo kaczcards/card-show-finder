@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
 import { UserRole } from '../../services/userRoleService';
 import GroupMessageComposer from '../../components/GroupMessageComposer';
@@ -338,21 +339,46 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   /* Placeholder navigation / messaging handlers for MVP dealers    */
   /* -------------------------------------------------------------- */
   const handleViewDealerDetails = (dealerId: string) => {
-    // Navigate to the *Profile* tab then to its DealerProfile screen
-    navigation.navigate('Profile', {
-      screen: 'DealerProfile',
-      params: { dealerId },
-    });
+    // Reset navigation so root is MainTabs → Profile → DealerProfile
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'MainTabs',
+            params: {
+              screen: 'Profile',
+              params: {
+                screen: 'DealerProfile',
+                params: { dealerId },
+              },
+            },
+          },
+        ],
+      })
+    );
   };
 
   const handleMessageDealer = (dealerId: string, dealerName: string) => {
-    // The MainTab 'Messages' entry mounts DirectMessagesScreen directly,
-    // so we can navigate to it and pass the required params.
-    navigation.navigate('Messages', {
-      recipientId: dealerId,
-      recipientName: dealerName,
-      isNewConversation: true,
-    });
+    // Reset navigation so root is MainTabs → Messages (DirectMessagesScreen)
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'MainTabs',
+            params: {
+              screen: 'Messages',
+              params: {
+                recipientId: dealerId,
+                recipientName: dealerName,
+                isNewConversation: true,
+              },
+            },
+          },
+        ],
+      })
+    );
   };
   
   if (loading) {
