@@ -343,11 +343,15 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   };
 
   const handleMessageDealer = (dealerId: string, dealerName: string) => {
-    // Navigate to the Direct Messages screen, initiating a new conversation
-    navigation.navigate('DirectMessages', {
-      recipientId: dealerId,
-      recipientName: dealerName,
-      isNewConversation: true,
+    // Navigate to the Messages stack first, then to DirectMessages inside it
+    // This follows React-Navigation’s pattern for nested navigators.
+    navigation.navigate('Messages', {
+      screen: 'DirectMessages',
+      params: {
+        recipientId: dealerId,
+        recipientName: dealerName,
+        isNewConversation: true,
+      },
     });
   };
   
