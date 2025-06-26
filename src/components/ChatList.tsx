@@ -265,7 +265,7 @@ const ChatList: React.FC<ChatListProps> = ({
           <FlatList
             data={sortedConversations}
             renderItem={renderConversationItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) = removeClippedSubviews={false}> item.id}
             contentContainerStyle={
               sortedConversations.length === 0 ? styles.emptyListContainer : styles.listContainer
             }

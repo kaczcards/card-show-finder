@@ -487,7 +487,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               <FlatList
                 ref={flatListRef}
                 data={groupMessagesByDate()}
-                keyExtractor={(item) => item.date}
+                keyExtractor={(item) = removeClippedSubviews={false}> item.date}
                 renderItem={({ item }) => (
                   <View>
                     {renderDateSeparator(item.date)}
