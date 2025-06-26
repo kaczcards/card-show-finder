@@ -158,6 +158,23 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       console.log('User IDs:', JSON.stringify(participantUserIds));
 
       /* ---------------- Step 2: profiles ---------------- */
+      /* --- Extra debug: show the role each participant actually has ---- */
+      try {
+        const { data: roleData, error: roleError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .in('id', participantUserIds);
+
+        if (roleError) {
+          console.error('Error fetching participant roles:', roleError);
+        } else {
+          console.warn('Participant roles:', JSON.stringify(roleData));
+        }
+      } catch (roleCatch) {
+        console.error('Unexpected error in role debug:', roleCatch);
+      }
+
+      /* ---- Now fetch only those that are MVP dealers (case-insensitive) ---- */
       const {
         data: dealerProfiles,
         error: profilesError,
@@ -165,7 +182,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         .from('profiles')
         .select('id, first_name, last_name, profile_image_url')
         .in('id', participantUserIds)
-        .eq('role', 'mvp_dealer');
+        // case-insensitive match for the role column
+        .ilike('role', '%mvp_dealer%');
 
       if (profilesError) {
         console.error('Error fetching dealer profiles:', profilesError);
