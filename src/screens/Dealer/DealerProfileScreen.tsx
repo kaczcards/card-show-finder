@@ -28,23 +28,59 @@ const getDealerProfile = async (dealerId: string) => {
 };
 
 const DealerProfileScreen = ({ route, navigation }) => {
-  const { dealerId } = route.params;
+  // We may receive a showId when coming from ShowDetail so we can
+  // display booth-specific info for that show.
+  const { dealerId, showId } = route.params;
   const { user } = useAuth();
   
   const [dealer, setDealer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Booth information (specific to a show registration)
+  const [boothInfo, setBoothInfo] = useState<any>(null);
+  const [loadingBoothInfo, setLoadingBoothInfo] = useState(false);
   
   // Check if the current user can message this dealer
   const { canMessage } = useMessagePermissions(dealerId, dealer?.role);
   
   // Load dealer profile
   useEffect(() => {
+    const fetchBoothInfo = async (
+      dId: string,
+      sId: string
+    ): Promise<void> => {
+      if (!dId || !sId) return;
+      try {
+        setLoadingBoothInfo(true);
+        const { data, error } = await supabase
+          .from('show_participants')
+          .select('*')
+          .eq('userid', dId)
+          .eq('showid', sId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching booth info:', error);
+          return;
+        }
+        setBoothInfo(data);
+      } catch (err) {
+        console.error('Unexpected error in fetchBoothInfo:', err);
+      } finally {
+        setLoadingBoothInfo(false);
+      }
+    };
+
     const loadDealerProfile = async () => {
       try {
         setLoading(true);
         const profile = await getDealerProfile(dealerId);
         setDealer(profile);
+
+        // If we have a showId (coming from ShowDetail), also fetch booth info
+        if (showId) {
+          fetchBoothInfo(dealerId, showId);
+        }
       } catch (err) {
         console.error('Error loading dealer profile:', err);
         setError('Failed to load dealer profile');
@@ -149,6 +185,44 @@ const DealerProfileScreen = ({ route, navigation }) => {
         <Text style={styles.sectionTitle}>About</Text>
         <Text style={styles.bioText}>{dealerProfile.bio || 'No information provided.'}</Text>
       </View>
+      
+      {/* Booth information (only when viewing from a show context) */}
+      {showId && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Booth Information</Text>
+          {loadingBoothInfo ? (
+            <ActivityIndicator size="small" color="#0057B8" />
+          ) : boothInfo ? (
+            <>
+              <View style={styles.infoRow}>
+                <Ionicons name="grid" size={18} color="#666" />
+                <Text style={styles.infoLabel}>Booth:</Text>
+                <Text style={styles.infoValue}>
+                  {boothInfo.booth_number || 'Not specified'}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons name="list" size={18} color="#666" />
+                <Text style={styles.infoLabel}>Items:</Text>
+                <Text style={styles.infoValue}>
+                  {boothInfo.items_for_sale || 'Not specified'}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons name="information-circle" size={18} color="#666" />
+                <Text style={styles.infoLabel}>Notes:</Text>
+                <Text style={styles.infoValue}>
+                  {boothInfo.notes || 'No additional notes'}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <Text style={{ color: '#666' }}>
+              No booth information available.
+            </Text>
+          )}
+        </View>
+      )}
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Upcoming Shows</Text>

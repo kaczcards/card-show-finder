@@ -350,7 +350,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
               screen: 'Profile',
               params: {
                 screen: 'DealerProfile',
-                params: { dealerId },
+                // Pass both dealerId and showId so the profile screen
+                // can display booth-specific info for this show.
+                params: { 
+                  dealerId,
+                  showId, 
+                },
               },
             },
           },
