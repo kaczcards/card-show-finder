@@ -240,15 +240,15 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   
   const checkIfFavorite = async () => {
     if (!user) return;
-    
+
     try {
-      const { data, error } = await supabase
+      const { data, error } = await directSupabase
         .from('user_favorite_shows')
         .select()
         .eq('user_id', user.id)
         .eq('show_id', showId)
         .single();
-      
+
       if (!error && data) {
         setIsFavorite(true);
       } else {
@@ -311,6 +311,8 @@ const toggleFavorite = async () => {
         if (!isFavorite) {
           console.log('🔍 STATE DEBUG - UI state doesn\'t match DB state, updating to favorited');
           setIsFavorite(true);
+          // UI now matches DB; no further DB operation required.
+          return;
         }
       }
     } catch (checkErr: any) {
