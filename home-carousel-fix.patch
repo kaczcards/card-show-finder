@@ -1,0 +1,21 @@
+--- src/components/HomeCarousel.tsx
++++ src/components/HomeCarousel.tsx
+@@ -183,8 +183,8 @@
+   // Render pagination indicators
+   const renderPagination = () => (
+     <View style={styles.paginationContainer}>
+-      {carouselImages.map((_, index) => (
+-        <PaginationDot key={index} index={index} activeIndex={activeIndex} />
++      {carouselImages.map((item, index) => (
++        <PaginationDot key={`dot-${item.id}`} index={index} activeIndex={activeIndex} />
+       ))}
+     </View>
+   );
+@@ -208,6 +208,7 @@
+         )}
+         onViewableItemsChanged={onViewableItemsChanged}
+         viewabilityConfig={viewabilityConfig}
++        removeClippedSubviews={false}
+       />
+       {renderPagination()}
+     </View>
