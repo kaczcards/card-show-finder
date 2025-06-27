@@ -1,6 +1,10 @@
 // src/services/subscriptionService.ts
 import { supabase } from '../supabase';
 import { User } from '../types';
+import {
+  createPaymentSheetForSubscription,
+  StripePaymentResult,
+} from './stripePaymentService';
 
 /**
  * Subscription plan types available in the app
@@ -249,11 +253,18 @@ export const calculateExpiryDate = (plan: SubscriptionPlan): Date => {
  * Initiate a subscription purchase
  * @param userId The ID of the user making the purchase
  * @param planId The ID of the plan being purchased
+ * @param stripeCtx Optional Stripe helpers (initPaymentSheet, presentPaymentSheet) –
+ *                  if provided we run the real payment flow, otherwise we fall back
+ *                  to the legacy mock implementation (useful for unit tests / Storybook).
  * @returns Promise with the payment result
  */
 export const initiateSubscriptionPurchase = async (
   userId: string,
-  planId: string
+  planId: string,
+  stripeCtx?: {
+    initPaymentSheet: (params: any) => Promise<any>;
+    presentPaymentSheet: () => Promise<any>;
+  }
 ): Promise<PaymentResult> => {
   try {
     // Find the selected plan
@@ -265,11 +276,47 @@ export const initiateSubscriptionPurchase = async (
       };
     }
     
-    // TODO: Integrate with Stripe payment processor
-    // This is a placeholder for the actual payment processing logic
-    // In a real implementation, this would redirect to Stripe checkout
-    // or use Stripe Elements/mobile SDK
+    /* ------------------------------------------------------------------
+     * 1. Real payment flow via Stripe (preferred)
+     * ------------------------------------------------------------------ */
+    if (stripeCtx) {
+      const stripeResult: StripePaymentResult =
+        await createPaymentSheetForSubscription(
+          userId,
+          planId,
+          stripeCtx.initPaymentSheet,
+          stripeCtx.presentPaymentSheet
+        );
+
+      if (!stripeResult.success) {
+        return {
+          success: false,
+          error: stripeResult.error || 'Stripe payment failed',
+        };
+      }
+
+      /* After a successful payment, the stripePaymentService already
+       * updates the user profile with the correct expiry date and role.
+       * Retrieve the latest expiry so the caller can display it.
+       */
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_expiry')
+        .eq('id', userId)
+        .single();
+
+      return {
+        success: true,
+        transactionId: stripeResult.transactionId,
+        subscriptionExpiry: profile?.subscription_expiry
+          ? new Date(profile.subscription_expiry)
+          : undefined,
+      };
+    }
     
+    /* ------------------------------------------------------------------
+     * 2. Legacy mock payment (development fallback)
+     * ------------------------------------------------------------------ */
     // For demonstration purposes, we'll simulate a successful payment
     const mockTransactionId = `tx_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     
@@ -319,7 +366,7 @@ export const renewSubscription = async (
   userId: string,
   planId: string
 ): Promise<PaymentResult> => {
-  // The renewal process is similar to the initial purchase
+  // Forward to initiateSubscriptionPurchase so we keep one code-path
   return initiateSubscriptionPurchase(userId, planId);
 };
 
