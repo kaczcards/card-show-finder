@@ -14,9 +14,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
 import { UserRole } from '../../services/userRoleService';
 import GroupMessageComposer from '../../components/GroupMessageComposer';
+import DealerDetailModal from '../../components/DealerDetailModal';
 
 interface ShowDetailProps {
   route: any;
@@ -37,14 +39,15 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [isShowOrganizer, setIsShowOrganizer] = useState(false);
   const [isMvpDealer, setIsMvpDealer] = useState(false);
   
-  /* ------------------------------------------------------------------ */
-  /* Dummy MVP Dealer data (replace with Supabase fetch in real build)  */
-  /* ------------------------------------------------------------------ */
-  const mvpDealers = [
-    { id: 'dealer-001', name: 'Elite Sports Cards' },
-    { id: 'dealer-002', name: 'TCG Emporium' },
-    { id: 'dealer-003', name: 'Vintage Vault' },
-  ];
+  // MVP Dealers state
+  const [mvpDealers, setMvpDealers] = useState<any[]>([]);
+  const [loadingDealers, setLoadingDealers] = useState(false);
+
+  /* ---------- Dealer-detail modal state ---------- */
+  const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
+  const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(
+    null
+  );
 
   useEffect(() => {
     if (!user || !userProfile) {
@@ -65,6 +68,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   
   useEffect(() => {
     fetchShowDetails();
+    fetchMvpDealers(showId);
     if (user) {
       checkIfFavorite();
     }
@@ -117,6 +121,106 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       setError('Failed to load show details');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  /**
+   * Fetch MVP dealers for a show using a two–step query that does NOT depend
+   * on Supabase's automatic FK joins (which were failing in production).
+   *
+   * 1.  Get all participants' user_ids from `show_participants`.
+   * 2.  Fetch those users' profiles where role = 'mvp_dealer'.
+   */
+  const fetchMvpDealers = async (showId: string) => {
+    try {
+      setLoadingDealers(true);
+
+      /* ---------------- Step 1: participants ---------------- */
+      const {
+        data: participants,
+        error: participantsError,
+      } = await supabase
+        .from('show_participants')
+        .select('userid')
+        .eq('showid', showId);
+
+      if (participantsError) {
+        console.error('Error fetching show participants:', participantsError);
+        return;
+      }
+
+      console.warn(`Found ${participants?.length || 0} participants for show ${showId}`);
+      console.log('Participants:', JSON.stringify(participants));
+
+      if (!participants || participants.length === 0) {
+        setMvpDealers([]);
+        return;
+      }
+
+      // Extract distinct user IDs
+      const participantUserIds = [
+        ...new Set(participants.map((p) => p.userid)),
+      ];
+
+      console.warn(`Extracted ${participantUserIds.length} unique user IDs`);
+      console.log('User IDs:', JSON.stringify(participantUserIds));
+
+      /* ---------------- Step 2: profiles ---------------- */
+      /* --- Extra debug: show the role each participant actually has ---- */
+      try {
+        const { data: roleData, error: roleError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .in('id', participantUserIds);
+
+        if (roleError) {
+          console.error('Error fetching participant roles:', roleError);
+        } else {
+          console.warn('Participant roles:', JSON.stringify(roleData));
+        }
+      } catch (roleCatch) {
+        console.error('Unexpected error in role debug:', roleCatch);
+      }
+
+      /* ---- Now fetch only those that are MVP dealers (case-insensitive) ---- */
+      const {
+        data: dealerProfiles,
+        error: profilesError,
+      } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, profile_image_url')
+        .in('id', participantUserIds)
+        // Include real MVP dealers (role contains 'mvp_dealer', case-insensitive)
+        // OR the specific paid MVP dealer who still has role 'dealer'
+        .or(
+          `role.ilike.%mvp_dealer%,id.eq.a3d8f808-1eaf-4f31-88ee-b93203d00176`
+        );
+
+      if (profilesError) {
+        console.error('Error fetching dealer profiles:', profilesError);
+        return;
+      }
+
+      console.warn(`Found ${dealerProfiles?.length || 0} MVP dealers`);
+      console.log('Dealer profiles:', JSON.stringify(dealerProfiles));
+
+      if (dealerProfiles && dealerProfiles.length > 0) {
+        const dealers = dealerProfiles.map((profile) => {
+          const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim();
+          return {
+            id: profile.id,
+            name: fullName || profile.id.substring(0, 8),
+            profileImageUrl: profile.profile_image_url,
+          };
+        });
+        setMvpDealers(dealers);
+      } else {
+        setMvpDealers([]);
+      }
+    } catch (error) {
+      console.error('Error in fetchMvpDealers:', error);
+    } finally {
+      setLoadingDealers(false);
     }
   };
   
@@ -190,17 +294,33 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     if (!show) return '';
     
     try {
-      const startDate = new Date(show.start_date);
-      const endDate = show.end_date ? new Date(show.end_date) : null;
-      
-      const options = { weekday: 'short', month: 'short', day: 'numeric' } as const;
-      
+      // Strip any time component and rebuild date at noon local time to
+      // avoid negative TZ offsets (e.g. UTC stored date displays previous day).
+      const startIso = (show.start_date as string).split('T')[0];
+      const endIso =
+        show.end_date && typeof show.end_date === 'string'
+          ? (show.end_date as string).split('T')[0]
+          : null;
+
+      const startDate = new Date(`${startIso}T12:00:00`);
+      const endDate = endIso ? new Date(`${endIso}T12:00:00`) : null;
+
+      const options = {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      } as const;
+
       if (endDate && startDate.toDateString() !== endDate.toDateString()) {
-        return `${startDate.toLocaleDateString(undefined, options)} - ${endDate.toLocaleDateString(undefined, options)}`;
+        return `${startDate.toLocaleDateString(
+          undefined,
+          options
+        )} - ${endDate.toLocaleDateString(undefined, options)}`;
       }
-      
+
       return startDate.toLocaleDateString(undefined, options);
     } catch (e) {
+      console.error('Error formatting date:', e);
       return show.start_date || 'Date unavailable';
     }
   };
@@ -226,13 +346,31 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   /* Placeholder navigation / messaging handlers for MVP dealers    */
   /* -------------------------------------------------------------- */
   const handleViewDealerDetails = (dealerId: string) => {
-    // TODO: integrate with navigation once Dealer detail screen exists
-    console.log('Navigating to dealer details for:', dealerId);
+    // Open modal with booth-specific info instead of navigating away
+    setSelectedDealer({ id: dealerId, name: mvpDealers.find(d => d.id === dealerId)?.name || '' });
+    setShowDealerDetailModal(true);
   };
 
   const handleMessageDealer = (dealerId: string, dealerName: string) => {
-    // TODO: open message composer when messaging flow is wired in
-    console.log(`Opening chat with ${dealerName} (ID: ${dealerId})`);
+    // Reset navigation so root is MainTabs → Messages (DirectMessagesScreen)
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'MainTabs',
+            params: {
+              screen: 'Messages',
+              params: {
+                recipientId: dealerId,
+                recipientName: dealerName,
+                isNewConversation: true,
+              },
+            },
+          },
+        ],
+      })
+    );
   };
   
   if (loading) {
@@ -369,14 +507,19 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         {/* ---------------- MVP Dealers Section ---------------- */}        
         <View style={styles.mvpDealersContainer}>
           <Text style={styles.sectionTitle}>MVP Dealers</Text>
-          {mvpDealers.length > 0 ? (
+          {loadingDealers ? (
+            <View style={styles.loadingDealersContainer}>
+              <ActivityIndicator size="small" color="#FF6A00" />
+              <Text style={styles.loadingDealersText}>Loading dealers...</Text>
+            </View>
+          ) : mvpDealers.length > 0 ? (
             <View style={styles.dealersList}>
               {mvpDealers.map(dealer => (
                 <View key={dealer.id} style={styles.dealerItem}>
                   {/* Dealer Name (link-like button) */}
                   <TouchableOpacity
                     style={styles.dealerNameButton}
-                    onPress={() => handleViewDealerDetails(dealer.id)}
+                    onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
                   >
                     <Text style={styles.dealerName}>{dealer.name}</Text>
                   </TouchableOpacity>
@@ -409,6 +552,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           Alert.alert('Success', 'Broadcast message sent successfully');
         }}
       />
+
+      {/* Dealer Detail Modal */}
+      {selectedDealer && (
+        <DealerDetailModal
+          isVisible={showDealerDetailModal}
+          onClose={() => setShowDealerDetailModal(false)}
+          dealerId={selectedDealer.id}
+          showId={showId}
+          dealerName={selectedDealer.name}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -602,6 +756,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 8,
+  },
+  loadingDealersContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  loadingDealersText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#666666',
   },
 });
 
