@@ -42,14 +42,6 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
       try {
         setLoading(true);
         setError(null);
-        /* ------------------------------------------------------------------
-         * DEBUG-HELPERS – log everything we can about this query so we can
-         * see why booth fields might appear as "Not specified".
-         * ---------------------------------------------------------------- */
-        console.log(
-          '[DealerDetailModal] fetching booth info',
-          JSON.stringify({ dealerId, showId })
-        );
 
         // Primary query for this dealer / show pair
         const { data, error: fetchError } = await supabase
@@ -65,17 +57,6 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
           setBoothInfo(null);
           return;
         }
-        // ---- Additional debug logging -----------------------------------
-        if (data) {
-          console.log(
-            '[DealerDetailModal] raw boothInfo:',
-            JSON.stringify(data, null, 2)
-          );
-
-          // Log the exact keys present so we know naming conventions
-          console.log('[DealerDetailModal] boothInfo keys:', Object.keys(data));
-        }
-        // ------------------------------------------------------------------
 
         setBoothInfo(data);
       } catch (err: any) {
@@ -212,23 +193,6 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
                   {boothInfo.buying_cards ? 'Buying cards' : 'Not buying cards'}
                 </Text>
               </View>
-
-              {/* Debug section - keep for additional troubleshooting */}
-              <View style={styles.debugSection}>
-                <Text style={styles.debugTitle}>All Available Data:</Text>
-                {Object.entries(boothInfo)
-                  .filter(
-                    ([key, value]) =>
-                      typeof value !== 'object' &&
-                      !['id', 'created_at', 'updated_at', 'userid', 'showid', 'createdat'].includes(key)
-                  )
-                  .map(([key, value]) => (
-                    <View key={key} style={styles.debugRow}>
-                      <Text style={styles.debugKey}>{key}:</Text>
-                      <Text style={styles.debugValue}>{String(value ?? '-')}</Text>
-                    </View>
-                  ))}
-              </View>
             </View>
           ) : (
             <Text style={styles.noInfoText}>No booth information available for this show.</Text>
@@ -341,37 +305,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
-  },
-
-  /* ----------  Debug styles ---------- */
-  debugSection: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-  },
-  debugTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#495057',
-  },
-  debugRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  debugKey: {
-    fontSize: 12,
-    color: '#6c757d',
-    fontWeight: '600',
-    width: 120,
-  },
-  debugValue: {
-    fontSize: 12,
-    color: '#212529',
-    flex: 1,
   },
   infoRowSmaller: {
     flexDirection: 'row',
