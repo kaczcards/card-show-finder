@@ -83,10 +83,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   useEffect(() => {
     fetchShowDetails();
     fetchMvpDealers(showId);
-    if (user) {
-      checkIfFavorite();
-    }
-  }, [showId, user]);
+    // Always verify favourite status on mount / when showId changes
+    checkIfFavorite();
+  }, [showId]);
   
   const fetchShowDetails = async () => {
     try {
@@ -238,20 +237,51 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     }
   };
   
+  /**
+   * Checks if the current show is in the authenticated user's favourites
+   * using the same directSupabase client utilised in `toggleFavorite`.
+   */
   const checkIfFavorite = async () => {
-    if (!user) return;
-
     try {
+      console.log('🔍 FAV DEBUG - Running checkIfFavorite for showId:', showId);
+
+      /* -----------------------------------------------------------
+       * 1. Get current session (avoid relying on `user` prop)
+       * --------------------------------------------------------- */
+      const {
+        data: { session },
+        error: sessionError,
+      } = await directSupabase.auth.getSession();
+
+      if (sessionError || !session?.user?.id) {
+        console.warn(
+          '🔍 FAV DEBUG - No authenticated session found while checking favourites',
+          sessionError?.message
+        );
+        setIsFavorite(false);
+        return;
+      }
+
+      const userId = session.user.id;
+
+      /* -----------------------------------------------------------
+       * 2. Query user_favorite_shows for this show / user combo
+       * --------------------------------------------------------- */
       const { data, error } = await directSupabase
         .from('user_favorite_shows')
         .select()
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('show_id', showId)
         .single();
 
       if (!error && data) {
+        console.log('🔍 FAV DEBUG - Favourite record exists:', data);
         setIsFavorite(true);
       } else {
+        if (error && error.code !== 'PGRST116') {
+          // Ignore “no rows” (PGRST116). Log anything else.
+          console.error('🚨 FAV ERROR - Error checking favourite status:', error);
+        }
         setIsFavorite(false);
       }
     } catch (error) {
