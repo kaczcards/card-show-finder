@@ -156,17 +156,61 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
               <View style={styles.infoRow}>
                 <Ionicons name="grid" size={20} color="#666" style={styles.infoIcon} />
                 <Text style={styles.infoLabel}>Booth Number:</Text>
-                <Text style={styles.infoValue}>{boothInfo.booth_number || 'Not specified'}</Text>
+                <Text style={styles.infoValue}>
+                  {boothInfo.booth_number ||
+                    boothInfo.boothnumber ||
+                    boothInfo.boothNumber ||
+                    boothInfo.booth ||
+                    'Not specified'}
+                </Text>
               </View>
               <View style={styles.infoRow}>
                 <Ionicons name="list" size={20} color="#666" style={styles.infoIcon} />
                 <Text style={styles.infoLabel}>Items for Sale:</Text>
-                <Text style={styles.infoValue}>{boothInfo.items_for_sale || 'Not specified'}</Text>
+                <Text style={styles.infoValue}>
+                  {boothInfo.items_for_sale ||
+                    boothInfo.itemsForSale ||
+                    boothInfo.itemsforsale ||
+                    boothInfo.items ||
+                    boothInfo.inventory ||
+                    boothInfo.products ||
+                    'Not specified'}
+                </Text>
               </View>
               <View style={styles.infoRow}>
                 <Ionicons name="information-circle" size={20} color="#666" style={styles.infoIcon} />
                 <Text style={styles.infoLabel}>Notes:</Text>
-                <Text style={styles.infoValue}>{boothInfo.notes || 'No additional notes'}</Text>
+                <Text style={styles.infoValue}>
+                  {boothInfo.notes ||
+                    boothInfo.additional_notes ||
+                    boothInfo.additionalNotes ||
+                    boothInfo.description ||
+                    boothInfo.comments ||
+                    'No additional notes'}
+                </Text>
+              </View>
+
+              {/* Debug: list all simple scalar fields so we can see what's actually stored */}
+              <View style={styles.debugSection}>
+                <Text style={styles.debugTitle}>All Available Data:</Text>
+                {Object.entries(boothInfo)
+                  .filter(
+                    ([key, value]) =>
+                      typeof value !== 'object' &&
+                      ![
+                        'id',
+                        'created_at',
+                        'updated_at',
+                        'userid',
+                        'showid',
+                      ].includes(key)
+                  )
+                  .map(([key, value]) => (
+                    <View key={key} style={styles.debugRow}>
+                      <Text style={styles.debugKey}>{key}:</Text>
+                      <Text style={styles.debugValue}>{String(value ?? '-')}</Text>
+                    </View>
+                  ))}
               </View>
             </View>
           ) : (
@@ -280,6 +324,37 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+
+  /* ----------  Debug styles ---------- */
+  debugSection: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  debugTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#495057',
+  },
+  debugRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  debugKey: {
+    fontSize: 12,
+    color: '#6c757d',
+    fontWeight: '600',
+    width: 120,
+  },
+  debugValue: {
+    fontSize: 12,
+    color: '#212529',
+    flex: 1,
   },
 });
 
