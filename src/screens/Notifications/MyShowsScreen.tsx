@@ -49,7 +49,25 @@ const MyShowsScreen: React.FC = () => {
         
         const userId = authState.user?.id;
         const currentDate = new Date().toISOString();
-        const favoriteShowIds = authState.user?.favoriteShows || [];
+
+        /* -----------------------------------------------------------
+         * Get favourite show IDs from user_favorite_shows join table
+         * --------------------------------------------------------- */
+        const { data: favRows, error: favRowsError } = await supabase
+          .from('user_favorite_shows')
+          .select('show_id')
+          .eq('user_id', userId);
+
+        if (favRowsError) {
+          console.error('Error fetching favourite show IDs:', favRowsError);
+        }
+
+        const favoriteShowIds =
+          favRows && favRows.length > 0 ? favRows.map((r: any) => r.show_id) : [];
+
+        console.log(
+          `[MyShows] Fetched ${favoriteShowIds.length} favourite show IDs for user ${userId}`
+        );
         
         // Step 1: Get shows the user has favorited
         let allUpcoming: Record<string, Show> = {};
