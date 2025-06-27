@@ -27,9 +27,19 @@ interface ShowDetailProps {
 
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
-  // Access authenticated user via authState from the AuthContext
-  const { authState } = useAuth();
-  const { user } = authState;
+  
+  // Get the entire auth context to access all available properties
+  const authContext = useAuth();
+  // Try multiple ways to access user data for resilience
+  const user = authContext.authState?.user || null;
+  
+  // Debug logging for authentication state
+  useEffect(() => {
+    console.log('Auth state in ShowDetailScreen:', 
+      authContext.authState?.isAuthenticated ? 'Authenticated' : 'Not authenticated',
+      'User ID:', authContext.authState?.user?.id || 'undefined'
+    );
+  }, [authContext.authState]);
   
   const [show, setShow] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -53,11 +63,13 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
 
   useEffect(() => {
     if (!user) {
+      console.log('No user found in auth state, resetting organizer/dealer status');
       setIsShowOrganizer(false);
       setIsMvpDealer(false);
       return;
     }
     
+    console.log('User role in ShowDetailScreen:', user.role);
     const userRole = user.role as UserRole;
     setIsShowOrganizer(userRole === UserRole.SHOW_ORGANIZER);
     setIsMvpDealer(userRole === UserRole.MVP_DEALER);
@@ -71,8 +83,13 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   useEffect(() => {
     fetchShowDetails();
     fetchMvpDealers(showId);
-    if (user) {
+    
+    // Check if favorite whenever user or showId changes
+    if (user && user.id) {
+      console.log('Checking favorite status for user:', user.id, 'show:', showId);
       checkIfFavorite();
+    } else {
+      console.log('Cannot check favorite status - no authenticated user');
     }
   }, [showId, user]);
   
@@ -227,9 +244,13 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   };
   
   const checkIfFavorite = async () => {
-    if (!user) return;
+    if (!user || !user.id) {
+      console.log('checkIfFavorite: No authenticated user found');
+      return;
+    }
     
     try {
+      console.log('Checking if show is favorited:', { userId: user.id, showId });
       const { data, error } = await supabase
         .from('user_favorite_shows')
         .select()
@@ -238,8 +259,10 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         .single();
       
       if (!error && data) {
+        console.log('Show is favorited');
         setIsFavorite(true);
       } else {
+        console.log('Show is not favorited', error?.message);
         setIsFavorite(false);
       }
     } catch (error) {
@@ -248,28 +271,69 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   };
   
   const toggleFavorite = async () => {
-    if (!user) {
+    // Multiple checks to ensure we have authentication
+    const isAuthenticated = authContext.authState?.isAuthenticated;
+    const userId = user?.id;
+    
+    console.log('Toggle favorite - Auth state:', { 
+      isAuthenticated, 
+      userId,
+      isFavorite
+    });
+    
+    // Check authentication status with detailed error message
+    if (!isAuthenticated || !userId) {
+      console.error('Authentication check failed:', { 
+        isContextAvailable: !!authContext,
+        authStateAvailable: !!authContext?.authState,
+        isAuthenticated,
+        hasUser: !!user,
+        userId
+      });
+      
+      // Try to get session directly from Supabase as a fallback
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          console.log('Found user session directly from Supabase:', session.user.id);
+          proceedWithFavoriteToggle(session.user.id);
+          return;
+        }
+      } catch (sessionError) {
+        console.error('Failed to get session from Supabase:', sessionError);
+      }
+      
       Alert.alert('Sign In Required', 'Please sign in to save favorites');
       return;
     }
     
+    // If we have authentication, proceed with the favorite toggle
+    proceedWithFavoriteToggle(userId);
+  };
+  
+  // Separated function to handle the actual favorite toggle operation
+  const proceedWithFavoriteToggle = async (userId: string) => {
     try {
       if (isFavorite) {
         // Remove from favorites
+        console.log('Removing from favorites:', { userId, showId });
         await supabase
           .from('user_favorite_shows')
           .delete()
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .eq('show_id', showId);
         
         setIsFavorite(false);
+        console.log('Successfully removed from favorites');
       } else {
         // Add to favorites
+        console.log('Adding to favorites:', { userId, showId });
         await supabase
           .from('user_favorite_shows')
-          .insert([{ user_id: user.id, show_id: showId }]);
+          .insert([{ user_id: userId, show_id: showId }]);
         
         setIsFavorite(true);
+        console.log('Successfully added to favorites');
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
