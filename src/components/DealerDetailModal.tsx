@@ -42,6 +42,16 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
       try {
         setLoading(true);
         setError(null);
+        /* ------------------------------------------------------------------
+         * DEBUG-HELPERS – log everything we can about this query so we can
+         * see why booth fields might appear as “Not specified”.
+         * ---------------------------------------------------------------- */
+        console.log(
+          '[DealerDetailModal] fetching booth info',
+          JSON.stringify({ dealerId, showId })
+        );
+
+        // Primary query for this dealer / show pair
         const { data, error: fetchError } = await supabase
           .from('show_participants')
           .select('*')
@@ -55,6 +65,38 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
           setBoothInfo(null);
           return;
         }
+        // ---- Additional debug logging -----------------------------------
+        if (data) {
+          console.log(
+            '[DealerDetailModal] raw boothInfo:',
+            JSON.stringify(data, null, 2)
+          );
+
+          // Log the exact keys present so we know naming conventions
+          console.log('[DealerDetailModal] boothInfo keys:', Object.keys(data));
+
+          // Check for expected / alternative field names
+          const potentialFields = [
+            'booth_number',
+            'boothnumber',
+            'booth_num',
+            'boothNumber',
+            'items_for_sale',
+            'itemsForSale',
+            'itemsforsale',
+            'items',
+            'notes',
+            'additional_notes',
+          ];
+
+          const found = potentialFields.reduce<Record<string, any>>((acc, f) => {
+            if (data[f] !== undefined) acc[f] = data[f];
+            return acc;
+          }, {});
+          console.log('[DealerDetailModal] matched boothInfo fields:', found);
+        }
+        // ------------------------------------------------------------------
+
         setBoothInfo(data);
       } catch (err: any) {
         console.error('Unexpected error in fetchBoothInfo:', err);
