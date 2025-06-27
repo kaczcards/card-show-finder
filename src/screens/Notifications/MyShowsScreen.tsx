@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,59 +6,204 @@ import {
   FlatList,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
 import { Show, Review } from '../../types';
 import ReviewForm from '../../components/ReviewForm';
 import ReviewsList from '../../components/ReviewsList';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../supabase';
 
 /**
- * MyShowsScreen – replaces the old Notifications screen.
- * Displays Upcoming shows the user plans to attend, and Past shows the user attended.
- * Past shows allow leaving a review (opens ReviewForm modal).
+ * MyShowsScreen – Shows user's upcoming and past shows from:
+ * - User's favorited shows
+ * - Shows where the user is registered as an MVP dealer
+ * - Shows with favorited MVP dealer booths
  */
 const MyShowsScreen: React.FC = () => {
-  /* ------------------------------------------------------------------
-   * Placeholder data – replace with real data via context / API later
-   * ------------------------------------------------------------------ */
-  const dummyUpcoming: Show[] = [
-    {
-      id: '1',
-      title: 'Indy Card Expo',
-      location: 'Fairgrounds Hall',
-      address: '123 Main St, Indianapolis, IN',
-      startDate: new Date().toISOString(),
-      endDate: new Date().toISOString(),
-      entryFee: 5,
-      status: 0 as any,
-      organizerId: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-  const dummyPast: Show[] = [
-    {
-      id: '2',
-      title: 'East Coast Card Show',
-      location: 'Boston Convention Ctr.',
-      address: '1 Seaport Ln, Boston, MA',
-      startDate: new Date(Date.now() - 864e5 * 5).toISOString(),
-      endDate: new Date(Date.now() - 864e5 * 4).toISOString(),
-      entryFee: 0,
-      status: 0 as any,
-      organizerId: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-
-  /* ------------------------------------------------------------------ */
+  const { authState } = useAuth();
+  const navigation = useNavigation();
   const [currentTab, setCurrentTab] = useState<'upcoming' | 'past'>('upcoming');
-  const [upcomingShows, setUpcomingShows] = useState<Show[]>(dummyUpcoming);
-  const [pastShows] = useState<Show[]>(dummyPast);
+  const [upcomingShows, setUpcomingShows] = useState<Show[]>([]);
+  const [pastShows, setPastShows] = useState<Show[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   const [reviewFormVisible, setReviewFormVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Track which shows have dealer booth info
+  const [showsWithBoothInfo, setShowsWithBoothInfo] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    if (!authState.isAuthenticated || !authState.user) return;
+    
+    const fetchUserShows = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const userId = authState.user?.id;
+        const currentDate = new Date().toISOString();
+        const favoriteShowIds = authState.user?.favoriteShows || [];
+        
+        // Step 1: Get shows the user has favorited
+        let allUpcoming: Record<string, Show> = {};
+        let allPast: Record<string, Show> = {};
+        
+        if (favoriteShowIds.length > 0) {
+          const { data: favoriteShows, error: favoriteError } = await supabase
+            .from('shows')
+            .select('*')
+            .in('id', favoriteShowIds);
+          
+          if (favoriteError) {
+            console.error('Error fetching favorite shows:', favoriteError);
+          } else if (favoriteShows) {
+            // Sort shows into upcoming and past
+            favoriteShows.forEach(show => {
+              if (new Date(show.end_date) >= new Date()) {
+                allUpcoming[show.id] = {
+                  id: show.id,
+                  title: show.title,
+                  location: show.location,
+                  address: show.address,
+                  startDate: show.start_date,
+                  endDate: show.end_date,
+                  entryFee: show.entryfee || 0,
+                  status: show.status,
+                  organizerId: show.organizer_id,
+                  imageUrl: show.image,
+                  coordinates: show.coordinate,
+                  description: show.description,
+                  createdAt: show.created_at,
+                  updatedAt: show.updated_at,
+                };
+              } else {
+                allPast[show.id] = {
+                  id: show.id,
+                  title: show.title,
+                  location: show.location,
+                  address: show.address,
+                  startDate: show.start_date,
+                  endDate: show.end_date,
+                  entryFee: show.entryfee || 0,
+                  status: show.status,
+                  organizerId: show.organizer_id,
+                  imageUrl: show.image,
+                  coordinates: show.coordinate,
+                  description: show.description,
+                  createdAt: show.created_at,
+                  updatedAt: show.updated_at,
+                };
+              }
+            });
+          }
+        }
+        
+        // Step 2: Get shows where user is registered as a dealer
+        const { data: dealerShows, error: dealerError } = await supabase
+          .from('show_participants')
+          .select(`
+            showid,
+            shows (*)
+          `)
+          .eq('userid', userId);
+        
+        if (dealerError) {
+          console.error('Error fetching dealer shows:', dealerError);
+        } else if (dealerShows && dealerShows.length > 0) {
+          dealerShows.forEach(item => {
+            if (!item.shows) return;
+            
+            const show = item.shows as any;
+            
+            // Add dealer participation info
+            if (!showsWithBoothInfo[show.id]) {
+              showsWithBoothInfo[show.id] = ['me'];
+            }
+            
+            if (new Date(show.end_date) >= new Date()) {
+              allUpcoming[show.id] = {
+                id: show.id,
+                title: show.title,
+                location: show.location,
+                address: show.address,
+                startDate: show.start_date,
+                endDate: show.end_date,
+                entryFee: show.entryfee || 0,
+                status: show.status,
+                organizerId: show.organizer_id,
+                imageUrl: show.image,
+                coordinates: show.coordinate,
+                description: show.description,
+                createdAt: show.created_at,
+                updatedAt: show.updated_at,
+              };
+            } else {
+              allPast[show.id] = {
+                id: show.id,
+                title: show.title,
+                location: show.location,
+                address: show.address,
+                startDate: show.start_date,
+                endDate: show.end_date,
+                entryFee: show.entryfee || 0,
+                status: show.status,
+                organizerId: show.organizer_id,
+                imageUrl: show.image,
+                coordinates: show.coordinate,
+                description: show.description,
+                createdAt: show.created_at,
+                updatedAt: show.updated_at,
+              };
+            }
+          });
+        }
+        
+        // Step 3: Get shows where the user has favorited an MVP dealer's booth
+        // This would require additional table or functionality to track favorited booths
+        // For now, we'll leave this as a placeholder for future implementation
+        
+        // Set the state with all found shows
+        setUpcomingShows(Object.values(allUpcoming));
+        setPastShows(Object.values(allPast));
+        setShowsWithBoothInfo(showsWithBoothInfo);
+        
+        // Step 4: Get reviews for past shows
+        const { data: reviewData, error: reviewError } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('user_id', userId);
+          
+        if (reviewError) {
+          console.error('Error fetching reviews:', reviewError);
+        } else if (reviewData) {
+          setReviews(reviewData.map(review => ({
+            id: review.id,
+            showId: review.show_id,
+            userId: review.user_id,
+            userName: 'You', // Assuming viewing own reviews
+            rating: review.rating,
+            comment: review.comment,
+            date: review.created_at,
+          })));
+        }
+        
+      } catch (err: any) {
+        console.error('Error in fetchUserShows:', err);
+        setError('Failed to load your shows. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserShows();
+  }, [authState.isAuthenticated, authState.user]);
 
   /* -------------------------  Helpers  ----------------------------- */
   const renderEmptyState = (message: string, icon: keyof typeof Ionicons.glyphMap) => (
@@ -77,21 +222,52 @@ const MyShowsScreen: React.FC = () => {
     setReviewFormVisible(true);
   };
 
-  const submitReview = (rating: number, comment: string) => {
-    if (selectedShow) {
-      const newReview: Review = {
-        id: Date.now().toString(),
-        showId: selectedShow.id,
-        userId: 'currentUser',
-        userName: 'You',
-        rating,
-        comment,
-        date: new Date().toISOString(),
-      };
-      setReviews((prev) => [...prev, newReview]);
-      setReviewFormVisible(false);
-      setSelectedShow(null);
+  const submitReview = async (rating: number, comment: string) => {
+    if (!selectedShow || !authState.user) return;
+    
+    try {
+      // Save review to database
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert({
+          show_id: selectedShow.id,
+          user_id: authState.user.id,
+          rating,
+          comment,
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        const newReview: Review = {
+          id: data.id,
+          showId: data.show_id,
+          userId: data.user_id,
+          userName: 'You', // Assuming viewing own reviews
+          rating: data.rating,
+          comment: data.comment,
+          date: data.created_at,
+        };
+        
+        setReviews((prev) => [...prev, newReview]);
+        setReviewFormVisible(false);
+        setSelectedShow(null);
+        
+        Alert.alert('Success', 'Your review has been submitted!');
+      }
+    } catch (err: any) {
+      console.error('Error submitting review:', err);
+      Alert.alert('Error', 'Failed to submit your review. Please try again.');
     }
+  };
+  
+  const handleViewDealerBooth = (show: Show) => {
+    // Navigate to show detail screen
+    navigation.navigate('ShowDetail' as never, { id: show.id } as never);
   };
 
   /* -------------------------  Renderers  ---------------------------- */
@@ -118,9 +294,20 @@ const MyShowsScreen: React.FC = () => {
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{item.title}</Text>
-        <TouchableOpacity onPress={() => removeUpcoming(item.id)}>
-          <Ionicons name="remove-circle-outline" size={22} color="#FF3B30" />
-        </TouchableOpacity>
+        <View style={styles.cardActions}>
+          {showsWithBoothInfo[item.id] && (
+            <TouchableOpacity 
+              style={styles.boothButton}
+              onPress={() => handleViewDealerBooth(item)}
+            >
+              <Ionicons name="business" size={20} color="#007AFF" />
+              <Text style={styles.boothText}>Booth Info</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => removeUpcoming(item.id)}>
+            <Ionicons name="remove-circle-outline" size={22} color="#FF3B30" />
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={styles.cardSubtitle}>
         {formatDate(item.startDate)} • {item.location}
@@ -135,11 +322,22 @@ const MyShowsScreen: React.FC = () => {
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>{item.title}</Text>
-          {!alreadyReviewed && (
-            <TouchableOpacity onPress={() => openReviewForm(item)}>
-              <Ionicons name="create-outline" size={22} color="#007AFF" />
-            </TouchableOpacity>
-          )}
+          <View style={styles.cardActions}>
+            {showsWithBoothInfo[item.id] && (
+              <TouchableOpacity 
+                style={styles.boothButton}
+                onPress={() => handleViewDealerBooth(item)}
+              >
+                <Ionicons name="business" size={20} color="#007AFF" />
+                <Text style={styles.boothText}>Booth Info</Text>
+              </TouchableOpacity>
+            )}
+            {!alreadyReviewed && (
+              <TouchableOpacity onPress={() => openReviewForm(item)}>
+                <Ionicons name="create-outline" size={22} color="#007AFF" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         <Text style={styles.cardSubtitle}>
           {formatDate(item.startDate)} • {item.location}
@@ -193,24 +391,37 @@ const MyShowsScreen: React.FC = () => {
       </View>
 
       {/* Content */}
-      <FlatList
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        data={currentTab === 'upcoming' ? upcomingShows : pastShows}
-        keyExtractor={(item) => item.id}
-        renderItem={currentTab === 'upcoming' ? renderUpcomingItem : renderPastItem}
-        ListEmptyComponent={
-          currentTab === 'upcoming'
-            ? renderEmptyState(
-                "You haven't added any upcoming shows to your list.",
-                'calendar-outline'
-              )
-            : renderEmptyState(
-                'No past shows yet. Shows you attend will appear here.',
-                'time-outline'
-              )
-        }
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading your shows...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={64} color="#FF3B30" />
+          <Text style={styles.errorTitle}>Error</Text>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <FlatList
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          data={currentTab === 'upcoming' ? upcomingShows : pastShows}
+          keyExtractor={(item) => item.id}
+          renderItem={currentTab === 'upcoming' ? renderUpcomingItem : renderPastItem}
+          ListEmptyComponent={
+            currentTab === 'upcoming'
+              ? renderEmptyState(
+                  "You haven't added any upcoming shows to your list.",
+                  'calendar-outline'
+                )
+              : renderEmptyState(
+                  'No past shows yet. Shows you attend will appear here.',
+                  'time-outline'
+                )
+          }
+        />
+      )}
 
       {reviewFormVisible && selectedShow && (
         <ReviewForm
@@ -298,6 +509,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    flex: 1,
   },
   cardSubtitle: {
     fontSize: 14,
@@ -322,6 +534,55 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    fontSize: 16, 
+    color: '#666',
+    marginTop: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 16,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  boothButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+    backgroundColor: '#f0f6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  boothText: {
+    fontSize: 12,
+    color: '#007AFF',
+    marginLeft: 4,
+    fontWeight: '500',
   },
 });
 
