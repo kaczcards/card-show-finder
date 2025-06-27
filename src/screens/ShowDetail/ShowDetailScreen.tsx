@@ -24,7 +24,21 @@ interface ShowDetailProps {
   route: any;
   navigation: any;
 }
+// ******** AUTHENTICATION FIX *********
+import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
+// Supabase client for direct auth check
+const directSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || Constants.expoConfig?.extra?.supabaseUrl;
+const directSupabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.expoConfig?.extra?.supabaseAnonKey;
+const directSupabase = createClient(directSupabaseUrl, directSupabaseKey, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+  },
+});
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
   
@@ -83,15 +97,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   useEffect(() => {
     fetchShowDetails();
     fetchMvpDealers(showId);
-    
-    // Check if favorite whenever user or showId changes
-    if (user && user.id) {
-      console.log('Checking favorite status for user:', user.id, 'show:', showId);
-      checkIfFavorite();
-    } else {
-      console.log('Cannot check favorite status - no authenticated user');
-    }
-  }, [showId, user]);
+    // Always verify favourite status on mount / when showId changes
+    checkIfFavorite();
+  }, [showId]);
   
   const fetchShowDetails = async () => {
     try {
@@ -243,26 +251,51 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     }
   };
   
+  /**
+   * Checks if the current show is in the authenticated user's favourites
+   * using the same directSupabase client utilised in `toggleFavorite`.
+   */
   const checkIfFavorite = async () => {
-    if (!user || !user.id) {
-      console.log('checkIfFavorite: No authenticated user found');
-      return;
-    }
-    
     try {
-      console.log('Checking if show is favorited:', { userId: user.id, showId });
-      const { data, error } = await supabase
+      console.log('🔍 FAV DEBUG - Running checkIfFavorite for showId:', showId);
+
+      /* -----------------------------------------------------------
+       * 1. Get current session (avoid relying on `user` prop)
+       * --------------------------------------------------------- */
+      const {
+        data: { session },
+        error: sessionError,
+      } = await directSupabase.auth.getSession();
+
+      if (sessionError || !session?.user?.id) {
+        console.warn(
+          '🔍 FAV DEBUG - No authenticated session found while checking favourites',
+          sessionError?.message
+        );
+        setIsFavorite(false);
+        return;
+      }
+
+      const userId = session.user.id;
+
+      /* -----------------------------------------------------------
+       * 2. Query user_favorite_shows for this show / user combo
+       * --------------------------------------------------------- */
+      const { data, error } = await directSupabase
         .from('user_favorite_shows')
         .select()
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('show_id', showId)
         .single();
-      
+
       if (!error && data) {
-        console.log('Show is favorited');
+        console.log('🔍 FAV DEBUG - Favourite record exists:', data);
         setIsFavorite(true);
       } else {
-        console.log('Show is not favorited', error?.message);
+        if (error && error.code !== 'PGRST116') {
+          // Ignore "no rows" (PGRST116). Log anything else.
+          console.error('🚨 FAV ERROR - Error checking favourite status:', error);
+        }
         setIsFavorite(false);
       }
     } catch (error) {
@@ -270,77 +303,135 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     }
   };
   
-  const toggleFavorite = async () => {
-    // Multiple checks to ensure we have authentication
-    const isAuthenticated = authContext.authState?.isAuthenticated;
-    const userId = user?.id;
+const toggleFavorite = async () => {
+  // Direct session check without using AuthContext
+  try {
+    // Log environment variables to debug connection issues
+    console.log('🔍 ENV DEBUG - Supabase URL:', directSupabaseUrl ? 'Set' : 'Not set');
+    console.log('🔍 ENV DEBUG - Supabase Key:', directSupabaseKey ? 'Set' : 'Not set');
     
-    console.log('Toggle favorite - Auth state:', { 
-      isAuthenticated, 
-      userId,
-      isFavorite
-    });
+    const { data: { session }, error: sessionError } = await directSupabase.auth.getSession();
     
-    // Check authentication status with detailed error message
-    if (!isAuthenticated || !userId) {
-      console.error('Authentication check failed:', { 
-        isContextAvailable: !!authContext,
-        authStateAvailable: !!authContext?.authState,
-        isAuthenticated,
-        hasUser: !!user,
-        userId
-      });
-      
-      // Try to get session directly from Supabase as a fallback
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          console.log('Found user session directly from Supabase:', session.user.id);
-          proceedWithFavoriteToggle(session.user.id);
-          return;
-        }
-      } catch (sessionError) {
-        console.error('Failed to get session from Supabase:', sessionError);
-      }
-      
+    if (sessionError || !session || !session.user) {
+      console.error('🚨 AUTH ERROR - No direct session found:', sessionError?.message, 'Code:', sessionError?.code);
       Alert.alert('Sign In Required', 'Please sign in to save favorites');
       return;
     }
     
-    // If we have authentication, proceed with the favorite toggle
-    proceedWithFavoriteToggle(userId);
-  };
-  
-  // Separated function to handle the actual favorite toggle operation
-  const proceedWithFavoriteToggle = async (userId: string) => {
+    const userId = session.user.id;
+    console.log('🔍 AUTH DEBUG - Got userId directly from session:', userId);
+    
+    // Check if a favorites record exists at the beginning to confirm persistence
     try {
-      if (isFavorite) {
-        // Remove from favorites
-        console.log('Removing from favorites:', { userId, showId });
-        await supabase
-          .from('user_favorite_shows')
-          .delete()
-          .eq('user_id', userId)
-          .eq('show_id', showId);
-        
-        setIsFavorite(false);
-        console.log('Successfully removed from favorites');
-      } else {
-        // Add to favorites
-        console.log('Adding to favorites:', { userId, showId });
-        await supabase
-          .from('user_favorite_shows')
-          .insert([{ user_id: userId, show_id: showId }]);
-        
-        setIsFavorite(true);
-        console.log('Successfully added to favorites');
+      console.log('🔍 DB DEBUG - Checking if favorite already exists in database');
+      const { data: existingFavorite, error: checkError } = await directSupabase
+        .from('user_favorite_shows')
+        .select()
+        .eq('user_id', userId)
+        .eq('show_id', showId)
+        .single();
+      
+      if (checkError) {
+        if (checkError.code === 'PGRST116') {
+          // PGRST116 is "No rows returned" - expected if not favorited
+          console.log('🔍 DB DEBUG - No existing favorite record found');
+        } else {
+          // This could indicate a more serious issue like missing table
+          console.error('🚨 DB ERROR - Error checking existing favorite:', checkError.message, 'Code:', checkError.code);
+          
+          // Check specifically for "relation does not exist" error
+          if (checkError.code === '42P01') {
+            console.error('🚨 DB ERROR - The user_favorite_shows table does not exist in the database!');
+            Alert.alert(
+              'Database Error', 
+              'The favorites feature is not properly set up. Please contact support.'
+            );
+            return;
+          }
+        }
+      } else if (existingFavorite) {
+        console.log('🔍 DB DEBUG - Existing favorite record found:', existingFavorite);
+        // If UI state doesn't match DB state, update it
+        if (!isFavorite) {
+          console.log('🔍 STATE DEBUG - UI state doesn\'t match DB state, updating to favorited');
+          setIsFavorite(true);
+          // UI now matches DB; no further DB operation required.
+          return;
+        }
       }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      Alert.alert('Error', 'Failed to update favorites');
+    } catch (checkErr: any) {
+      console.error('🚨 UNEXPECTED ERROR checking favorite status:', checkErr.message, checkErr.code || 'No code');
     }
-  };
-  
+    
+    if (isFavorite) {
+      // Remove from favorites
+      console.log('🔍 DB OPERATION - Removing favorite:', { userId, showId });
+      const { data: deleteData, error: deleteError } = await directSupabase
+        .from('user_favorite_shows')
+        .delete()
+        .eq('user_id', userId)
+        .eq('show_id', showId);
+      
+      if (deleteError) {
+        console.error('🚨 DB ERROR - Failed to remove favorite:', deleteError.message, 'Code:', deleteError.code);
+        
+        // Handle specific error types
+        if (deleteError.code === '42P01') {
+          // Table doesn't exist
+          Alert.alert('Database Error', 'The favorites table does not exist. Please contact support.');
+        } else if (deleteError.code === '23503') {
+          // Foreign key violation
+          Alert.alert('Error', 'Could not remove favorite due to data integrity issue.');
+        } else {
+          Alert.alert('Error', `Failed to remove favorite: ${deleteError.message}`);
+        }
+        return;
+      }
+      
+      console.log('✅ DB SUCCESS - Removed favorite. Response:', deleteData);
+      setIsFavorite(false);
+      console.log('✅ STATE UPDATE - Updated isFavorite to false');
+    } else {
+      // Add to favorites
+      console.log('🔍 DB OPERATION - Adding favorite:', { userId, showId });
+      const { data: insertData, error: insertError } = await directSupabase
+        .from('user_favorite_shows')
+        .insert([{ user_id: userId, show_id: showId }]);
+      
+      if (insertError) {
+        console.error('🚨 DB ERROR - Failed to add favorite:', insertError.message, 'Code:', insertError.code);
+        
+        // Handle specific error types
+        if (insertError.code === '42P01') {
+          // Table doesn't exist
+          Alert.alert('Database Error', 'The favorites table does not exist. Please contact support.');
+        } else if (insertError.code === '23503') {
+          // Foreign key violation
+          Alert.alert('Error', 'Could not add favorite due to data integrity issue (e.g., show or user does not exist).');
+        } else if (insertError.code === '23505') {
+          // Unique constraint violation (already favorited)
+          Alert.alert('Info', 'This show is already in your favorites.');
+        } else {
+          Alert.alert('Error', `Failed to add favorite: ${insertError.message}`);
+        }
+        return;
+      }
+      
+      console.log('✅ DB SUCCESS - Added favorite. Response:', insertData);
+      setIsFavorite(true);
+      console.log('✅ STATE UPDATE - Updated isFavorite to true');
+    }
+  } catch (error: any) {
+    // Log detailed error information
+    console.error('🚨 UNEXPECTED ERROR in toggleFavorite:', error);
+    console.error('Error details:', {
+      message: error.message || 'Unknown error',
+      code: error.code || 'No code',
+      stack: error.stack || 'No stack trace'
+    });
+    Alert.alert('Error', 'An unexpected error occurred while updating favorites.');
+  }
+};
   const shareShow = async () => {
     try {
       if (!show) return;

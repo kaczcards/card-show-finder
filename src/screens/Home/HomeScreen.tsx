@@ -14,6 +14,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as locationService from '../../services/locationService';
 import { getShows } from '../../services/showService';
+import FilterSheet from '../../components/FilterSheet';
+import FilterChips from '../../components/FilterChips';
+import FilterPresetModal from '../../components/FilterPresetModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ShowFilters } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Constants
@@ -44,8 +49,40 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [coordinates, setCoordinates] = useState(null);
-  const radius = 25; // Default 25 miles
-  const dateRange = 30; // Default 30 days
+  /* ------------------------------------------------------------------
+   * Filter State & Persistence
+   * ---------------------------------------------------------------- */
+  const defaultFilters: ShowFilters = {
+    radius: 25,
+    startDate: new Date(),
+    endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+  };
+
+  const [filters, setFilters] = useState<ShowFilters>(defaultFilters);
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [presetModalVisible, setPresetModalVisible] = useState(false);
+
+  // Load persisted filters on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem('homeFilters');
+        if (stored) {
+          const parsed: ShowFilters = JSON.parse(stored);
+          setFilters({ ...defaultFilters, ...parsed });
+        }
+      } catch (e) {
+        console.warn('Failed to load stored filters', e);
+      }
+    })();
+  }, []);
+
+  // Persist filters whenever they change
+  useEffect(() => {
+    AsyncStorage.setItem('homeFilters', JSON.stringify(filters)).catch(() =>
+      console.warn('Failed to persist filters')
+    );
+  }, [filters]);
 
   // Get stock image based on show index or ID to ensure consistency
   const getStockImage = (index: number, id?: string) => {
@@ -71,21 +108,25 @@ const HomeScreen = () => {
           if (zipData && zipData.coordinates) {
             setCoordinates(zipData.coordinates);
             
-            // Create date range for the next X days
-            const startDate = new Date();
-            const endDate = new Date();
-            endDate.setDate(startDate.getDate() + dateRange);
-            
-            // Format dates as ISO strings for the API
-            const formattedStartDate = startDate.toISOString();
-            const formattedEndDate = endDate.toISOString();
-            
-            console.log(`Fetching shows within ${radius} miles of ${authState.user.homeZipCode} for the next ${dateRange} days`);
-            
+            // Derive start & end dates from current filter state
+            const formattedStartDate =
+              filters.startDate instanceof Date
+                ? filters.startDate.toISOString()
+                : filters.startDate ?? null;
+            const formattedEndDate =
+              filters.endDate instanceof Date
+                ? filters.endDate.toISOString()
+                : filters.endDate ?? null;
+
+            console.log(
+              `Fetching shows within ${filters.radius} miles with filters`,
+              filters
+            );
+
             const nearbyShows = await getShows({
               latitude: zipData.coordinates.latitude,
               longitude: zipData.coordinates.longitude,
-              radius: radius,
+              ...filters,
               startDate: formattedStartDate,
               endDate: formattedEndDate,
             });
@@ -119,17 +160,18 @@ const HomeScreen = () => {
     setRefreshing(true);
     try {
       if (coordinates) {
-        // Create date range for the next X days
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(startDate.getDate() + dateRange);
-        
         const nearbyShows = await getShows({
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
-          radius: radius,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
+          ...filters,
+          startDate:
+            filters.startDate instanceof Date
+              ? filters.startDate.toISOString()
+              : filters.startDate ?? null,
+          endDate:
+            filters.endDate instanceof Date
+              ? filters.endDate.toISOString()
+              : filters.endDate ?? null,
         });
 
         // Sort shows by startDate in ascending order before updating state
@@ -154,7 +196,59 @@ const HomeScreen = () => {
 
   // Navigate to filter screen
   const handleFilterPress = () => {
-    navigation.navigate('Filter');
+    setFilterSheetVisible(true);
+  };
+
+  // Apply filters callback
+  const handleApplyFilters = (newFilters: ShowFilters) => {
+    setFilters(newFilters);
+    setFilterSheetVisible(false);
+  };
+
+  // Remove a single filter (chip press)
+  const handleRemoveFilter = (key: string, value?: string) => {
+    setFilters((prev) => {
+      const updated: ShowFilters = { ...prev };
+      switch (key) {
+        case 'radius':
+          updated.radius = defaultFilters.radius;
+          break;
+        case 'dateRange':
+          updated.startDate = defaultFilters.startDate;
+          updated.endDate = defaultFilters.endDate;
+          break;
+        case 'maxEntryFee':
+          delete updated.maxEntryFee;
+          break;
+        case 'category':
+          updated.categories = (updated.categories || []).filter((c) => c !== value);
+          break;
+        case 'feature':
+          updated.features = (updated.features || []).filter((f) => f !== value);
+          break;
+        default:
+          break;
+      }
+      return updated;
+    });
+  };
+
+  const activeFilterCount = () => {
+    let count = 0;
+    if (filters.radius !== defaultFilters.radius) count++;
+    if (
+      (filters.startDate &&
+        new Date(filters.startDate).toDateString() !==
+          new Date(defaultFilters.startDate!).toDateString()) ||
+      (filters.endDate &&
+        new Date(filters.endDate).toDateString() !==
+          new Date(defaultFilters.endDate!).toDateString())
+    )
+      count++;
+    if (filters.maxEntryFee !== undefined) count++;
+    if (filters.categories && filters.categories.length) count += filters.categories.length;
+    if (filters.features && filters.features.length) count += filters.features.length;
+    return count;
   };
 
   // Format date for display
@@ -207,6 +301,7 @@ const HomeScreen = () => {
   );
 
   return (
+    <>
     <View style={styles.container}>
       <ScrollView
         refreshControl={
@@ -223,8 +318,32 @@ const HomeScreen = () => {
             >
               <Ionicons name="options" size={18} color="white" />
               <Text style={styles.filterButtonText}>Filters</Text>
+              {activeFilterCount() > 0 && (
+                <View style={styles.filterBadge}>
+                  <Text style={styles.filterBadgeText}>{activeFilterCount()}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            {/* Presets Button */}
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                { backgroundColor: PRIMARY_COLOR, marginLeft: 10 },
+              ]}
+              onPress={() => setPresetModalVisible(true)}
+            >
+              <Ionicons name="star" size={18} color="white" />
+              <Text style={styles.filterButtonText}>Presets</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Active Filter Chips */}
+          <FilterChips
+            filters={filters}
+            onRemoveFilter={handleRemoveFilter}
+            style={{ marginTop: 10 }}
+          />
         </View>
 
         {/* Upcoming Shows Section */}
@@ -253,6 +372,25 @@ const HomeScreen = () => {
         </View>
       </ScrollView>
     </View>
+    {/* Filter Sheet */}
+    <FilterSheet
+      visible={filterSheetVisible}
+      onClose={() => setFilterSheetVisible(false)}
+      filters={filters}
+      onApplyFilters={handleApplyFilters}
+    />
+    {/* Preset Modal */}
+    <FilterPresetModal
+      visible={presetModalVisible}
+      onClose={() => setPresetModalVisible(false)}
+      currentFilters={filters}
+      onApplyPreset={(presetFilters) => {
+        setFilters(presetFilters);
+        setPresetModalVisible(false);
+      }}
+      userId={authState.user?.id || ''}
+    />
+    </>
   );
 };
 
@@ -279,6 +417,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 20,
     minWidth: 90,
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 10,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  filterBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   filterButtonText: {
     color: 'white',
