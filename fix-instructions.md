@@ -51,6 +51,34 @@ These steps deploy **both** fixes required to resolve:
    * Open a show ⇒ tap **Save** → heart icon toggles without alert.  
    * Quit & relaunch app → favourite persists.
 
+### 2 a · Apply the Code Patch (only if you pulled **main** without the fix)
+
+If you checked out **main** before the `ShowDetailScreen` authentication
+changes were merged you can apply the patch directly instead of merging the
+whole branch:
+
+```bash
+# ensure you are on a throw-away feature branch
+git checkout -b apply-auth-fix
+
+# apply the patch file that lives in the repo root
+git apply authentication-fix.patch
+
+# confirm the file changed
+git status            # ShowDetailScreen.tsx should be ‘modified’
+
+# run the app to verify the Save/Favourite button now works
+npm install
+npx expo start -c
+
+# commit & push if everything looks good
+git commit -am "Apply favourites authentication patch"
+git push -u origin apply-auth-fix
+```
+
+_Skip this subsection if you have already merged or rebased onto the
+`fix-favorites-auth-check` branch._
+
 ---
 
 ## 3 · Apply the Database Patch
