@@ -44,7 +44,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
         setError(null);
         /* ------------------------------------------------------------------
          * DEBUG-HELPERS – log everything we can about this query so we can
-         * see why booth fields might appear as “Not specified”.
+         * see why booth fields might appear as "Not specified".
          * ---------------------------------------------------------------- */
         console.log(
           '[DealerDetailModal] fetching booth info',
@@ -74,26 +74,6 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
 
           // Log the exact keys present so we know naming conventions
           console.log('[DealerDetailModal] boothInfo keys:', Object.keys(data));
-
-          // Check for expected / alternative field names
-          const potentialFields = [
-            'booth_number',
-            'boothnumber',
-            'booth_num',
-            'boothNumber',
-            'items_for_sale',
-            'itemsForSale',
-            'itemsforsale',
-            'items',
-            'notes',
-            'additional_notes',
-          ];
-
-          const found = potentialFields.reduce<Record<string, any>>((acc, f) => {
-            if (data[f] !== undefined) acc[f] = data[f];
-            return acc;
-          }, {});
-          console.log('[DealerDetailModal] matched boothInfo fields:', found);
         }
         // ------------------------------------------------------------------
 
@@ -154,56 +134,93 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
           ) : boothInfo ? (
             <View style={styles.infoContainer}>
               <View style={styles.infoRow}>
-                <Ionicons name="grid" size={20} color="#666" style={styles.infoIcon} />
-                <Text style={styles.infoLabel}>Booth Number:</Text>
+                <Ionicons name="location" size={20} color="#666" style={styles.infoIcon} />
+                <Text style={styles.infoLabel}>Booth Location:</Text>
                 <Text style={styles.infoValue}>
-                  {boothInfo.booth_number ||
-                    boothInfo.boothnumber ||
-                    boothInfo.boothNumber ||
-                    boothInfo.booth ||
-                    'Not specified'}
+                  {boothInfo.booth_location || 'Not specified'}
                 </Text>
               </View>
+              
               <View style={styles.infoRow}>
-                <Ionicons name="list" size={20} color="#666" style={styles.infoIcon} />
-                <Text style={styles.infoLabel}>Items for Sale:</Text>
+                <Ionicons name="star" size={20} color="#666" style={styles.infoIcon} />
+                <Text style={styles.infoLabel}>Specialty:</Text>
                 <Text style={styles.infoValue}>
-                  {boothInfo.items_for_sale ||
-                    boothInfo.itemsForSale ||
-                    boothInfo.itemsforsale ||
-                    boothInfo.items ||
-                    boothInfo.inventory ||
-                    boothInfo.products ||
-                    'Not specified'}
+                  {boothInfo.specialty || 'Not specified'}
                 </Text>
               </View>
+              
               <View style={styles.infoRow}>
-                <Ionicons name="information-circle" size={20} color="#666" style={styles.infoIcon} />
-                <Text style={styles.infoLabel}>Notes:</Text>
+                <Ionicons name="pricetag" size={20} color="#666" style={styles.infoIcon} />
+                <Text style={styles.infoLabel}>Price Range:</Text>
                 <Text style={styles.infoValue}>
-                  {boothInfo.notes ||
-                    boothInfo.additional_notes ||
-                    boothInfo.additionalNotes ||
-                    boothInfo.description ||
-                    boothInfo.comments ||
-                    'No additional notes'}
+                  {boothInfo.price_range || 'Not specified'}
+                </Text>
+              </View>
+              
+              <View style={styles.infoRow}>
+                <Ionicons name="trophy" size={20} color="#666" style={styles.infoIcon} />
+                <Text style={styles.infoLabel}>Notable Items:</Text>
+                <Text style={styles.infoValue}>
+                  {boothInfo.notable_items || 'None specified'}
                 </Text>
               </View>
 
-              {/* Debug: list all simple scalar fields so we can see what's actually stored */}
+              {boothInfo.card_types && boothInfo.card_types.length > 0 && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="albums" size={20} color="#666" style={styles.infoIcon} />
+                  <Text style={styles.infoLabel}>Card Types:</Text>
+                  <Text style={styles.infoValue}>
+                    {Array.isArray(boothInfo.card_types) 
+                      ? boothInfo.card_types.join(', ') 
+                      : boothInfo.card_types || 'None specified'}
+                  </Text>
+                </View>
+              )}
+              
+              {boothInfo.payment_methods && boothInfo.payment_methods.length > 0 && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="card" size={20} color="#666" style={styles.infoIcon} />
+                  <Text style={styles.infoLabel}>Payment Methods:</Text>
+                  <Text style={styles.infoValue}>
+                    {Array.isArray(boothInfo.payment_methods) 
+                      ? boothInfo.payment_methods.join(', ') 
+                      : boothInfo.payment_methods || 'None specified'}
+                  </Text>
+                </View>
+              )}
+              
+              <View style={styles.infoRowSmaller}>
+                <Ionicons 
+                  name={boothInfo.open_to_trades ? "checkmark-circle" : "close-circle"} 
+                  size={20} 
+                  color={boothInfo.open_to_trades ? "#4CAF50" : "#F44336"} 
+                  style={styles.infoIcon} 
+                />
+                <Text style={styles.infoValue}>
+                  {boothInfo.open_to_trades ? 'Open to trades' : 'Not open to trades'}
+                </Text>
+              </View>
+              
+              <View style={styles.infoRowSmaller}>
+                <Ionicons 
+                  name={boothInfo.buying_cards ? "checkmark-circle" : "close-circle"} 
+                  size={20} 
+                  color={boothInfo.buying_cards ? "#4CAF50" : "#F44336"} 
+                  style={styles.infoIcon} 
+                />
+                <Text style={styles.infoValue}>
+                  {boothInfo.buying_cards ? 'Buying cards' : 'Not buying cards'}
+                </Text>
+              </View>
+
+              {/* Debug section - keep for additional troubleshooting */}
               <View style={styles.debugSection}>
                 <Text style={styles.debugTitle}>All Available Data:</Text>
                 {Object.entries(boothInfo)
                   .filter(
                     ([key, value]) =>
                       typeof value !== 'object' &&
-                      ![
-                        'id',
-                        'created_at',
-                        'updated_at',
-                        'userid',
-                        'showid',
-                      ].includes(key)
+                      !['id', 'created_at', 'updated_at', 'userid', 'showid', 'createdat'].includes(key)
                   )
                   .map(([key, value]) => (
                     <View key={key} style={styles.debugRow}>
@@ -355,6 +372,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#212529',
     flex: 1,
+  },
+  infoRowSmaller: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    marginTop: 4,
   },
 });
 
