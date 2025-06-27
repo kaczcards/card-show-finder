@@ -41,7 +41,19 @@ const directSupabase = createClient(directSupabaseUrl, directSupabaseKey, {
 });
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
-  const { user, userProfile } = useAuth();
+  
+  // Get the entire auth context to access all available properties
+  const authContext = useAuth();
+  // Try multiple ways to access user data for resilience
+  const user = authContext.authState?.user || null;
+  
+  // Debug logging for authentication state
+  useEffect(() => {
+    console.log('Auth state in ShowDetailScreen:', 
+      authContext.authState?.isAuthenticated ? 'Authenticated' : 'Not authenticated',
+      'User ID:', authContext.authState?.user?.id || 'undefined'
+    );
+  }, [authContext.authState]);
   
   const [show, setShow] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -64,13 +76,15 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   );
 
   useEffect(() => {
-    if (!user || !userProfile) {
+    if (!user) {
+      console.log('No user found in auth state, resetting organizer/dealer status');
       setIsShowOrganizer(false);
       setIsMvpDealer(false);
       return;
     }
     
-    const userRole = userProfile.role as UserRole;
+    console.log('User role in ShowDetailScreen:', user.role);
+    const userRole = user.role as UserRole;
     setIsShowOrganizer(userRole === UserRole.SHOW_ORGANIZER);
     setIsMvpDealer(userRole === UserRole.MVP_DEALER);
     
@@ -78,7 +92,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     if (userRoleService.IS_TEST_MODE) {
       setIsShowOrganizer(true);
     }
-  }, [user, userProfile]);
+  }, [user]);
   
   useEffect(() => {
     fetchShowDetails();
@@ -279,7 +293,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         setIsFavorite(true);
       } else {
         if (error && error.code !== 'PGRST116') {
-          // Ignore “no rows” (PGRST116). Log anything else.
+          // Ignore "no rows" (PGRST116). Log anything else.
           console.error('🚨 FAV ERROR - Error checking favourite status:', error);
         }
         setIsFavorite(false);
