@@ -1,74 +1,58 @@
-# PR: Extend User Schema for Subscription & Account Types
+# Complete Messaging System with Subscription Management
 
-## Summary
-This pull-request introduces first-class support for **paid account tiers** (Dealer, Organizer) by extending the user schema in Supabase and wiring the new fields throughout the React Native mobile app.  
-The change adds `account_type`, `subscription_status`, and `subscription_expiry` columns, updates the TypeScript `User` interface, and propagates the data through the Auth Context and Supabase service layer.
+## Overview
+This PR implements two major features for Card Show Finder:
 
----
+1. **Enhanced Messaging System:**
+   - Role-based permissions for sending/receiving messages
+   - One-way announcements for show organizers
+   - Message moderation (report and delete capabilities)
+   - Location-based filtering for targeted communication
 
-## Key Features
+2. **Subscription System with Stripe Integration:**
+   - Complete payment processing with Stripe
+   - Role upgrades based on subscription purchases
+   - Trial period functionality
+   - Subscription status stored in user profiles
+   - Renewal and cancellation flows
 
-| Area | Change |
-|------|--------|
-| **Database Schema** | `db_migrations/user_account_subscription.sql` adds:<br>• `account_type` (`collector` \| `dealer` \| `organizer`) – *default `collector`*<br>• `subscription_status` (`active` \| `expired` \| `none`) – *default `none`*<br>• `subscription_expiry` (`timestamptz`) – *nullable*<br>Indexes + column comments included. |
-| **TypeScript Types** | `src/types/index.ts` → `User` interface now includes `accountType`, `subscriptionStatus`, `subscriptionExpiry`. |
-| **Auth Flow** | `src/contexts/AuthContext.tsx` maps the new columns into in-memory `User` objects on login, registration, and session refresh. |
-| **Service Layer** | `src/services/supabaseAuthService.ts` reads/writes the new fields during registration, login, profile updates, and helper functions. |
-| **Branching** | New branch `feature/extend-user-schema` branched off `feature/update-logo` to keep concerns isolated. |
+## Key Technical Details
 
----
+### Messaging System
+- **Database Schema:** Added columns for one-way messaging, moderation, and geographic filtering
+- **RLS Policies:** Updated to enforce proper access controls
+- **Role-Based Matrix:** Permissions now enforced consistently through a unified action matrix
+- **Moderation:** Soft delete and reporting functionality via Supabase RPCs
+- **TEST_MODE Removal:** Eliminated this security gap in favor of proper RBAC
 
-## How to Run the Migration
+### Subscription System
+- **Stripe Integration:** Complete payment flow using Stripe Payment Sheet
+- **Role Upgrades:** Automatic role changes based on subscription tier
+- **Database Schema:** Subscription data stored in user profiles table
+- **Trial Period:** 7-day trial period with automatic expiry handling
+- **Error Handling:** Comprehensive error handling for payment failures
+- **UI Enhancements:** Clean subscription screen with plan selection, billing cycle toggle, and comparison view
 
-### Supabase SQL Editor (recommended)
-1. Open your Supabase project ➜ **SQL Editor**.  
-2. Create a new query tab and paste the contents of `db_migrations/user_account_subscription.sql`.  
-3. Click **RUN**.  
-4. Verify the `profiles` table now contains the three new columns.
+## Testing Guidance
+- Detailed test plan is available in `messaging-system-test-plan.md`
+- Ensure the Supabase migration in `db_migrations/messaging_enhancements.sql` is applied first
+- Verify Stripe payments by configuring `.env` with your Stripe test keys
+- Test trial periods by setting a shorter duration in development
+- Verify role upgrades after subscription purchase
 
-### CLI / CI Pipeline
-```bash
-psql "$SUPABASE_DB_URL" -f db_migrations/user_account_subscription.sql
-```
+## Deployment Steps
+1. Run the database migration script on Supabase
+2. Set required environment variables for Stripe:
+   - EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
+   - Configure Supabase Edge Function for payment intents
+3. Deploy the updated client application
+4. Monitor for any payment processing issues
 
-> **No back-fill needed** — existing users default to  
-> `account_type = 'collector'`, `subscription_status = 'none'`, `subscription_expiry = NULL`.
-
----
-
-## Testing Instructions
-
-1. **Fresh Registration**  
-   • `npx expo start` → Register a new user.  
-   • Inspect Supabase → New columns show default values.
-
-2. **Existing User Sign-in**  
-   • Log in with a pre-migration account.  
-   • App loads with no errors; new fields visible in network inspector / Supabase row.
-
-3. **Upgrade Flow**  
-   • Via profile screen or Postman, update profile to:  
-     `accountType = 'dealer'`, `subscriptionStatus = 'active'`, `subscriptionExpiry = <future date>`.  
-   • Restart app → AuthContext reflects the changes.
-
-4. **Regression Pass**  
-   • Favouriting shows, reviews, collection screens, etc. continue to work unchanged.
-
----
-
-## Verification Checklist
-
-- [x] SQL migration applies without error on staging.
-- [x] New TypeScript types compile & pass `tsc --noEmit`.
-- [x] Expo app launches on iOS & Android simulators/devices.
-- [x] Automated tests pass (`npm test`).
-- [x] ESLint & Prettier show no new violations.
+## Documentation
+- Full documentation in `messaging-system-documentation.md`
+- Subscription system concepts explained in code comments
+- Technical summary in `MESSAGING-SYSTEM-UPDATES.md`
 
 ---
 
-## Notes
-
-*Snake_case* is now the canonical naming convention for new DB columns.  
-The existing `role` column continues to drive feature gates; the new `account_type` purely labels a user’s subscription tier.
-
-This PR was assisted by Factory Code Droid and is ready for review. 🚀
+*This PR was Droid-assisted.*
