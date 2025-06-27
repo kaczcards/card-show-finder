@@ -27,7 +27,9 @@ interface ShowDetailProps {
 
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
-  const { user, userProfile } = useAuth();
+  // Access authenticated user via authState from the AuthContext
+  const { authState } = useAuth();
+  const { user } = authState;
   
   const [show, setShow] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -50,13 +52,13 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   );
 
   useEffect(() => {
-    if (!user || !userProfile) {
+    if (!user) {
       setIsShowOrganizer(false);
       setIsMvpDealer(false);
       return;
     }
     
-    const userRole = userProfile.role as UserRole;
+    const userRole = user.role as UserRole;
     setIsShowOrganizer(userRole === UserRole.SHOW_ORGANIZER);
     setIsMvpDealer(userRole === UserRole.MVP_DEALER);
     
@@ -64,7 +66,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     if (userRoleService.IS_TEST_MODE) {
       setIsShowOrganizer(true);
     }
-  }, [user, userProfile]);
+  }, [user]);
   
   useEffect(() => {
     fetchShowDetails();
