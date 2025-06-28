@@ -192,8 +192,45 @@ export const registerForShow = async (
       throw userError;
     }
 
+    // ------------------------------------------------------------
+    // Debugging – log the raw role we got back from Supabase
+    // ------------------------------------------------------------
+    // eslint-disable-next-line no-console
+    console.log(
+      '[registerForShow] DB role value:',
+      userData?.role,
+      '| normalised:',
+      normalizeRole(userData?.role)
+    );
+
     const userRole = normalizeRole(userData?.role);
-    if (!userRole || (userRole !== UserRole.DEALER && userRole !== UserRole.MVP_DEALER)) {
+
+    /**
+     * Temporary, more lenient role check:
+     *  1. Accept normalised enum values (DEALER / MVP_DEALER)
+     *  2. Fallback – if the raw string contains “dealer” or “mvp”
+     *     (case-insensitive) we also treat it as dealer-tier.
+     */
+    const rawRole = (userData?.role || '').toString().toLowerCase();
+    const isDealerLike =
+      rawRole.includes('dealer') || rawRole.includes('mvp');
+
+    if (
+      !userRole &&
+      !isDealerLike
+    ) {
+      return { data: null, error: 'User is not a dealer' };
+    }
+
+    // If we passed the lenient check but normalisation failed,
+    // treat the user as a basic DEALER for the remainder of this call.
+    const effectiveRole =
+      userRole ?? UserRole.DEALER;
+
+    if (
+      effectiveRole !== UserRole.DEALER &&
+      effectiveRole !== UserRole.MVP_DEALER
+    ) {
       return { data: null, error: 'User is not a dealer' };
     }
 
