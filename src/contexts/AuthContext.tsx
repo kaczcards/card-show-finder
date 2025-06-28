@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
+import { refreshUserSession } from '../services/userRoleService';
 
 // Define the shape of our auth context
 interface AuthContextType {
@@ -22,6 +23,7 @@ interface AuthContextType {
   addFavoriteShow: (showId: string) => Promise<void>;
   removeFavoriteShow: (showId: string) => Promise<void>;
   clearError: () => void;
+  refreshUserRole: () => Promise<boolean>;
 }
 
 // Default auth state
@@ -43,6 +45,7 @@ const AuthContext = createContext<AuthContextType>({
   addFavoriteShow: async () => { throw new Error('AuthContext not initialized'); },
   removeFavoriteShow: async () => { throw new Error('AuthContext not initialized'); },
   clearError: () => {},
+  refreshUserRole: async () => false,
 });
 
 // Provider component
@@ -412,6 +415,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       error: null,
     }));
   };
+
+  const refreshUserRole = async (): Promise<boolean> => {
+    try {
+      const { success, error: sessionError } = await refreshUserSession();
+      if (!success || sessionError || !authState.user) {
+        if(sessionError) console.error('Session refresh failed:', sessionError);
+        return false;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authState.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Failed to fetch updated profile:', profileError);
+        return false;
+      }
+
+      setAuthState(prev => {
+        if (!prev.user) return prev;
+        const updatedUser: User = {
+          ...prev.user,
+          role: profile.role as UserRole,
+          accountType: profile.account_type,
+          subscriptionStatus: profile.subscription_status,
+          subscriptionExpiry: profile.subscription_expiry,
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          homeZipCode: profile.home_zip_code,
+          phoneNumber: profile.phone_number,
+          profileImageUrl: profile.profile_image_url,
+          favoriteShows: profile.favorite_shows || [],
+          attendedShows: profile.attended_shows || [],
+        };
+        return {
+          ...prev,
+          user: updatedUser,
+        };
+      });
+      
+      return true;
+    } catch (e) {
+      console.error('An unexpected error occurred in refreshUserRole:', e);
+      return false;
+    }
+  };
   
   // Context value
   const contextValue: AuthContextType = {
@@ -424,6 +475,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addFavoriteShow,
     removeFavoriteShow,
     clearError,
+    refreshUserRole,
   };
   
   return (

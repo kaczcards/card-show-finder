@@ -10,6 +10,16 @@ import { Show, UserRole } from '../types';
 /**
  * Types for dealer show participation
  */
+/**
+ * Normalize a role string (DB may store lowercase) to the uppercase
+ * `UserRole` enum used throughout the client.
+ */
+const normalizeRole = (role: string | null | undefined): UserRole | null => {
+  if (!role) return null;
+  const upper = role.toUpperCase() as UserRole;
+  return Object.values(UserRole).includes(upper) ? upper : null;
+};
+
 export interface DealerShowParticipation {
   id: string;
   userId: string;
@@ -182,7 +192,8 @@ export const registerForShow = async (
       throw userError;
     }
 
-    if (!userData || (userData.role !== 'dealer' && userData.role !== 'mvp_dealer')) {
+    const userRole = normalizeRole(userData?.role);
+    if (!userRole || (userRole !== UserRole.DEALER && userRole !== UserRole.MVP_DEALER)) {
       return { data: null, error: 'User is not a dealer' };
     }
 
@@ -203,13 +214,25 @@ export const registerForShow = async (
     }
 
     // Insert new participation record
+    const insertData: Record<string, any> = {
+      userid: userId,
+      showid: participationData.showId,
+      status: 'registered',
+    };
+
+    // Map optional fields if provided
+    if (participationData.cardTypes !== undefined) insertData.card_types = participationData.cardTypes;
+    if (participationData.specialty !== undefined) insertData.specialty = participationData.specialty;
+    if (participationData.priceRange !== undefined) insertData.price_range = participationData.priceRange;
+    if (participationData.notableItems !== undefined) insertData.notable_items = participationData.notableItems;
+    if (participationData.boothLocation !== undefined) insertData.booth_location = participationData.boothLocation;
+    if (participationData.paymentMethods !== undefined) insertData.payment_methods = participationData.paymentMethods;
+    if (participationData.openToTrades !== undefined) insertData.open_to_trades = participationData.openToTrades;
+    if (participationData.buyingCards !== undefined) insertData.buying_cards = participationData.buyingCards;
+
     const { data, error } = await supabase
       .from('show_participants')
-      // Insert only the base columns that are guaranteed to exist
-      .insert({
-        userid: userId,
-        showid: participationData.showId,
-      })
+      .insert(insertData)
       .select()
       .single();
 
