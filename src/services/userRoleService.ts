@@ -24,6 +24,21 @@ export const __setTestMode = (enabled: boolean) => {
 };
 
 /* ------------------------------------------------------------------
+ * Utility helpers
+ * ------------------------------------------------------------------ */
+
+/**
+ * Normalises a role string coming from the database (often lowercase)
+ * to the corresponding uppercase `UserRole` enum value.
+ * Returns `null` if it cannot be mapped.
+ */
+export const normalizeRole = (role?: string | null): UserRole | null => {
+  if (!role) return null;
+  const upper = role.toUpperCase() as UserRole;
+  return (Object.values(UserRole) as string[]).includes(upper) ? upper : null;
+};
+
+/* ------------------------------------------------------------------
  * Permission Matrix
  * ------------------------------------------------------------------ */
 
@@ -95,7 +110,7 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
       return null;
     }
 
-    return (data?.role?.toUpperCase() as UserRole) || null;
+    return normalizeRole(data?.role);
   } catch (error) {
     console.error('Exception in getUserRole:', error);
     return null;
@@ -227,4 +242,40 @@ export const canContactUser = (currentUserRole: UserRole, targetUserRole: UserRo
   
   // Check if the target user can receive messages
   return canUserReceiveMessage(targetUserRole);
+};
+
+/* ------------------------------------------------------------------
+ * Session / role synchronisation helpers
+ * ------------------------------------------------------------------ */
+
+/**
+ * Forces Supabase to refresh the current JWT/session so that any recent
+ * changes to the user's profile (e.g., role upgrades) are immediately
+ * reflected in `supabase.auth`.
+ */
+export const refreshUserSession = async (): Promise<{ success: boolean; error?: any }> => {
+  try {
+    const { error } = await supabase.auth.refreshSession();
+    if (error) {
+      console.error('Error refreshing Supabase session:', error);
+      return { success: false, error };
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('Unexpected error in refreshUserSession:', err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Convenience helper that:
+ * 1. Refreshes the session token
+ * 2. Fetches the latest role from the database
+ *
+ * This should be called after any action that might change the user's
+ * subscription or role (e.g., webhook, upgrade flow).
+ */
+export const updateUserRole = async (userId: string): Promise<UserRole | null> => {
+  await refreshUserSession();
+  return getUserRole(userId);
 };

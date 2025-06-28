@@ -19,13 +19,15 @@ import { UserRole } from '../../types';
 import { useNavigation } from '@react-navigation/native';
 
 const ProfileScreen: React.FC = () => {
-  const { authState, logout, updateProfile, clearError } = useAuth();
+  const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
   const { user, isLoading, error } = authState;
   const navigation = useNavigation();
   
   // State for edit mode
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // session refresh loading
+  const [isRefreshingRole, setIsRefreshingRole] = useState(false);
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -104,6 +106,23 @@ const ProfileScreen: React.FC = () => {
       Alert.alert('Update Failed', error || 'Please try again');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Force-refresh JWT / role
+  const handleRefreshRole = async () => {
+    try {
+      setIsRefreshingRole(true);
+      const success = await refreshUserRole();
+      if (success) {
+        Alert.alert('Session Refreshed', 'Your account information has been updated.');
+      } else {
+        Alert.alert('Refresh Failed', 'Unable to refresh session right now. Please try again later.');
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'Unexpected error refreshing session');
+    } finally {
+      setIsRefreshingRole(false);
     }
   };
   
@@ -410,6 +429,26 @@ const ProfileScreen: React.FC = () => {
             <Ionicons name="lock-closed-outline" size={20} color="#007AFF" />
             <Text style={styles.actionButtonText}>Change Password</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" style={styles.actionButtonIcon} />
+          </TouchableOpacity>
+
+          {/* Refresh Session */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleRefreshRole}
+            disabled={isRefreshingRole}
+          >
+            {isRefreshingRole ? (
+              <ActivityIndicator size="small" color="#007AFF" style={{ marginHorizontal: 2 }} />
+            ) : (
+              <Ionicons name="refresh-outline" size={20} color="#007AFF" />
+            )}
+            <Text style={styles.actionButtonText}>Refresh Session</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#ccc"
+              style={styles.actionButtonIcon}
+            />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
