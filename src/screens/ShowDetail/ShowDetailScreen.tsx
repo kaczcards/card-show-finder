@@ -661,7 +661,7 @@ const toggleFavorite = async () => {
                   {dealer.role === UserRole.MVP_DEALER ? (
                     <TouchableOpacity
                       style={styles.dealerNameButton}
-                      onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
+                      onPress={() => handleViewDealerDetails(dealer.id)}
                     >
                       <Text style={styles.dealerName}>{dealer.name} (MVP)</Text> {/* Added (MVP) for clarity */}
                     </TouchableOpacity>
