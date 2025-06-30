@@ -16,7 +16,8 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
-import { UserRole } from '../../services/userRoleService';
+import { UserRole } from '../../types'; // Ensure UserRole is imported from types
+
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
 
@@ -39,6 +40,7 @@ const directSupabase = createClient(directSupabaseUrl, directSupabaseKey, {
     persistSession: true,
   },
 });
+
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
   
@@ -65,8 +67,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [isShowOrganizer, setIsShowOrganizer] = useState(false);
   const [isMvpDealer, setIsMvpDealer] = useState(false);
   
-  // MVP Dealers state
-  const [mvpDealers, setMvpDealers] = useState<any[]>([]);
+  // State for all participating dealers (formerly mvpDealers)
+  const [participatingDealers, setParticipatingDealers] = useState<any[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
 
   /* ---------- Dealer-detail modal state ---------- */
@@ -96,7 +98,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   
   useEffect(() => {
     fetchShowDetails();
-    fetchMvpDealers(showId);
+    fetchParticipatingDealers(showId); // Call the new function
     // Always verify favourite status on mount / when showId changes
     checkIfFavorite();
   }, [showId]);
@@ -118,8 +120,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       if (data) {
         /* ----------------------------------------------------------------
          * 2. If the show has an organizer_id, fetch that user's profile
-         *    in a second query.  Attach as `profiles` so the rest of the
-         *    component can keep using the previous shape.
+         * in a second query.  Attach as `profiles` so the rest of the
+         * component can keep using the previous shape.
          * ---------------------------------------------------------------- */
         if (data.organizer_id) {
           const { data: profileData, error: profileError } = await supabase
@@ -152,13 +154,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   };
   
   /**
-   * Fetch MVP dealers for a show using a two–step query that does NOT depend
-   * on Supabase's automatic FK joins (which were failing in production).
+   * Fetch all participating dealers (MVP and regular dealers) for a show.
    *
    * 1.  Get all participants' user_ids from `show_participants`.
-   * 2.  Fetch those users' profiles where role = 'mvp_dealer'.
+   * 2.  Fetch those users' profiles where role is 'mvp_dealer' or 'dealer'.
    */
-  const fetchMvpDealers = async (showId: string) => {
+  const fetchParticipatingDealers = async (showId: string) => { // Renamed function
     try {
       setLoadingDealers(true);
 
@@ -180,7 +181,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       console.log('Participants:', JSON.stringify(participants));
 
       if (!participants || participants.length === 0) {
-        setMvpDealers([]);
+        setParticipatingDealers([]); // Set to new state name
         return;
       }
 
@@ -193,42 +194,23 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       console.log('User IDs:', JSON.stringify(participantUserIds));
 
       /* ---------------- Step 2: profiles ---------------- */
-      /* --- Extra debug: show the role each participant actually has ---- */
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from('profiles')
-          .select('id, role')
-          .in('id', participantUserIds);
-
-        if (roleError) {
-          console.error('Error fetching participant roles:', roleError);
-        } else {
-          console.warn('Participant roles:', JSON.stringify(roleData));
-        }
-      } catch (roleCatch) {
-        console.error('Unexpected error in role debug:', roleCatch);
-      }
-
-      /* ---- Now fetch only those that are MVP dealers (case-insensitive) ---- */
+      // Fetch profiles for both 'mvp_dealer' and 'dealer' roles
       const {
         data: dealerProfiles,
         error: profilesError,
       } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, profile_image_url')
+        .select('id, first_name, last_name, profile_image_url, role, account_type') // Select role and account_type
         .in('id', participantUserIds)
-        // Include real MVP dealers (role contains 'mvp_dealer', case-insensitive)
-        // OR the specific paid MVP dealer who still has role 'dealer'
-        .or(
-          `role.ilike.%mvp_dealer%,id.eq.a3d8f808-1eaf-4f31-88ee-b93203d00176`
-        );
+        // Filter to include only 'mvp_dealer' and 'dealer' roles (case-insensitive for robustness)
+        .or(`role.eq.${UserRole.MVP_DEALER},role.eq.${UserRole.DEALER}`); // Use enum values
 
       if (profilesError) {
         console.error('Error fetching dealer profiles:', profilesError);
         return;
       }
 
-      console.warn(`Found ${dealerProfiles?.length || 0} MVP dealers`);
+      console.warn(`Found ${dealerProfiles?.length || 0} participating dealers`);
       console.log('Dealer profiles:', JSON.stringify(dealerProfiles));
 
       if (dealerProfiles && dealerProfiles.length > 0) {
@@ -238,14 +220,16 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
             id: profile.id,
             name: fullName || profile.id.substring(0, 8),
             profileImageUrl: profile.profile_image_url,
+            role: profile.role as UserRole, // Store the role
+            accountType: profile.account_type // Store account type
           };
         });
-        setMvpDealers(dealers);
+        setParticipatingDealers(dealers); // Set to new state name
       } else {
-        setMvpDealers([]);
+        setParticipatingDealers([]); // Set to new state name
       }
     } catch (error) {
-      console.error('Error in fetchMvpDealers:', error);
+      console.error('Error in fetchParticipatingDealers:', error);
     } finally {
       setLoadingDealers(false);
     }
@@ -502,9 +486,9 @@ const toggleFavorite = async () => {
   /* -------------------------------------------------------------- */
   /* Placeholder navigation / messaging handlers for MVP dealers    */
   /* -------------------------------------------------------------- */
-  const handleViewDealerDetails = (dealerId: string) => {
+  const handleViewDealerDetails = (dealerId: string, dealerName: string) => { // Added dealerName to args
     // Open modal with booth-specific info instead of navigating away
-    setSelectedDealer({ id: dealerId, name: mvpDealers.find(d => d.id === dealerId)?.name || '' });
+    setSelectedDealer({ id: dealerId, name: dealerName });
     setShowDealerDetailModal(true);
   };
 
@@ -661,38 +645,45 @@ const toggleFavorite = async () => {
           <Text style={styles.description}>{show.description || 'No description available'}</Text>
         </View>
 
-        {/* ---------------- MVP Dealers Section ---------------- */}        
-        <View style={styles.mvpDealersContainer}>
-          <Text style={styles.sectionTitle}>MVP Dealers</Text>
+        {/* ---------------- Participating Dealers Section ---------------- */}        
+        <View style={styles.mvpDealersContainer}> {/* Renamed for clarity, but keeping styling */}
+          <Text style={styles.sectionTitle}>Participating Dealers</Text> {/* Updated title */}
           {loadingDealers ? (
             <View style={styles.loadingDealersContainer}>
               <ActivityIndicator size="small" color="#FF6A00" />
               <Text style={styles.loadingDealersText}>Loading dealers...</Text>
             </View>
-          ) : mvpDealers.length > 0 ? (
+          ) : participatingDealers.length > 0 ? ( // Use new state name
             <View style={styles.dealersList}>
-              {mvpDealers.map(dealer => (
+              {participatingDealers.map(dealer => ( // Use new state name
                 <View key={dealer.id} style={styles.dealerItem}>
-                  {/* Dealer Name (link-like button) */}
-                  <TouchableOpacity
-                    style={styles.dealerNameButton}
-                    onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
-                  >
-                    <Text style={styles.dealerName}>{dealer.name}</Text>
-                  </TouchableOpacity>
+                  {/* Conditionally render as clickable based on role */}
+                  {dealer.role === UserRole.MVP_DEALER ? (
+                    <TouchableOpacity
+                      style={styles.dealerNameButton}
+                      onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
+                    >
+                      <Text style={styles.dealerName}>{dealer.name} (MVP)</Text> {/* Added (MVP) for clarity */}
+                    </TouchableOpacity>
+                  ) : (
+                    // Regular dealers are not clickable, just display name
+                    <Text style={[styles.dealerName, styles.nonClickableDealerName]}>{dealer.name}</Text>
+                  )}
 
-                  {/* Message Dealer */}
-                  <TouchableOpacity
-                    style={styles.messageDealerButton}
-                    onPress={() => handleMessageDealer(dealer.id, dealer.name)}
-                  >
-                    <Text style={styles.messageDealerButtonText}>Message Dealer</Text>
-                  </TouchableOpacity>
+                  {/* Message Dealer button only for MVP Dealers */}
+                  {dealer.role === UserRole.MVP_DEALER && (
+                    <TouchableOpacity
+                      style={styles.messageDealerButton}
+                      onPress={() => handleMessageDealer(dealer.id, dealer.name)}
+                    >
+                      <Text style={styles.messageDealerButtonText}>Message Dealer</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))}
             </View>
           ) : (
-            <Text style={styles.noDataText}>No MVP Dealers listed for this show yet.</Text>
+            <Text style={styles.noDataText}>No participating dealers listed for this show yet.</Text> 
           )}
         </View>
 
@@ -863,8 +854,8 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
-  /* ----------  MVP Dealers styles ---------- */
-  mvpDealersContainer: {
+  /* ----------  Participating Dealers styles ---------- */
+  mvpDealersContainer: { // Keeping old name for now, but semantically it's now all participating dealers
     marginTop: 24,
     padding: 12,
     backgroundColor: '#F9F9F9',
@@ -882,13 +873,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
-  dealerNameButton: {
+  dealerNameButton: { // This is for clickable names (MVP dealers)
     flex: 1,
   },
   dealerName: {
     fontSize: 16,
     fontWeight: '500',
     color: '#0057B8',
+  },
+  nonClickableDealerName: { // Style for non-clickable names (regular dealers)
+    color: '#333333', // Make it less prominent than a link
+    // You might want to remove flex: 1 if it interferes with alignment for non-clickable
+    // or adjust styling as needed.
   },
   messageDealerButton: {
     backgroundColor: '#4CAF50',
