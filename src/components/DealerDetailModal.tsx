@@ -106,7 +106,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
             <Ionicons name="close-circle" size={30} color="#666" />
           </TouchableOpacity>
 
-          <Text style={styles.modalTitle}>{dealerName}'s Booth Info</Text>
+          <Text style={styles.modalTitle}>{`${dealerName}'s Booth Info`}</Text>
 
           {loading ? (
             <ActivityIndicator size="large" color="#0057B8" style={styles.loadingIndicator} />
@@ -200,7 +200,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
 
           <TouchableOpacity style={styles.messageButton} onPress={handleMessageDealer}>
             <Ionicons name="chatbubbles" size={20} color="white" style={styles.messageButtonIcon} />
-            <Text style={styles.messageButtonText}>Message {dealerName}</Text>
+            <Text style={styles.messageButtonText}>{`Message ${dealerName}`}</Text>
           </TouchableOpacity>
         </View>
       </View>
