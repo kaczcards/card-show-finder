@@ -615,7 +615,7 @@ const toggleFavorite = async () => {
           <View style={styles.infoRow}>
             <Ionicons name="cash" size={20} color="#666666" style={styles.infoIcon} />
             <Text style={styles.infoText}>
-              Entry Fee: {typeof show.entry_fee === 'number' ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}
+              `Entry Fee: ${typeof show.entry_fee === "number" ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}`
             </Text>
           </View>
         )}
