@@ -16,12 +16,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
   const { user, isLoading, error } = authState;
   const navigation = useNavigation();
+  const isFocused = useIsFocused(); // Keeping useIsFocused in case you want to add other focus-based logic later
   
   // State for edit mode
   const [isEditMode, setIsEditMode] = useState(false);
@@ -35,16 +36,10 @@ const ProfileScreen: React.FC = () => {
   const [homeZipCode, setHomeZipCode] = useState(user?.homeZipCode || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
 
-  // Log user object whenever it changes for debugging purposes
-  useEffect(() => {
-    if (user) {
-      console.log('User state updated in ProfileScreen:', {
-        role: user.role,
-        accountType: user.accountType,
-        subscriptionStatus: user.subscriptionStatus,
-      });
-    }
-  }, [user]);
+  // IMPORTANT: Removed the useEffect that caused the infinite refresh loop.
+  // The AuthContext manages user state updates, and the "Refresh Session"
+  // button provides manual control. ProfileScreen will automatically re-render
+  // when `user` changes in AuthContext.
   
   // Handle logout
   const handleLogout = async () => {
@@ -120,16 +115,13 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  // Force-refresh JWT / role
+  // Force-refresh JWT / role - This function is fine and used by the button
   const handleRefreshRole = async () => {
     try {
       setIsRefreshingRole(true);
       const success = await refreshUserRole();
       if (success) {
         Alert.alert('Session Refreshed', 'Your account information has been updated.');
-        // The updated user object will be available in the next render.
-        // The useEffect hook above will log the new state.
-        console.log('Refresh successful. New state will be logged on re-render.');
       } else {
         Alert.alert('Refresh Failed', 'Unable to refresh session right now. Please try again later.');
       }
@@ -152,18 +144,18 @@ const ProfileScreen: React.FC = () => {
   // Check if user is a dealer (using current user directly)
   const isDealer = () => {
     if (!user) return false;
-    const currentRole = user.role?.toUpperCase();
     return (
-      currentRole === UserRole.DEALER ||
-      currentRole === UserRole.MVP_DEALER ||
-      currentRole === UserRole.SHOW_ORGANIZER
+      user.role === UserRole.DEALER ||
+      user.role === UserRole.MVP_DEALER ||
+      user.role === UserRole.SHOW_ORGANIZER ||
+      user.accountType === 'dealer' ||
+      user.accountType === 'organizer'
     );
   };
   
   // Get role display name
-  const getRoleDisplayName = (role: UserRole | undefined | null) => {
-    if (!role) return 'Unknown';
-    switch (role.toUpperCase()) {
+  const getRoleDisplayName = (role: UserRole) => {
+    switch (role) {
       case UserRole.ATTENDEE:
         return 'Attendee';
       case UserRole.DEALER:
@@ -173,6 +165,8 @@ const ProfileScreen: React.FC = () => {
       case UserRole.SHOW_ORGANIZER:
         return 'Show Organizer';
       default:
+        // Add a console log here to debug what 'role' is if it hits 'Unknown'
+        console.warn('Unknown UserRole encountered:', role);
         return 'Unknown';
     }
   };
@@ -343,9 +337,8 @@ const ProfileScreen: React.FC = () => {
               <Ionicons name="shield-checkmark-outline" size={20} color="#666" />
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Account Type</Text>
-                <Text style={styles.infoValue}>
-                  {getRoleDisplayName(user.role)} ({user.accountType || 'unknown'})
-                </Text>
+                {/* Display user.role directly, as it should now be correct from Supabase */}
+                <Text style={styles.infoValue}>{getRoleDisplayName(user.role)}</Text>
               </View>
             </View>
             
@@ -354,7 +347,14 @@ const ProfileScreen: React.FC = () => {
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Member Since</Text>
                 <Text style={styles.infoValue}>
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {(() => {
+                    // Ensure the day shown matches the value in the DB
+                    const date = new Date(user.createdAt);
+                    const utcDate = new Date(
+                      date.getTime() + date.getTimezoneOffset() * 60 * 1000
+                    );
+                    return utcDate.toLocaleDateString();
+                  })()}
                 </Text>
               </View>
             </View>
@@ -380,38 +380,6 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
         </View>
-
-        {/* Subscription Details Section - Conditional */}
-        {user.accountType !== 'collector' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Subscription Details</Text>
-            <View style={styles.infoList}>
-              <View style={styles.infoItem}>
-                <Ionicons name="card-outline" size={20} color="#666" />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Status</Text>
-                  <Text style={[
-                    styles.infoValue,
-                    user.subscriptionStatus === 'active' ? styles.statusActive : styles.statusInactive
-                  ]}>
-                    {user.subscriptionStatus?.charAt(0).toUpperCase() + user.subscriptionStatus?.slice(1)}
-                  </Text>
-                </View>
-              </View>
-              {user.subscriptionStatus === 'active' && user.subscriptionExpiry && (
-                <View style={styles.infoItem}>
-                  <Ionicons name="timer-outline" size={20} color="#666" />
-                  <View style={styles.infoTextContainer}>
-                    <Text style={styles.infoLabel}>Expires On</Text>
-                    <Text style={styles.infoValue}>
-                      {new Date(user.subscriptionExpiry).toLocaleDateString()}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
         
         {/* Statistics */}
         <View style={styles.section}>
@@ -620,14 +588,6 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: '#333',
-  },
-  statusActive: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-  },
-  statusInactive: {
-    color: '#F44336',
-    fontWeight: 'bold',
   },
   verificationStatus: {
     flexDirection: 'row',

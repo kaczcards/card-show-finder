@@ -615,6 +615,23 @@ const ShowParticipationScreen: React.FC = () => {
             )}
             
             <ScrollView style={styles.formContainer}>
+              {/* Added informational message */}
+              <View style={styles.infoMessageContainer}>
+                <Text style={styles.infoMessageText}>
+                  By registering for this show, your name will appear on the list of participating dealers for this show.
+                  Upgrade to an MVP Dealer subscription to unlock your full booth information being searchable and accessible to all attendees and collectors!
+                </Text>
+                <TouchableOpacity
+                  style={styles.infoUpgradeButton}
+                  onPress={() => {
+                    setRegistrationModalVisible(false); // Close current modal
+                    navigation.navigate('SubscriptionScreen' as never); // Navigate to subscription
+                  }}
+                >
+                  <Text style={styles.infoUpgradeButtonText}>Learn More about MVP</Text>
+                </TouchableOpacity>
+              </View>
+
               <Text style={styles.formSectionTitle}>Booth Information</Text>
               
               <View style={styles.formGroup}>
@@ -1318,6 +1335,34 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // New styles for the informational message in the modal
+  infoMessageContainer: {
+    backgroundColor: '#e6f0ff', // Light blue background
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#0057B8',
+  },
+  infoMessageText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  infoUpgradeButton: {
+    backgroundColor: '#0057B8',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 6,
+    alignSelf: 'center', // Center the button
+  },
+  infoUpgradeButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 
