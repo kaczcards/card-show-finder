@@ -416,44 +416,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
-  const refreshUserRole = async (): Promise<boolean> => {
+  /**
+   * Helper util that guarantees we have the *latest* profile information
+   * from Supabase in three steps:
+   *   1. Clear any cached JWT/session entries in AsyncStorage (defensive)
+   *   2. Force‐refresh the JWT via `refreshUserSession`
+   *   3. Fetch a fresh profile row from the DB and map it to the `User` shape
+   *
+   * If any step fails we fall back to directly hitting the `profiles` table.
+   * Detailed console logs are provided to aid troubleshooting in production.
+   */
+  const forceRefreshAndFetchProfile = async (userId: string): Promise<User | null> => {
     try {
-      const { success, error: sessionError } = await refreshUserSession();
-      if (!success || sessionError || !authState.user) {
-        if(sessionError) console.error('Session refresh failed:', sessionError);
-        return false;
+      // 1) Clear stale auth tokens from AsyncStorage (best-effort)
+      try {
+        const keys = await AsyncStorage.getAllKeys();
+        const supabaseKeys = keys.filter(k => k.includes('supabase'));
+        if (supabaseKeys.length) {
+          await AsyncStorage.multiRemove(supabaseKeys);
+          /* eslint-disable no-console */
+          console.log('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
+        }
+      } catch (clearErr) {
+        console.warn('[AuthContext] Failed to clear cached tokens', clearErr);
       }
 
-      const { data: profile, error: profileError } = await supabase
+      // 2) Force the session to refresh
+      const { success, error: refreshErr } = await refreshUserSession();
+      if (!success) {
+        console.warn('[AuthContext] Session refresh failed – falling back to direct DB fetch', refreshErr);
+      }
+
+      // 3) Fetch the latest profile data directly
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', authState.user.id)
+        .eq('id', userId)
         .single();
 
-      if (profileError || !profile) {
-        console.error('Failed to fetch updated profile:', profileError);
+      if (error || !profile) {
+        console.error('[AuthContext] Failed to fetch profile after refresh', error);
+        return null;
+      }
+
+      // Map DB → App `User`
+      const mapped: User = {
+        id: profile.id,
+        email: profile.email ?? '',
+        firstName: profile.first_name,
+        lastName: profile.last_name ?? undefined,
+        homeZipCode: profile.home_zip_code,
+        role: (profile.role as UserRole) ?? UserRole.ATTENDEE,
+        createdAt: profile.created_at,
+        updatedAt: profile.updated_at,
+        isEmailVerified: !!profile.is_email_verified,
+        accountType: profile.account_type ?? 'collector',
+        subscriptionStatus: profile.subscription_status ?? 'none',
+        subscriptionExpiry: profile.subscription_expiry,
+        favoriteShows: profile.favorite_shows || [],
+        attendedShows: profile.attended_shows || [],
+        phoneNumber: profile.phone_number ?? undefined,
+        profileImageUrl: profile.profile_image_url ?? undefined,
+      };
+      console.log('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
+
+      return mapped;
+    } catch (err) {
+      console.error('[AuthContext] Unexpected error in forceRefreshAndFetchProfile', err);
+      return null;
+    }
+  };
+
+  const refreshUserRole = async (): Promise<boolean> => {
+    try {
+      if (!authState.user) return false;
+
+      // Use the new robust helper
+      const fresh = await forceRefreshAndFetchProfile(authState.user.id);
+      if (!fresh) {
         return false;
       }
 
       setAuthState(prev => {
         if (!prev.user) return prev;
-        const updatedUser: User = {
-          ...prev.user,
-          role: profile.role as UserRole,
-          accountType: profile.account_type,
-          subscriptionStatus: profile.subscription_status,
-          subscriptionExpiry: profile.subscription_expiry,
-          firstName: profile.first_name,
-          lastName: profile.last_name,
-          homeZipCode: profile.home_zip_code,
-          phoneNumber: profile.phone_number,
-          profileImageUrl: profile.profile_image_url,
-          favoriteShows: profile.favorite_shows || [],
-          attendedShows: profile.attended_shows || [],
-        };
         return {
           ...prev,
-          user: updatedUser,
+          user: fresh,
         };
       });
       
