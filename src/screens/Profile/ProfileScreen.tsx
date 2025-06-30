@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,17 @@ const ProfileScreen: React.FC = () => {
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [homeZipCode, setHomeZipCode] = useState(user?.homeZipCode || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
+
+  // Log user object whenever it changes for debugging purposes
+  useEffect(() => {
+    if (user) {
+      console.log('User state updated in ProfileScreen:', {
+        role: user.role,
+        accountType: user.accountType,
+        subscriptionStatus: user.subscriptionStatus,
+      });
+    }
+  }, [user]);
   
   // Handle logout
   const handleLogout = async () => {
@@ -116,6 +127,9 @@ const ProfileScreen: React.FC = () => {
       const success = await refreshUserRole();
       if (success) {
         Alert.alert('Session Refreshed', 'Your account information has been updated.');
+        // The updated user object will be available in the next render.
+        // The useEffect hook above will log the new state.
+        console.log('Refresh successful. New state will be logged on re-render.');
       } else {
         Alert.alert('Refresh Failed', 'Unable to refresh session right now. Please try again later.');
       }
@@ -138,18 +152,18 @@ const ProfileScreen: React.FC = () => {
   // Check if user is a dealer (using current user directly)
   const isDealer = () => {
     if (!user) return false;
+    const currentRole = user.role?.toUpperCase();
     return (
-      user.role === UserRole.DEALER ||
-      user.role === UserRole.MVP_DEALER ||
-      user.role === UserRole.SHOW_ORGANIZER ||
-      user.accountType === 'dealer' ||
-      user.accountType === 'organizer'
+      currentRole === UserRole.DEALER ||
+      currentRole === UserRole.MVP_DEALER ||
+      currentRole === UserRole.SHOW_ORGANIZER
     );
   };
   
   // Get role display name
-  const getRoleDisplayName = (role: UserRole) => {
-    switch (role) {
+  const getRoleDisplayName = (role: UserRole | undefined | null) => {
+    if (!role) return 'Unknown';
+    switch (role.toUpperCase()) {
       case UserRole.ATTENDEE:
         return 'Attendee';
       case UserRole.DEALER:
@@ -329,7 +343,9 @@ const ProfileScreen: React.FC = () => {
               <Ionicons name="shield-checkmark-outline" size={20} color="#666" />
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Account Type</Text>
-                <Text style={styles.infoValue}>{getRoleDisplayName(user.role)}</Text>
+                <Text style={styles.infoValue}>
+                  {getRoleDisplayName(user.role)} ({user.accountType || 'unknown'})
+                </Text>
               </View>
             </View>
             
@@ -338,14 +354,7 @@ const ProfileScreen: React.FC = () => {
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Member Since</Text>
                 <Text style={styles.infoValue}>
-                  {(() => {
-                    // Ensure the day shown matches the value in the DB
-                    const date = new Date(user.createdAt);
-                    const utcDate = new Date(
-                      date.getTime() + date.getTimezoneOffset() * 60 * 1000
-                    );
-                    return utcDate.toLocaleDateString();
-                  })()}
+                  {new Date(user.createdAt).toLocaleDateString()}
                 </Text>
               </View>
             </View>
@@ -371,6 +380,38 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+        {/* Subscription Details Section - Conditional */}
+        {user.accountType !== 'collector' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Subscription Details</Text>
+            <View style={styles.infoList}>
+              <View style={styles.infoItem}>
+                <Ionicons name="card-outline" size={20} color="#666" />
+                <View style={styles.infoTextContainer}>
+                  <Text style={styles.infoLabel}>Status</Text>
+                  <Text style={[
+                    styles.infoValue,
+                    user.subscriptionStatus === 'active' ? styles.statusActive : styles.statusInactive
+                  ]}>
+                    {user.subscriptionStatus?.charAt(0).toUpperCase() + user.subscriptionStatus?.slice(1)}
+                  </Text>
+                </View>
+              </View>
+              {user.subscriptionStatus === 'active' && user.subscriptionExpiry && (
+                <View style={styles.infoItem}>
+                  <Ionicons name="timer-outline" size={20} color="#666" />
+                  <View style={styles.infoTextContainer}>
+                    <Text style={styles.infoLabel}>Expires On</Text>
+                    <Text style={styles.infoValue}>
+                      {new Date(user.subscriptionExpiry).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
         
         {/* Statistics */}
         <View style={styles.section}>
@@ -579,6 +620,14 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: '#333',
+  },
+  statusActive: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
+  statusInactive: {
+    color: '#F44336',
+    fontWeight: 'bold',
   },
   verificationStatus: {
     flexDirection: 'row',

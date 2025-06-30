@@ -1,9 +1,9 @@
 --
--- SQL SCRIPT: Fix Row Level Security (RLS) Policies for Show Participation
+-- SQL SCRIPT: Fix Row Level Security (RLS) Policies for Show Participation (v2)
 --
 -- PURPOSE: This script corrects the RLS policies on the `show_participants` table.
--- The primary issue it solves is the "new row violates row-level security policy"
--- error that prevents users, including MVP Dealers, from registering for shows.
+-- It fixes the "column does not exist" error from the previous version by using
+-- the correct column name `userid` instead of `user_id`.
 --
 -- This script will:
 --  1. Display the current (problematic) RLS policies for diagnosis.
