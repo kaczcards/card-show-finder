@@ -11,7 +11,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
 import {
   SUBSCRIPTION_PLANS,
   getSubscriptionDetails,
@@ -26,7 +26,7 @@ import {
 } from '../../services/subscriptionService';
 
 const SubscriptionScreen: React.FC = () => {
-  const { authState } = useAuth();
+  const { authState, refreshUserRole } = useAuth(); // Destructure refreshUserRole from useAuth
   const { user } = authState;
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
@@ -104,6 +104,7 @@ const SubscriptionScreen: React.FC = () => {
       const result = await initiateSubscriptionPurchase(user.id, selectedPlan.id);
       
       if (result.success) {
+        await refreshUserRole(); // Call to refresh user's role and state after successful purchase
         Alert.alert(
           'Success',
           `Your subscription has been activated! It will expire on ${formatExpiryDate(result.subscriptionExpiry as Date)}`,
@@ -128,6 +129,7 @@ const SubscriptionScreen: React.FC = () => {
       const result = await renewSubscription(user.id, selectedPlan.id);
       
       if (result.success) {
+        await refreshUserRole(); // Call to refresh user's role and state after successful renewal
         Alert.alert(
           'Success',
           `Your subscription has been renewed! It will now expire on ${formatExpiryDate(result.subscriptionExpiry as Date)}`,
@@ -161,6 +163,7 @@ const SubscriptionScreen: React.FC = () => {
               const result = await cancelSubscription(user.id);
               
               if (result.success) {
+                await refreshUserRole(); // Call to refresh user's role and state after successful cancellation
                 Alert.alert(
                   'Subscription Cancelled',
                   'Your subscription has been cancelled. You will have access until the end of your current billing period.',

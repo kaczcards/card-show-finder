@@ -11,13 +11,19 @@ import { Show, UserRole } from '../types';
  * Types for dealer show participation
  */
 /**
- * Normalize a role string (DB may store lowercase) to the uppercase
+ * Normalize a role string (DB may store lowercase) to the lowercase
  * `UserRole` enum used throughout the client.
  */
 const normalizeRole = (role: string | null | undefined): UserRole | null => {
   if (!role) return null;
-  const upper = role.toUpperCase() as UserRole;
-  return Object.values(UserRole).includes(upper) ? upper : null;
+  // FIX: Convert to lowercase to match enum string values
+  const normalizedRoleString = role.toLowerCase();
+  
+  // Check if the normalized string is one of the valid UserRole enum values
+  if (Object.values(UserRole).includes(normalizedRoleString as UserRole)) {
+    return normalizedRoleString as UserRole;
+  }
+  return null;
 };
 
 export interface DealerShowParticipation {
@@ -95,8 +101,7 @@ const mapDbCoordinatesToApp = (
 
 /**
  * Get all shows a dealer is participating in
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param status - Optional filter for participation status
  * @returns Array of shows with participation details
  */
@@ -167,8 +172,7 @@ export const getDealerShows = async (
 
 /**
  * Register a dealer for a show
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param participationData - Dealer participation details
  * @returns The created participation record or error
  */
@@ -207,9 +211,9 @@ export const registerForShow = async (
 
     /**
      * Temporary, more lenient role check:
-     *  1. Accept normalised enum values (DEALER / MVP_DEALER)
-     *  2. Fallback – if the raw string contains “dealer” or “mvp”
-     *     (case-insensitive) we also treat it as dealer-tier.
+     * 1. Accept normalised enum values (DEALER / MVP_DEALER)
+     * 2. Fallback – if the raw string contains “dealer” or “mvp”
+     * (case-insensitive) we also treat it as dealer-tier.
      */
     const rawRole = (userData?.role || '').toString().toLowerCase();
     const isDealerLike =
@@ -286,8 +290,7 @@ export const registerForShow = async (
 
 /**
  * Update dealer participation details for a show
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param participationId - The participation record ID
  * @param participationData - Updated dealer participation details
  * @returns The updated participation record or error
@@ -350,8 +353,7 @@ export const updateShowParticipation = async (
 
 /**
  * Cancel dealer participation in a show
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param participationId - The participation record ID
  * @returns Success or error message
  */
@@ -403,8 +405,7 @@ export const cancelShowParticipation = async (
 
 /**
  * Get dealer information for a specific show
- * 
- * @param showId - The show ID
+ * * @param showId - The show ID
  * @returns Array of dealer participation records for the show
  */
 export const getDealersForShow = async (
@@ -477,8 +478,7 @@ export const getDealersForShow = async (
 
 /**
  * Get upcoming shows available for dealer registration
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param filters - Optional filters for shows
  * @returns Array of shows available for registration
  */
