@@ -41,6 +41,7 @@ const ProfileScreen: React.FC = () => {
   // State for badges
   const [featuredBadges, setFeaturedBadges] = useState<Badge[]>([]);
   const [isLoadingBadges, setIsLoadingBadges] = useState(false);
+  const [badgeError, setBadgeError] = useState<string | null>(null);
   const [nextBadge, setNextBadge] = useState<Badge | null>(null);
   const [badgeProgress, setBadgeProgress] = useState<{
     current: number;
@@ -55,27 +56,32 @@ const ProfileScreen: React.FC = () => {
     }
   }, [user, isFocused]);
 
-  // Load user badges
+  // Load user badges with improved error handling
   const loadUserBadges = async () => {
     if (!user) return;
     
     setIsLoadingBadges(true);
+    setBadgeError(null);
+    
     try {
-      // Get featured badges
+      // Get featured badges - will return empty array if error occurs
       const featured = await badgeService.getUserFeaturedBadges(user.id, 3);
-      setFeaturedBadges(featured);
+      setFeaturedBadges(featured || []);
       
-      // Get next badge to earn
+      // Get next badge to earn - will return null if error occurs
       const next = await badgeService.getUserNextBadge(user.id);
       setNextBadge(next);
       
-      // If there's a next badge, get progress
+      // If there's a next badge, get progress - will return null if error occurs
       if (next) {
         const progress = await badgeService.getBadgeProgress(user.id, next.id);
         setBadgeProgress(progress);
+      } else {
+        setBadgeProgress(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading badges:', error);
+      setBadgeError(error.message || 'Failed to load badges');
     } finally {
       setIsLoadingBadges(false);
     }
@@ -231,6 +237,11 @@ const ProfileScreen: React.FC = () => {
   const navigateToBadges = () => {
     navigation.navigate('Badges' as never);
   };
+
+  // Retry loading badges if there was an error
+  const handleRetryLoadBadges = () => {
+    loadUserBadges();
+  };
   
   // If user is not loaded yet
   if (isLoading || !user) {
@@ -282,7 +293,7 @@ const ProfileScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
-
+        
         {/* Badges Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -294,6 +305,19 @@ const ProfileScreen: React.FC = () => {
           
           {isLoadingBadges ? (
             <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 20 }} />
+          ) : badgeError ? (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle-outline" size={40} color="#FF3B30" />
+              <Text style={styles.errorText}>
+                There was an error loading your badges.
+              </Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={handleRetryLoadBadges}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
           ) : featuredBadges.length > 0 ? (
             <View style={styles.badgesContainer}>
               <FlatList
@@ -758,6 +782,29 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 10,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
   },
   nextBadgeContainer: {
     marginTop: 16,
