@@ -1,15 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { Marker, Callout, Region } from 'react-native-maps';
 import ClusteredMapView from 'react-native-maps-super-cluster';
-import { Ionicons } from '@expo/vector-icons';
-import { Show, Coordinates } from '../types';
+import { Show, Coordinates } from '../../types';
 
 interface MapShowClusterProps {
   shows: Show[];
@@ -23,27 +22,20 @@ interface MapShowClusterProps {
   onRegionChangeComplete?: (region: Region) => void;
 }
 
-const { width } = Dimensions.get('window');
+const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) => {
+  const {
+    shows,
+    onShowPress,
+    region,
+    showsUserLocation = true,
+    loadingEnabled = true,
+    showsCompass = true,
+    showsScale = true,
+    provider = 'google',
+    onRegionChangeComplete
+  } = props;
 
-const MapShowCluster: React.FC<MapShowClusterProps> = ({
-  shows,
-  onShowPress,
-  region,
-  showsUserLocation = true,
-  loadingEnabled = true,
-  showsCompass = true,
-  showsScale = true,
-  provider = 'google',
-  onRegionChangeComplete,
-}) => {
-  const mapRef = useRef<ClusteredMapView>(null);
-  const [currentRegion, setCurrentRegion] = useState<Region>(region);
-
-  /**
-   * Format date for callout with timezone correction
-   * @param dateValue Date or string to format
-   * @returns Formatted date string
-   */
+  // Format date for callout with timezone correction
   const formatDate = (dateValue: Date | string) => {
     try {
       const date = new Date(dateValue);
@@ -53,18 +45,13 @@ const MapShowCluster: React.FC<MapShowClusterProps> = ({
 
       // Adjust for timezone offset to ensure correct date display
       const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-
       return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     } catch (err) {
       return 'Unknown date';
     }
   };
 
-  /**
-   * Render an individual marker for a show
-   * @param show The show to render
-   * @returns Marker component
-   */
+  // Render an individual marker
   const renderMarker = (show: Show) => {
     if (!show.coordinates || 
         typeof show.coordinates.latitude !== 'number' || 
@@ -97,28 +84,22 @@ const MapShowCluster: React.FC<MapShowClusterProps> = ({
             <Text style={styles.calloutDetail}>
               {show.entryFee === 0 ? 'Free Entry' : `Entry: $${show.entryFee}`}
             </Text>
-            <View style={styles.calloutButton}>
+            <TouchableOpacity style={styles.calloutButton}>
               <Text style={styles.calloutButtonText}>View Details</Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </Callout>
       </Marker>
     );
   };
 
-  /**
-   * Render a cluster of markers
-   * @param cluster Cluster information
-   * @param onPress Callback for when the cluster is pressed
-   * @returns Marker component for the cluster
-   */
+  // Render a cluster
   const renderCluster = (cluster: any, onPress: () => void) => {
-    const { pointCount, coordinate, clusterId } = cluster;
+    const { pointCount, coordinate } = cluster;
     
     return (
-      <Marker
-        key={`cluster-${clusterId}`}
-        coordinate={coordinate}
+      <Marker 
+        coordinate={coordinate} 
         onPress={onPress}
       >
         <View style={styles.clusterContainer}>
@@ -128,11 +109,7 @@ const MapShowCluster: React.FC<MapShowClusterProps> = ({
     );
   };
 
-  /**
-   * Convert Show objects to points for the clusterer
-   * @param show Show object
-   * @returns Point object with location and properties
-   */
+  // Convert Show objects to points for the clusterer
   const showToPoint = (show: Show) => {
     if (!show.coordinates || 
         typeof show.coordinates.latitude !== 'number' || 
@@ -152,37 +129,21 @@ const MapShowCluster: React.FC<MapShowClusterProps> = ({
     };
   };
 
-  /**
-   * Filter valid shows that have coordinates
-   * @returns Array of valid shows
-   */
-  const getValidShows = () => {
-    return shows.filter(show => 
-      show && 
-      show.coordinates && 
-      typeof show.coordinates.latitude === 'number' && 
-      typeof show.coordinates.longitude === 'number'
-    );
-  };
-
-  /**
-   * Handle region change
-   * @param newRegion New map region
-   */
-  const handleRegionChangeComplete = (newRegion: Region) => {
-    setCurrentRegion(newRegion);
-    if (onRegionChangeComplete) {
-      onRegionChangeComplete(newRegion);
-    }
-  };
+  // Filter valid shows with coordinates
+  const validShows = shows.filter(show => 
+    show && 
+    show.coordinates && 
+    typeof show.coordinates.latitude === 'number' && 
+    typeof show.coordinates.longitude === 'number'
+  );
 
   return (
     <ClusteredMapView
-      ref={mapRef}
+      ref={ref}
       style={styles.map}
-      data={getValidShows()}
+      data={validShows}
       initialRegion={region}
-      region={currentRegion}
+      region={region}
       renderMarker={renderMarker}
       renderCluster={renderCluster}
       showsUserLocation={showsUserLocation}
@@ -190,7 +151,7 @@ const MapShowCluster: React.FC<MapShowClusterProps> = ({
       showsCompass={showsCompass}
       showsScale={showsScale}
       provider={provider}
-      onRegionChangeComplete={handleRegionChangeComplete}
+      onRegionChangeComplete={onRegionChangeComplete}
       clusteringEnabled={true}
       spiralEnabled={true}
       zoomEnabled={true}
@@ -204,7 +165,7 @@ const MapShowCluster: React.FC<MapShowClusterProps> = ({
       nodeExtractor={showToPoint}
     />
   );
-};
+});
 
 const styles = StyleSheet.create({
   map: {
