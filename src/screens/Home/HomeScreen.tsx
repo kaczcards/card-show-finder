@@ -18,7 +18,7 @@ import FilterSheet from '../../components/FilterSheet';
 import FilterChips from '../../components/FilterChips';
 import FilterPresetModal from '../../components/FilterPresetModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ShowFilters } from '../../types';
+import { ShowFilters, Coordinates } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Constants
@@ -42,13 +42,26 @@ const stockImages = [
 // Always-safe fallback
 const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
 
-const HomeScreen = () => {
+// Define props interface for HomeScreen
+interface HomeScreenProps {
+  customFilters?: ShowFilters;
+  onFilterChange?: (filters: ShowFilters) => void;
+  onShowPress?: (showId: string) => void;
+  userLocation?: Coordinates | null;
+}
+
+const HomeScreen = ({ 
+  customFilters, 
+  onFilterChange, 
+  onShowPress,
+  userLocation: propUserLocation 
+}: HomeScreenProps) => {
   const navigation = useNavigation();
   const { authState } = useAuth();
   const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [coordinates, setCoordinates] = useState(null);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   /* ------------------------------------------------------------------
    * Filter State & Persistence
    * ---------------------------------------------------------------- */
@@ -58,31 +71,40 @@ const HomeScreen = () => {
     endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
   };
 
-  const [filters, setFilters] = useState<ShowFilters>(defaultFilters);
+  // Use customFilters if provided, otherwise use local state
+  const [localFilters, setLocalFilters] = useState<ShowFilters>(defaultFilters);
+  
+  // Derive actual filters to use - prefer customFilters if provided
+  const filters = customFilters || localFilters;
+  
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const [presetModalVisible, setPresetModalVisible] = useState(false);
 
-  // Load persisted filters on mount
+  // Load persisted filters on mount - only if customFilters is not provided
   useEffect(() => {
+    if (customFilters) return; // Skip if customFilters is provided
+    
     (async () => {
       try {
         const stored = await AsyncStorage.getItem('homeFilters');
         if (stored) {
           const parsed: ShowFilters = JSON.parse(stored);
-          setFilters({ ...defaultFilters, ...parsed });
+          setLocalFilters({ ...defaultFilters, ...parsed });
         }
       } catch (e) {
         console.warn('Failed to load stored filters', e);
       }
     })();
-  }, []);
+  }, [customFilters]);
 
-  // Persist filters whenever they change
+  // Persist filters whenever they change - only if customFilters is not provided
   useEffect(() => {
-    AsyncStorage.setItem('homeFilters', JSON.stringify(filters)).catch(() =>
+    if (customFilters) return; // Skip if customFilters is provided
+    
+    AsyncStorage.setItem('homeFilters', JSON.stringify(localFilters)).catch(() =>
       console.warn('Failed to persist filters')
     );
-  }, [filters]);
+  }, [localFilters, customFilters]);
 
   // Get stock image based on show index or ID to ensure consistency
   const getStockImage = (index: number, id?: string) => {
@@ -93,57 +115,72 @@ const HomeScreen = () => {
     return stockImages[hash % stockImages.length] || fallbackImage;
   };
 
-  // Fetch shows based on user's home zip code
+  // Set coordinates based on propUserLocation if provided
+  useEffect(() => {
+    if (propUserLocation) {
+      setCoordinates(propUserLocation);
+    }
+  }, [propUserLocation]);
+
+  // Fetch shows based on user's home zip code or provided location
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // Get coordinates from user's home zip code
-        if (authState.user && authState.user.homeZipCode) {
+        // First priority: Use coordinates from props if available
+        if (propUserLocation) {
+          console.log('Using coordinates from props');
+          setCoordinates(propUserLocation);
+        } 
+        // Second priority: Get coordinates from user's home zip code
+        else if (authState.user && authState.user.homeZipCode && !coordinates) {
           console.log(`Using zip code from user profile: ${authState.user.homeZipCode}`);
           
           const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
           
           if (zipData && zipData.coordinates) {
             setCoordinates(zipData.coordinates);
-            
-            // Derive start & end dates from current filter state
-            const formattedStartDate =
-              filters.startDate instanceof Date
-                ? filters.startDate.toISOString()
-                : filters.startDate ?? null;
-            const formattedEndDate =
-              filters.endDate instanceof Date
-                ? filters.endDate.toISOString()
-                : filters.endDate ?? null;
-
-            console.log(
-              `Fetching shows within ${filters.radius} miles with filters`,
-              filters
-            );
-
-            const nearbyShows = await getShows({
-              latitude: zipData.coordinates.latitude,
-              longitude: zipData.coordinates.longitude,
-              ...filters,
-              startDate: formattedStartDate,
-              endDate: formattedEndDate,
-            });
-            
-            console.log(`Found ${nearbyShows.length} shows`);
-            // Sort shows by startDate in ascending order before setting state
-            const sortedShows = [...nearbyShows].sort(
-              (a, b) =>
-                new Date(a.startDate).getTime() -
-                new Date(b.startDate).getTime()
-            );
-            setShows(sortedShows);
           } else {
             console.error(`Could not get coordinates for zip code: ${authState.user.homeZipCode}`);
           }
+        }
+        
+        // If we have coordinates, fetch shows
+        if (coordinates) {
+          // Derive start & end dates from current filter state
+          const formattedStartDate =
+            filters.startDate instanceof Date
+              ? filters.startDate.toISOString()
+              : filters.startDate ?? null;
+          const formattedEndDate =
+            filters.endDate instanceof Date
+              ? filters.endDate.toISOString()
+              : filters.endDate ?? null;
+
+          console.log(
+            `Fetching shows within ${filters.radius} miles with filters`,
+            filters
+          );
+
+          const nearbyShows = await getShows({
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            ...filters,
+            startDate: formattedStartDate,
+            endDate: formattedEndDate,
+          });
+          
+          console.log(`Found ${nearbyShows.length} shows`);
+          // Sort shows by startDate in ascending order before setting state
+          const sortedShows = [...nearbyShows].sort(
+            (a, b) =>
+              new Date(a.startDate).getTime() -
+              new Date(b.startDate).getTime()
+          );
+          setShows(sortedShows);
         } else {
-          console.warn('No home zip code found in user profile');
+          console.warn('No coordinates available to fetch shows');
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -153,7 +190,7 @@ const HomeScreen = () => {
     };
 
     fetchData();
-  }, [authState.user]);
+  }, [authState.user, coordinates, filters]);
 
   // Handle pull-to-refresh
   const onRefresh = async () => {
@@ -189,9 +226,13 @@ const HomeScreen = () => {
     }
   };
 
-  // Navigate to show detail screen
+  // Navigate to show detail screen or use provided callback
   const handleShowPress = (showId) => {
-    navigation.navigate('ShowDetail', { showId });
+    if (onShowPress) {
+      onShowPress(showId);
+    } else {
+      navigation.navigate('ShowDetail', { showId });
+    }
   };
 
   // Navigate to filter screen
@@ -201,13 +242,19 @@ const HomeScreen = () => {
 
   // Apply filters callback
   const handleApplyFilters = (newFilters: ShowFilters) => {
-    setFilters(newFilters);
+    if (onFilterChange) {
+      // If parent is managing filters, call the callback
+      onFilterChange(newFilters);
+    } else {
+      // Otherwise, update local state
+      setLocalFilters(newFilters);
+    }
     setFilterSheetVisible(false);
   };
 
   // Remove a single filter (chip press)
   const handleRemoveFilter = (key: string, value?: string) => {
-    setFilters((prev) => {
+    const updateFilters = (prev: ShowFilters) => {
       const updated: ShowFilters = { ...prev };
       switch (key) {
         case 'radius':
@@ -230,7 +277,15 @@ const HomeScreen = () => {
           break;
       }
       return updated;
-    });
+    };
+
+    if (onFilterChange) {
+      // If parent is managing filters, call the callback with updated filters
+      onFilterChange(updateFilters(filters));
+    } else {
+      // Otherwise, update local state
+      setLocalFilters(prev => updateFilters(prev));
+    }
   };
 
   const activeFilterCount = () => {
@@ -385,7 +440,11 @@ const HomeScreen = () => {
       onClose={() => setPresetModalVisible(false)}
       currentFilters={filters}
       onApplyPreset={(presetFilters) => {
-        setFilters(presetFilters);
+        if (onFilterChange) {
+          onFilterChange(presetFilters);
+        } else {
+          setLocalFilters(presetFilters);
+        }
         setPresetModalVisible(false);
       }}
       userId={authState.user?.id || ''}
