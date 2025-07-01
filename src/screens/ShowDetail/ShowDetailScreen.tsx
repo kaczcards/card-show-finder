@@ -16,7 +16,7 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
-import { UserRole } from '../../types'; // Ensure UserRole is imported from types
+import { UserRole } from '../../types';
 
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
@@ -615,7 +615,7 @@ const toggleFavorite = async () => {
           <View style={styles.infoRow}>
             <Ionicons name="cash" size={20} color="#666666" style={styles.infoIcon} />
             <Text style={styles.infoText}>
-              Entry Fee: {typeof show.entry_fee === 'number' ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}
+              `Entry Fee: ${typeof show.entry_fee === "number" ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}`
             </Text>
           </View>
         )}
@@ -661,7 +661,7 @@ const toggleFavorite = async () => {
                   {dealer.role === UserRole.MVP_DEALER ? (
                     <TouchableOpacity
                       style={styles.dealerNameButton}
-                      onPress={() => handleViewDealerDetails(dealer.id)}
+                      onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
                     >
                       <Text style={styles.dealerName}>{dealer.name} (MVP)</Text> {/* Added (MVP) for clarity */}
                     </TouchableOpacity>
