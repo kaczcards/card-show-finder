@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,16 +7,13 @@ import {
   ActivityIndicator,
   Dimensions,
   Alert,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Region } from 'react-native-maps';
 import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
-import { getShows } from '../../services/showService';
 import {
   getCurrentLocation,
   getZipCodeCoordinates,
@@ -38,32 +35,79 @@ interface MapScreenProps extends NativeStackScreenProps<MainStackParamList> {
   initialUserLocation?: Coordinates | null;
 }
 
-const MapScreen: React.FC<MapScreenProps> = ({ 
-  navigation, 
+const MapScreen: React.FC<MapScreenProps> = ({
+  navigation,
   customFilters,
   onFilterChange,
   onShowPress,
   initialUserLocation
 }) => {
-  // State
-  const [shows, setShows] = useState<Show[]>([]);
-  const [loading, setLoading] = useState(true);
+  // --- HARDCODED SHOWS DATA ---
+  // We are temporarily hardcoding show data to test if pins appear and to stop infinite logging.
+  // This bypasses the showService and Supabase.
+  const [shows, setShows] = useState<Show[]>([
+    {
+      id: "hardcoded-show-1",
+      title: "Sample Card Show A",
+      location: "Noblesville, IN",
+      address: "Moose Lodge, 950 Field Drive, Noblesville, IN 46060",
+      startDate: "2025-07-12T00:00:00+00:00",
+      endDate: "2025-07-12T00:00:00+00:00",
+      startTime: "09:00 AM",
+      endTime: "03:00 PM",
+      entryFee: 5,
+      description: "This is a hardcoded test show to check map pins. Should appear near Noblesville.",
+      status: ShowStatus.ACTIVE,
+      categories: ["Sports Cards"],
+      features: ["Autographs"],
+      organizerId: "test-organizer-1",
+      coordinates: {
+        latitude: 40.063948,
+        longitude: -85.976875
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "hardcoded-show-2",
+      title: "Sample Card Show B",
+      location: "Indianapolis, IN",
+      address: "200 E. Market St, Indianapolis, IN 46204",
+      startDate: "2025-07-19T00:00:00+00:00",
+      endDate: "2025-07-19T00:00:00+00:00",
+      startTime: "10:00 AM",
+      endTime: "04:00 PM",
+      entryFee: 10,
+      description: "Another hardcoded test show. Should appear in Indianapolis.",
+      status: ShowStatus.ACTIVE,
+      categories: ["Memorabilia"],
+      features: ["Free Parking"],
+      organizerId: "test-organizer-2",
+      coordinates: {
+        latitude: 39.7684,
+        longitude: -86.1581
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  ]);
+  const [loading, setLoading] = useState(false); // Set to false because data is hardcoded and immediately available
+  // --- END HARDCODED SHOWS DATA ---
+
   const [filterVisible, setFilterVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
-  
+
   // Default filters
   const defaultFilters: ShowFilters = {
-    radius: 25, // Default radius: 25 miles
-    startDate: new Date(), // Default start date: today
-    endDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default end date: 30 days from now
+    radius: 25,
+    startDate: new Date(),
+    endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
   };
-  
+
   // Use customFilters if provided, otherwise use local state
   const [localFilters, setLocalFilters] = useState<ShowFilters>(defaultFilters);
-  
-  // Derive actual filters to use - prefer customFilters if provided
   const filters = customFilters || localFilters;
 
   // Refs
@@ -84,63 +128,65 @@ const MapScreen: React.FC<MapScreenProps> = ({
   useEffect(() => {
     const setupInitialRegion = async () => {
       try {
+        let determinedLocation: Coordinates | null = null;
+        let regionToSet: Region | null = null;
+
         /* ---- 1) Try initialUserLocation first if provided ---- */
         if (initialUserLocation) {
-          const region = {
+          determinedLocation = initialUserLocation;
+          regionToSet = {
             latitude: initialUserLocation.latitude,
             longitude: initialUserLocation.longitude,
             latitudeDelta: 0.5,
             longitudeDelta: 0.5,
           };
-          setUserLocation(initialUserLocation);
-          setInitialRegion(region);
-          setCurrentRegion(region);
-          return;
-        }
-        
-        /* ---- 2) Try live GPS ---- */
-        const gps = await getCurrentLocation();
-        if (gps) {
-          setUserLocation(gps);
-          const region = {
-            latitude: gps.latitude,
-            longitude: gps.longitude,
-            latitudeDelta: 0.5,
-            longitudeDelta: 0.5,
-          };
-          setInitialRegion(region);
-          setCurrentRegion(region);
-          return;
         }
 
-        /* ---- 3) Fallback to profile ZIP ---- */
-        if (user?.homeZipCode) {
+        /* ---- 2) Try live GPS if no initialUserLocation or it's null ---- */
+        if (!determinedLocation) {
+          const gps = await getCurrentLocation();
+          if (gps) {
+            determinedLocation = gps;
+            regionToSet = {
+              latitude: gps.latitude,
+              longitude: gps.longitude,
+              latitudeDelta: 0.5,
+              longitudeDelta: 0.5,
+            };
+          }
+        }
+
+        /* ---- 3) Fallback to profile ZIP if still no location ---- */
+        if (!determinedLocation && user?.homeZipCode) {
           const zipData = await getZipCodeCoordinates(user.homeZipCode);
           if (zipData) {
-            const region = {
+            determinedLocation = zipData.coordinates;
+            regionToSet = {
               latitude: zipData.coordinates.latitude,
               longitude: zipData.coordinates.longitude,
               latitudeDelta: 2,
               longitudeDelta: 2,
             };
-            setInitialRegion(region);
-            setCurrentRegion(region);
-            return;
           }
         }
 
-        /* ---- 4) Final fallback – US center ---- */
-        const defaultRegion = {
-          latitude: 39.8283,
-          longitude: -98.5795,
-          latitudeDelta: 40,
-          longitudeDelta: 40,
-        };
-        setInitialRegion(defaultRegion);
-        setCurrentRegion(defaultRegion);
+        /* ---- 4) Final fallback – US center if no location could be determined ---- */
+        if (!determinedLocation || !regionToSet) {
+          console.warn('No coordinates available, falling back to US center.');
+          determinedLocation = { latitude: 39.8283, longitude: -98.5795 };
+          regionToSet = {
+            latitude: 39.8283,
+            longitude: -98.5795,
+            latitudeDelta: 40,
+            longitudeDelta: 40,
+          };
+        }
+
+        setUserLocation(determinedLocation);
+        setInitialRegion(regionToSet);
+        setCurrentRegion(regionToSet);
       } catch (error) {
         console.error('Error setting up initial region:', error);
-        // Default to US center if error
         const defaultRegion = {
           latitude: 39.8283,
           longitude: -98.5795,
@@ -155,87 +201,11 @@ const MapScreen: React.FC<MapScreenProps> = ({
     setupInitialRegion();
   }, [user, initialUserLocation]);
 
-  /**
-   * fetchShows
-   *
-   * Retrieves shows from the backend using the current filter state and,
-   * when available, the user's live location.  Location (lat/lng) and
-   * radius are forwarded to `showService.getShows`, enabling the geo-aware
-   * RPC on the database.  Falls back gracefully to the non-spatial query
-   * if coordinates are missing.
-   */
-  const fetchShows = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      console.log('[MapScreen] Fetching shows using showService');
-      
-      // Create a copy of the filters to modify
-      const currentFilters: ShowFilters = { ...filters };
-      
-      // If we have user location, use it
-      if (userLocation) {
-        currentFilters.latitude = userLocation.latitude;
-        currentFilters.longitude = userLocation.longitude;
-      }
-      
-      console.log('[MapScreen] Filters being used:', currentFilters);
-      
-      // Use the improved getShows function from showService
-      const showsData = await getShows(currentFilters);
-      
-      // Always ensure we're setting an array
-      setShows(Array.isArray(showsData) ? showsData : []);
-      console.log(`[MapScreen] Successfully fetched ${showsData.length} shows`);
-    } catch (error: any) {
-      console.error('[MapScreen] Error fetching shows:', error);
-      // Set empty array to prevent map errors
-      setShows([]);
-      Alert.alert(
-        'Error', 
-        `Failed to load card shows. ${error?.message ? `\n\nDetails: ${error.message}` : 'Please try again.'}`
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, userLocation]);
-
-  // Load shows when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      if (initialRegion) {
-        fetchShows();
-      }
-    }, [fetchShows, initialRegion])
-  );
-
-  /* ------------------------------------------------------------------
-   * Re-run query whenever the user changes filter options or when we
-   * obtain a fresh GPS fix.  We guard with `initialRegion` so we don't
-   * fire while the map is still initializing (e.g., first app launch).
-   * ---------------------------------------------------------------- */
-  useEffect(() => {
-    if (initialRegion) {
-      fetchShows();
-    }
-  }, [filters, userLocation, initialRegion, fetchShows]);
-
   // Handle filter changes
-  /**
-   * handleFilterChange
-   *
-   * Merges the newly-selected values into the existing `filters` state.
-   * If onFilterChange is provided, calls it with the new filters.
-   * Otherwise, updates the local filters state.
-   * The `useEffect` above listens for changes to `filters` and will
-   * automatically trigger a fresh show fetch.
-   */
   const handleFilterChange = (newFilters: Partial<ShowFilters>) => {
     if (onFilterChange) {
-      // If parent is managing filters, call the callback with merged filters
       onFilterChange({ ...filters, ...newFilters });
     } else {
-      // Otherwise, update local state
       setLocalFilters(prev => ({ ...prev, ...newFilters }));
     }
     setFilterVisible(false);
@@ -250,22 +220,12 @@ const MapScreen: React.FC<MapScreenProps> = ({
     }
   };
 
-  // Handle region change from the map
+  // Handle region change from the map - this only updates the map's visible area, not trigger data fetch
   const handleRegionChangeComplete = (region: Region) => {
     setCurrentRegion(region);
   };
 
   // Center map on user location
-  /**
-   * centerOnUserLocation
-   *
-   * Attempts to obtain the user's current GPS coordinates.  If successful,
-   *   • updates local state so subsequent fetches use fresh coordinates  
-   *   • animates the map to the user's position with a ~1-mile zoom level
-   *
-   * If location services are disabled or permission is denied, a helpful
-   * alert is shown prompting the user to enable / grant permission.
-   */
   const centerOnUserLocation = async () => {
     try {
       const gps = await getCurrentLocation();
@@ -278,7 +238,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
         return;
       }
 
-      setUserLocation(gps); // update state so future fetches use fresh coords
+      setUserLocation(gps);
 
       const newRegion = {
         latitude: gps.latitude,
@@ -287,10 +247,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
         longitudeDelta: 0.0922,
       };
 
-      // Update current region to center on user
       setCurrentRegion(newRegion);
 
-      // Animate to the new region if map ref is available
       if (mapRef.current && mapRef.current.animateToRegion) {
         mapRef.current.animateToRegion(newRegion, 500);
       }
@@ -311,7 +269,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
           {initialRegion && (
             <MapShowCluster
               ref={mapRef}
-              shows={shows}
+              shows={shows} // Now uses hardcoded 'shows' data
               onShowPress={handleShowPress}
               region={currentRegion || initialRegion}
               showsUserLocation={true}
