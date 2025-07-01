@@ -14,10 +14,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import { getShows } from '../../services/showService';
+import {
+  getCurrentLocation,
+  getZipCodeCoordinates,
+} from '../../services/locationService';
+import FilterSheet from '../../components/FilterSheet';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -51,15 +55,40 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     const setupInitialRegion = async () => {
       try {
-        // Default to US center
-        const defaultRegion = {
+        /* ---- 1) Try live GPS ---- */
+        const gps = await getCurrentLocation();
+        if (gps) {
+          setUserLocation(gps);
+          setInitialRegion({
+            latitude: gps.latitude,
+            longitude: gps.longitude,
+            latitudeDelta: 0.5,
+            longitudeDelta: 0.5,
+          });
+          return;
+        }
+
+        /* ---- 2) Fallback to profile ZIP ---- */
+        if (user?.homeZipCode) {
+          const zipData = await getZipCodeCoordinates(user.homeZipCode);
+          if (zipData) {
+            setInitialRegion({
+              latitude: zipData.coordinates.latitude,
+              longitude: zipData.coordinates.longitude,
+              latitudeDelta: 2,
+              longitudeDelta: 2,
+            });
+            return;
+          }
+        }
+
+        /* ---- 3) Final fallback – US center ---- */
+        setInitialRegion({
           latitude: 39.8283,
           longitude: -98.5795,
-          latitudeDelta: 40, // Zoomed out to show most of US
+          latitudeDelta: 40,
           longitudeDelta: 40,
-        };
-
-        setInitialRegion(defaultRegion);
+        });
       } catch (error) {
         console.error('Error setting up initial region:', error);
         // Default to US center if error
@@ -75,7 +104,21 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     setupInitialRegion();
   }, [user]);
 
-  // Fetch shows based on location or ZIP code
+  /**
+   * fetchShows
+   *
+   * Retrieves shows from the backend using the current filter state and the
+   * user's location when available. Passes location data and radius to the
+   * showService, enabling geo-spatial queries on the database. This function:
+   *
+   * 1. Copies the current filters to a new object
+   * 2. Adds the user's location coordinates when available
+   * 3. Calls the API with all relevant filters
+   * 4. Updates the local shows state with the results
+   *
+   * The function handles errors gracefully, showing appropriate alerts and
+   * ensuring the shows state is always a valid array.
+   */
   const fetchShows = useCallback(async () => {
     try {
       setLoading(true);
@@ -121,7 +164,26 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     }, [fetchShows, initialRegion])
   );
 
+  /* ------------------------------------------------------------------
+   * Re-run query whenever the user changes filter options or when we
+   * obtain a fresh GPS fix.  We guard with `initialRegion` so we don’t
+   * fire while the map is still initializing (e.g., first app launch).
+   * ---------------------------------------------------------------- */
+  useEffect(() => {
+    if (initialRegion) {
+      fetchShows();
+    }
+  }, [filters, userLocation, initialRegion, fetchShows]);
+
   // Handle filter changes
+  /**
+   * handleFilterChange
+   *
+   * Merges the newly-selected values into the existing `filters` state.
+   * The `useEffect` above listens for changes to `filters` and will
+   * automatically trigger a fresh show fetch, so we don’t need to call
+   * `fetchShows` directly here.
+   */
   const handleFilterChange = (newFilters: Partial<ShowFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setFilterVisible(false);
@@ -133,9 +195,39 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   // Center map on user location
+  /**
+   * centerOnUserLocation
+   *
+   * Requests the user’s current coordinates, updates local state so that
+   * subsequent show queries use the fresh location, and smoothly animates
+   * the map camera to the user’s position.  If permissions are denied we
+   * present a helpful alert prompting the user to enable them.
+   */
   const centerOnUserLocation = async () => {
     try {
-      Alert.alert('Note', 'This feature will be implemented in a future update.');
+      const gps = await getCurrentLocation();
+
+      if (!gps) {
+        Alert.alert(
+          'Location Needed',
+          'Please enable location permissions in settings to center the map on your position.'
+        );
+        return;
+      }
+
+      setUserLocation(gps); // update state so future fetches use fresh coords
+
+      if (mapRef.current) {
+        mapRef.current.animateToRegion(
+          {
+            latitude: gps.latitude,
+            longitude: gps.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0922,
+          },
+          500
+        );
+      }
     } catch (error) {
       console.error('Error centering on user location:', error);
     }
@@ -254,13 +346,13 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
             <Ionicons name="locate" size={24} color="#007AFF" />
           </TouchableOpacity>
 
-          {/* Filter Sheet - To be implemented later */}
-          {/* <FilterSheet
+          {/* Filter Sheet */}
+          <FilterSheet
             visible={filterVisible}
             onClose={() => setFilterVisible(false)}
             filters={filters}
             onApplyFilters={handleFilterChange}
-          /> */}
+          />
         </>
       )}
     </SafeAreaView>
