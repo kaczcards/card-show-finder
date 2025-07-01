@@ -30,7 +30,7 @@ export const getAllBadgeDefinitions = async (): Promise<Badge[]> => {
     }));
   } catch (error) {
     console.error('Error fetching badge definitions:', error);
-    throw error;
+    return []; // Return empty array instead of throwing to prevent UI crashes
   }
 };
 
@@ -40,43 +40,58 @@ export const getAllBadgeDefinitions = async (): Promise<Badge[]> => {
  */
 export const getUserBadges = async (userId: string): Promise<Badge[]> => {
   try {
-    const { data, error } = await supabase
+    // Step 1: Get the user's badge IDs and earned dates
+    const { data: userBadgesData, error: userBadgesError } = await supabase
       .from('user_badges')
-      .select(`
-        badge_id,
-        earned_at,
-        badges_definitions (
-          id,
-          name,
-          description,
-          image_url,
-          requirement,
-          tier
-        )
-      `)
+      .select('badge_id, earned_at')
       .eq('user_id', userId);
     
-    if (error) {
-      throw error;
+    if (userBadgesError) {
+      throw userBadgesError;
     }
     
-    if (!data) {
+    if (!userBadgesData || userBadgesData.length === 0) {
       return [];
     }
     
-    // Map the database records to our Badge type
-    return data.map(badge => ({
-      id: badge.badges_definitions.id,
-      name: badge.badges_definitions.name,
-      description: badge.badges_definitions.description,
-      imageUrl: badge.badges_definitions.image_url,
-      requirement: badge.badges_definitions.requirement,
-      tier: badge.badges_definitions.tier as BadgeTier,
-      dateEarned: badge.earned_at,
-    }));
+    // Step 2: Get the badge definitions for those badge IDs
+    const badgeIds = userBadgesData.map(badge => badge.badge_id);
+    const { data: badgeDefsData, error: badgeDefsError } = await supabase
+      .from('badges_definitions')
+      .select('*')
+      .in('id', badgeIds);
+    
+    if (badgeDefsError) {
+      throw badgeDefsError;
+    }
+    
+    if (!badgeDefsData) {
+      return [];
+    }
+    
+    // Step 3: Combine the data
+    return userBadgesData.map(userBadge => {
+      // Find the corresponding badge definition
+      const badgeDef = badgeDefsData.find(def => def.id === userBadge.badge_id);
+      
+      if (!badgeDef) {
+        return null; // Skip if no matching definition found
+      }
+      
+      // Map to our Badge type
+      return {
+        id: badgeDef.id,
+        name: badgeDef.name,
+        description: badgeDef.description,
+        imageUrl: badgeDef.image_url,
+        requirement: badgeDef.requirement,
+        tier: badgeDef.tier as BadgeTier,
+        dateEarned: userBadge.earned_at,
+      };
+    }).filter(badge => badge !== null) as Badge[]; // Remove any nulls
   } catch (error) {
     console.error('Error fetching user badges:', error);
-    throw error;
+    return []; // Return empty array instead of throwing to prevent UI crashes
   }
 };
 
@@ -99,7 +114,7 @@ export const getUnearnedBadges = async (userId: string): Promise<Badge[]> => {
     return allBadges.filter(badge => !earnedBadgeIds.includes(badge.id));
   } catch (error) {
     console.error('Error fetching unearned badges:', error);
-    throw error;
+    return []; // Return empty array instead of throwing to prevent UI crashes
   }
 };
 
@@ -142,7 +157,7 @@ export const getUserFeaturedBadges = async (userId: string, limit: number = 3): 
     return tieredBadges.slice(0, limit);
   } catch (error) {
     console.error('Error fetching featured badges:', error);
-    throw error;
+    return []; // Return empty array instead of throwing to prevent UI crashes
   }
 };
 
@@ -166,7 +181,8 @@ export const getUserNextBadge = async (userId: string): Promise<Badge | null> =>
       .single();
     
     if (profileError) {
-      throw profileError;
+      console.error('Error fetching profile data:', profileError);
+      return null; // Return null instead of throwing
     }
     
     const attendanceCount = profileData?.show_attendance_count || 0;
@@ -188,7 +204,8 @@ export const getUserNextBadge = async (userId: string): Promise<Badge | null> =>
       .order('requirement_count', { ascending: true });
     
     if (badgeError) {
-      throw badgeError;
+      console.error('Error fetching badge definitions:', badgeError);
+      return null; // Return null instead of throwing
     }
     
     if (!badgeDefinitions || badgeDefinitions.length === 0) {
@@ -226,7 +243,7 @@ export const getUserNextBadge = async (userId: string): Promise<Badge | null> =>
     };
   } catch (error) {
     console.error('Error fetching next badge:', error);
-    throw error;
+    return null; // Return null instead of throwing to prevent UI crashes
   }
 };
 
@@ -239,7 +256,7 @@ export const getBadgeProgress = async (userId: string, badgeId: string): Promise
   current: number;
   required: number;
   percent: number;
-}> => {
+} | null> => {
   try {
     // Get the badge definition
     const { data: badgeDef, error: badgeError } = await supabase
@@ -249,11 +266,13 @@ export const getBadgeProgress = async (userId: string, badgeId: string): Promise
       .single();
     
     if (badgeError) {
-      throw badgeError;
+      console.error('Error fetching badge definition:', badgeError);
+      return null; // Return null instead of throwing
     }
     
     if (!badgeDef) {
-      throw new Error('Badge not found');
+      console.error('Badge not found');
+      return null; // Return null instead of throwing
     }
     
     // Get the user's profile to check progress
@@ -264,7 +283,8 @@ export const getBadgeProgress = async (userId: string, badgeId: string): Promise
       .single();
     
     if (profileError) {
-      throw profileError;
+      console.error('Error fetching profile data:', profileError);
+      return null; // Return null instead of throwing
     }
     
     const current = profileData?.show_attendance_count || 0;
@@ -280,6 +300,6 @@ export const getBadgeProgress = async (userId: string, badgeId: string): Promise
     };
   } catch (error) {
     console.error('Error getting badge progress:', error);
-    throw error;
+    return null; // Return null instead of throwing to prevent UI crashes
   }
 };

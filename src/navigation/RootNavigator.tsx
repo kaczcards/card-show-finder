@@ -1,5 +1,4 @@
 import React from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 
 // Import navigators
@@ -9,6 +8,12 @@ import MainNavigator from './MainNavigator';
 // Import auth context
 import { useAuth } from '../contexts/AuthContext';
 
+// Import theme context
+import { useTheme } from '../contexts/ThemeContext';
+
+// Import UI components
+import { Loading } from '../components/ui';
+
 /**
  * RootNavigator - Handles top-level navigation based on auth state
  * Shows either the auth flow or main app based on authentication status
@@ -16,14 +21,17 @@ import { useAuth } from '../contexts/AuthContext';
 const RootNavigator: React.FC = () => {
   const { authState } = useAuth();
   const { isAuthenticated, isLoading } = authState;
+  
+  // Get theme from context
+  const { theme } = useTheme();
 
   // Show loading indicator while auth state is being determined
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={{ marginTop: 10, fontSize: 16, color: '#666' }}>Loading...</Text>
-      </View>
+      <Loading 
+        type="fullScreen"
+        message="Loading..."
+      />
     );
   }
 
