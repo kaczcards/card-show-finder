@@ -30,21 +30,41 @@ type MainStackParamList = {
   ShowDetail: { showId: string };
 };
 
-type Props = NativeStackScreenProps<MainStackParamList>;
+// Define props interface with optional props for tabbed interface
+interface MapScreenProps extends NativeStackScreenProps<MainStackParamList> {
+  customFilters?: ShowFilters;
+  onFilterChange?: (filters: ShowFilters) => void;
+  onShowPress?: (showId: string) => void;
+  initialUserLocation?: Coordinates | null;
+}
 
-const MapScreen: React.FC<Props> = ({ navigation }) => {
+const MapScreen: React.FC<MapScreenProps> = ({ 
+  navigation, 
+  customFilters,
+  onFilterChange,
+  onShowPress,
+  initialUserLocation
+}) => {
   // State
   const [shows, setShows] = useState<Show[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
-  const [filters, setFilters] = useState<ShowFilters>({
+  
+  // Default filters
+  const defaultFilters: ShowFilters = {
     radius: 25, // Default radius: 25 miles
     startDate: new Date(), // Default start date: today
     endDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default end date: 30 days from now
-  });
+  };
+  
+  // Use customFilters if provided, otherwise use local state
+  const [localFilters, setLocalFilters] = useState<ShowFilters>(defaultFilters);
+  
+  // Derive actual filters to use - prefer customFilters if provided
+  const filters = customFilters || localFilters;
 
   // Refs
   const mapRef = useRef<any>(null);
@@ -53,11 +73,32 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   const { authState } = useAuth();
   const { user } = authState;
 
+  // Update userLocation when initialUserLocation changes
+  useEffect(() => {
+    if (initialUserLocation) {
+      setUserLocation(initialUserLocation);
+    }
+  }, [initialUserLocation]);
+
   // Set up initial region based on user location or ZIP code
   useEffect(() => {
     const setupInitialRegion = async () => {
       try {
-        /* ---- 1) Try live GPS ---- */
+        /* ---- 1) Try initialUserLocation first if provided ---- */
+        if (initialUserLocation) {
+          const region = {
+            latitude: initialUserLocation.latitude,
+            longitude: initialUserLocation.longitude,
+            latitudeDelta: 0.5,
+            longitudeDelta: 0.5,
+          };
+          setUserLocation(initialUserLocation);
+          setInitialRegion(region);
+          setCurrentRegion(region);
+          return;
+        }
+        
+        /* ---- 2) Try live GPS ---- */
         const gps = await getCurrentLocation();
         if (gps) {
           setUserLocation(gps);
@@ -72,7 +113,7 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
           return;
         }
 
-        /* ---- 2) Fallback to profile ZIP ---- */
+        /* ---- 3) Fallback to profile ZIP ---- */
         if (user?.homeZipCode) {
           const zipData = await getZipCodeCoordinates(user.homeZipCode);
           if (zipData) {
@@ -88,7 +129,7 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
           }
         }
 
-        /* ---- 3) Final fallback – US center ---- */
+        /* ---- 4) Final fallback – US center ---- */
         const defaultRegion = {
           latitude: 39.8283,
           longitude: -98.5795,
@@ -112,22 +153,16 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     };
 
     setupInitialRegion();
-  }, [user]);
+  }, [user, initialUserLocation]);
 
   /**
    * fetchShows
    *
-   * Retrieves shows from the backend using the current filter state and the
-   * user's location when available. Passes location data and radius to the
-   * showService, enabling geo-spatial queries on the database. This function:
-   *
-   * 1. Copies the current filters to a new object
-   * 2. Adds the user's location coordinates when available
-   * 3. Calls the API with all relevant filters
-   * 4. Updates the local shows state with the results
-   *
-   * The function handles errors gracefully, showing appropriate alerts and
-   * ensuring the shows state is always a valid array.
+   * Retrieves shows from the backend using the current filter state and,
+   * when available, the user's live location.  Location (lat/lng) and
+   * radius are forwarded to `showService.getShows`, enabling the geo-aware
+   * RPC on the database.  Falls back gracefully to the non-spatial query
+   * if coordinates are missing.
    */
   const fetchShows = useCallback(async () => {
     try {
@@ -190,18 +225,29 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
    * handleFilterChange
    *
    * Merges the newly-selected values into the existing `filters` state.
+   * If onFilterChange is provided, calls it with the new filters.
+   * Otherwise, updates the local filters state.
    * The `useEffect` above listens for changes to `filters` and will
-   * automatically trigger a fresh show fetch, so we don't need to call
-   * `fetchShows` directly here.
+   * automatically trigger a fresh show fetch.
    */
   const handleFilterChange = (newFilters: Partial<ShowFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    if (onFilterChange) {
+      // If parent is managing filters, call the callback with merged filters
+      onFilterChange({ ...filters, ...newFilters });
+    } else {
+      // Otherwise, update local state
+      setLocalFilters(prev => ({ ...prev, ...newFilters }));
+    }
     setFilterVisible(false);
   };
 
-  // Navigate to show detail
+  // Navigate to show detail or call provided callback
   const handleShowPress = (showId: string) => {
-    navigation.navigate('ShowDetail', { showId });
+    if (onShowPress) {
+      onShowPress(showId);
+    } else {
+      navigation.navigate('ShowDetail', { showId });
+    }
   };
 
   // Handle region change from the map
@@ -213,10 +259,12 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   /**
    * centerOnUserLocation
    *
-   * Requests the user's current coordinates, updates local state so that
-   * subsequent show queries use the fresh location, and smoothly animates
-   * the map camera to the user's position.  If permissions are denied we
-   * present a helpful alert prompting the user to enable them.
+   * Attempts to obtain the user's current GPS coordinates.  If successful,
+   *   • updates local state so subsequent fetches use fresh coordinates  
+   *   • animates the map to the user's position with a ~1-mile zoom level
+   *
+   * If location services are disabled or permission is denied, a helpful
+   * alert is shown prompting the user to enable / grant permission.
    */
   const centerOnUserLocation = async () => {
     try {
