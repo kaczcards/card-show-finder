@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,16 +7,13 @@ import {
   ActivityIndicator,
   Dimensions,
   Alert,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Region } from 'react-native-maps';
 import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
-// Removed import for getShows from showService as we're hardcoding data
 import {
   getCurrentLocation,
   getZipCodeCoordinates,
@@ -203,66 +200,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
     setupInitialRegion();
   }, [user, initialUserLocation]);
-
-  // --- TEMPORARILY DISABLED fetchShows LOGIC ---
-  // This entire useCallback is commented out to stop fetching from Supabase
-  // and prevent infinite loops while we test hardcoded pins.
-  /*
-  const fetchShows = useCallback(async () => {
-    if (!initialRegion) {
-        console.log('[MapScreen] Waiting for initialRegion to be set before fetching shows.');
-        return;
-    }
-
-    setLoading(true);
-    console.log('[MapScreen] Fetching shows using showService');
-
-    const currentFilters: ShowFilters = { ...filters };
-    if (userLocation) {
-        currentFilters.latitude = userLocation.latitude;
-        currentFilters.longitude = userLocation.longitude;
-    }
-    console.log('[MapScreen] Filters being used:', currentFilters);
-
-    try {
-      const showsData = await getShows(currentFilters);
-      console.log('[MapScreen] Fetched shows data:', JSON.stringify(showsData, null, 2));
-      setShows(Array.isArray(showsData) ? showsData : []);
-      console.log(`[MapScreen] Successfully fetched ${showsData.length} shows`);
-    } catch (error: any) {
-      console.error('[MapScreen] Error fetching shows:', error);
-      setShows([]);
-      Alert.alert(
-        'Error',
-        `Failed to load card shows. ${error?.message ? `\n\nDetails: ${error.message}` : 'Please try again.'}`
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, userLocation, initialRegion]);
-  */
-  // --- END TEMPORARILY DISABLED fetchShows LOGIC ---
-
-  // --- TEMPORARILY DISABLED useEffect CALLS TO fetchShows ---
-  // Comment out any useEffect or useFocusEffect that calls fetchShows,
-  // as data is now hardcoded.
-  /*
-  useFocusEffect(
-    useCallback(() => {
-      if (initialRegion) {
-        fetchShows();
-      }
-    }, [initialRegion, filters, userLocation])
-  );
-
-  useEffect(() => {
-    if (initialRegion) {
-      fetchShows();
-    }
-  }, [initialRegion, filters, userLocation]);
-  */
-  // --- END TEMPORARILY DISABLED useEffect CALLS ---
-
 
   // Handle filter changes
   const handleFilterChange = (newFilters: Partial<ShowFilters>) => {
