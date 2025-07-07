@@ -108,3 +108,23 @@ All filters now **sync** between Home & Map and persist for session.
 6. Open show without `image_url` → stock image appears, no red-box.  
 
 _All checks green ➜ ready for QA sign-off._
+
+---
+
+## 8 · Merge-Conflict Resolution Notes ( `main` ⇄ `fix-data-loading-issues` )
+
+While rebasing the **`fix-data-loading-issues`** branch onto the updated `main`
+branch 7 textual conflicts surfaced – only **two** required manual edits:
+
+| File | Key Conflict | Resolution | Preserved Logic |
+|------|--------------|------------|-----------------|
+| `src/screens/Home/HomeScreen.tsx` | Both branches introduced new filter state & persistence code. | – **Unified** the two code paths.<br>– Chose the enhanced *local + prop* filter model from the feature branch.<br>– Retained `AsyncStorage` persistence and *active-filter badge*.<br>– Re-hooked `fetchData()` to trigger automatically via `useEffect`. | • `defaultFilters` definition (from main).<br>• `FilterChips` / preset modal (from feature branch). |
+| `src/screens/Map/MapScreen.tsx` | Large divergence: test-marker prototype vs. live cluster implementation. | – **Removed** temporary hard-coded shows.<br>– Kept **live** `getShows` pipeline & `MapShowCluster` integration.<br>– Consolidated location-fallback chain (GPS ➜ ZIP ➜ US centre). | • Cluster rendering + region handling (feature).<br>• New error / empty / loading overlays (feature). |
+
+Remaining 5 conflicts were trivial (package-lock, import strips, etc.) and
+resolved by favouring `main` where functionality overlapped.
+
+**Result:**  
+The merged branch keeps all new data-loading capabilities while remaining
+compatible with freshly-merged theme, badge-system and messaging updates from
+`main`.

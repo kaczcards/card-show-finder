@@ -130,4 +130,45 @@ git branch -d fix-data-loading-issues
 
 ---
 
+## 7 · Handling Merge Conflicts
+
+Should GitHub report **“This branch has conflicts that must be resolved”** during
+PR creation:
+
+1. **Fetch & Merge `main` locally**
+   ```bash
+   git checkout fix-data-loading-issues
+   git pull                       # make sure branch is current
+   git fetch origin main
+   git merge origin/main          # start the merge
+   ```
+
+2. **Identify conflicted files**
+   ```bash
+   git status --short
+   # Files marked `UU` (both-modified) need attention
+   ```
+
+3. **Resolve each file**
+   * **Keep `main`** for parts unrelated to data-loading (e.g. theme tokens).
+   * **Keep `fix-data-loading-issues`** for:
+     - `src/screens/Home/HomeScreen.tsx`
+     - `src/screens/Map/MapScreen.tsx`
+     - `src/screens/ShowDetail/ShowDetailScreen.tsx`
+   * Remove all `<<<<<<<`, `=======`, `>>>>>>>` markers.
+
+4. **Mark files as resolved & finish merge**
+   ```bash
+   git add <resolved-file(s)>
+   git commit -m "Resolve merge conflicts with main"
+   ```
+
+5. **Re-run the app** to confirm it still builds.
+
+6. **Push the updated branch**
+   ```bash
+   git push
+   ```
+   The PR will automatically update and conflicts should disappear.
+
 ### :tada:  Your Data-Loading fixes are now ready for release!
