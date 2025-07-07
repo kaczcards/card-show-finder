@@ -205,54 +205,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
     try {
+      // show spinner + clear previous error
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password,
+
+      // delegate the heavy lifting to the service layer
+      const userData = await supabaseAuthService.signInUser(credentials);
+
+      // success → hydrate state
+      setAuthState({
+        user: userData,
+        isLoading: false,
+        error: null,
+        isAuthenticated: true,
       });
 
-      if (error) {
-        // If there's an error, update the authState with the error message
-        setAuthState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: error.message || 'Failed to sign in',
-          isAuthenticated: false,
-        }));
-        throw error;
-      }
-
-      // On success, get the user data and update state
-      try {
-        const userData = await supabaseAuthService.getCurrentUser(data.user.id);
-        
-        if (!userData) {
-          throw new Error('Failed to get user data after login');
-        }
-        
-        setAuthState({
-          user: userData,
-          isLoading: false,
-          error: null,
-          isAuthenticated: true,
-        });
-        
-        return userData;
-      } catch (profileError: any) {
-        console.error('Error getting user profile after login:', profileError);
-        setAuthState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: profileError.message || 'Failed to get user profile',
-          isAuthenticated: false,
-        }));
-        throw profileError;
-      }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      // Error state is already set above, so just rethrow
-      throw error;
+      return userData;
+    } catch (err: any) {
+      // ensure UI can display the message
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: err?.message || 'Failed to sign in',
+        isAuthenticated: false,
+      }));
+      console.error('Login error:', err);
+      throw err;
     }
   };
   
