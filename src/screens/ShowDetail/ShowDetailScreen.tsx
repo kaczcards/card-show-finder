@@ -16,6 +16,7 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
+import * as showService from '../../services/showService';
 import { UserRole } from '../../types';
 
 import GroupMessageComposer from '../../components/GroupMessageComposer';
@@ -74,11 +75,19 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [participatingDealers, setParticipatingDealers] = useState<any[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
 
+  // State for show claiming functionality
+  const [isShowClaimed, setIsShowClaimed] = useState(false);
+  const [isClaimingShow, setIsClaimingShow] = useState(false);
+
   /* ---------- Dealer-detail modal state ---------- */
   const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(
     null
   );
+
+  /* ---------- Image loading / error state ---------- */
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -142,6 +151,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         }
 
         setShow(data);
+        setIsShowClaimed(!!data.claimed);
 
         // Update navigation title
         navigation.setOptions({
@@ -419,6 +429,50 @@ const toggleFavorite = async () => {
     Alert.alert('Error', 'An unexpected error occurred while updating favorites.');
   }
 };
+
+const handleClaimShow = async () => {
+  try {
+    if (!user) {
+      Alert.alert('Authentication Required', 'You must be logged in as a Show Organizer to claim this show.');
+      return;
+    }
+
+    setIsClaimingShow(true);
+    
+    // Call API to claim the show
+    const result = await showService.claimShow(showId, user.id);
+    
+    if (result.success) {
+      // Update local state to reflect claimed status
+      setShow(prev => ({
+        ...prev,
+        claimed: true,
+        claimed_by: user.id
+      }));
+      
+      setIsShowClaimed(true);
+      
+      // Show success message
+      Alert.alert(
+        'Show Claimed',
+        'You are now the organizer of this show. You can edit show details and manage dealers.',
+        [{ text: 'OK' }]
+      );
+    } else {
+      throw new Error(result.message || 'Failed to claim show');
+    }
+  } catch (error) {
+    console.error('Error claiming show:', error);
+    Alert.alert(
+      'Error',
+      'There was a problem claiming this show. Please try again.',
+      [{ text: 'OK' }]
+    );
+  } finally {
+    setIsClaimingShow(false);
+  }
+};
+
   const shareShow = async () => {
     try {
       if (!show) return;
@@ -469,6 +523,20 @@ const toggleFavorite = async () => {
     }
   };
   
+  /* -------------------------------------------------------------- */
+  /* Helper: format a time string to 12-hour hh:mm                   */
+  /* -------------------------------------------------------------- */
+  const formatTime = (timeString?: string | null) => {
+    if (!timeString) return '';
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      console.error('Error formatting time:', e);
+      return timeString ?? '';
+    }
+  };
+  
   /**
    * Build a friendly start–end time string if the show includes hours.
    * Accepts both snake_case (DB) and camelCase (sanity) variants.
@@ -484,11 +552,11 @@ const toggleFavorite = async () => {
     const end = show.end_time ?? show.endTime ?? null;
 
     if (start && end && start !== end) {
-      return `${start} - ${end}`;
+      return `${formatTime(start)} - ${formatTime(end)}`;
     }
 
-    if (start) return start;
-    if (end) return end;
+    if (start) return formatTime(start);
+    if (end) return formatTime(end);
     return 'Time not specified';
   };
   
@@ -568,17 +636,27 @@ const toggleFavorite = async () => {
     <ScrollView style={styles.container}>
       {/* Show Image */}
       {(() => {
-        const imageUri =
+        const showImageUri =
           show.image_url || show.imageUrl || show.image || null;
-        if (imageUri) {
-          return <Image source={{ uri: imageUri }} style={styles.image} />;
-        }
+
+        const resolvedSource =
+          imageError || !showImageUri ? fallbackImage : { uri: showImageUri };
+
         return (
           <View style={styles.imagePlaceholder}>
+            {imageLoading && (
+              <ActivityIndicator
+                size="large"
+                color="#FF6A00"
+                style={StyleSheet.absoluteFill}
+              />
+            )}
             <Image
-              source={fallbackImage}
+              source={resolvedSource}
               style={styles.image}
               resizeMode="cover"
+              onError={() => setImageError(true)}
+              onLoadEnd={() => setImageLoading(false)}
             />
           </View>
         );
@@ -635,9 +713,40 @@ const toggleFavorite = async () => {
           <Text style={styles.infoText}>{formatShowDate(show)}</Text>
         </View>
         
-        <View style={styles.infoRow}>
-          <Ionicons name="time" size={20} color="#666666" style={styles.infoIcon} />
-          <Text style={styles.infoText}>{getFormattedShowHours(show)}</Text>
+        {/* ------- Show Times Section ------- */}
+        <View style={styles.timeContainer}>
+          <Text style={styles.sectionTitle}>Show Hours</Text>
+          {(() => {
+            const start = show.start_time ?? show.startTime ?? null;
+            const end = show.end_time ?? show.endTime ?? null;
+            if (start && end) {
+              return (
+                <Text style={styles.timeText}>
+                  {formatTime(start)} - {formatTime(end)}
+                </Text>
+              );
+            }
+            if (start || end) {
+              return (
+                <Text style={styles.timeText}>
+                  {formatTime(start || end)}
+                </Text>
+              );
+            }
+            return <Text style={styles.noTimeText}>Show times not available</Text>;
+          })()}
+
+          {/* Per-day hours handling (optional array) */}
+          {Array.isArray(show.show_days || show.showDays) &&
+            (show.show_days || show.showDays).map((day: any, idx: number) => (
+              <View key={idx} style={styles.dayTimeRow}>
+                <Text style={styles.dayText}>{day.date}:</Text>
+                <Text style={styles.timeText}>
+                  {formatTime(day.start_time || day.startTime)} -{' '}
+                  {formatTime(day.end_time || day.endTime)}
+                </Text>
+              </View>
+            ))}
         </View>
         
         <View style={styles.infoRow}>
@@ -649,7 +758,10 @@ const toggleFavorite = async () => {
           <View style={styles.infoRow}>
             <Ionicons name="cash" size={20} color="#666666" style={styles.infoIcon} />
             <Text style={styles.infoText}>
-              `Entry Fee: ${typeof show.entry_fee === "number" ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}`
+              Entry Fee:{' '}
+              {typeof show.entry_fee === 'number'
+                ? `$${show.entry_fee.toFixed(2)}`
+                : show.entry_fee}
             </Text>
           </View>
         )}
@@ -678,6 +790,59 @@ const toggleFavorite = async () => {
           <Text style={styles.sectionTitle}>About this show</Text>
           <Text style={styles.description}>{show.description || 'No description available'}</Text>
         </View>
+
+        {/* Show Claiming Section for Show Organizers */}
+        {isShowOrganizer && (
+          <View style={styles.claimContainer}>
+            {isShowClaimed && show.claimed_by === user?.id ? (
+              <View>
+                <View style={styles.claimedBadge}>
+                  <Text style={styles.claimedText}>You manage this show</Text>
+                </View>
+                <View style={styles.managementSection}>
+                  <Text style={styles.sectionTitle}>Show Management</Text>
+                  
+                  <TouchableOpacity 
+                    style={styles.managementButton}
+                    onPress={() => navigation.navigate('EditShow', { showId })}
+                  >
+                    <Text style={styles.buttonText}>Edit Show Details</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.managementButton}
+                    onPress={() => navigation.navigate('ManageDealers', { showId })}
+                  >
+                    <Text style={styles.buttonText}>Manage Dealers</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.managementButton}
+                    onPress={() => navigation.navigate('ShowAnalytics', { showId })}
+                  >
+                    <Text style={styles.buttonText}>View Analytics</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : !isShowClaimed ? (
+              <TouchableOpacity 
+                style={styles.claimButton}
+                onPress={handleClaimShow}
+                disabled={isClaimingShow}
+              >
+                {isClaimingShow ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.claimButtonText}>Claim This Show</Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.alreadyClaimedText}>
+                This show has already been claimed by another organizer.
+              </Text>
+            )}
+          </View>
+        )}
 
         {/* ---------------- Participating Dealers Section ---------------- */}        
         <View style={styles.mvpDealersContainer}> {/* Renamed for clarity, but keeping styling */}
@@ -888,6 +1053,32 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
+  /* ----------  Show Time section styles ---------- */
+  timeContainer: {
+    marginVertical: 10,
+    padding: 15,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+  },
+  timeText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  noTimeText: {
+    fontSize: 16,
+    color: '#888',
+    fontStyle: 'italic',
+  },
+  dayTimeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 4,
+  },
+  dayText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
   /* ----------  Participating Dealers styles ---------- */
   mvpDealersContainer: { // Keeping old name for now, but semantically it's now all participating dealers
     marginTop: 24,
@@ -953,6 +1144,60 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: '#666666',
+  },
+
+  /* ----------  Show Claiming styles ---------- */
+  claimContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#f5f9ff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e9f7',
+  },
+  claimButton: {
+    backgroundColor: '#4a90e2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  claimButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  claimedBadge: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginBottom: 16,
+  },
+  claimedText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  alreadyClaimedText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  managementSection: {
+    marginTop: 16,
+  },
+  managementButton: {
+    backgroundColor: '#2c3e50',
+    padding: 12,
+    borderRadius: 6,
+    marginVertical: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
 
