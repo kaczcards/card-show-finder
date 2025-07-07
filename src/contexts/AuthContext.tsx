@@ -8,6 +8,14 @@ import { refreshUserSession } from '../services/userRoleService';
 // Define the shape of our auth context
 interface AuthContextType {
   authState: AuthState;
+  /**
+   * Convenience getters exposed alongside the full `authState`
+   * so that consuming components can access them directly without
+   * drilling into `authState`.
+   */
+  error: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
   login: (credentials: AuthCredentials) => Promise<User>;
   register: (
     email: string,
@@ -37,6 +45,9 @@ const defaultAuthState: AuthState = {
 // Create the context with default values
 const AuthContext = createContext<AuthContextType>({
   authState: defaultAuthState,
+  error: defaultAuthState.error,
+  isLoading: defaultAuthState.isLoading,
+  isAuthenticated: defaultAuthState.isAuthenticated,
   login: async () => { throw new Error('AuthContext not initialized'); },
   register: async () => { throw new Error('AuthContext not initialized'); },
   logout: async () => { throw new Error('AuthContext not initialized'); },
@@ -515,6 +526,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Context value
   const contextValue: AuthContextType = {
     authState,
+    error: authState.error,
+    isLoading: authState.isLoading,
+    isAuthenticated: authState.isAuthenticated,
     login,
     register,
     logout,

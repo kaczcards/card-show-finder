@@ -96,7 +96,35 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );
     } catch (err: any) {
-      Alert.alert('Registration Failed', err.message || 'Please try again');
+      const message: string = err?.message || '';
+
+      // --- Account already exists ------------------------------------
+      if (/already exists|user already registered|account .* exists/i.test(message)) {
+        Alert.alert(
+          'Account Already Exists',
+          'An account with this email address already exists. Would you like to sign in instead?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Sign In',
+              onPress: () => handleNavigate('Login'),
+            },
+          ]
+        );
+        return;
+      }
+
+      // --- Network / offline errors ----------------------------------
+      if (/network request failed|internet|offline/i.test(message)) {
+        Alert.alert(
+          'No Internet Connection',
+          'Unable to reach the authentication server. Please check your internet connection and try again.'
+        );
+        return;
+      }
+
+      // --- Generic fallback ------------------------------------------
+      Alert.alert('Registration Failed', message || 'Please try again');
     } finally {
       setIsSubmitting(false);
     }
