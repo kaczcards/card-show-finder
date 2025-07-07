@@ -205,57 +205,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
+    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      // 1. The service returns an object with an 'error' property
-      const result = await supabaseAuthService.signInWithEmailPassword(
+      const { error, user } = await signInWithEmailPassword(
         credentials.email,
         credentials.password
       );
 
-      // 2. --- THIS IS THE FIX ---
-      //    We must check for the error on the 'result' object
-      if (result.error) {
-        // 3. If there's an error, we update the state with the error message
-        setAuthState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: result.error.message,
-          isAuthenticated: false
-        }));
-        return null as any; // Stop execution since there was an error
+      if (error) {
+        throw new Error(error.message);
       }
-
-      // If the login is successful, get the user data
-      if (result.user) {
-        const userData = await supabaseAuthService.getCurrentUser(result.user.id);
-        
-        if (!userData) {
+      
+      // If we get here, login was successful, so get the full user data
+      if (user) {
+        const userData = await supabaseAuthService.getCurrentUser(user.id);
+        if (userData) {
+          setAuthState(prev => ({
+            ...prev,
+            user: userData,
+            isAuthenticated: true,
+          }));
+          return userData;
+        } else {
           throw new Error('Failed to get user data after login');
         }
-        
-        setAuthState({
-          user: userData,
-          isLoading: false,
-          error: null,
-          isAuthenticated: true
-        });
-        
-        return userData;
       } else {
         throw new Error('Login failed - no user returned');
       }
     } catch (e: any) {
-      // This will catch any other unexpected errors
-      console.error('Login error:', e);
       setAuthState(prev => ({
         ...prev,
-        isLoading: false,
-        error: e.message || 'Failed to sign in',
-        isAuthenticated: false
+        error: e.message,
+        isAuthenticated: false,
       }));
-      throw e;
+      // Need to return a rejected promise to maintain the function signature
+      return Promise.reject(e);
+    } finally {
+      setAuthState(prev => ({ ...prev, isLoading: false }));
     }
   };
   
