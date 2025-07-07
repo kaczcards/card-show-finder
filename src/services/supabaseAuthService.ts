@@ -109,7 +109,7 @@ export const registerUser = async (
  * @param password User's password
  * @returns Object with user and error properties
  */
-export const signInWithEmail = async (email: string, password: string) => {
+export const signInWithEmailPassword = async (email: string, password: string) => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -117,15 +117,11 @@ export const signInWithEmail = async (email: string, password: string) => {
     });
 
     if (error) {
-      // --> ADD THIS LINE <--
-      console.log("[supabaseAuthService] Error received from Supabase:", JSON.stringify(error, null, 2));
-      return { user: null, error: error };
+      return { user: null, error };
     }
 
     return { user: data.user, error: null };
   } catch (err: any) {
-    // --> AND ADD THIS LINE <--
-    console.log("[supabaseAuthService] Caught an unexpected error:", JSON.stringify(err, null, 2));
     return { user: null, error: err };
   }
 };
@@ -139,8 +135,8 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
   try {
     const { email, password } = credentials;
 
-    // Use the new signInWithEmail function instead of calling Supabase directly
-    const result = await signInWithEmail(email, password);
+    // Use the helper that returns `{ user, error }`
+    const result = await signInWithEmailPassword(email, password);
     
     // --> ADD THIS LINE <--
     console.log("[AuthContext] Result received from service:", JSON.stringify(result, null, 2));
