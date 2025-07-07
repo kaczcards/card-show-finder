@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
+import { signInWithEmail } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/userRoleService';
 
 // Define the shape of our auth context
@@ -208,10 +209,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // show spinner + clear previous error
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // delegate the heavy lifting to the service layer
-      const userData = await supabaseAuthService.signInUser(credentials);
+      // Call the slimmer email/password sign-in to capture raw result
+      const result = await signInWithEmail(credentials.email, credentials.password);
 
-      // success → hydrate state
+      // Debug log so we can inspect exactly what the service returns
+      // eslint-disable-next-line no-console
+      console.log(
+        '[AuthContext] Result received from service:',
+        JSON.stringify(result, null, 2)
+      );
+
+      // Handle any error coming back from Supabase
+      if (result.error) {
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: result.error.message,
+          isAuthenticated: false,
+        }));
+        throw result.error;
+      }
+
+      // At this point we have a basic Supabase user – fetch full profile
+      const userData = await supabaseAuthService.getCurrentUser(result.user.id);
+      if (!userData) {
+        throw new Error('Failed to get user data after login');
+      }
+
+      // success → hydrate state with enriched profile
       setAuthState({
         user: userData,
         isLoading: false,
