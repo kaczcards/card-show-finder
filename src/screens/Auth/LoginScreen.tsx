@@ -53,7 +53,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       if (message.toLowerCase().includes('verify') || message.toLowerCase().includes('confirmed')) {
         setVerificationRequired(true);
       } else {
-        Alert.alert('Login Failed', error || 'Please check your credentials and try again');
+        Alert.alert('Login Failed', message || 'Please check your credentials and try again');
       }
     }
   };
