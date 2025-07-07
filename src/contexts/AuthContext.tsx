@@ -207,24 +207,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      const userData = await supabaseAuthService.signInUser(credentials);
-      
-      setAuthState({
-        user: userData,
-        isLoading: false,
-        error: null,
-        isAuthenticated: true,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
       });
-      
-      return userData;
+
+      if (error) {
+        // If there's an error, update the authState with the error message
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: error.message || 'Failed to sign in',
+          isAuthenticated: false,
+        }));
+        throw error;
+      }
+
+      // On success, get the user data and update state
+      try {
+        const userData = await supabaseAuthService.getCurrentUser(data.user.id);
+        
+        if (!userData) {
+          throw new Error('Failed to get user data after login');
+        }
+        
+        setAuthState({
+          user: userData,
+          isLoading: false,
+          error: null,
+          isAuthenticated: true,
+        });
+        
+        return userData;
+      } catch (profileError: any) {
+        console.error('Error getting user profile after login:', profileError);
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: profileError.message || 'Failed to get user profile',
+          isAuthenticated: false,
+        }));
+        throw profileError;
+      }
     } catch (error: any) {
       console.error('Login error:', error);
-      setAuthState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error.message || 'Failed to sign in',
-        isAuthenticated: false,
-      }));
+      // Error state is already set above, so just rethrow
       throw error;
     }
   };
