@@ -205,43 +205,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
+    // 1. Set loading state and clear previous errors
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+
     try {
-      const { error, user } = await signInWithEmailPassword(
+      // 2. Call the authentication service
+      const { data, error } = await supabaseAuthService.signInWithEmailPassword(
         credentials.email,
         credentials.password
       );
 
+      // 3. Check if Supabase returned an error
       if (error) {
-        throw new Error(error.message);
+        // 4. If there is an error, throw it to be caught by the catch block
+        throw error;
       }
-      
-      // If we get here, login was successful, so get the full user data
-      if (user) {
-        const userData = await supabaseAuthService.getCurrentUser(user.id);
+
+      // 5. On success, get the user data and update state
+      if (data?.user) {
+        const userData = await supabaseAuthService.getCurrentUser(data.user.id);
+        
         if (userData) {
           setAuthState(prev => ({
             ...prev,
             user: userData,
-            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+            isAuthenticated: true
           }));
+          
           return userData;
         } else {
-          throw new Error('Failed to get user data after login');
+          throw new Error("Login successful, but failed to get user data.");
         }
       } else {
-        throw new Error('Login failed - no user returned');
+        throw new Error("Login successful, but no user was returned.");
       }
     } catch (e: any) {
+      // 6. Catch ANY error thrown and update the state with the error message
       setAuthState(prev => ({
         ...prev,
-        error: e.message,
-        isAuthenticated: false,
+        isLoading: false,
+        error: e.message || "An unexpected error occurred.",
+        isAuthenticated: false
       }));
-      // Need to return a rejected promise to maintain the function signature
+      
+      // Return a rejected promise to maintain the function signature
       return Promise.reject(e);
-    } finally {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
     }
   };
   
