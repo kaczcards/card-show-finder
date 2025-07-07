@@ -217,11 +217,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 3. Check if Supabase returned an error.
       if (error) {
-        // 4. If so, throw the error to be handled by the catch block.
+        // 4. If there is an error, throw it so the 'catch' block can handle it.
         throw error;
       }
 
-      // 5. On success, get user data and update state.
+      // 5. On a successful login, get the user data and update state.
       if (data?.user) {
         const userData = await supabaseAuthService.getCurrentUser(data.user.id);
         if (userData) {
@@ -233,16 +233,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           return userData;
         } else {
-          // This is an edge case, but it's good practice to handle it.
-          throw new Error("Login successful, but failed to get user data.");
+          // This is a safety net for unexpected successful responses without user data.
+          throw new Error("Login succeeded but failed to get user data.");
         }
       } else {
-        // This is an edge case, but it's good practice to handle it.
-        throw new Error("Login successful, but no user was returned.");
+        // This is a safety net for unexpected successful responses without a user.
+        throw new Error("Login succeeded but no user was returned.");
       }
 
     } catch (e: any) {
-      // 6. CATCH ANY ERROR and update the state with the error message.
+      // 6. CATCH THE ERROR and update the state with the error message.
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
