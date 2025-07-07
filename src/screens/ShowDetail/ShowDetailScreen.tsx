@@ -54,7 +54,7 @@ type InfoRowProps = {
   children?: React.ReactNode;
 };
 
-/** Renders a consistent “icon + text” row */
+/** Renders a consistent "icon + text" row */
 const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => (
   <View style={styles.infoRow}>
     <Ionicons name={icon} size={20} color="#666666" style={styles.infoIcon} />
@@ -121,11 +121,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     
     console.log('User role in ShowDetailScreen:', user.role);
     const userRole = user.role as UserRole;
-    setIsShowOrganizer(userRole === UserRole.SHOW_ORGANIZER);
+    
+    // Explicitly check if the user has the SHOW_ORGANIZER role
+    const hasOrganizerRole = userRole === UserRole.SHOW_ORGANIZER;
+    console.log('Is user a show organizer?', hasOrganizerRole);
+    
+    setIsShowOrganizer(hasOrganizerRole);
     setIsMvpDealer(userRole === UserRole.MVP_DEALER);
     
     // In test mode, treat all authenticated users as organizers
     if (userRoleService.IS_TEST_MODE) {
+      console.log('Test mode enabled, treating user as organizer');
       setIsShowOrganizer(true);
     }
   }, [user]);
