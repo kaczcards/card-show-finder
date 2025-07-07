@@ -303,6 +303,55 @@ export const getUpcomingShows = async (params: {
 };
 
 /**
+ * Claims a show for a show organizer.
+ *
+ * 1. Marks the show row as claimed (`claimed`, `claimed_by`, `claimed_at`).
+ * 2. Inserts a row in the `show_organizers` join table so we can
+ *    easily query which organisers manage which shows.
+ *
+ * On success returns `{ success: true, data: <updated show row> }`
+ * On failure returns `{ success: false, message: <reason> }`
+ */
+export const claimShow = async (
+  showId: string,
+  userId: string
+): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    /* --------------------------------------------------------
+     * Step 1: flag the show itself as claimed
+     * ------------------------------------------------------ */
+    const { data: updatedShow, error: updateError } = await supabase
+      .from('shows')
+      .update({
+        claimed: true,
+        claimed_by: userId,
+        claimed_at: new Date().toISOString(),
+      })
+      .eq('id', showId)
+      .single();
+
+    if (updateError) throw updateError;
+
+    /* --------------------------------------------------------
+     * Step 2: add organiser ↔ show relation
+     * ------------------------------------------------------ */
+    const { error: orgError } = await supabase.from('show_organizers').insert({
+      show_id: showId,
+      user_id: userId,
+      role: 'primary',
+      created_at: new Date().toISOString(),
+    });
+
+    if (orgError) throw orgError;
+
+    return { success: true, data: updatedShow };
+  } catch (err: any) {
+    console.error('API error in claimShow:', err);
+    return { success: false, message: err.message || 'Failed to claim show' };
+  }
+};
+
+/**
  * Update an existing show (stub)
  */
 export const updateShow = () => {
