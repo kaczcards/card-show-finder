@@ -8,16 +8,19 @@ import {
   Dimensions,
   Alert,
   Platform,
+  RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import { getShows } from '../../services/showService';
+import * as locationService from '../../services/locationService';
+import FilterSheet from '../../components/FilterSheet';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -31,35 +34,101 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   // State
   const [shows, setShows] = useState<Show[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ShowFilters>({
     radius: 25, // Default radius: 25 miles
     startDate: new Date(), // Default start date: today
     endDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default end date: 30 days from now
+    features: [],
+    categories: [],
   });
 
   // Refs
   const mapRef = useRef<MapView>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Get auth context
   const { authState } = useAuth();
   const { user } = authState;
 
+  // Get user location
+  const getUserLocation = useCallback(async () => {
+    try {
+      // First check if we have permission
+      const hasPermission = await locationService.checkLocationPermissions();
+      
+      if (!hasPermission) {
+        const granted = await locationService.requestLocationPermissions();
+        if (!granted) {
+          console.log('Location permission denied');
+          return null;
+        }
+      }
+      
+      // Get current location
+      const location = await locationService.getCurrentLocation();
+      
+      if (location) {
+        console.log('Got user location:', location);
+        setUserLocation(location);
+        return location;
+      } else if (user && user.homeZipCode) {
+        // Fall back to ZIP code if we can't get current location
+        console.log('Falling back to user ZIP code:', user.homeZipCode);
+        const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+        
+        if (zipData && zipData.coordinates) {
+          setUserLocation(zipData.coordinates);
+          return zipData.coordinates;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting user location:', error);
+      return null;
+    }
+  }, [user]);
+
   // Set up initial region based on user location or ZIP code
   useEffect(() => {
     const setupInitialRegion = async () => {
       try {
-        // Default to US center
-        const defaultRegion = {
-          latitude: 39.8283,
-          longitude: -98.5795,
-          latitudeDelta: 40, // Zoomed out to show most of US
-          longitudeDelta: 40,
-        };
-
-        setInitialRegion(defaultRegion);
+        setLoading(true);
+        setError(null);
+        
+        // Try to get user location
+        const location = await getUserLocation();
+        
+        if (location) {
+          // Set initial region to user location with appropriate zoom
+          const newRegion = {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.1, // Zoomed in to show local area
+            longitudeDelta: 0.1,
+          };
+          
+          setInitialRegion(newRegion);
+        } else {
+          // Default to US center if no location available
+          console.log('No location available, defaulting to US center');
+          setInitialRegion({
+            latitude: 39.8283,
+            longitude: -98.5795,
+            latitudeDelta: 40, // Zoomed out to show most of US
+            longitudeDelta: 40,
+          });
+          
+          // Set error if we couldn't get user location and don't have a ZIP code
+          if (!user || !user.homeZipCode) {
+            setError('Could not determine your location. Please set your home ZIP code in your profile.');
+          }
+        }
       } catch (error) {
         console.error('Error setting up initial region:', error);
         // Default to US center if error
@@ -69,16 +138,22 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
           latitudeDelta: 40,
           longitudeDelta: 40,
         });
+        setError('Error determining your location. Please try again later.');
+      } finally {
+        setLoading(false);
       }
     };
 
     setupInitialRegion();
-  }, [user]);
+  }, [getUserLocation, user]);
 
   // Fetch shows based on location or ZIP code
-  const fetchShows = useCallback(async () => {
+  const fetchShows = useCallback(async (isRefreshing = false) => {
     try {
-      setLoading(true);
+      if (!isRefreshing) {
+        setLoading(true);
+      }
+      setError(null);
       
       console.log('[MapScreen] Fetching shows using showService');
       
@@ -89,6 +164,35 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
       if (userLocation) {
         currentFilters.latitude = userLocation.latitude;
         currentFilters.longitude = userLocation.longitude;
+      } else {
+        // Try to get user location again if we don't have it
+        const location = await getUserLocation();
+        
+        if (location) {
+          currentFilters.latitude = location.latitude;
+          currentFilters.longitude = location.longitude;
+        } else if (user && user.homeZipCode) {
+          // Fall back to ZIP code if we still can't get location
+          const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+          
+          if (zipData && zipData.coordinates) {
+            currentFilters.latitude = zipData.coordinates.latitude;
+            currentFilters.longitude = zipData.coordinates.longitude;
+          } else {
+            throw new Error('Could not determine your location. Please check your home ZIP code.');
+          }
+        } else {
+          throw new Error('No location available. Please set your home ZIP code in your profile.');
+        }
+      }
+      
+      // Format dates as ISO strings if they're Date objects
+      if (currentFilters.startDate instanceof Date) {
+        currentFilters.startDate = currentFilters.startDate.toISOString();
+      }
+      
+      if (currentFilters.endDate instanceof Date) {
+        currentFilters.endDate = currentFilters.endDate.toISOString();
       }
       
       console.log('[MapScreen] Filters being used:', currentFilters);
@@ -103,14 +207,14 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
       console.error('[MapScreen] Error fetching shows:', error);
       // Set empty array to prevent map errors
       setShows([]);
-      Alert.alert(
-        'Error', 
-        `Failed to load card shows. ${error?.message ? `\n\nDetails: ${error.message}` : 'Please try again.'}`
-      );
+      setError(error?.message || 'Failed to load card shows. Please try again.');
     } finally {
       setLoading(false);
+      if (isRefreshing) {
+        setRefreshing(false);
+      }
     }
-  }, [filters, userLocation]);
+  }, [filters, userLocation, getUserLocation, user]);
 
   // Load shows when screen is focused
   useFocusEffect(
@@ -121,10 +225,33 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     }, [fetchShows, initialRegion])
   );
 
+  // Handle pull-to-refresh
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchShows(true);
+  }, [fetchShows]);
+
   // Handle filter changes
-  const handleFilterChange = (newFilters: Partial<ShowFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+  const handleFilterChange = (newFilters: ShowFilters) => {
+    setFilters(newFilters);
     setFilterVisible(false);
+    // Fetch shows with new filters
+    fetchShows();
+  };
+
+  // Reset filters to defaults
+  const resetFilters = () => {
+    const defaultFilters: ShowFilters = {
+      radius: 25,
+      startDate: new Date(),
+      endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+      maxEntryFee: undefined,
+      features: [],
+      categories: [],
+    };
+    
+    setFilters(defaultFilters);
+    fetchShows();
   };
 
   // Navigate to show detail
@@ -135,9 +262,35 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   // Center map on user location
   const centerOnUserLocation = async () => {
     try {
-      Alert.alert('Note', 'This feature will be implemented in a future update.');
+      setLoading(true);
+      
+      // Get current location
+      const location = await getUserLocation();
+      
+      if (location && mapRef.current) {
+        // Animate to user location
+        mapRef.current.animateToRegion({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
+        }, 1000);
+        
+        console.log('Centered map on user location:', location);
+      } else {
+        Alert.alert(
+          'Location Unavailable',
+          'Could not determine your current location. Please check your device settings and ensure location services are enabled.'
+        );
+      }
     } catch (error) {
       console.error('Error centering on user location:', error);
+      Alert.alert(
+        'Error',
+        'Failed to center on your location. Please try again.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -202,67 +355,124 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
       ));
   };
 
+  // Render empty state when no shows are found
+  const renderEmptyState = () => {
+    if (loading || shows.length > 0) return null;
+    
+    return (
+      <View style={styles.emptyStateContainer}>
+        <Ionicons name="map-outline" size={50} color="#007AFF" />
+        <Text style={styles.emptyStateTitle}>No Shows Found</Text>
+        <Text style={styles.emptyStateDescription}>
+          Try adjusting your filters or expanding your search radius
+        </Text>
+        <TouchableOpacity style={styles.resetButton} onPress={resetFilters}>
+          <Text style={styles.resetButtonText}>Reset Filters</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      {loading && !initialRegion ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading map...</Text>
-        </View>
-      ) : (
-        <>
-          {initialRegion && (
-            <MapView
-              ref={mapRef}
-              style={styles.map}
-              provider={PROVIDER_GOOGLE}
-              initialRegion={initialRegion}
-              showsUserLocation
-              showsMyLocationButton={false}
-              showsCompass
-              showsScale
-              loadingEnabled
-            >
-              {renderMarkers()}
-            </MapView>
-          )}
-
-          {/* Filter info banner */}
-          <View style={styles.filterInfoContainer}>
-            <Text style={styles.filterInfoText}>
-              {shows.length === 0
-                ? 'No shows found'
-                : shows.length === 1
-                ? '1 show found'
-                : `${shows.length} shows found`}
-              {' • '}Within {filters.radius} miles
-            </Text>
-            <TouchableOpacity
-              style={styles.filterButton}
-              onPress={() => setFilterVisible(true)}
-            >
-              <Ionicons name="options-outline" size={18} color="#007AFF" />
-              <Text style={styles.filterButtonText}>Filter</Text>
-            </TouchableOpacity>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        scrollEnabled={false}
+      >
+        {loading && !initialRegion ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Loading map...</Text>
           </View>
+        ) : (
+          <>
+            {initialRegion && (
+              <MapView
+                ref={mapRef}
+                style={styles.map}
+                provider={PROVIDER_GOOGLE}
+                initialRegion={initialRegion}
+                showsUserLocation
+                showsMyLocationButton={false}
+                showsCompass
+                showsScale
+                loadingEnabled
+              >
+                {renderMarkers()}
+              </MapView>
+            )}
 
-          {/* My Location Button */}
-          <TouchableOpacity
-            style={styles.myLocationButton}
-            onPress={centerOnUserLocation}
-          >
-            <Ionicons name="locate" size={24} color="#007AFF" />
-          </TouchableOpacity>
+            {/* Error Message */}
+            {error && (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={20} color="#D32F2F" />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
 
-          {/* Filter Sheet - To be implemented later */}
-          {/* <FilterSheet
-            visible={filterVisible}
-            onClose={() => setFilterVisible(false)}
-            filters={filters}
-            onApplyFilters={handleFilterChange}
-          /> */}
-        </>
-      )}
+            {/* Empty State */}
+            {renderEmptyState()}
+
+            {/* Filter info banner */}
+            <View style={styles.filterInfoContainer}>
+              <Text style={styles.filterInfoText}>
+                {shows.length === 0
+                  ? 'No shows found'
+                  : shows.length === 1
+                  ? '1 show found'
+                  : `${shows.length} shows found`}
+                {' • '}Within {filters.radius} miles
+              </Text>
+              <TouchableOpacity
+                style={styles.filterButton}
+                onPress={() => setFilterVisible(true)}
+              >
+                <Ionicons name="options-outline" size={18} color="#007AFF" />
+                <Text style={styles.filterButtonText}>Filter</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* My Location Button */}
+            <TouchableOpacity
+              style={styles.myLocationButton}
+              onPress={centerOnUserLocation}
+            >
+              <Ionicons name="locate" size={24} color="#007AFF" />
+            </TouchableOpacity>
+
+            {/* Active Filters Display */}
+            {(filters.features?.length > 0 || filters.categories?.length > 0 || filters.maxEntryFee !== undefined) && (
+              <View style={styles.activeFiltersContainer}>
+                <Text style={styles.activeFiltersText}>
+                  {filters.features?.length > 0 && `${filters.features.length} features • `}
+                  {filters.categories?.length > 0 && `${filters.categories.length} categories • `}
+                  {filters.maxEntryFee !== undefined && `Max $${filters.maxEntryFee} • `}
+                  <Text style={styles.resetFiltersText} onPress={resetFilters}>Reset</Text>
+                </Text>
+              </View>
+            )}
+
+            {/* Loading Overlay */}
+            {loading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#007AFF" />
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
+
+      {/* Filter Sheet */}
+      <FilterSheet
+        visible={filterVisible}
+        onClose={() => setFilterVisible(false)}
+        filters={filters}
+        onApplyFilters={handleFilterChange}
+      />
     </SafeAreaView>
   );
 };
@@ -274,10 +484,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f8f8',
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    height: height - 100,
   },
   loadingText: {
     marginTop: 10,
@@ -373,6 +587,96 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '500',
+  },
+  errorContainer: {
+    position: 'absolute',
+    top: 70,
+    left: 16,
+    right: 16,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#D32F2F',
+    marginLeft: 8,
+  },
+  emptyStateContainer: {
+    position: 'absolute',
+    top: '40%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 20,
+    margin: 20,
+    borderRadius: 8,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  emptyStateDescription: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  resetButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  resetButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeFiltersContainer: {
+    position: 'absolute',
+    bottom: 90,
+    left: 16,
+    right: 16,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activeFiltersText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  resetFiltersText: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });
 

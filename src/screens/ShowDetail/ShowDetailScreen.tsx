@@ -20,6 +20,9 @@ import { UserRole } from '../../services/userRoleService';
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
 
+// Fallback stock image (same asset used in HomeScreen)
+const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
+
 interface ShowDetailProps {
   route: any;
   navigation: any;
@@ -391,6 +394,29 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     }
   };
   
+  /**
+   * Build a friendly start–end time string if the show includes hours.
+   * Accepts both snake_case (DB) and camelCase (sanity) variants.
+   */
+  const getFormattedShowHours = (show: any): string => {
+    if (!show) return 'Time not specified';
+
+    const start =
+      show.start_time ??
+      show.startTime ??
+      show.time ?? // legacy single-field fallback
+      null;
+    const end = show.end_time ?? show.endTime ?? null;
+
+    if (start && end && start !== end) {
+      return `${start} - ${end}`;
+    }
+
+    if (start) return start;
+    if (end) return end;
+    return 'Time not specified';
+  };
+  
   const openMapLocation = () => {
     if (!show) return;
     
@@ -466,14 +492,22 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   return (
     <ScrollView style={styles.container}>
       {/* Show Image */}
-      {show.image ? (
-        <Image source={{ uri: show.image }} style={styles.image} />
-      ) : (
-        <View style={styles.imagePlaceholder}>
-          <Ionicons name="card" size={60} color="#CCCCCC" />
-          <Text style={styles.placeholderText}>No Image Available</Text>
-        </View>
-      )}
+      {(() => {
+        const imageUri =
+          show.image_url || show.imageUrl || show.image || null;
+        if (imageUri) {
+          return <Image source={{ uri: imageUri }} style={styles.image} />;
+        }
+        return (
+          <View style={styles.imagePlaceholder}>
+            <Image
+              source={fallbackImage}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          </View>
+        );
+      })()}
       
       {/* Header Actions */}
       <View style={styles.actionsContainer}>
@@ -528,7 +562,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         
         <View style={styles.infoRow}>
           <Ionicons name="time" size={20} color="#666666" style={styles.infoIcon} />
-          <Text style={styles.infoText}>{show.time || 'Time not specified'}</Text>
+          <Text style={styles.infoText}>{getFormattedShowHours(show)}</Text>
         </View>
         
         <View style={styles.infoRow}>
