@@ -36,8 +36,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [isResending, setIsResending] = useState(false);
 
   // Get auth context
-  const { authState, login, clearError } = useAuth();
-  const { isLoading, error } = authState;
+  const { login, clearError, error, isLoading, isAuthenticated } = useAuth();
 
   // Handle login
   const handleLogin = async () => {
@@ -53,7 +52,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       if (message.toLowerCase().includes('verify') || message.toLowerCase().includes('confirmed')) {
         setVerificationRequired(true);
       } else {
-        Alert.alert('Login Failed', error || 'Please check your credentials and try again');
+        // Display the error message, which is now properly handled
+        Alert.alert('Login Failed', message || 'Please check your credentials and try again');
       }
     }
   };
@@ -207,7 +207,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-// --- NEW STYLES ---
+// --- STYLES ---
 const BRAND_COLORS = {
   primaryBlue: '#007AFF',
   primaryOrange: '#FF6A00',
@@ -355,7 +355,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  // Removed miniLogo styles as they were redundant
 });
 
 export default LoginScreen;
