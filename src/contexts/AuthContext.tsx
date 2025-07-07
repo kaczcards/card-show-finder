@@ -205,67 +205,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
-    // 1. Immediately set the app to a "loading" state and clear old errors.
+    // 1. Set loading state and clear any previous errors.
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-    // 2. Call the Supabase service to attempt the login.
-    const { data, error } = await supabaseAuthService.signInWithEmailPassword(
-      credentials.email,
-      credentials.password
-    );
+    try {
+      // 2. Call the authentication service.
+      const { data, error } = await supabaseAuthService.signInWithEmailPassword(
+        credentials.email,
+        credentials.password
+      );
 
-    // 3. Handle the response from the service.
-    if (error) {
-      // FAILURE: If the service returns an error, update the state.
-      // Set the error message and turn off the loading indicator.
+      // 3. Check if Supabase returned an error.
+      if (error) {
+        // 4. If so, throw the error to be handled by the catch block.
+        throw error;
+      }
+
+      // 5. On success, get user data and update state.
+      if (data?.user) {
+        const userData = await supabaseAuthService.getCurrentUser(data.user.id);
+        if (userData) {
+          setAuthState({
+            user: userData,
+            isLoading: false,
+            error: null,
+            isAuthenticated: true
+          });
+          return userData;
+        } else {
+          // This is an edge case, but it's good practice to handle it.
+          throw new Error("Login successful, but failed to get user data.");
+        }
+      } else {
+        // This is an edge case, but it's good practice to handle it.
+        throw new Error("Login successful, but no user was returned.");
+      }
+
+    } catch (e: any) {
+      // 6. CATCH ANY ERROR and update the state with the error message.
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message,
+        error: e.message || "An unexpected error occurred.",
         isAuthenticated: false
       }));
       
       // Return a rejected promise to maintain the function signature
-      return Promise.reject(new Error(error.message));
-    } 
-    
-    // 4. Check if we have a user in the response
-    if (data?.user) {
-      // 5. If we have a user, get their full profile data
-      const userData = await supabaseAuthService.getCurrentUser(data.user.id);
-      
-      if (userData) {
-        // SUCCESS: If we got the user data, update the state
-        setAuthState({
-          user: userData,
-          isLoading: false,
-          error: null,
-          isAuthenticated: true
-        });
-        
-        // Return the user data to fulfill the Promise<User> return type
-        return userData;
-      } else {
-        // EDGE CASE: We got a user from Supabase but couldn't get their profile
-        setAuthState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: "Failed to get user profile data.",
-          isAuthenticated: false
-        }));
-        
-        return Promise.reject(new Error("Failed to get user profile data."));
-      }
-    } else {
-      // EDGE CASE: No error but also no user data
-      setAuthState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: "An unexpected error occurred. Please try again.",
-        isAuthenticated: false
-      }));
-      
-      return Promise.reject(new Error("An unexpected error occurred. Please try again."));
+      return Promise.reject(e);
     }
   };
   
