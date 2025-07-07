@@ -1,6 +1,8 @@
 // src/services/supabaseAuthService.ts
 import { supabase } from '../supabase';
 import { User, UserRole, AuthCredentials, AuthState } from '../types';
+import NetInfo from '@react-native-community/netinfo';
+import { isSupabaseInitialized } from '../supabase';
 
 /**
  * Register a new user with email and password
@@ -21,6 +23,20 @@ export const registerUser = async (
   role: UserRole = UserRole.ATTENDEE
 ): Promise<User> => {
   try {
+    /* ---- Preconditions -------------------------------------------------- */
+    // 1) Supabase properly initialised?
+    if (!isSupabaseInitialized()) {
+      throw new Error(
+        'Supabase client not initialised – please check your environment variables (EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY).'
+      );
+    }
+
+    // 2) Device has network connectivity?
+    const netState = await NetInfo.fetch();
+    if (!netState.isConnected) {
+      throw new Error('No internet connection. Please connect to the internet and try again.');
+    }
+
     // Register user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -61,8 +77,29 @@ export const registerUser = async (
 
     return userData;
   } catch (error: any) {
+    /* ---- Enhanced error mapping ---------------------------------------- */
+    const rawMessage = error?.message || '';
+
+    // Duplicate user (already registered)
+    if (
+      rawMessage.toLowerCase().includes('user already registered') ||
+      rawMessage.toLowerCase().includes('already exists') ||
+      error?.status === 409 || // Supabase may respond with 409
+      error?.code === '23505'   // postgres unique violation
+    ) {
+      console.warn('Attempted to register an already-existing user.');
+      throw new Error('An account with this email already exists. Please sign in instead.');
+    }
+
+    // Network / fetch failures
+    if (rawMessage.toLowerCase().includes('network request failed')) {
+      throw new Error(
+        'Unable to reach authentication server. Please check your internet connection and try again.'
+      );
+    }
+
     console.error('Error registering user via Supabase signUp:', error);
-    throw new Error(error.message || 'Failed to register user');
+    throw new Error(rawMessage || 'Failed to register user');
   }
 };
 
