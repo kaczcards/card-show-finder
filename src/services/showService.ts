@@ -318,29 +318,78 @@ export const claimShow = async (
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     /* --------------------------------------------------------
-     * Step 1: flag the show itself as claimed
+     * 0. Verify user is a (paid) show organiser
      * ------------------------------------------------------ */
-    const { data: updatedShow, error: updateError } = await supabase
-      .from('shows')
-      .update({
-        claimed: true,
-        claimed_by: userId,
-        claimed_at: new Date().toISOString(),
-      })
-      .eq('id', showId)
+    const { data: profile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('role, is_paid')
+      .eq('id', userId)
       .single();
+
+    if (profileErr) throw profileErr;
+    if (!profile) {
+      return {
+        success: false,
+        message: 'User profile not found',
+      };
+    }
+
+    const roleOk =
+      (profile.role ?? '').toString().toLowerCase() ===
+      'show_organizer';
+    const paidOk =
+      profile.is_paid === undefined
+        ? true // tolerate missing column
+        : !!profile.is_paid;
+
+    if (!roleOk || !paidOk) {
+      return {
+        success: false,
+        message:
+          'Only paid Show Organizers can claim shows. Please upgrade your plan.',
+      };
+    }
+
+    /* --------------------------------------------------------
+     * 1. Atomically flag the show as claimed IF not yet claimed
+     *    — PostgREST will return 0 rows if the condition fails.
+     * ------------------------------------------------------ */
+    const { data: updatedShow, error: updateError, count } =
+      await supabase
+        .from('shows')
+        .update({
+          claimed: true,
+          claimed_by: userId,
+          claimed_at: new Date().toISOString(),
+        })
+        .eq('id', showId)
+        .or('claimed.is.null,claimed.eq.false') // only update unclaimed
+        .select('*', { count: 'exact' })
+        .single();
 
     if (updateError) throw updateError;
 
+    if (!updatedShow || count === 0) {
+      return {
+        success: false,
+        message: 'Show has already been claimed by another organiser.',
+      };
+    }
+
     /* --------------------------------------------------------
-     * Step 2: add organiser ↔ show relation
+     * 2. Insert organiser ↔ show relation (ignore duplicates)
      * ------------------------------------------------------ */
-    const { error: orgError } = await supabase.from('show_organizers').insert({
-      show_id: showId,
-      user_id: userId,
-      role: 'primary',
-      created_at: new Date().toISOString(),
-    });
+    const { error: orgError } = await supabase
+      .from('show_organizers')
+      .insert(
+        {
+          show_id: showId,
+          user_id: userId,
+          role: 'owner',
+          created_at: new Date().toISOString(),
+        },
+        { ignoreDuplicates: true }
+      );
 
     if (orgError) throw orgError;
 
