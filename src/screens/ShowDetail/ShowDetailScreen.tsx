@@ -610,7 +610,49 @@ const handleClaimShow = async () => {
 
     if (start) return formatTime(start);
     if (end) return formatTime(end);
+    
+    // Try to extract time from description as a last resort
+    if (show.description) {
+      return extractTimeFromDescription(show.description) || 'Time not specified';
+    }
+    
     return 'Time not specified';
+  };
+  
+  /**
+   * Attempts to extract time information from the show description
+   * using common patterns like "10am-4pm" or "10:00 AM to 5:00 PM"
+   */
+  const extractTimeFromDescription = (description: string): string | null => {
+    if (!description) return null;
+    
+    // Common time patterns:
+    // 1. 10am-4pm, 10 am - 4 pm
+    // 2. 10:00 AM to 5:00 PM, 10:00AM-5:00PM
+    // 3. 10 to 4, 10-4
+    
+    // Look for time patterns with AM/PM
+    const timePattern1 = /(\d{1,2})(:\d{2})?\s*(am|pm|AM|PM)\s*[-–—to]\s*(\d{1,2})(:\d{2})?\s*(am|pm|AM|PM)/;
+    const match1 = description.match(timePattern1);
+    if (match1) {
+      return `${match1[1]}${match1[2] || ''}${match1[3].toLowerCase()} - ${match1[4]}${match1[5] || ''}${match1[6].toLowerCase()}`;
+    }
+    
+    // Look for simple hour ranges (10-4)
+    const timePattern2 = /\b(\d{1,2})\s*[-–—to]\s*(\d{1,2})(\s*[ap]m)?\b/i;
+    const match2 = description.match(timePattern2);
+    if (match2) {
+      if (match2[3]) {
+        // Has am/pm suffix
+        return `${match2[1]}${match2[3].toLowerCase()} - ${match2[2]}${match2[3].toLowerCase()}`;
+      } else {
+        // No am/pm, assume it's like "10-4" meaning "10am-4pm"
+        return `${match2[1]}am - ${match2[2]}pm`;
+      }
+    }
+    
+    // No time pattern found
+    return null;
   };
   
   const openMapLocation = () => {
@@ -766,34 +808,20 @@ const handleClaimShow = async () => {
         {/* ------- Show Times Section ------- */}
         <View style={styles.timeContainer}>
           <SectionHeader>Show Hours</SectionHeader>
-          {(() => {
-            const start = show.start_time ?? show.startTime ?? null;
-            const end = show.end_time ?? show.endTime ?? null;
-            if (start && end) {
-              return (
-                <Text style={styles.timeText}>
-                  {formatTime(start)} - {formatTime(end)}
-                </Text>
-              );
-            }
-            if (start || end) {
-              return (
-                <Text style={styles.timeText}>
-                  {formatTime(start || end)}
-                </Text>
-              );
-            }
-            return <Text style={styles.noTimeText}>Show times not available</Text>;
-          })()}
+          {/* Use the getFormattedShowHours function to display times */}
+          <Text style={styles.timeText}>
+            {getFormattedShowHours(show)}
+          </Text>
 
           {/* Per-day hours handling (optional array) */}
           {Array.isArray(show.show_days || show.showDays) &&
             (show.show_days || show.showDays).map((day: any, idx: number) => (
               <View key={idx} style={styles.dayTimeRow}>
-                <Text style={styles.dayText}>{day.date}:</Text>
+                <Text style={styles.dayText}>{day.date || `Day ${idx + 1}`}:</Text>
                 <Text style={styles.timeText}>
-                  {formatTime(day.start_time || day.startTime)} -{' '}
-                  {formatTime(day.end_time || day.endTime)}
+                  {day.start_time || day.startTime ? formatTime(day.start_time || day.startTime) : ''}
+                  {(day.start_time || day.startTime) && (day.end_time || day.endTime) ? ' - ' : ''}
+                  {day.end_time || day.endTime ? formatTime(day.end_time || day.endTime) : ''}
                 </Text>
               </View>
             ))}
