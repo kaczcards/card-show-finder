@@ -125,6 +125,12 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
           'Your email address has not been verified. Please check your inbox for a verification email or use the "Resend verification" button.'
         );
       }
+      
+      // Check for invalid credentials error
+      if (authError.message?.toLowerCase().includes('invalid login credentials')) {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
+      }
+      
       throw authError;
     }
 

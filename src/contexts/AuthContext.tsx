@@ -523,12 +523,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Context value
+  // Context value - ensuring error, isLoading, and isAuthenticated are always defined
   const contextValue: AuthContextType = {
     authState,
-    error: authState.error,
-    isLoading: authState.isLoading,
-    isAuthenticated: authState.isAuthenticated,
+    // Explicitly extract these properties from authState with fallbacks to ensure they're never undefined
+    error: authState?.error ?? null,
+    isLoading: authState?.isLoading ?? false,
+    isAuthenticated: authState?.isAuthenticated ?? false,
     login,
     register,
     logout,
