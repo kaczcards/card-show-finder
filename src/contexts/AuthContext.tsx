@@ -205,42 +205,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
-    // 1) show spinner & clear stale errors
+    // 1. Immediately set the app to a "loading" state and clear old errors.
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-    try {
-      // 2) attempt password login via service
-      const { data, error } = await supabaseAuthService.signInWithEmailPassword(
-        credentials.email,
-        credentials.password
-      );
+    // 2. Call the Supabase service to attempt the login.
+    const { data, error } = await supabaseAuthService.signInWithEmailPassword(
+      credentials.email,
+      credentials.password
+    );
 
-      // 3) surface any auth error
-      if (error) throw error;
-
-      // 4) defensive – Supabase should always return a user
-      if (!data?.user) throw new Error('Login succeeded but no user was returned.');
-
-      // 5) fetch full profile & hydrate state
-      const user = await supabaseAuthService.getCurrentUser(data.user.id);
-      if (!user) throw new Error('Login succeeded but failed to get user data.');
-
-      setAuthState({
-        user,
-        isLoading: false,
-        error: null,
-        isAuthenticated: true,
-      });
-      return user;
-    } catch (err: any) {
-      // 6) single error handler – update state & propagate
+    // 3. Handle the response directly.
+    if (error) {
+      // FAILURE: If the service returns an error, update the state.
+      // Set the error message and turn off the loading indicator.
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: err.message || 'An unexpected error occurred.',
-        isAuthenticated: false,
+        error: error.message,
+        isAuthenticated: false
       }));
-      return Promise.reject(err);
+      return Promise.reject(new Error(error.message));
+    } else if (data?.user) {
+      // SUCCESS: If the service returns a user, get their profile and update state.
+      const userData = await supabaseAuthService.getCurrentUser(data.user.id);
+      
+      if (userData) {
+        setAuthState({
+          user: userData,
+          isLoading: false,
+          error: null,
+          isAuthenticated: true
+        });
+        return userData;
+      } else {
+        // EDGE CASE: If we couldn't get the user profile data.
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: "Failed to get user profile data.",
+          isAuthenticated: false
+        }));
+        return Promise.reject(new Error("Failed to get user profile data."));
+      }
+    } else {
+      // EDGE CASE: If there's no error but also no user, handle it.
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: "An unexpected error occurred. Please try again.",
+        isAuthenticated: false
+      }));
+      return Promise.reject(new Error("An unexpected error occurred. Please try again."));
     }
   };
   
