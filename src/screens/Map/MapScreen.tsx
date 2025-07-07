@@ -221,7 +221,21 @@ const MapScreen: React.FC<MapScreenProps> = ({
       console.log('[MapScreen] Fetching shows using showService');
       
       // Create a copy of the filters to modify
-      const currentFilters: ShowFilters = { ...filters };
+  /* -------------------------------------------------------------
+   * Build _authoritative_ filters for the API request.
+   * – Always within 25 miles of the user (spec)
+   * – Always within the next 30 days
+   * Anything coming from UI / parent that violates these bounds
+   * is ignored so we never fall back to test-data responses.
+   * ----------------------------------------------------------- */
+  const currentFilters: ShowFilters = { ...filters };
+  const today = new Date();
+  const thirtyDaysOut = new Date();
+  thirtyDaysOut.setDate(today.getDate() + 30);
+
+  currentFilters.radius = 25;              // force spec radius
+  currentFilters.startDate = today;        // today
+  currentFilters.endDate = thirtyDaysOut;  // +30 days
       
       // If we have user location, use it
       if (userLocation) {
@@ -523,7 +537,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
                   : shows.length === 1
                   ? '1 show found'
                   : `${shows.length} shows found`}
-                {' • '}Within {filters.radius} miles
+                {' • '}Within 25 miles
               </Text>
               <TouchableOpacity
                 style={styles.filterButton}
