@@ -45,6 +45,28 @@ const directSupabase = createClient(directSupabaseUrl, directSupabaseKey, {
   },
 });
 
+/* -------------------------------------------------------------------------- */
+/* Utility presentation components (kept local to avoid extra files)          */
+/* -------------------------------------------------------------------------- */
+type InfoRowProps = {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  text?: string;
+  children?: React.ReactNode;
+};
+
+/** Renders a consistent “icon + text” row */
+const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => (
+  <View style={styles.infoRow}>
+    <Ionicons name={icon} size={20} color="#666666" style={styles.infoIcon} />
+    {children ?? <Text style={styles.infoText}>{text}</Text>}
+  </View>
+);
+
+/** Section header helper for consistent typography */
+const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Text style={styles.sectionTitle}>{children}</Text>
+);
+
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
   
@@ -708,14 +730,11 @@ const handleClaimShow = async () => {
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{show.title}</Text>
         
-        <View style={styles.infoRow}>
-          <Ionicons name="calendar" size={20} color="#666666" style={styles.infoIcon} />
-          <Text style={styles.infoText}>{formatShowDate(show)}</Text>
-        </View>
+        <InfoRow icon="calendar" text={formatShowDate(show)} />
         
         {/* ------- Show Times Section ------- */}
         <View style={styles.timeContainer}>
-          <Text style={styles.sectionTitle}>Show Hours</Text>
+          <SectionHeader>Show Hours</SectionHeader>
           {(() => {
             const start = show.start_time ?? show.startTime ?? null;
             const end = show.end_time ?? show.endTime ?? null;
@@ -749,26 +768,25 @@ const handleClaimShow = async () => {
             ))}
         </View>
         
-        <View style={styles.infoRow}>
-          <Ionicons name="location" size={20} color="#666666" style={styles.infoIcon} />
-          <Text style={styles.infoText}>{show.address || show.location || 'Location not specified'}</Text>
-        </View>
+        <InfoRow
+          icon="location"
+          text={show.address || show.location || 'Location not specified'}
+        />
         
         {show.entry_fee && (
-          <View style={styles.infoRow}>
-            <Ionicons name="cash" size={20} color="#666666" style={styles.infoIcon} />
+          <InfoRow icon="cash">
             <Text style={styles.infoText}>
               Entry Fee:{' '}
               {typeof show.entry_fee === 'number'
                 ? `$${show.entry_fee.toFixed(2)}`
                 : show.entry_fee}
             </Text>
-          </View>
+          </InfoRow>
         )}
         
         {show.organizer_id && show.profiles && (
           <View style={styles.organizerContainer}>
-            <Text style={styles.sectionTitle}>Organized by:</Text>
+            <SectionHeader>Organized by:</SectionHeader>
             <View style={styles.organizer}>
               {show.profiles.avatar_url ? (
                 <Image source={{ uri: show.profiles.avatar_url }} style={styles.organizerAvatar} />
@@ -787,7 +805,7 @@ const handleClaimShow = async () => {
         )}
         
         <View style={styles.descriptionContainer}>
-          <Text style={styles.sectionTitle}>About this show</Text>
+          <SectionHeader>About this show</SectionHeader>
           <Text style={styles.description}>{show.description || 'No description available'}</Text>
         </View>
 
@@ -846,7 +864,7 @@ const handleClaimShow = async () => {
 
         {/* ---------------- Participating Dealers Section ---------------- */}        
         <View style={styles.mvpDealersContainer}> {/* Renamed for clarity, but keeping styling */}
-          <Text style={styles.sectionTitle}>Participating Dealers</Text> {/* Updated title */}
+          <SectionHeader>Participating Dealers</SectionHeader>
           {loadingDealers ? (
             <View style={styles.loadingDealersContainer}>
               <ActivityIndicator size="small" color="#FF6A00" />
