@@ -8,8 +8,89 @@ export enum UserRole {
   SHOW_ORGANIZER = 'SHOW_ORGANIZER',
 }
 
-// Test mode flag - set to false in production
-export const IS_TEST_MODE = true; 
+/**
+ * Global test-mode flag.
+ *
+ * KEEP THIS **FALSE** IN PRODUCTION.
+ * Can be overridden at runtime by setting
+ *   globalThis.CSF_IS_TEST_MODE = true
+ * during e2e / unit tests.
+ */
+export let IS_TEST_MODE = false;
+
+// ---- Small helper to allow runtime toggling (used by tests) ----
+export const __setTestMode = (enabled: boolean) => {
+  IS_TEST_MODE = enabled;
+};
+
+/* ------------------------------------------------------------------
+ * Utility helpers
+ * ------------------------------------------------------------------ */
+
+/**
+ * Normalises a role string coming from the database (often lowercase)
+ * to the corresponding uppercase `UserRole` enum value.
+ * Returns `null` if it cannot be mapped.
+ */
+export const normalizeRole = (role?: string | null): UserRole | null => {
+  if (!role) return null;
+  const upper = role.toUpperCase() as UserRole;
+  return (Object.values(UserRole) as string[]).includes(upper) ? upper : null;
+};
+
+/* ------------------------------------------------------------------
+ * Permission Matrix
+ * ------------------------------------------------------------------ */
+
+/**
+ * Discrete actions in the system that can be gated by role.
+ * Extend this enum as new features are added.
+ */
+export enum Action {
+  SEND_MESSAGE = 'SEND_MESSAGE',
+  RECEIVE_MESSAGE = 'RECEIVE_MESSAGE',
+  MANAGE_SHOWS = 'MANAGE_SHOWS', // create / edit show listings
+  DEALER_PARTICIPATION = 'DEALER_PARTICIPATION',
+  PREMIUM_FEATURE = 'PREMIUM_FEATURE',
+}
+
+/**
+ * Mapping of role ⇒ allowed action set.
+ * NOTE: keep this in sync with product requirements.
+ */
+const ROLE_PERMISSIONS: Record<UserRole, Set<Action>> = {
+  [UserRole.ATTENDEE]: new Set<Action>([
+    Action.SEND_MESSAGE,
+  ]),
+  [UserRole.DEALER]: new Set<Action>([
+    Action.SEND_MESSAGE,
+    Action.DEALER_PARTICIPATION,
+  ]),
+  [UserRole.MVP_DEALER]: new Set<Action>([
+    Action.SEND_MESSAGE,
+    Action.RECEIVE_MESSAGE,
+    Action.DEALER_PARTICIPATION,
+    Action.PREMIUM_FEATURE,
+  ]),
+  [UserRole.SHOW_ORGANIZER]: new Set<Action>([
+    Action.SEND_MESSAGE,
+    Action.RECEIVE_MESSAGE,
+    Action.MANAGE_SHOWS,
+    Action.DEALER_PARTICIPATION,
+    Action.PREMIUM_FEATURE,
+  ]),
+};
+
+/**
+ * Generic permission checker.
+ * @param userRole   caller’s role
+ * @param action     action to check
+ */
+export const canPerformAction = (userRole: UserRole, action: Action): boolean => {
+  if (IS_TEST_MODE) return true;
+  const allowed = ROLE_PERMISSIONS[userRole];
+  return allowed ? allowed.has(action) : false;
+};
 
 /**
  * Fetches a user's role from the profiles table.
@@ -29,7 +110,7 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
       return null;
     }
 
-    return (data?.role?.toUpperCase() as UserRole) || null;
+    return normalizeRole(data?.role);
   } catch (error) {
     console.error('Exception in getUserRole:', error);
     return null;
@@ -68,11 +149,7 @@ export const getUserProfile = async (userId: string) => {
  * @returns True if the user can send messages, false otherwise.
  */
 export const canUserSendMessage = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) {
-    return true; // Bypass role checks in test mode
-  }
-  // All roles can send messages in the current system
-  return true;
+  return canPerformAction(userRole, Action.SEND_MESSAGE);
 };
 
 /**
@@ -82,11 +159,7 @@ export const canUserSendMessage = (userRole: UserRole): boolean => {
  * @returns True if the user can receive messages, false otherwise.
  */
 export const canUserReceiveMessage = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) {
-    return true; // Bypass role checks in test mode
-  }
-  // Only MVP_DEALER and SHOW_ORGANIZER can receive messages
-  return userRole === UserRole.MVP_DEALER || userRole === UserRole.SHOW_ORGANIZER;
+  return canPerformAction(userRole, Action.RECEIVE_MESSAGE);
 };
 
 /**
@@ -122,10 +195,7 @@ export const hasAnyRole = (userRole: UserRole, requiredRoles: UserRole[]): boole
  * @returns True if the user can manage show listings, false otherwise.
  */
 export const canManageShows = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) {
-    return true; // Bypass role checks in test mode
-  }
-  return userRole === UserRole.SHOW_ORGANIZER;
+  return canPerformAction(userRole, Action.MANAGE_SHOWS);
 };
 
 /**
@@ -135,10 +205,7 @@ export const canManageShows = (userRole: UserRole): boolean => {
  * @returns True if the user can participate as a dealer, false otherwise.
  */
 export const canParticipateAsDealer = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) {
-    return true; // Bypass role checks in test mode
-  }
-  return [UserRole.DEALER, UserRole.MVP_DEALER, UserRole.SHOW_ORGANIZER].includes(userRole);
+  return canPerformAction(userRole, Action.DEALER_PARTICIPATION);
 };
 
 /**
@@ -148,10 +215,7 @@ export const canParticipateAsDealer = (userRole: UserRole): boolean => {
  * @returns True if the user has premium features, false otherwise.
  */
 export const hasPremiumFeatures = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) {
-    return true; // Bypass role checks in test mode
-  }
-  return [UserRole.MVP_DEALER, UserRole.SHOW_ORGANIZER].includes(userRole);
+  return canPerformAction(userRole, Action.PREMIUM_FEATURE);
 };
 
 /**
@@ -161,10 +225,7 @@ export const hasPremiumFeatures = (userRole: UserRole): boolean => {
  * @returns True if the user needs to upgrade, false otherwise.
  */
 export const needsUpgrade = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) {
-    return false; // Bypass role checks in test mode
-  }
-  return [UserRole.ATTENDEE, UserRole.DEALER].includes(userRole);
+  return !hasPremiumFeatures(userRole);
 };
 
 /**
@@ -180,8 +241,41 @@ export const canContactUser = (currentUserRole: UserRole, targetUserRole: UserRo
   }
   
   // Check if the target user can receive messages
-  const canReceive = targetUserRole === UserRole.MVP_DEALER || targetUserRole === UserRole.SHOW_ORGANIZER;
-  
-  // All users can send, but only certain roles can receive
-  return canReceive;
+  return canUserReceiveMessage(targetUserRole);
+};
+
+/* ------------------------------------------------------------------
+ * Session / role synchronisation helpers
+ * ------------------------------------------------------------------ */
+
+/**
+ * Forces Supabase to refresh the current JWT/session so that any recent
+ * changes to the user's profile (e.g., role upgrades) are immediately
+ * reflected in `supabase.auth`.
+ */
+export const refreshUserSession = async (): Promise<{ success: boolean; error?: any }> => {
+  try {
+    const { error } = await supabase.auth.refreshSession();
+    if (error) {
+      console.error('Error refreshing Supabase session:', error);
+      return { success: false, error };
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('Unexpected error in refreshUserSession:', err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Convenience helper that:
+ * 1. Refreshes the session token
+ * 2. Fetches the latest role from the database
+ *
+ * This should be called after any action that might change the user's
+ * subscription or role (e.g., webhook, upgrade flow).
+ */
+export const updateUserRole = async (userId: string): Promise<UserRole | null> => {
+  await refreshUserSession();
+  return getUserRole(userId);
 };

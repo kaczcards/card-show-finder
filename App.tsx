@@ -6,6 +6,10 @@ import { NavigationContainer } from '@react-navigation/native';
 
 // Import context providers
 import { AuthProvider } from './src/contexts/AuthContext';
+import { ThemeProvider } from './src/contexts/ThemeContext';
+
+// Import theme for initial loading screen
+import { theme } from './src/constants/theme';
 
 // Import root navigator from navigation folder
 import RootNavigator from './src/navigation';
@@ -38,19 +42,35 @@ export default function App() {
 
   if (!isReady) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={{ marginTop: 10 }}>Starting up...</Text>
+      <View style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.colors.background.default,
+      }}>
+        <ActivityIndicator
+          size="large"
+          color={theme.colors.primary.main}
+        />
+        <Text style={{
+          marginTop: theme.spacing.spacing.medium,
+          fontSize: theme.typography.fontSize.body,
+          color: theme.colors.text.secondary,
+        }}>
+          Starting up...
+        </Text>
       </View>
     );
   }
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <RootNavigator />
-        <StatusBar style="auto" />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <RootNavigator />
+          <StatusBar style="auto" />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

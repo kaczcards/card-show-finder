@@ -10,6 +10,22 @@ import { Show, UserRole } from '../types';
 /**
  * Types for dealer show participation
  */
+/**
+ * Normalize a role string (DB may store lowercase) to the lowercase
+ * `UserRole` enum used throughout the client.
+ */
+const normalizeRole = (role: string | null | undefined): UserRole | null => {
+  if (!role) return null;
+  // FIX: Convert to lowercase to match enum string values
+  const normalizedRoleString = role.toLowerCase();
+  
+  // Check if the normalized string is one of the valid UserRole enum values
+  if (Object.values(UserRole).includes(normalizedRoleString as UserRole)) {
+    return normalizedRoleString as UserRole;
+  }
+  return null;
+};
+
 export interface DealerShowParticipation {
   id: string;
   userId: string;
@@ -85,8 +101,7 @@ const mapDbCoordinatesToApp = (
 
 /**
  * Get all shows a dealer is participating in
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param status - Optional filter for participation status
  * @returns Array of shows with participation details
  */
@@ -157,8 +172,7 @@ export const getDealerShows = async (
 
 /**
  * Register a dealer for a show
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param participationData - Dealer participation details
  * @returns The created participation record or error
  */
@@ -182,7 +196,45 @@ export const registerForShow = async (
       throw userError;
     }
 
-    if (!userData || (userData.role !== 'dealer' && userData.role !== 'mvp_dealer')) {
+    // ------------------------------------------------------------
+    // Debugging – log the raw role we got back from Supabase
+    // ------------------------------------------------------------
+    // eslint-disable-next-line no-console
+    console.log(
+      '[registerForShow] DB role value:',
+      userData?.role,
+      '| normalised:',
+      normalizeRole(userData?.role)
+    );
+
+    const userRole = normalizeRole(userData?.role);
+
+    /**
+     * Temporary, more lenient role check:
+     * 1. Accept normalised enum values (DEALER / MVP_DEALER)
+     * 2. Fallback – if the raw string contains “dealer” or “mvp”
+     * (case-insensitive) we also treat it as dealer-tier.
+     */
+    const rawRole = (userData?.role || '').toString().toLowerCase();
+    const isDealerLike =
+      rawRole.includes('dealer') || rawRole.includes('mvp');
+
+    if (
+      !userRole &&
+      !isDealerLike
+    ) {
+      return { data: null, error: 'User is not a dealer' };
+    }
+
+    // If we passed the lenient check but normalisation failed,
+    // treat the user as a basic DEALER for the remainder of this call.
+    const effectiveRole =
+      userRole ?? UserRole.DEALER;
+
+    if (
+      effectiveRole !== UserRole.DEALER &&
+      effectiveRole !== UserRole.MVP_DEALER
+    ) {
       return { data: null, error: 'User is not a dealer' };
     }
 
@@ -203,13 +255,25 @@ export const registerForShow = async (
     }
 
     // Insert new participation record
+    const insertData: Record<string, any> = {
+      userid: userId,
+      showid: participationData.showId,
+      status: 'registered',
+    };
+
+    // Map optional fields if provided
+    if (participationData.cardTypes !== undefined) insertData.card_types = participationData.cardTypes;
+    if (participationData.specialty !== undefined) insertData.specialty = participationData.specialty;
+    if (participationData.priceRange !== undefined) insertData.price_range = participationData.priceRange;
+    if (participationData.notableItems !== undefined) insertData.notable_items = participationData.notableItems;
+    if (participationData.boothLocation !== undefined) insertData.booth_location = participationData.boothLocation;
+    if (participationData.paymentMethods !== undefined) insertData.payment_methods = participationData.paymentMethods;
+    if (participationData.openToTrades !== undefined) insertData.open_to_trades = participationData.openToTrades;
+    if (participationData.buyingCards !== undefined) insertData.buying_cards = participationData.buyingCards;
+
     const { data, error } = await supabase
       .from('show_participants')
-      // Insert only the base columns that are guaranteed to exist
-      .insert({
-        userid: userId,
-        showid: participationData.showId,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -226,8 +290,7 @@ export const registerForShow = async (
 
 /**
  * Update dealer participation details for a show
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param participationId - The participation record ID
  * @param participationData - Updated dealer participation details
  * @returns The updated participation record or error
@@ -290,8 +353,7 @@ export const updateShowParticipation = async (
 
 /**
  * Cancel dealer participation in a show
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param participationId - The participation record ID
  * @returns Success or error message
  */
@@ -343,8 +405,7 @@ export const cancelShowParticipation = async (
 
 /**
  * Get dealer information for a specific show
- * 
- * @param showId - The show ID
+ * * @param showId - The show ID
  * @returns Array of dealer participation records for the show
  */
 export const getDealersForShow = async (
@@ -417,8 +478,7 @@ export const getDealersForShow = async (
 
 /**
  * Get upcoming shows available for dealer registration
- * 
- * @param userId - The dealer's user ID
+ * * @param userId - The dealer's user ID
  * @param filters - Optional filters for shows
  * @returns Array of shows available for registration
  */

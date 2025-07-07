@@ -1,0 +1,18 @@
+--- src/screens/Messages/DirectMessagesScreen.tsx	2025-06-26 12:42:34.000000000 -0700
++++ src/screens/Messages/DirectMessagesScreen.tsx.new	2025-06-26 12:51:34.000000000 -0700
+@@ -452,6 +452,7 @@
+             keyExtractor={item => item.id}
+             contentContainerStyle={styles.messagesList}
+             inverted={false}
++            removeClippedSubviews={false}
+           />
+           
+           <View style={styles.inputContainer}>
+@@ -557,6 +558,7 @@
+               contentContainerStyle={styles.conversationsList}
+               refreshing={isLoading}
+               onRefresh={() => currentUser && fetchConversations(currentUser.id)}
++              removeClippedSubviews={false}
+             />
+           )}
+           
