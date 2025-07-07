@@ -486,7 +486,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
           <>
             {initialRegion && (
               // Use MapShowCluster if available, otherwise fallback to standard MapView
-              mapRef.current && MapShowCluster ? (
+              MapShowCluster ? (
                 <MapShowCluster
                   ref={mapRef}
                   shows={shows}

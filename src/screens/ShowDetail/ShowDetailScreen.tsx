@@ -55,12 +55,37 @@ type InfoRowProps = {
 };
 
 /** Renders a consistent "icon + text" row */
-const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => (
-  <View style={styles.infoRow}>
-    <Ionicons name={icon} size={20} color="#666666" style={styles.infoIcon} />
-    {children ?? <Text style={styles.infoText}>{text}</Text>}
-  </View>
-);
+const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
+  /* ----------------------------------------------------------------
+   * RN requires all strings to be wrapped in <Text>.  If a caller
+   * passes `children` as a bare string we wrap it proactively.
+   * ---------------------------------------------------------------- */
+  const renderContent = () => {
+    if (children === undefined || children === null) {
+      return <Text style={styles.infoText}>{text}</Text>;
+    }
+
+    // children exists – wrap if it's a primitive
+    if (typeof children === 'string' || typeof children === 'number') {
+      return <Text style={styles.infoText}>{children}</Text>;
+    }
+
+    // otherwise assume it's valid ReactNode(s)
+    return children;
+  };
+
+  return (
+    <View style={styles.infoRow}>
+      <Ionicons
+        name={icon}
+        size={20}
+        color="#666666"
+        style={styles.infoIcon}
+      />
+      {renderContent()}
+    </View>
+  );
+};
 
 /** Section header helper for consistent typography */
 const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
