@@ -128,3 +128,58 @@ resolved by favouring `main` where functionality overlapped.
 The merged branch keeps all new data-loading capabilities while remaining
 compatible with freshly-merged theme, badge-system and messaging updates from
 `main`.
+
+---
+
+## 9 · SQL Hot-Fix – Exclude Historical Shows
+
+During QA we discovered that **expired / historical shows** were still returned
+by the `find_filtered_shows` PostGIS RPC even when the client supplied a
+`startDate` of **today** and an `endDate` +30 days.  
+
+### Root Cause  
+The original SQL contained:
+
+```sql
+AND (start_date IS NULL OR shows.start_date >= start_date)
+AND (end_date   IS NULL OR shows.end_date   <= end_date)
+```
+
+If the _caller_ passed **`NULL`** for `start_date` (which can happen when the
+filter object is built incorrectly) the first predicate collapses to `TRUE`,
+so any show – even one that ended last year – satisfied the condition as long
+as its **status = 'ACTIVE'** flag had not been cleaned up.
+
+### Fix  
+We recreated the function in `db_migrations/fix_show_date_filtering.sql`
+(included in this branch).  The new logic adds:
+
+```sql
+-- Always exclude shows that have fully completed
+AND shows.end_date >= NOW()
+```
+
+This single guard guarantees that only current or future events are returned,
+irrespective of the optional `start_date` parameter.  The migration drops the
+old function and re-creates it with identical signature, so **no client-side
+code changes are required**.
+
+### Verification Steps
+1. Apply migration on Supabase (`psql < fix_show_date_filtering.sql` or via
+   Dashboard → SQL Editor).  
+2. Call the RPC manually:
+
+```sql
+select id, title, start_date, end_date
+from find_filtered_shows(
+  center_lat := 40.0772,
+  center_lng := -85.9259,
+  radius_miles := 25,
+  start_date := null,
+  end_date   := null
+);
+```
+
+Only shows whose `end_date >= now()` are returned. Older records are
+excluded.  
+3. Re-run the mobile app – homepage & map no longer display past events.
