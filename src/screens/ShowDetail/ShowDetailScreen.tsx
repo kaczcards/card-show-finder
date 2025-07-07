@@ -16,7 +16,8 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
-import { UserRole } from '../../services/userRoleService';
+import { UserRole } from '../../types';
+
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
 
@@ -27,6 +28,21 @@ interface ShowDetailProps {
   route: any;
   navigation: any;
 }
+// ******** AUTHENTICATION FIX *********
+import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+
+// Supabase client for direct auth check
+const directSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || Constants.expoConfig?.extra?.supabaseUrl;
+const directSupabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.expoConfig?.extra?.supabaseAnonKey;
+const directSupabase = createClient(directSupabaseUrl, directSupabaseKey, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+  },
+});
 
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
@@ -54,8 +70,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [isShowOrganizer, setIsShowOrganizer] = useState(false);
   const [isMvpDealer, setIsMvpDealer] = useState(false);
   
-  // MVP Dealers state
-  const [mvpDealers, setMvpDealers] = useState<any[]>([]);
+  // State for all participating dealers (formerly mvpDealers)
+  const [participatingDealers, setParticipatingDealers] = useState<any[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
 
   /* ---------- Dealer-detail modal state ---------- */
@@ -85,16 +101,10 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   
   useEffect(() => {
     fetchShowDetails();
-    fetchMvpDealers(showId);
-    
-    // Check if favorite whenever user or showId changes
-    if (user && user.id) {
-      console.log('Checking favorite status for user:', user.id, 'show:', showId);
-      checkIfFavorite();
-    } else {
-      console.log('Cannot check favorite status - no authenticated user');
-    }
-  }, [showId, user]);
+    fetchParticipatingDealers(showId); // Call the new function
+    // Always verify favourite status on mount / when showId changes
+    checkIfFavorite();
+  }, [showId]);
   
   const fetchShowDetails = async () => {
     try {
@@ -113,8 +123,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       if (data) {
         /* ----------------------------------------------------------------
          * 2. If the show has an organizer_id, fetch that user's profile
-         *    in a second query.  Attach as `profiles` so the rest of the
-         *    component can keep using the previous shape.
+         * in a second query.  Attach as `profiles` so the rest of the
+         * component can keep using the previous shape.
          * ---------------------------------------------------------------- */
         if (data.organizer_id) {
           const { data: profileData, error: profileError } = await supabase
@@ -147,13 +157,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   };
   
   /**
-   * Fetch MVP dealers for a show using a two–step query that does NOT depend
-   * on Supabase's automatic FK joins (which were failing in production).
+   * Fetch all participating dealers (MVP and regular dealers) for a show.
    *
    * 1.  Get all participants' user_ids from `show_participants`.
-   * 2.  Fetch those users' profiles where role = 'mvp_dealer'.
+   * 2.  Fetch those users' profiles where role is 'mvp_dealer' or 'dealer'.
    */
-  const fetchMvpDealers = async (showId: string) => {
+  const fetchParticipatingDealers = async (showId: string) => { // Renamed function
     try {
       setLoadingDealers(true);
 
@@ -175,7 +184,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       console.log('Participants:', JSON.stringify(participants));
 
       if (!participants || participants.length === 0) {
-        setMvpDealers([]);
+        setParticipatingDealers([]); // Set to new state name
         return;
       }
 
@@ -188,42 +197,23 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       console.log('User IDs:', JSON.stringify(participantUserIds));
 
       /* ---------------- Step 2: profiles ---------------- */
-      /* --- Extra debug: show the role each participant actually has ---- */
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from('profiles')
-          .select('id, role')
-          .in('id', participantUserIds);
-
-        if (roleError) {
-          console.error('Error fetching participant roles:', roleError);
-        } else {
-          console.warn('Participant roles:', JSON.stringify(roleData));
-        }
-      } catch (roleCatch) {
-        console.error('Unexpected error in role debug:', roleCatch);
-      }
-
-      /* ---- Now fetch only those that are MVP dealers (case-insensitive) ---- */
+      // Fetch profiles for both 'mvp_dealer' and 'dealer' roles
       const {
         data: dealerProfiles,
         error: profilesError,
       } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, profile_image_url')
+        .select('id, first_name, last_name, profile_image_url, role, account_type') // Select role and account_type
         .in('id', participantUserIds)
-        // Include real MVP dealers (role contains 'mvp_dealer', case-insensitive)
-        // OR the specific paid MVP dealer who still has role 'dealer'
-        .or(
-          `role.ilike.%mvp_dealer%,id.eq.a3d8f808-1eaf-4f31-88ee-b93203d00176`
-        );
+        // Filter to include only 'mvp_dealer' and 'dealer' roles (case-insensitive for robustness)
+        .or(`role.eq.${UserRole.MVP_DEALER},role.eq.${UserRole.DEALER}`); // Use enum values
 
       if (profilesError) {
         console.error('Error fetching dealer profiles:', profilesError);
         return;
       }
 
-      console.warn(`Found ${dealerProfiles?.length || 0} MVP dealers`);
+      console.warn(`Found ${dealerProfiles?.length || 0} participating dealers`);
       console.log('Dealer profiles:', JSON.stringify(dealerProfiles));
 
       if (dealerProfiles && dealerProfiles.length > 0) {
@@ -233,39 +223,66 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
             id: profile.id,
             name: fullName || profile.id.substring(0, 8),
             profileImageUrl: profile.profile_image_url,
+            role: profile.role as UserRole, // Store the role
+            accountType: profile.account_type // Store account type
           };
         });
-        setMvpDealers(dealers);
+        setParticipatingDealers(dealers); // Set to new state name
       } else {
-        setMvpDealers([]);
+        setParticipatingDealers([]); // Set to new state name
       }
     } catch (error) {
-      console.error('Error in fetchMvpDealers:', error);
+      console.error('Error in fetchParticipatingDealers:', error);
     } finally {
       setLoadingDealers(false);
     }
   };
   
+  /**
+   * Checks if the current show is in the authenticated user's favourites
+   * using the same directSupabase client utilised in `toggleFavorite`.
+   */
   const checkIfFavorite = async () => {
-    if (!user || !user.id) {
-      console.log('checkIfFavorite: No authenticated user found');
-      return;
-    }
-    
     try {
-      console.log('Checking if show is favorited:', { userId: user.id, showId });
-      const { data, error } = await supabase
+      console.log('🔍 FAV DEBUG - Running checkIfFavorite for showId:', showId);
+
+      /* -----------------------------------------------------------
+       * 1. Get current session (avoid relying on `user` prop)
+       * --------------------------------------------------------- */
+      const {
+        data: { session },
+        error: sessionError,
+      } = await directSupabase.auth.getSession();
+
+      if (sessionError || !session?.user?.id) {
+        console.warn(
+          '🔍 FAV DEBUG - No authenticated session found while checking favourites',
+          sessionError?.message
+        );
+        setIsFavorite(false);
+        return;
+      }
+
+      const userId = session.user.id;
+
+      /* -----------------------------------------------------------
+       * 2. Query user_favorite_shows for this show / user combo
+       * --------------------------------------------------------- */
+      const { data, error } = await directSupabase
         .from('user_favorite_shows')
         .select()
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('show_id', showId)
         .single();
-      
+
       if (!error && data) {
-        console.log('Show is favorited');
+        console.log('🔍 FAV DEBUG - Favourite record exists:', data);
         setIsFavorite(true);
       } else {
-        console.log('Show is not favorited', error?.message);
+        if (error && error.code !== 'PGRST116') {
+          // Ignore "no rows" (PGRST116). Log anything else.
+          console.error('🚨 FAV ERROR - Error checking favourite status:', error);
+        }
         setIsFavorite(false);
       }
     } catch (error) {
@@ -273,77 +290,135 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     }
   };
   
-  const toggleFavorite = async () => {
-    // Multiple checks to ensure we have authentication
-    const isAuthenticated = authContext.authState?.isAuthenticated;
-    const userId = user?.id;
+const toggleFavorite = async () => {
+  // Direct session check without using AuthContext
+  try {
+    // Log environment variables to debug connection issues
+    console.log('🔍 ENV DEBUG - Supabase URL:', directSupabaseUrl ? 'Set' : 'Not set');
+    console.log('🔍 ENV DEBUG - Supabase Key:', directSupabaseKey ? 'Set' : 'Not set');
     
-    console.log('Toggle favorite - Auth state:', { 
-      isAuthenticated, 
-      userId,
-      isFavorite
-    });
+    const { data: { session }, error: sessionError } = await directSupabase.auth.getSession();
     
-    // Check authentication status with detailed error message
-    if (!isAuthenticated || !userId) {
-      console.error('Authentication check failed:', { 
-        isContextAvailable: !!authContext,
-        authStateAvailable: !!authContext?.authState,
-        isAuthenticated,
-        hasUser: !!user,
-        userId
-      });
-      
-      // Try to get session directly from Supabase as a fallback
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          console.log('Found user session directly from Supabase:', session.user.id);
-          proceedWithFavoriteToggle(session.user.id);
-          return;
-        }
-      } catch (sessionError) {
-        console.error('Failed to get session from Supabase:', sessionError);
-      }
-      
+    if (sessionError || !session || !session.user) {
+      console.error('🚨 AUTH ERROR - No direct session found:', sessionError?.message, 'Code:', sessionError?.code);
       Alert.alert('Sign In Required', 'Please sign in to save favorites');
       return;
     }
     
-    // If we have authentication, proceed with the favorite toggle
-    proceedWithFavoriteToggle(userId);
-  };
-  
-  // Separated function to handle the actual favorite toggle operation
-  const proceedWithFavoriteToggle = async (userId: string) => {
+    const userId = session.user.id;
+    console.log('🔍 AUTH DEBUG - Got userId directly from session:', userId);
+    
+    // Check if a favorites record exists at the beginning to confirm persistence
     try {
-      if (isFavorite) {
-        // Remove from favorites
-        console.log('Removing from favorites:', { userId, showId });
-        await supabase
-          .from('user_favorite_shows')
-          .delete()
-          .eq('user_id', userId)
-          .eq('show_id', showId);
-        
-        setIsFavorite(false);
-        console.log('Successfully removed from favorites');
-      } else {
-        // Add to favorites
-        console.log('Adding to favorites:', { userId, showId });
-        await supabase
-          .from('user_favorite_shows')
-          .insert([{ user_id: userId, show_id: showId }]);
-        
-        setIsFavorite(true);
-        console.log('Successfully added to favorites');
+      console.log('🔍 DB DEBUG - Checking if favorite already exists in database');
+      const { data: existingFavorite, error: checkError } = await directSupabase
+        .from('user_favorite_shows')
+        .select()
+        .eq('user_id', userId)
+        .eq('show_id', showId)
+        .single();
+      
+      if (checkError) {
+        if (checkError.code === 'PGRST116') {
+          // PGRST116 is "No rows returned" - expected if not favorited
+          console.log('🔍 DB DEBUG - No existing favorite record found');
+        } else {
+          // This could indicate a more serious issue like missing table
+          console.error('🚨 DB ERROR - Error checking existing favorite:', checkError.message, 'Code:', checkError.code);
+          
+          // Check specifically for "relation does not exist" error
+          if (checkError.code === '42P01') {
+            console.error('🚨 DB ERROR - The user_favorite_shows table does not exist in the database!');
+            Alert.alert(
+              'Database Error', 
+              'The favorites feature is not properly set up. Please contact support.'
+            );
+            return;
+          }
+        }
+      } else if (existingFavorite) {
+        console.log('🔍 DB DEBUG - Existing favorite record found:', existingFavorite);
+        // If UI state doesn't match DB state, update it
+        if (!isFavorite) {
+          console.log('🔍 STATE DEBUG - UI state doesn\'t match DB state, updating to favorited');
+          setIsFavorite(true);
+          // UI now matches DB; no further DB operation required.
+          return;
+        }
       }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      Alert.alert('Error', 'Failed to update favorites');
+    } catch (checkErr: any) {
+      console.error('🚨 UNEXPECTED ERROR checking favorite status:', checkErr.message, checkErr.code || 'No code');
     }
-  };
-  
+    
+    if (isFavorite) {
+      // Remove from favorites
+      console.log('🔍 DB OPERATION - Removing favorite:', { userId, showId });
+      const { data: deleteData, error: deleteError } = await directSupabase
+        .from('user_favorite_shows')
+        .delete()
+        .eq('user_id', userId)
+        .eq('show_id', showId);
+      
+      if (deleteError) {
+        console.error('🚨 DB ERROR - Failed to remove favorite:', deleteError.message, 'Code:', deleteError.code);
+        
+        // Handle specific error types
+        if (deleteError.code === '42P01') {
+          // Table doesn't exist
+          Alert.alert('Database Error', 'The favorites table does not exist. Please contact support.');
+        } else if (deleteError.code === '23503') {
+          // Foreign key violation
+          Alert.alert('Error', 'Could not remove favorite due to data integrity issue.');
+        } else {
+          Alert.alert('Error', `Failed to remove favorite: ${deleteError.message}`);
+        }
+        return;
+      }
+      
+      console.log('✅ DB SUCCESS - Removed favorite. Response:', deleteData);
+      setIsFavorite(false);
+      console.log('✅ STATE UPDATE - Updated isFavorite to false');
+    } else {
+      // Add to favorites
+      console.log('🔍 DB OPERATION - Adding favorite:', { userId, showId });
+      const { data: insertData, error: insertError } = await directSupabase
+        .from('user_favorite_shows')
+        .insert([{ user_id: userId, show_id: showId }]);
+      
+      if (insertError) {
+        console.error('🚨 DB ERROR - Failed to add favorite:', insertError.message, 'Code:', insertError.code);
+        
+        // Handle specific error types
+        if (insertError.code === '42P01') {
+          // Table doesn't exist
+          Alert.alert('Database Error', 'The favorites table does not exist. Please contact support.');
+        } else if (insertError.code === '23503') {
+          // Foreign key violation
+          Alert.alert('Error', 'Could not add favorite due to data integrity issue (e.g., show or user does not exist).');
+        } else if (insertError.code === '23505') {
+          // Unique constraint violation (already favorited)
+          Alert.alert('Info', 'This show is already in your favorites.');
+        } else {
+          Alert.alert('Error', `Failed to add favorite: ${insertError.message}`);
+        }
+        return;
+      }
+      
+      console.log('✅ DB SUCCESS - Added favorite. Response:', insertData);
+      setIsFavorite(true);
+      console.log('✅ STATE UPDATE - Updated isFavorite to true');
+    }
+  } catch (error: any) {
+    // Log detailed error information
+    console.error('🚨 UNEXPECTED ERROR in toggleFavorite:', error);
+    console.error('Error details:', {
+      message: error.message || 'Unknown error',
+      code: error.code || 'No code',
+      stack: error.stack || 'No stack trace'
+    });
+    Alert.alert('Error', 'An unexpected error occurred while updating favorites.');
+  }
+};
   const shareShow = async () => {
     try {
       if (!show) return;
@@ -437,9 +512,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   /* -------------------------------------------------------------- */
   /* Placeholder navigation / messaging handlers for MVP dealers    */
   /* -------------------------------------------------------------- */
-  const handleViewDealerDetails = (dealerId: string) => {
+  const handleViewDealerDetails = (dealerId: string, dealerName: string) => { // Added dealerName to args
     // Open modal with booth-specific info instead of navigating away
-    setSelectedDealer({ id: dealerId, name: mvpDealers.find(d => d.id === dealerId)?.name || '' });
+    setSelectedDealer({ id: dealerId, name: dealerName });
     setShowDealerDetailModal(true);
   };
 
@@ -574,7 +649,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           <View style={styles.infoRow}>
             <Ionicons name="cash" size={20} color="#666666" style={styles.infoIcon} />
             <Text style={styles.infoText}>
-              Entry Fee: {typeof show.entry_fee === 'number' ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}
+              `Entry Fee: ${typeof show.entry_fee === "number" ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}`
             </Text>
           </View>
         )}
@@ -604,38 +679,45 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           <Text style={styles.description}>{show.description || 'No description available'}</Text>
         </View>
 
-        {/* ---------------- MVP Dealers Section ---------------- */}        
-        <View style={styles.mvpDealersContainer}>
-          <Text style={styles.sectionTitle}>MVP Dealers</Text>
+        {/* ---------------- Participating Dealers Section ---------------- */}        
+        <View style={styles.mvpDealersContainer}> {/* Renamed for clarity, but keeping styling */}
+          <Text style={styles.sectionTitle}>Participating Dealers</Text> {/* Updated title */}
           {loadingDealers ? (
             <View style={styles.loadingDealersContainer}>
               <ActivityIndicator size="small" color="#FF6A00" />
               <Text style={styles.loadingDealersText}>Loading dealers...</Text>
             </View>
-          ) : mvpDealers.length > 0 ? (
+          ) : participatingDealers.length > 0 ? ( // Use new state name
             <View style={styles.dealersList}>
-              {mvpDealers.map(dealer => (
+              {participatingDealers.map(dealer => ( // Use new state name
                 <View key={dealer.id} style={styles.dealerItem}>
-                  {/* Dealer Name (link-like button) */}
-                  <TouchableOpacity
-                    style={styles.dealerNameButton}
-                    onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
-                  >
-                    <Text style={styles.dealerName}>{dealer.name}</Text>
-                  </TouchableOpacity>
+                  {/* Conditionally render as clickable based on role */}
+                  {dealer.role === UserRole.MVP_DEALER ? (
+                    <TouchableOpacity
+                      style={styles.dealerNameButton}
+                      onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
+                    >
+                      <Text style={styles.dealerName}>{dealer.name} (MVP)</Text> {/* Added (MVP) for clarity */}
+                    </TouchableOpacity>
+                  ) : (
+                    // Regular dealers are not clickable, just display name
+                    <Text style={[styles.dealerName, styles.nonClickableDealerName]}>{dealer.name}</Text>
+                  )}
 
-                  {/* Message Dealer */}
-                  <TouchableOpacity
-                    style={styles.messageDealerButton}
-                    onPress={() => handleMessageDealer(dealer.id, dealer.name)}
-                  >
-                    <Text style={styles.messageDealerButtonText}>Message Dealer</Text>
-                  </TouchableOpacity>
+                  {/* Message Dealer button only for MVP Dealers */}
+                  {dealer.role === UserRole.MVP_DEALER && (
+                    <TouchableOpacity
+                      style={styles.messageDealerButton}
+                      onPress={() => handleMessageDealer(dealer.id, dealer.name)}
+                    >
+                      <Text style={styles.messageDealerButtonText}>Message Dealer</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))}
             </View>
           ) : (
-            <Text style={styles.noDataText}>No MVP Dealers listed for this show yet.</Text>
+            <Text style={styles.noDataText}>No participating dealers listed for this show yet.</Text> 
           )}
         </View>
 
@@ -806,8 +888,8 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
-  /* ----------  MVP Dealers styles ---------- */
-  mvpDealersContainer: {
+  /* ----------  Participating Dealers styles ---------- */
+  mvpDealersContainer: { // Keeping old name for now, but semantically it's now all participating dealers
     marginTop: 24,
     padding: 12,
     backgroundColor: '#F9F9F9',
@@ -825,13 +907,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
-  dealerNameButton: {
+  dealerNameButton: { // This is for clickable names (MVP dealers)
     flex: 1,
   },
   dealerName: {
     fontSize: 16,
     fontWeight: '500',
     color: '#0057B8',
+  },
+  nonClickableDealerName: { // Style for non-clickable names (regular dealers)
+    color: '#333333', // Make it less prominent than a link
+    // You might want to remove flex: 1 if it interferes with alignment for non-clickable
+    // or adjust styling as needed.
   },
   messageDealerButton: {
     backgroundColor: '#4CAF50',

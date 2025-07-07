@@ -21,6 +21,7 @@ import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import { getShows } from '../../services/showService';
 import * as locationService from '../../services/locationService';
 import FilterSheet from '../../components/FilterSheet';
+import MapShowCluster from '../../components/MapShowCluster/index';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -28,32 +29,59 @@ type MainStackParamList = {
   ShowDetail: { showId: string };
 };
 
-type Props = NativeStackScreenProps<MainStackParamList>;
+// Define props interface with optional props for tabbed interface
+interface MapScreenProps extends NativeStackScreenProps<MainStackParamList> {
+  customFilters?: ShowFilters;
+  onFilterChange?: (filters: ShowFilters) => void;
+  onShowPress?: (showId: string) => void;
+  initialUserLocation?: Coordinates | null;
+}
 
-const MapScreen: React.FC<Props> = ({ navigation }) => {
+const MapScreen: React.FC<MapScreenProps> = ({
+  navigation,
+  customFilters,
+  onFilterChange,
+  onShowPress,
+  initialUserLocation
+}) => {
   // State
   const [shows, setShows] = useState<Show[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
+  const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<ShowFilters>({
-    radius: 25, // Default radius: 25 miles
-    startDate: new Date(), // Default start date: today
-    endDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default end date: 30 days from now
+  
+  // Default filters
+  const defaultFilters: ShowFilters = {
+    radius: 25,
+    startDate: new Date(),
+    endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+    maxEntryFee: undefined,
     features: [],
     categories: [],
-  });
+  };
+
+  // Use customFilters if provided, otherwise use local state
+  const [localFilters, setLocalFilters] = useState<ShowFilters>(defaultFilters);
+  const filters = customFilters || localFilters;
 
   // Refs
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Get auth context
   const { authState } = useAuth();
   const { user } = authState;
+
+  // Update userLocation when initialUserLocation changes
+  useEffect(() => {
+    if (initialUserLocation) {
+      setUserLocation(initialUserLocation);
+    }
+  }, [initialUserLocation]);
 
   // Get user location
   const getUserLocation = useCallback(async () => {
@@ -101,43 +129,78 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
         setLoading(true);
         setError(null);
         
-        // Try to get user location
-        const location = await getUserLocation();
-        
-        if (location) {
-          // Set initial region to user location with appropriate zoom
-          const newRegion = {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            latitudeDelta: 0.1, // Zoomed in to show local area
-            longitudeDelta: 0.1,
+        let determinedLocation: Coordinates | null = null;
+        let regionToSet: Region | null = null;
+
+        /* ---- 1) Try initialUserLocation first if provided ---- */
+        if (initialUserLocation) {
+          determinedLocation = initialUserLocation;
+          regionToSet = {
+            latitude: initialUserLocation.latitude,
+            longitude: initialUserLocation.longitude,
+            latitudeDelta: 0.5,
+            longitudeDelta: 0.5,
           };
-          
-          setInitialRegion(newRegion);
-        } else {
-          // Default to US center if no location available
-          console.log('No location available, defaulting to US center');
-          setInitialRegion({
+        }
+
+        /* ---- 2) Try live GPS if no initialUserLocation or it's null ---- */
+        if (!determinedLocation) {
+          const location = await getUserLocation();
+          if (location) {
+            determinedLocation = location;
+            regionToSet = {
+              latitude: location.latitude,
+              longitude: location.longitude,
+              latitudeDelta: 0.5,
+              longitudeDelta: 0.5,
+            };
+          }
+        }
+
+        /* ---- 3) Fallback to profile ZIP if still no location ---- */
+        if (!determinedLocation && user?.homeZipCode) {
+          const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+          if (zipData) {
+            determinedLocation = zipData.coordinates;
+            regionToSet = {
+              latitude: zipData.coordinates.latitude,
+              longitude: zipData.coordinates.longitude,
+              latitudeDelta: 2,
+              longitudeDelta: 2,
+            };
+          }
+        }
+
+        /* ---- 4) Final fallback – US center if no location could be determined ---- */
+        if (!determinedLocation || !regionToSet) {
+          console.warn('No coordinates available, falling back to US center.');
+          determinedLocation = { latitude: 39.8283, longitude: -98.5795 };
+          regionToSet = {
             latitude: 39.8283,
             longitude: -98.5795,
-            latitudeDelta: 40, // Zoomed out to show most of US
+            latitudeDelta: 40,
             longitudeDelta: 40,
-          });
-          
-          // Set error if we couldn't get user location and don't have a ZIP code
-          if (!user || !user.homeZipCode) {
-            setError('Could not determine your location. Please set your home ZIP code in your profile.');
-          }
+          };
+        }
+
+        setUserLocation(determinedLocation);
+        setInitialRegion(regionToSet);
+        setCurrentRegion(regionToSet);
+        
+        // Set error if we couldn't get user location and don't have a ZIP code
+        if (!user || !user.homeZipCode) {
+          setError('Could not determine your location. Please set your home ZIP code in your profile.');
         }
       } catch (error) {
         console.error('Error setting up initial region:', error);
-        // Default to US center if error
-        setInitialRegion({
+        const defaultRegion = {
           latitude: 39.8283,
           longitude: -98.5795,
           latitudeDelta: 40,
           longitudeDelta: 40,
-        });
+        };
+        setInitialRegion(defaultRegion);
+        setCurrentRegion(defaultRegion);
         setError('Error determining your location. Please try again later.');
       } finally {
         setLoading(false);
@@ -145,7 +208,7 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     };
 
     setupInitialRegion();
-  }, [getUserLocation, user]);
+  }, [getUserLocation, user, initialUserLocation]);
 
   // Fetch shows based on location or ZIP code
   const fetchShows = useCallback(async (isRefreshing = false) => {
@@ -233,7 +296,13 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
 
   // Handle filter changes
   const handleFilterChange = (newFilters: ShowFilters) => {
-    setFilters(newFilters);
+    if (onFilterChange) {
+      // If parent is managing filters, call the callback
+      onFilterChange(newFilters);
+    } else {
+      // Otherwise, update local state
+      setLocalFilters(newFilters);
+    }
     setFilterVisible(false);
     // Fetch shows with new filters
     fetchShows();
@@ -241,22 +310,27 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
 
   // Reset filters to defaults
   const resetFilters = () => {
-    const defaultFilters: ShowFilters = {
-      radius: 25,
-      startDate: new Date(),
-      endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-      maxEntryFee: undefined,
-      features: [],
-      categories: [],
-    };
-    
-    setFilters(defaultFilters);
+    if (onFilterChange) {
+      onFilterChange(defaultFilters);
+    } else {
+      setLocalFilters(defaultFilters);
+    }
+    // Fetch data with default filters
     fetchShows();
   };
 
-  // Navigate to show detail
+  // Navigate to show detail or call provided callback
   const handleShowPress = (showId: string) => {
-    navigation.navigate('ShowDetail', { showId });
+    if (onShowPress) {
+      onShowPress(showId);
+    } else {
+      navigation.navigate('ShowDetail', { showId });
+    }
+  };
+
+  // Handle region change from the map - this only updates the map's visible area, not trigger data fetch
+  const handleRegionChangeComplete = (region: Region) => {
+    setCurrentRegion(region);
   };
 
   // Center map on user location
@@ -269,12 +343,18 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
       
       if (location && mapRef.current) {
         // Animate to user location
-        mapRef.current.animateToRegion({
+        const newRegion = {
           latitude: location.latitude,
           longitude: location.longitude,
           latitudeDelta: 0.1,
           longitudeDelta: 0.1,
-        }, 1000);
+        };
+        
+        setCurrentRegion(newRegion);
+        
+        if (mapRef.current.animateToRegion) {
+          mapRef.current.animateToRegion(newRegion, 1000);
+        }
         
         console.log('Centered map on user location:', location);
       } else {
@@ -391,19 +471,37 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
         ) : (
           <>
             {initialRegion && (
-              <MapView
-                ref={mapRef}
-                style={styles.map}
-                provider={PROVIDER_GOOGLE}
-                initialRegion={initialRegion}
-                showsUserLocation
-                showsMyLocationButton={false}
-                showsCompass
-                showsScale
-                loadingEnabled
-              >
-                {renderMarkers()}
-              </MapView>
+              // Use MapShowCluster if available, otherwise fallback to standard MapView
+              mapRef.current && MapShowCluster ? (
+                <MapShowCluster
+                  ref={mapRef}
+                  shows={shows}
+                  onShowPress={handleShowPress}
+                  region={currentRegion || initialRegion}
+                  showsUserLocation={true}
+                  loadingEnabled={true}
+                  showsCompass={true}
+                  showsScale={true}
+                  provider="google"
+                  onRegionChangeComplete={handleRegionChangeComplete}
+                />
+              ) : (
+                <MapView
+                  ref={mapRef}
+                  style={styles.map}
+                  provider={PROVIDER_GOOGLE}
+                  initialRegion={initialRegion}
+                  region={currentRegion || undefined}
+                  showsUserLocation
+                  showsMyLocationButton={false}
+                  showsCompass
+                  showsScale
+                  loadingEnabled
+                  onRegionChangeComplete={handleRegionChangeComplete}
+                >
+                  {renderMarkers()}
+                </MapView>
+              )
             )}
 
             {/* Error Message */}

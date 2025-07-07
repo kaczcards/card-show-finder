@@ -1,0 +1,11 @@
+--- src/screens/Messages/DirectMessagesScreen.tsx
++++ src/screens/Messages/DirectMessagesScreen.tsx
+@@ -595,7 +595,7 @@
+           
+           <ScrollView style={styles.debugScroll}>
+             {debugInfo.map((log, index) => (
+-              <View key={index} style={styles.logItem}>
++              <View key={`${log.timestamp}-${index}`} style={styles.logItem}>
+                 <Text style={styles.logTitle}>
+                   {log.title} - {new Date(log.timestamp).toLocaleTimeString()}
+                 </Text>

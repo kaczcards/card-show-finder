@@ -40,7 +40,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.ATTENDEE);
 
   // Get auth context
-  const { register, error, clearError } = useAuth();
+  // FIX: Destructure authState from useAuth, then get error from authState
+  const { register, authState, clearError } = useAuth();
+  const { error } = authState; // Correctly access error from authState
 
   // Validate form
   const validateForm = () => {
@@ -157,7 +159,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Sign up to find card shows near you</Text>
 
-            {error ? (
+            {error ? ( // This now correctly accesses error from authState
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error}</Text>
               </View>

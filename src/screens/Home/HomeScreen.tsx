@@ -19,7 +19,10 @@ import * as locationService from '../../services/locationService';
 import { getShows } from '../../services/showService';
 import { useAuth } from '../../contexts/AuthContext';
 import FilterSheet from '../../components/FilterSheet';
-import { ShowFilters } from '../../types';
+import FilterChips from '../../components/FilterChips';
+import FilterPresetModal from '../../components/FilterPresetModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ShowFilters, Coordinates } from '../../types';
 
 // Constants
 const PRIMARY_COLOR = '#FF6A00'; // Orange
@@ -42,26 +45,73 @@ const stockImages = [
 // Always-safe fallback
 const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
 
-const HomeScreen = () => {
+// Define props interface for HomeScreen
+interface HomeScreenProps {
+  customFilters?: ShowFilters;
+  onFilterChange?: (filters: ShowFilters) => void;
+  onShowPress?: (showId: string) => void;
+  userLocation?: Coordinates | null;
+}
+
+const HomeScreen = ({ 
+  customFilters, 
+  onFilterChange, 
+  onShowPress,
+  userLocation: propUserLocation 
+}: HomeScreenProps = {}) => {
   const navigation = useNavigation();
   const { authState } = useAuth();
   const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [coordinates, setCoordinates] = useState(null);
-  const [error, setError] = useState(null);
-  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
   
   // Default filter values
-  const [filters, setFilters] = useState<ShowFilters>({
-    radius: 25, // Default 25 miles
+  const defaultFilters: ShowFilters = {
+    radius: 25,
     startDate: new Date(),
-    endDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default 30 days
+    endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     maxEntryFee: undefined,
     features: [],
     categories: [],
-  });
+  };
+
+  // Use customFilters if provided, otherwise use local state
+  const [localFilters, setLocalFilters] = useState<ShowFilters>(defaultFilters);
+  
+  // Derive actual filters to use - prefer customFilters if provided
+  const filters = customFilters || localFilters;
+  
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [presetModalVisible, setPresetModalVisible] = useState(false);
+
+  // Load persisted filters on mount - only if customFilters is not provided
+  useEffect(() => {
+    if (customFilters) return; // Skip if customFilters is provided
+    
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem('homeFilters');
+        if (stored) {
+          const parsed: ShowFilters = JSON.parse(stored);
+          setLocalFilters({ ...defaultFilters, ...parsed });
+        }
+      } catch (e) {
+        console.warn('Failed to load stored filters', e);
+      }
+    })();
+  }, [customFilters]);
+
+  // Persist filters whenever they change - only if customFilters is not provided
+  useEffect(() => {
+    if (customFilters) return; // Skip if customFilters is provided
+    
+    AsyncStorage.setItem('homeFilters', JSON.stringify(localFilters)).catch(() =>
+      console.warn('Failed to persist filters')
+    );
+  }, [localFilters, customFilters]);
 
   // Get stock image based on show index or ID to ensure consistency
   const getStockImage = (index: number, id?: string) => {
@@ -71,6 +121,13 @@ const HomeScreen = () => {
     const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return stockImages[hash % stockImages.length] || fallbackImage;
   };
+
+  // Set coordinates based on propUserLocation if provided
+  useEffect(() => {
+    if (propUserLocation) {
+      setCoordinates(propUserLocation);
+    }
+  }, [propUserLocation]);
 
   // Monitor app state changes to refresh data when app comes to foreground
   useEffect(() => {
@@ -111,7 +168,14 @@ const HomeScreen = () => {
       // Get coordinates from user's home zip code if we don't have them yet
       let currentCoords = coordinates;
       
-      if ((!currentCoords || !currentCoords.latitude) && authState.user && authState.user.homeZipCode) {
+      // First priority: Use coordinates from props if available
+      if (propUserLocation) {
+        console.log('Using coordinates from props');
+        currentCoords = propUserLocation;
+        setCoordinates(propUserLocation);
+      } 
+      // Second priority: Get coordinates from user's home zip code
+      else if ((!currentCoords || !currentCoords.latitude) && authState.user && authState.user.homeZipCode) {
         console.log(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         
         const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
@@ -175,9 +239,13 @@ const HomeScreen = () => {
     fetchData(true);
   };
 
-  // Navigate to show detail screen
+  // Navigate to show detail screen or use provided callback
   const handleShowPress = (showId) => {
-    navigation.navigate('ShowDetail', { showId });
+    if (onShowPress) {
+      onShowPress(showId);
+    } else {
+      navigation.navigate('ShowDetail', { showId });
+    }
   };
 
   // Open filter sheet
@@ -185,27 +253,82 @@ const HomeScreen = () => {
     setFilterSheetVisible(true);
   };
 
-  // Apply filters from filter sheet
+  // Apply filters callback
   const handleApplyFilters = (newFilters: ShowFilters) => {
-    setFilters(newFilters);
+    if (onFilterChange) {
+      // If parent is managing filters, call the callback
+      onFilterChange(newFilters);
+    } else {
+      // Otherwise, update local state
+      setLocalFilters(newFilters);
+    }
     setFilterSheetVisible(false);
-    // Fetch data with new filters
-    fetchData();
+    // Fetch data with new filters (will happen automatically via useEffect)
+  };
+
+  // Remove a single filter (chip press)
+  const handleRemoveFilter = (key: string, value?: string) => {
+    const updateFilters = (prev: ShowFilters) => {
+      const updated: ShowFilters = { ...prev };
+      switch (key) {
+        case 'radius':
+          updated.radius = defaultFilters.radius;
+          break;
+        case 'dateRange':
+          updated.startDate = defaultFilters.startDate;
+          updated.endDate = defaultFilters.endDate;
+          break;
+        case 'maxEntryFee':
+          delete updated.maxEntryFee;
+          break;
+        case 'category':
+          updated.categories = (updated.categories || []).filter((c) => c !== value);
+          break;
+        case 'feature':
+          updated.features = (updated.features || []).filter((f) => f !== value);
+          break;
+        default:
+          break;
+      }
+      return updated;
+    };
+
+    if (onFilterChange) {
+      // If parent is managing filters, call the callback with updated filters
+      onFilterChange(updateFilters(filters));
+    } else {
+      // Otherwise, update local state
+      setLocalFilters(prev => updateFilters(prev));
+    }
   };
 
   // Reset filters to defaults
   const resetFilters = () => {
-    const defaultFilters: ShowFilters = {
-      radius: 25,
-      startDate: new Date(),
-      endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-      maxEntryFee: undefined,
-      features: [],
-      categories: [],
-    };
-    
-    setFilters(defaultFilters);
-    fetchData();
+    if (onFilterChange) {
+      onFilterChange(defaultFilters);
+    } else {
+      setLocalFilters(defaultFilters);
+    }
+    // Fetch data with default filters (will happen automatically via useEffect)
+  };
+
+  // Get active filter count
+  const activeFilterCount = () => {
+    let count = 0;
+    if (filters.radius !== defaultFilters.radius) count++;
+    if (
+      (filters.startDate &&
+        new Date(filters.startDate).toDateString() !==
+          new Date(defaultFilters.startDate!).toDateString()) ||
+      (filters.endDate &&
+        new Date(filters.endDate).toDateString() !==
+          new Date(defaultFilters.endDate!).toDateString())
+    )
+      count++;
+    if (filters.maxEntryFee !== undefined) count++;
+    if (filters.categories && filters.categories.length) count += filters.categories.length;
+    if (filters.features && filters.features.length) count += filters.features.length;
+    return count;
   };
 
   // Format date for display
@@ -257,115 +380,115 @@ const HomeScreen = () => {
     </TouchableOpacity>
   );
 
-  // Render active filters summary
-  const renderActiveFilters = () => {
-    const activeFilterCount = 
-      (filters.radius !== 25 ? 1 : 0) +
-      (filters.maxEntryFee !== undefined ? 1 : 0) +
-      (filters.features && filters.features.length > 0 ? 1 : 0) +
-      (filters.categories && filters.categories.length > 0 ? 1 : 0);
-    
-    if (activeFilterCount === 0) {
-      return null;
-    }
-    
-    return (
-      <View style={styles.activeFiltersContainer}>
-        <Text style={styles.activeFiltersText}>
-          {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} active
-        </Text>
-        <TouchableOpacity onPress={resetFilters}>
-          <Text style={styles.resetFiltersText}>Reset</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
   return (
-    <View style={styles.container}>
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Filter Options */}
-        <View style={styles.filterContainer}>
-          <View style={styles.filterOptions}>
-            <TouchableOpacity
-              style={[styles.filterButton, { backgroundColor: SECONDARY_COLOR }]}
-              onPress={handleFilterPress}
-            >
-              <Ionicons name="options" size={18} color="white" />
-              <Text style={styles.filterButtonText}>Filters</Text>
-            </TouchableOpacity>
-            
-            {/* Display distance filter */}
-            <View style={styles.activeFilterPill}>
-              <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
-              <Text style={styles.activeFilterText}>
-                {filters.radius} miles
-              </Text>
-            </View>
-            
-            {/* Display date range filter */}
-            <View style={styles.activeFilterPill}>
-              <Ionicons name="calendar" size={14} color={SECONDARY_COLOR} />
-              <Text style={styles.activeFilterText}>
-                Next {Math.round((new Date(filters.endDate).getTime() - new Date(filters.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
-              </Text>
-            </View>
-          </View>
-          
-          {renderActiveFilters()}
-        </View>
-
-        {/* Error Message */}
-        {error && (
-          <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={20} color="#D32F2F" />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        {/* Upcoming Shows Section */}
-        <View style={styles.showsContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Upcoming Shows</Text>
-            <Text style={styles.showCountText}>
-              {shows.length > 0 ? `${shows.length} found` : 'No shows found'}
-            </Text>
-          </View>
-
-          {loading ? (
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color={PRIMARY_COLOR} style={styles.loader} />
-              <Text style={styles.loaderText}>Loading shows...</Text>
-            </View>
-          ) : shows.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={50} color={SECONDARY_COLOR} />
-              <Text style={styles.emptyStateText}>No upcoming shows found</Text>
-              <Text style={styles.emptyStateSubtext}>Try adjusting your filters or expanding your search radius</Text>
-              <TouchableOpacity 
-                style={styles.resetFiltersButton}
-                onPress={resetFilters}
+    <>
+      <View style={styles.container}>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Filter Options */}
+          <View style={styles.filterContainer}>
+            <View style={styles.filterOptions}>
+              <TouchableOpacity
+                style={[styles.filterButton, { backgroundColor: SECONDARY_COLOR }]}
+                onPress={handleFilterPress}
               >
-                <Text style={styles.resetFiltersButtonText}>Reset Filters</Text>
+                <Ionicons name="options" size={18} color="white" />
+                <Text style={styles.filterButtonText}>Filters</Text>
+                {activeFilterCount() > 0 && (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>{activeFilterCount()}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
+
+              {/* Presets Button */}
+              <TouchableOpacity
+                style={[
+                  styles.filterButton,
+                  { backgroundColor: PRIMARY_COLOR, marginLeft: 10 },
+                ]}
+                onPress={() => setPresetModalVisible(true)}
+              >
+                <Ionicons name="star" size={18} color="white" />
+                <Text style={styles.filterButtonText}>Presets</Text>
+              </TouchableOpacity>
+              
+              {/* Display distance filter */}
+              <View style={styles.activeFilterPill}>
+                <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
+                <Text style={styles.activeFilterText}>
+                  {filters.radius} miles
+                </Text>
+              </View>
+              
+              {/* Display date range filter */}
+              <View style={styles.activeFilterPill}>
+                <Ionicons name="calendar" size={14} color={SECONDARY_COLOR} />
+                <Text style={styles.activeFilterText}>
+                  Next {Math.round((new Date(filters.endDate).getTime() - new Date(filters.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                </Text>
+              </View>
             </View>
-          ) : (
-            <FlatList
-              data={shows}
-              renderItem={renderShowItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              contentContainerStyle={styles.showsList}
+
+            {/* Active Filter Chips */}
+            <FilterChips
+              filters={filters}
+              onRemoveFilter={handleRemoveFilter}
+              style={{ marginTop: 10 }}
             />
+          </View>
+
+          {/* Error Message */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={20} color="#D32F2F" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
           )}
-        </View>
-      </ScrollView>
-      
+
+          {/* Upcoming Shows Section */}
+          <View style={styles.showsContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Upcoming Shows</Text>
+              <Text style={styles.showCountText}>
+                {shows.length > 0 ? `${shows.length} found` : 'No shows found'}
+              </Text>
+            </View>
+
+            {loading ? (
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color={PRIMARY_COLOR} style={styles.loader} />
+                <Text style={styles.loaderText}>Loading shows...</Text>
+              </View>
+            ) : shows.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="calendar-outline" size={50} color={SECONDARY_COLOR} />
+                <Text style={styles.emptyStateText}>No upcoming shows found</Text>
+                <Text style={styles.emptyStateSubtext}>Try adjusting your filters or expanding your search radius</Text>
+                <TouchableOpacity 
+                  style={styles.resetFiltersButton}
+                  onPress={resetFilters}
+                >
+                  <Text style={styles.resetFiltersButtonText}>Reset Filters</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <FlatList
+                data={shows}
+                renderItem={renderShowItem}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                contentContainerStyle={styles.showsList}
+              />
+            )}
+          </View>
+        </ScrollView>
+      </View>
+
       {/* Filter Sheet */}
       <FilterSheet
         visible={filterSheetVisible}
@@ -373,7 +496,23 @@ const HomeScreen = () => {
         filters={filters}
         onApplyFilters={handleApplyFilters}
       />
-    </View>
+      
+      {/* Preset Modal */}
+      <FilterPresetModal
+        visible={presetModalVisible}
+        onClose={() => setPresetModalVisible(false)}
+        currentFilters={filters}
+        onApplyPreset={(presetFilters) => {
+          if (onFilterChange) {
+            onFilterChange(presetFilters);
+          } else {
+            setLocalFilters(presetFilters);
+          }
+          setPresetModalVisible(false);
+        }}
+        userId={authState.user?.id || ''}
+      />
+    </>
   );
 };
 
@@ -404,6 +543,20 @@ const styles = StyleSheet.create({
     minWidth: 90,
     marginRight: 8,
     marginBottom: 8,
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 10,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  filterBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   filterButtonText: {
     color: 'white',
