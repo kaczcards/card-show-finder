@@ -54,13 +54,38 @@ type InfoRowProps = {
   children?: React.ReactNode;
 };
 
-/** Renders a consistent “icon + text” row */
-const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => (
-  <View style={styles.infoRow}>
-    <Ionicons name={icon} size={20} color="#666666" style={styles.infoIcon} />
-    {children ?? <Text style={styles.infoText}>{text}</Text>}
-  </View>
-);
+/** Renders a consistent "icon + text" row */
+const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
+  /* ----------------------------------------------------------------
+   * RN requires all strings to be wrapped in <Text>.  If a caller
+   * passes `children` as a bare string we wrap it proactively.
+   * ---------------------------------------------------------------- */
+  const renderContent = () => {
+    if (children === undefined || children === null) {
+      return <Text style={styles.infoText}>{text}</Text>;
+    }
+
+    // children exists – wrap if it's a primitive
+    if (typeof children === 'string' || typeof children === 'number') {
+      return <Text style={styles.infoText}>{children}</Text>;
+    }
+
+    // otherwise assume it's valid ReactNode(s)
+    return children;
+  };
+
+  return (
+    <View style={styles.infoRow}>
+      <Ionicons
+        name={icon}
+        size={20}
+        color="#666666"
+        style={styles.infoIcon}
+      />
+      {renderContent()}
+    </View>
+  );
+};
 
 /** Section header helper for consistent typography */
 const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -121,11 +146,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     
     console.log('User role in ShowDetailScreen:', user.role);
     const userRole = user.role as UserRole;
-    setIsShowOrganizer(userRole === UserRole.SHOW_ORGANIZER);
+    
+    // Explicitly check if the user has the SHOW_ORGANIZER role
+    const hasOrganizerRole = userRole === UserRole.SHOW_ORGANIZER;
+    console.log('Is user a show organizer?', hasOrganizerRole);
+    
+    setIsShowOrganizer(hasOrganizerRole);
     setIsMvpDealer(userRole === UserRole.MVP_DEALER);
     
     // In test mode, treat all authenticated users as organizers
     if (userRoleService.IS_TEST_MODE) {
+      console.log('Test mode enabled, treating user as organizer');
       setIsShowOrganizer(true);
     }
   }, [user]);
