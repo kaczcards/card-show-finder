@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
-import { signInWithEmail } from '../services/supabaseAuthService';
+import { signInWithEmailPassword } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/userRoleService';
 
 // Define the shape of our auth context
@@ -206,20 +206,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
     try {
-      // show spinner + clear previous error
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      // Call the slimmer email/password sign-in to capture raw result
-      const result = await signInWithEmail(credentials.email, credentials.password);
-
-      // Debug log so we can inspect exactly what the service returns
-      // eslint-disable-next-line no-console
-      console.log(
-        '[AuthContext] Result received from service:',
-        JSON.stringify(result, null, 2)
-      );
-
-      // Handle any error coming back from Supabase
+      
+      const result = await signInWithEmailPassword(credentials.email, credentials.password);
+      
+      // Now, we check the 'error' property on the 'result' object
       if (result.error) {
         setAuthState(prev => ({
           ...prev,
@@ -227,34 +218,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           error: result.error.message,
           isAuthenticated: false,
         }));
-        throw result.error;
+        throw new Error(result.error.message);
       }
-
-      // At this point we have a basic Supabase user – fetch full profile
+      
+      // If no error, proceed with getting user data
+      if (!result.user) {
+        throw new Error('Login failed - no user returned');
+      }
+      
       const userData = await supabaseAuthService.getCurrentUser(result.user.id);
+      
       if (!userData) {
         throw new Error('Failed to get user data after login');
       }
-
-      // success → hydrate state with enriched profile
+      
       setAuthState({
         user: userData,
         isLoading: false,
         error: null,
         isAuthenticated: true,
       });
-
+      
       return userData;
-    } catch (err: any) {
-      // ensure UI can display the message
+    } catch (error: any) {
+      console.error('Login error:', error);
+      
+      // Make sure error state is set if it came from somewhere else
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: err?.message || 'Failed to sign in',
+        error: error.message || 'Failed to sign in',
         isAuthenticated: false,
       }));
-      console.error('Login error:', err);
-      throw err;
+      
+      throw error;
     }
   };
   
