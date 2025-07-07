@@ -104,6 +104,33 @@ export const registerUser = async (
 };
 
 /**
+ * Direct sign in with email and password - returns object with user and error
+ * @param email User's email
+ * @param password User's password
+ * @returns Object with user and error properties
+ */
+export const signInWithEmail = async (email: string, password: string) => {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      // --> ADD THIS LINE <--
+      console.log("[supabaseAuthService] Error received from Supabase:", JSON.stringify(error, null, 2));
+      return { user: null, error: error };
+    }
+
+    return { user: data.user, error: null };
+  } catch (err: any) {
+    // --> AND ADD THIS LINE <--
+    console.log("[supabaseAuthService] Caught an unexpected error:", JSON.stringify(err, null, 2));
+    return { user: null, error: err };
+  }
+};
+
+/**
  * Sign in a user with email and password
  * @param credentials User's email and password
  * @returns Promise with the user data
@@ -112,35 +139,36 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
   try {
     const { email, password } = credentials;
 
-    // Sign in with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Use the new signInWithEmail function instead of calling Supabase directly
+    const result = await signInWithEmail(email, password);
+    
+    // --> ADD THIS LINE <--
+    console.log("[AuthContext] Result received from service:", JSON.stringify(result, null, 2));
 
-    if (authError) {
+    // Check if there was an error
+    if (result.error) {
       // Check for specific "Email not confirmed" error
-      if (authError.message?.toLowerCase().includes('email not confirmed')) {
+      if (result.error.message?.toLowerCase().includes('email not confirmed')) {
         throw new Error(
           'Your email address has not been verified. Please check your inbox for a verification email or use the "Resend verification" button.'
         );
       }
       
       // Check for invalid credentials error
-      if (authError.message?.toLowerCase().includes('invalid login credentials')) {
+      if (result.error.message?.toLowerCase().includes('invalid login credentials')) {
         throw new Error('Invalid email or password. Please check your credentials and try again.');
       }
       
-      throw authError;
+      throw result.error;
     }
 
-    if (!authData.user) throw new Error('Login failed');
+    if (!result.user) throw new Error('Login failed');
 
     // Get user profile from the profiles table
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', authData.user.id)
+      .eq('id', result.user.id)
       .single();
 
     if (profileError) throw profileError;
@@ -148,8 +176,8 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
 
     // Convert from Supabase format to our app's User format
     const userData: User = {
-      id: authData.user.id,
-      email: authData.user.email || '',
+      id: result.user.id,
+      email: result.user.email || '',
       firstName: profileData.first_name,
       lastName: profileData.last_name || undefined,
       homeZipCode: profileData.home_zip_code,
@@ -159,7 +187,7 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
       subscriptionExpiry: profileData.subscription_expiry,
       createdAt: profileData.created_at,
       updatedAt: profileData.updated_at,
-      isEmailVerified: authData.user.email_confirmed_at !== null,
+      isEmailVerified: result.user.email_confirmed_at !== null,
       favoriteShows: profileData.favorite_shows || [],
       attendedShows: profileData.attended_shows || [],
       phoneNumber: profileData.phone_number,
