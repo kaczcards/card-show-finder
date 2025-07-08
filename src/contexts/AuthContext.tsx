@@ -8,7 +8,7 @@ import { refreshUserSession } from '../services/userRoleService';
 // Define the shape of our auth context
 interface AuthContextType {
   authState: AuthState;
-  login: (credentials: AuthCredentials) => Promise<User>;
+  login: (credentials: AuthCredentials) => Promise<boolean>;
   register: (
     email: string,
     password: string,
@@ -192,12 +192,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
   
   // Login method
-  const login = async (credentials: AuthCredentials): Promise<User> => {
+  const login = async (credentials: AuthCredentials): Promise<boolean> => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
+      // Attempt to sign in with Supabase
       const userData = await supabaseAuthService.signInUser(credentials);
       
+      // Update auth state with the user data
       setAuthState({
         user: userData,
         isLoading: false,
@@ -205,15 +207,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: true,
       });
       
-      return userData;
+      return true; // Indicate success
     } catch (error: any) {
       console.error('Login error:', error);
+      
+      // Format the error message consistently
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in';
+      
+      // Update auth state with the error
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to sign in',
+        error: errorMessage,
         isAuthenticated: false,
       }));
+      
+      // Propagate the error to be handled by the login screen
       throw error;
     }
   };
