@@ -3,11 +3,20 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
+import { signInWithEmailPassword } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/userRoleService';
 
 // Define the shape of our auth context
 interface AuthContextType {
   authState: AuthState;
+  /**
+   * Convenience getters exposed alongside the full `authState`
+   * so that consuming components can access them directly without
+   * drilling into `authState`.
+   */
+  error: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
   login: (credentials: AuthCredentials) => Promise<User>;
   register: (
     email: string,
@@ -37,6 +46,9 @@ const defaultAuthState: AuthState = {
 // Create the context with default values
 const AuthContext = createContext<AuthContextType>({
   authState: defaultAuthState,
+  error: defaultAuthState.error,
+  isLoading: defaultAuthState.isLoading,
+  isAuthenticated: defaultAuthState.isAuthenticated,
   login: async () => { throw new Error('AuthContext not initialized'); },
   register: async () => { throw new Error('AuthContext not initialized'); },
   logout: async () => { throw new Error('AuthContext not initialized'); },
@@ -193,28 +205,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
-    try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const userData = await supabaseAuthService.signInUser(credentials);
-      
-      setAuthState({
-        user: userData,
-        isLoading: false,
-        error: null,
-        isAuthenticated: true,
-      });
-      
-      return userData;
-    } catch (error: any) {
-      console.error('Login error:', error);
+    // 1. Immediately set the app to a "loading" state and clear old errors.
+    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+
+    // 2. Call the Supabase service to attempt the login.
+    const { data, error } = await supabaseAuthService.signInWithEmailPassword(
+      credentials.email,
+      credentials.password
+    );
+
+    // 3. Handle the response directly.
+    if (error) {
+      // FAILURE: If the service returns an error, update the state.
+      // Set the error message and turn off the loading indicator.
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to sign in',
-        isAuthenticated: false,
+        error: error.message,
+        isAuthenticated: false
       }));
-      throw error;
+      return Promise.reject(new Error(error.message));
+    } else if (data?.user) {
+      // SUCCESS: If the service returns a user, get their profile and update state.
+      const userData = await supabaseAuthService.getCurrentUser(data.user.id);
+      
+      if (userData) {
+        setAuthState({
+          user: userData,
+          isLoading: false,
+          error: null,
+          isAuthenticated: true
+        });
+        return userData;
+      } else {
+        // EDGE CASE: If we couldn't get the user profile data.
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: "Failed to get user profile data.",
+          isAuthenticated: false
+        }));
+        return Promise.reject(new Error("Failed to get user profile data."));
+      }
+    } else {
+      // EDGE CASE: If there's no error but also no user, handle it.
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: "An unexpected error occurred. Please try again.",
+        isAuthenticated: false
+      }));
+      return Promise.reject(new Error("An unexpected error occurred. Please try again."));
     }
   };
   
@@ -512,9 +553,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Context value
+  // Context value - ensuring error, isLoading, and isAuthenticated are always defined
   const contextValue: AuthContextType = {
     authState,
+    // Explicitly extract these properties from authState with fallbacks to ensure they're never undefined
+    error: authState?.error ?? null,
+    isLoading: authState?.isLoading ?? false,
+    isAuthenticated: authState?.isAuthenticated ?? false,
     login,
     register,
     logout,
