@@ -52,7 +52,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       if (message.toLowerCase().includes('verify') || message.toLowerCase().includes('confirmed')) {
         setVerificationRequired(true);
       } else {
-        // Display the error message, which is now properly handled
         Alert.alert('Login Failed', message || 'Please check your credentials and try again');
       }
     }
@@ -207,7 +206,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-// --- STYLES ---
 const BRAND_COLORS = {
   primaryBlue: '#007AFF',
   primaryOrange: '#FF6A00',
@@ -355,6 +353,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  // Removed miniLogo styles as they were redundant
 });
 
 export default LoginScreen;
