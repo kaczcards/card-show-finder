@@ -39,6 +39,11 @@ const stockImages = [
 // Always-safe fallback
 const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
 
+// Dedicated placeholder image for shows without an explicit image.
+// NOTE: this was previously pointing at `assets/stock/placeholder-show.png`
+// which does not exist.  The image now lives in `assets/images/`.
+const placeholderShowImage = require('../../../assets/images/placeholder-show.png');
+
 interface ShowDetailProps {
   route: any;
   navigation: any;
