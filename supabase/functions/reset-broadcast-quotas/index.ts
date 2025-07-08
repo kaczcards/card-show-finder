@@ -5,8 +5,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 interface Profile {
   id: string;
   role: string;
-  broadcast_message_count: number;
-  last_broadcast_reset_date: string | null;
+  /* new quota columns */
+  pre_show_broadcasts_remaining: number;
+  post_show_broadcasts_remaining: number;
 }
 
 interface ResetLogEntry {
@@ -19,9 +20,15 @@ interface ResetLogEntry {
 
 /**
  * This function resets the broadcast_message_count to 0 for all SHOW_ORGANIZER profiles
- * and updates their last_broadcast_reset_date to the current date.
- * 
- * It should be scheduled to run once per month using Supabase's scheduled functions.
+ * and sets their new per-show quotas:
+ *   • pre_show_broadcasts_remaining → 2
+ *   • post_show_broadcasts_remaining → 1
+ *
+ * Optional query param:
+ *   ?show_id=<uuid>  (or showId) → Only reset the organizer of that show.
+ *
+ * It can be invoked by a scheduled Edge Function (e.g. nightly) or
+ * manually after a specific show concludes.
  * 
  * To schedule this function:
  * 1. Deploy it with: supabase functions deploy reset-broadcast-quotas
@@ -62,6 +69,10 @@ serve(async (req: Request) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
+    // Extract optional show_id / showId query parameter
+    const reqUrl = new URL(req.url);
+    const showIdParam = reqUrl.searchParams.get("show_id") ?? reqUrl.searchParams.get("showId");
+
     // Create a log entry for this reset operation
     const now = new Date();
     const logEntry: ResetLogEntry = {
@@ -70,11 +81,54 @@ serve(async (req: Request) => {
       status: "success",
     };
     
-    // Get all profiles with SHOW_ORGANIZER role
-    const { data: profiles, error: fetchError } = await supabase
-      .from("profiles")
-      .select("id, role, broadcast_message_count, last_broadcast_reset_date")
-      .eq("role", "SHOW_ORGANIZER");
+    let profiles: Profile[] = [];
+    let fetchError: any = null;
+
+    if (showIdParam) {
+      /** Reset for a specific show's organizer **/
+      const { data: showData, error: showError } = await supabase
+        .from("shows")
+        .select("organizer_id")
+        .eq("id", showIdParam)
+        .single();
+
+      if (showError || !showData?.organizer_id) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Show not found or has no organizer",
+          }),
+          { status: 404, headers },
+        );
+      }
+
+      const { data: profileData, error: profileErr } = await supabase
+        .from("profiles")
+        .select("id, role, pre_show_broadcasts_remaining, post_show_broadcasts_remaining")
+        .eq("id", showData.organizer_id)
+        .single();
+
+      if (profileErr || !profileData) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Organizer profile not found",
+          }),
+          { status: 404, headers },
+        );
+      }
+
+      profiles = [profileData as Profile];
+    } else {
+      /** Reset for all organizers **/
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, role, pre_show_broadcasts_remaining, post_show_broadcasts_remaining")
+        .eq("role", "SHOW_ORGANIZER");
+
+      profiles = (data ?? []) as Profile[];
+      fetchError = error;
+    }
     
     if (fetchError) {
       logEntry.status = "failure";
@@ -111,8 +165,8 @@ serve(async (req: Request) => {
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
-          broadcast_message_count: 0,
-          last_broadcast_reset_date: now.toISOString(),
+          pre_show_broadcasts_remaining: 2,
+          post_show_broadcasts_remaining: 1,
         })
         .eq("id", profile.id);
       
