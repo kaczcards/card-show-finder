@@ -36,8 +36,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [isResending, setIsResending] = useState(false);
 
   // Get auth context
-  const { authState, login, clearError } = useAuth();
-  const { isLoading, error } = authState;
+  const { login, clearError, error, isLoading, isAuthenticated } = useAuth();
 
   // Handle login
   const handleLogin = async () => {
@@ -218,7 +217,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-// --- NEW STYLES ---
 const BRAND_COLORS = {
   primaryBlue: '#007AFF',
   primaryOrange: '#FF6A00',
