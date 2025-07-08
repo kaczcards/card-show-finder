@@ -4,8 +4,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 // Types for request and response
 interface BroadcastRequest {
   showId?: string;
+  seriesId?: string;
   message: string;
   recipients: ('attendees' | 'dealers')[];
+  broadcastType: 'pre_show' | 'post_show';
 }
 
 interface BroadcastResponse {
@@ -21,17 +23,17 @@ interface BroadcastResponse {
 interface Profile {
   id: string;
   role: string;
-  broadcast_message_count: number;
-  last_broadcast_reset_date: string | null;
+  broadcast_message_count?: number; // legacy – ignored
+  last_broadcast_reset_date?: string | null; // legacy – ignored
+  pre_show_broadcasts_remaining: number;
+  post_show_broadcasts_remaining: number;
 }
 
 interface Show {
   id: string;
   organizer_id: string;
+  series_id: string | null;
 }
-
-// Constants
-const MONTHLY_BROADCAST_LIMIT = 2; // Default limit for show organizers
 
 serve(async (req: Request) => {
   // CORS headers
@@ -90,7 +92,15 @@ serve(async (req: Request) => {
 
     // Parse request body
     const requestData: BroadcastRequest = await req.json();
-    const { showId, message, recipients } = requestData;
+    const { showId, seriesId: rawSeriesId, message, recipients, broadcastType } = requestData;
+
+    // Validate broadcastType
+    if (broadcastType !== 'pre_show' && broadcastType !== 'post_show') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'broadcastType must be "pre_show" or "post_show"' }),
+        { status: 400, headers },
+      );
+    }
 
     // Validate request data
     if (!message || message.trim().length === 0) {
@@ -117,7 +127,7 @@ serve(async (req: Request) => {
     // Verify user is a SHOW_ORGANIZER
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('id, role, broadcast_message_count, last_broadcast_reset_date')
+      .select('id, role, pre_show_broadcasts_remaining, post_show_broadcasts_remaining')
       .eq('id', user.id)
       .single();
 
@@ -136,11 +146,13 @@ serve(async (req: Request) => {
       );
     }
 
-    // If showId is provided, verify the organizer owns this show
+    // Derive seriesId if possible & verify ownership
+    let seriesId = rawSeriesId ?? null;
+
     if (showId) {
       const { data: showData, error: showError } = await supabaseAdmin
         .from('shows')
-        .select('id, organizer_id')
+        .select('id, organizer_id, series_id')
         .eq('id', showId)
         .single();
 
@@ -158,34 +170,26 @@ serve(async (req: Request) => {
           { status: 403, headers }
         );
       }
+
+      // populate seriesId from show if not explicitly supplied
+      if (!seriesId && show.series_id) {
+        seriesId = show.series_id;
+      }
     }
 
-    // Check and reset monthly broadcast quota if needed
-    let broadcastCount = profile.broadcast_message_count || 0;
-    const lastResetDate = profile.last_broadcast_reset_date ? new Date(profile.last_broadcast_reset_date) : null;
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Check quota for this broadcast type
+    const quotaRemaining =
+      broadcastType === 'pre_show'
+        ? profile.pre_show_broadcasts_remaining
+        : profile.post_show_broadcasts_remaining;
 
-    // Reset count if we're in a new month since the last reset
-    if (!lastResetDate || lastResetDate < monthStart) {
-      broadcastCount = 0;
-      await supabaseAdmin
-        .from('profiles')
-        .update({
-          last_broadcast_reset_date: now.toISOString(),
-          broadcast_message_count: 0,
-        })
-        .eq('id', user.id);
-    }
-
-    // Check if the organizer has reached their monthly limit
-    if (broadcastCount >= MONTHLY_BROADCAST_LIMIT) {
+    if (quotaRemaining <= 0) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `You have reached your monthly broadcast limit of ${MONTHLY_BROADCAST_LIMIT} messages`,
+          error: `You have no remaining ${broadcastType.replace('_', '-')} broadcasts`,
         }),
-        { status: 429, headers }
+        { status: 429, headers },
       );
     }
 
@@ -197,6 +201,8 @@ serve(async (req: Request) => {
           organizer_id: user.id,
           show_id: showId || null,
           message_content: message,
+          series_id: seriesId,
+          broadcast_type: broadcastType,
           recipients: recipients,
           sent_at: now.toISOString(),
         },
@@ -211,12 +217,15 @@ serve(async (req: Request) => {
       );
     }
 
-    // Increment the broadcast count
+    // Decrement the appropriate quota field
+    const quotaField =
+      broadcastType === 'pre_show'
+        ? 'pre_show_broadcasts_remaining'
+        : 'post_show_broadcasts_remaining';
+
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({
-        broadcast_message_count: broadcastCount + 1,
-      })
+      .update({ [quotaField]: quotaRemaining - 1 })
       .eq('id', user.id);
 
     if (updateError) {
