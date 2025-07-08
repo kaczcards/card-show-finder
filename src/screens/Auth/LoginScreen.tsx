@@ -40,18 +40,29 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   // Handle login
   const handleLogin = async () => {
+    // Basic validation
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
       return;
     }
 
     try {
+      // Attempt to log in – login() will throw if it fails.
+      // Successful navigation is handled automatically by the
+      // AuthContext listener once a valid session is detected.
       await login({ email, password });
     } catch (err: any) {
+      // Extract a human-readable message from the caught error
       const message = err?.message || '';
-      if (message.toLowerCase().includes('verify') || message.toLowerCase().includes('confirmed')) {
+
+      // Special handling when the account exists but email is unverified
+      if (
+        message.toLowerCase().includes('verify') ||
+        message.toLowerCase().includes('confirmed')
+      ) {
         setVerificationRequired(true);
       } else {
+        // Display the error message, which is now properly handled
         Alert.alert('Login Failed', message || 'Please check your credentials and try again');
       }
     }
