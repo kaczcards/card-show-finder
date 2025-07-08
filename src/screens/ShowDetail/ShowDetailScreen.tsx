@@ -21,6 +21,12 @@ import { UserRole } from '../../types';
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
 
+/* ------------------------------------------------------------------ */
+/* Local assets                                                        */
+/* ------------------------------------------------------------------ */
+// Default placeholder shown when a show has no custom image
+const placeholderShowImage = require('../../../assets/stock/placeholder-show.png');
+
 interface ShowDetailProps {
   route: any;
   navigation: any;
@@ -544,10 +550,8 @@ const toggleFavorite = async () => {
       {show.image ? (
         <Image source={{ uri: show.image }} style={styles.image} />
       ) : (
-        <View style={styles.imagePlaceholder}>
-          <Ionicons name="card" size={60} color="#CCCCCC" />
-          <Text style={styles.placeholderText}>No Image Available</Text>
-        </View>
+        // Use branded placeholder image for consistency with list view
+        <Image source={placeholderShowImage} style={styles.image} resizeMode="cover" />
       )}
       
       {/* Header Actions */}
@@ -614,8 +618,13 @@ const toggleFavorite = async () => {
         {show.entry_fee && (
           <View style={styles.infoRow}>
             <Ionicons name="cash" size={20} color="#666666" style={styles.infoIcon} />
+            {/* Wrap template literal in braces so it returns a single string */}
             <Text style={styles.infoText}>
-              `Entry Fee: ${typeof show.entry_fee === "number" ? `$${show.entry_fee.toFixed(2)}` : show.entry_fee}`
+              {`Entry Fee: ${
+                typeof show.entry_fee === 'number'
+                  ? `$${show.entry_fee.toFixed(2)}`
+                  : show.entry_fee
+              }`}
             </Text>
           </View>
         )}

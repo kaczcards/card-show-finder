@@ -249,9 +249,10 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 12,
+    // Enlarged splash/logo for better visual impact on welcome page
+    width: 150,
+    height: 150,
+    marginBottom: 16,
   },
   appName: {
     fontSize: 26,
