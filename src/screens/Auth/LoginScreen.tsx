@@ -48,13 +48,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
-      // Attempt to log in – login() will throw if it fails
-      const success = await login({ email, password });
-      /* 
-        If login succeeds, the AuthContext listener will detect the auth
-        change and navigate the user to the appropriate screen.
-        We don’t need anything else here.
-      */
+      // Attempt to log in – login() will throw if it fails.
+      // Successful navigation is handled automatically by the
+      // AuthContext listener once a valid session is detected.
+      await login({ email, password });
     } catch (err: any) {
       // Extract a human-readable message from the caught error
       const message = err?.message || '';
