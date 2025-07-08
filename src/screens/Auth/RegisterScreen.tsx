@@ -341,8 +341,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Mini logo at bottom */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -381,17 +379,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#FF6A00',
-  },
-
-  /* ----------  Mini-logo (bottom) ---------- */
-  miniLogoContainer: {
-    alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 10,
-  },
-  miniLogo: {
-    width: 60,
-    height: 60,
   },
   formContainer: {
     width: '100%',

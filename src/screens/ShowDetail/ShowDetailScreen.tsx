@@ -16,32 +16,11 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
-import * as showService from '../../services/showService';
 import { UserRole } from '../../types';
 
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
 
-// Stock images for show items (same as HomeScreen)
-const stockImages = [
-  require('../../../assets/stock/home_show_01.jpg'),
-  require('../../../assets/stock/home_show_02.jpg'),
-  require('../../../assets/stock/home_show_03.jpg'),
-  require('../../../assets/stock/home_show_04.jpg'),
-  require('../../../assets/stock/home_show_05.jpg'),
-  require('../../../assets/stock/home_show_06.jpg'),
-  require('../../../assets/stock/home_show_07.jpg'),
-  require('../../../assets/stock/home_show_08.jpg'),
-  require('../../../assets/stock/home_show_09.jpg'),
-  require('../../../assets/stock/home_show_10.jpg'),
-];
-
-// Always-safe fallback
-const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
-
-// Dedicated placeholder image for shows without an explicit image.
-// NOTE: this was previously pointing at `assets/stock/placeholder-show.png`
-// which does not exist.  The image now lives in `assets/images/`.
 const placeholderShowImage = require('../../../assets/images/placeholder-show.png');
 
 interface ShowDetailProps {
@@ -140,10 +119,6 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   // State for all participating dealers (formerly mvpDealers)
   const [participatingDealers, setParticipatingDealers] = useState<any[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
-
-  // State for show claiming functionality
-  const [isShowClaimed, setIsShowClaimed] = useState(false);
-  const [isClaimingShow, setIsClaimingShow] = useState(false);
 
   /* ---------- Dealer-detail modal state ---------- */
   const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
@@ -530,49 +505,6 @@ const toggleFavorite = async () => {
   }
 };
 
-const handleClaimShow = async () => {
-  try {
-    if (!user) {
-      Alert.alert('Authentication Required', 'You must be logged in as a Show Organizer to claim this show.');
-      return;
-    }
-
-    setIsClaimingShow(true);
-    
-    // Call API to claim the show
-    const result = await showService.claimShow(showId, user.id);
-    
-    if (result.success) {
-      // Update local state to reflect claimed status
-      setShow(prev => ({
-        ...prev,
-        claimed: true,
-        claimed_by: user.id
-      }));
-      
-      setIsShowClaimed(true);
-      
-      // Show success message
-      Alert.alert(
-        'Show Claimed',
-        'You are now the organizer of this show. You can edit show details and manage dealers.',
-        [{ text: 'OK' }]
-      );
-    } else {
-      throw new Error(result.message || 'Failed to claim show');
-    }
-  } catch (error) {
-    console.error('Error claiming show:', error);
-    Alert.alert(
-      'Error',
-      'There was a problem claiming this show. Please try again.',
-      [{ text: 'OK' }]
-    );
-  } finally {
-    setIsClaimingShow(false);
-  }
-};
-
   const shareShow = async () => {
     try {
       if (!show) return;
@@ -777,35 +709,6 @@ const handleClaimShow = async () => {
   return (
     <ScrollView style={styles.container}>
       {/* Show Image */}
-      <View style={styles.imageContainer}>
-        {imageLoading && (
-          <ActivityIndicator
-            size="large"
-            color="#FF6A00"
-            style={[StyleSheet.absoluteFill, styles.imageLoader]}
-          />
-        )}
-        <Image
-          source={(() => {
-            // Get image URI from show data (try all possible property names)
-            const imageUri = show.image_url || show.imageUrl || show.image || null;
-            
-            // If we have a valid image URI and no error, use it
-            if (imageUri && !imageError) {
-              return { uri: imageUri };
-            }
-            
-            // Otherwise use a stock image based on show ID for consistency
-            return getStockImage(show.id);
-          })()}
-          style={styles.image}
-          resizeMode="cover"
-          onLoadStart={() => setImageLoading(true)}
-          onLoadEnd={() => setImageLoading(false)}
-          onError={handleImageError}
-          defaultSource={fallbackImage} // Fallback while loading
-        />
-      </View>
       
       {/* Header Actions */}
       <View style={styles.actionsContainer}>
@@ -838,7 +741,7 @@ const handleClaimShow = async () => {
         </TouchableOpacity>
         
         {/* Broadcast Message button for organizers */}
-        {(isShowOrganizer || isMvpDealer) && (
+        {(isCurrentUserOrganizer || isMvpDealer) && (
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setShowBroadcastModal(true)}
@@ -883,14 +786,37 @@ const handleClaimShow = async () => {
         />
         
         {show.entry_fee && (
-          <InfoRow icon="cash">
-            <Text style={styles.infoText}>
-              Entry Fee:{' '}
-              {typeof show.entry_fee === 'number'
-                ? `$${show.entry_fee.toFixed(2)}`
-                : show.entry_fee}
             </Text>
           </InfoRow>
+        )}
+        
+        {/* Show Claim Button for Show Organizers */}
+        {isShowOrganizer && !isCurrentUserOrganizer && !show.organizer_id && (
+          <TouchableOpacity
+            style={styles.claimShowButton}
+            onPress={handleClaimShow}
+            disabled={isClaimingShow}
+          >
+            {isClaimingShow ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="flag" size={20} color="#FFFFFF" style={styles.claimButtonIcon} />
+                <Text style={styles.claimButtonText}>Claim This Show</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+        
+        {/* Edit Show Button for the organizer of this show */}
+        {isCurrentUserOrganizer && (
+          <TouchableOpacity
+            style={styles.editShowButton}
+            onPress={navigateToEditShow}
+          >
+            <Ionicons name="create" size={20} color="#FFFFFF" style={styles.claimButtonIcon} />
+            <Text style={styles.claimButtonText}>Edit Show Details</Text>
+          </TouchableOpacity>
         )}
         
         {show.organizer_id && show.profiles && (
@@ -1131,6 +1057,36 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     flex: 1,
+  },
+  claimShowButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF6A00',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  editShowButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0057B8',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  claimButtonIcon: {
+    marginRight: 8,
+  },
+  claimButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   organizerContainer: {
     marginTop: 16,
