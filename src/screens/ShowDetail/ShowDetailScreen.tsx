@@ -22,7 +22,21 @@ import { UserRole } from '../../types';
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
 
-// Fallback stock image (same asset used in HomeScreen)
+// Stock images for show items (same as HomeScreen)
+const stockImages = [
+  require('../../../assets/stock/home_show_01.jpg'),
+  require('../../../assets/stock/home_show_02.jpg'),
+  require('../../../assets/stock/home_show_03.jpg'),
+  require('../../../assets/stock/home_show_04.jpg'),
+  require('../../../assets/stock/home_show_05.jpg'),
+  require('../../../assets/stock/home_show_06.jpg'),
+  require('../../../assets/stock/home_show_07.jpg'),
+  require('../../../assets/stock/home_show_08.jpg'),
+  require('../../../assets/stock/home_show_09.jpg'),
+  require('../../../assets/stock/home_show_10.jpg'),
+];
+
+// Always-safe fallback
 const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
 
 interface ShowDetailProps {
@@ -135,6 +149,34 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   /* ---------- Image loading / error state ---------- */
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [imageRetryCount, setImageRetryCount] = useState(0);
+
+  /**
+   * Get a consistent stock image based on show ID or index
+   * This uses the same logic as HomeScreen for consistency
+   */
+  const getStockImage = (id?: string, index: number = 0) => {
+    if (!id) return stockImages[index % stockImages.length];
+    
+    // Use a hash-like approach to consistently map show IDs to images
+    const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return stockImages[hash % stockImages.length] || fallbackImage;
+  };
+
+  /**
+   * Retry loading the image when it fails
+   */
+  const handleImageError = () => {
+    // Only retry a few times to avoid infinite loop
+    if (imageRetryCount < 2) {
+      setImageRetryCount(prev => prev + 1);
+      setImageError(false);
+      setImageLoading(true);
+    } else {
+      setImageError(true);
+      setImageLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -730,32 +772,35 @@ const handleClaimShow = async () => {
   return (
     <ScrollView style={styles.container}>
       {/* Show Image */}
-      {(() => {
-        const showImageUri =
-          show.image_url || show.imageUrl || show.image || null;
-
-        const resolvedSource =
-          imageError || !showImageUri ? fallbackImage : { uri: showImageUri };
-
-        return (
-          <View style={styles.imagePlaceholder}>
-            {imageLoading && (
-              <ActivityIndicator
-                size="large"
-                color="#FF6A00"
-                style={StyleSheet.absoluteFill}
-              />
-            )}
-            <Image
-              source={resolvedSource}
-              style={styles.image}
-              resizeMode="cover"
-              onError={() => setImageError(true)}
-              onLoadEnd={() => setImageLoading(false)}
-            />
-          </View>
-        );
-      })()}
+      <View style={styles.imageContainer}>
+        {imageLoading && (
+          <ActivityIndicator
+            size="large"
+            color="#FF6A00"
+            style={[StyleSheet.absoluteFill, styles.imageLoader]}
+          />
+        )}
+        <Image
+          source={(() => {
+            // Get image URI from show data (try all possible property names)
+            const imageUri = show.image_url || show.imageUrl || show.image || null;
+            
+            // If we have a valid image URI and no error, use it
+            if (imageUri && !imageError) {
+              return { uri: imageUri };
+            }
+            
+            // Otherwise use a stock image based on show ID for consistency
+            return getStockImage(show.id);
+          })()}
+          style={styles.image}
+          resizeMode="cover"
+          onLoadStart={() => setImageLoading(true)}
+          onLoadEnd={() => setImageLoading(false)}
+          onError={handleImageError}
+          defaultSource={fallbackImage} // Fallback while loading
+        />
+      </View>
       
       {/* Header Actions */}
       <View style={styles.actionsContainer}>
@@ -1030,21 +1075,20 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  image: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  imagePlaceholder: {
+  imageContainer: {
     width: '100%',
     height: 200,
     backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    position: 'relative',
   },
-  placeholderText: {
-    marginTop: 10,
-    color: '#999999',
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageLoader: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    zIndex: 1,
   },
   actionsContainer: {
     flexDirection: 'row',
