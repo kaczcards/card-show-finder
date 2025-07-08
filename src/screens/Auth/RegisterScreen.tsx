@@ -343,13 +343,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           {/* Mini logo at bottom */}
-          <View style={styles.miniLogoContainer}>
-            <Image
-              source={require('../../../assets/splash-icon.png')}
-              style={styles.miniLogo}
-              resizeMode="contain"
-            />
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -372,10 +365,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 50,
     marginTop: 20,
+    /* ---------- Drop-shadow for the logo ---------- */
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 150,
+    height: 150,
     marginBottom: 10,
   },
   appName: {
