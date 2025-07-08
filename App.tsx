@@ -47,14 +47,19 @@ export default function App() {
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: theme.colors.background.default,
+        /* Ensure the splash covers the entire viewport on all devices */
+        width: '100%',
+        height: '100%',
       }}>
         <ActivityIndicator
-          size="large"
+          /* Bigger spinner for better visibility on high-res screens */
+          size={64}
           color={theme.colors.primary.main}
         />
         <Text style={{
           marginTop: theme.spacing.spacing.medium,
-          fontSize: theme.typography.fontSize.body,
+          /* Slightly larger start-up text for improved readability */
+          fontSize: theme.typography.fontSize.body * 1.25,
           color: theme.colors.text.secondary,
         }}>
           Starting up...
