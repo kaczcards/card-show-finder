@@ -16,6 +16,7 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
+import * as organizerService from '../../services/organizerService';
 import { UserRole } from '../../types';
 
 import GroupMessageComposer from '../../components/GroupMessageComposer';
@@ -25,7 +26,7 @@ import DealerDetailModal from '../../components/DealerDetailModal';
 /* Local assets                                                        */
 /* ------------------------------------------------------------------ */
 // Default placeholder shown when a show has no custom image
-const placeholderShowImage = require('../../../assets/stock/placeholder-show.png');
+const placeholderShowImage = require('../../../assets/images/placeholder-show.png');
 
 interface ShowDetailProps {
   route: any;
@@ -76,6 +77,11 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   // State for all participating dealers (formerly mvpDealers)
   const [participatingDealers, setParticipatingDealers] = useState<any[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
+
+  // State for show claiming
+  const [canClaimShow, setCanClaimShow] = useState(false);
+  const [isClaimingShow, setIsClaimingShow] = useState(false);
+  const [isCurrentUserOrganizer, setIsCurrentUserOrganizer] = useState(false);
 
   /* ---------- Dealer-detail modal state ---------- */
   const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
@@ -422,6 +428,44 @@ const toggleFavorite = async () => {
     Alert.alert('Error', 'An unexpected error occurred while updating favorites.');
   }
 };
+  /**
+   * Handles claiming a show as an organizer
+   */
+  const handleClaimShow = async () => {
+    if (!user || !isShowOrganizer) {
+      Alert.alert('Permission Denied', 'You must be a Show Organizer to claim this show.');
+      return;
+    }
+
+    try {
+      setIsClaimingShow(true);
+      
+      const { success, error } = await organizerService.claimShow(showId, user.id);
+      
+      if (success) {
+        Alert.alert(
+          'Success!', 
+          'You have successfully claimed this show. You can now manage it and respond to reviews.',
+          [{ text: 'OK', onPress: () => fetchShowDetails() }]
+        );
+      } else {
+        Alert.alert('Error', error || 'Failed to claim show. Please try again later.');
+      }
+    } catch (error: any) {
+      console.error('Error claiming show:', error);
+      Alert.alert('Error', 'An unexpected error occurred while claiming the show.');
+    } finally {
+      setIsClaimingShow(false);
+    }
+  };
+
+  /**
+   * Navigates to the edit show screen
+   */
+  const navigateToEditShow = () => {
+    navigation.navigate('EditShow', { showId });
+  };
+
   const shareShow = async () => {
     try {
       if (!show) return;
@@ -585,7 +629,7 @@ const toggleFavorite = async () => {
         </TouchableOpacity>
         
         {/* Broadcast Message button for organizers */}
-        {(isShowOrganizer || isMvpDealer) && (
+        {(isCurrentUserOrganizer || isMvpDealer) && (
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setShowBroadcastModal(true)}
@@ -627,6 +671,35 @@ const toggleFavorite = async () => {
               }`}
             </Text>
           </View>
+        )}
+        
+        {/* Show Claim Button for Show Organizers */}
+        {isShowOrganizer && !isCurrentUserOrganizer && !show.organizer_id && (
+          <TouchableOpacity
+            style={styles.claimShowButton}
+            onPress={handleClaimShow}
+            disabled={isClaimingShow}
+          >
+            {isClaimingShow ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="flag" size={20} color="#FFFFFF" style={styles.claimButtonIcon} />
+                <Text style={styles.claimButtonText}>Claim This Show</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+        
+        {/* Edit Show Button for the organizer of this show */}
+        {isCurrentUserOrganizer && (
+          <TouchableOpacity
+            style={styles.editShowButton}
+            onPress={navigateToEditShow}
+          >
+            <Ionicons name="create" size={20} color="#FFFFFF" style={styles.claimButtonIcon} />
+            <Text style={styles.claimButtonText}>Edit Show Details</Text>
+          </TouchableOpacity>
         )}
         
         {show.organizer_id && show.profiles && (
@@ -815,6 +888,36 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     flex: 1,
+  },
+  claimShowButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF6A00',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  editShowButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0057B8',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  claimButtonIcon: {
+    marginRight: 8,
+  },
+  claimButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   organizerContainer: {
     marginTop: 16,
