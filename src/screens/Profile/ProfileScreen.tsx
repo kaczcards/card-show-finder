@@ -190,13 +190,22 @@ const ProfileScreen: React.FC = () => {
   // Check if user is a dealer (using current user directly)
   const isDealer = () => {
     if (!user) return false;
-    return (
+    const dealerLike =
       user.role === UserRole.DEALER ||
       user.role === UserRole.MVP_DEALER ||
       user.role === UserRole.SHOW_ORGANIZER ||
       user.accountType === 'dealer' ||
-      user.accountType === 'organizer'
-    );
+      user.accountType === 'organizer';
+
+    /* Debug logging to diagnose access-control issues */
+    console.debug('[ProfileScreen] isDealer check', {
+      userId: user.id,
+      role: user.role,
+      accountType: user.accountType,
+      isDealer: dealerLike,
+    });
+
+    return dealerLike;
   };
   
   // Get role display name
