@@ -48,8 +48,8 @@ module.exports = {
   newArchEnabled: true,
   scheme: "cardshowfinder",
   splash: {
-    image: "./assets/splash-icon.png",
-    resizeMode: "contain",
+    image: "./assets/splash.jpg",
+    resizeMode: "cover",
     backgroundColor: "#ffffff"
   },
   ios: {
