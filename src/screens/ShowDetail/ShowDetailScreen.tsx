@@ -16,16 +16,11 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
-import * as organizerService from '../../services/organizerService';
 import { UserRole } from '../../types';
 
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
 
-/* ------------------------------------------------------------------ */
-/* Local assets                                                        */
-/* ------------------------------------------------------------------ */
-// Default placeholder shown when a show has no custom image
 const placeholderShowImage = require('../../../assets/images/placeholder-show.png');
 
 interface ShowDetailProps {
@@ -47,6 +42,53 @@ const directSupabase = createClient(directSupabaseUrl, directSupabaseKey, {
     persistSession: true,
   },
 });
+
+/* -------------------------------------------------------------------------- */
+/* Utility presentation components (kept local to avoid extra files)          */
+/* -------------------------------------------------------------------------- */
+type InfoRowProps = {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  text?: string;
+  children?: React.ReactNode;
+};
+
+/** Renders a consistent "icon + text" row */
+const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
+  /* ----------------------------------------------------------------
+   * RN requires all strings to be wrapped in <Text>.  If a caller
+   * passes `children` as a bare string we wrap it proactively.
+   * ---------------------------------------------------------------- */
+  const renderContent = () => {
+    if (children === undefined || children === null) {
+      return <Text style={styles.infoText}>{text}</Text>;
+    }
+
+    // children exists – wrap if it's a primitive
+    if (typeof children === 'string' || typeof children === 'number') {
+      return <Text style={styles.infoText}>{children}</Text>;
+    }
+
+    // otherwise assume it's valid ReactNode(s)
+    return children;
+  };
+
+  return (
+    <View style={styles.infoRow}>
+      <Ionicons
+        name={icon}
+        size={20}
+        color="#666666"
+        style={styles.infoIcon}
+      />
+      {renderContent()}
+    </View>
+  );
+};
+
+/** Section header helper for consistent typography */
+const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Text style={styles.sectionTitle}>{children}</Text>
+);
 
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
@@ -78,16 +120,43 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [participatingDealers, setParticipatingDealers] = useState<any[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
 
-  // State for show claiming
-  const [canClaimShow, setCanClaimShow] = useState(false);
-  const [isClaimingShow, setIsClaimingShow] = useState(false);
-  const [isCurrentUserOrganizer, setIsCurrentUserOrganizer] = useState(false);
-
   /* ---------- Dealer-detail modal state ---------- */
   const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(
     null
   );
+
+  /* ---------- Image loading / error state ---------- */
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const [imageRetryCount, setImageRetryCount] = useState(0);
+
+  /**
+   * Get a consistent stock image based on show ID or index
+   * This uses the same logic as HomeScreen for consistency
+   */
+  const getStockImage = (id?: string, index: number = 0) => {
+    if (!id) return stockImages[index % stockImages.length];
+    
+    // Use a hash-like approach to consistently map show IDs to images
+    const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return stockImages[hash % stockImages.length] || fallbackImage;
+  };
+
+  /**
+   * Retry loading the image when it fails
+   */
+  const handleImageError = () => {
+    // Only retry a few times to avoid infinite loop
+    if (imageRetryCount < 2) {
+      setImageRetryCount(prev => prev + 1);
+      setImageError(false);
+      setImageLoading(true);
+    } else {
+      setImageError(true);
+      setImageLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -99,11 +168,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     
     console.log('User role in ShowDetailScreen:', user.role);
     const userRole = user.role as UserRole;
-    setIsShowOrganizer(userRole === UserRole.SHOW_ORGANIZER);
+    
+    // Explicitly check if the user has the SHOW_ORGANIZER role
+    const hasOrganizerRole = userRole === UserRole.SHOW_ORGANIZER;
+    console.log('Is user a show organizer?', hasOrganizerRole);
+    
+    setIsShowOrganizer(hasOrganizerRole);
     setIsMvpDealer(userRole === UserRole.MVP_DEALER);
     
     // In test mode, treat all authenticated users as organizers
     if (userRoleService.IS_TEST_MODE) {
+      console.log('Test mode enabled, treating user as organizer');
       setIsShowOrganizer(true);
     }
   }, [user]);
@@ -151,6 +226,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         }
 
         setShow(data);
+        setIsShowClaimed(!!data.claimed);
 
         // Update navigation title
         navigation.setOptions({
@@ -428,43 +504,6 @@ const toggleFavorite = async () => {
     Alert.alert('Error', 'An unexpected error occurred while updating favorites.');
   }
 };
-  /**
-   * Handles claiming a show as an organizer
-   */
-  const handleClaimShow = async () => {
-    if (!user || !isShowOrganizer) {
-      Alert.alert('Permission Denied', 'You must be a Show Organizer to claim this show.');
-      return;
-    }
-
-    try {
-      setIsClaimingShow(true);
-      
-      const { success, error } = await organizerService.claimShow(showId, user.id);
-      
-      if (success) {
-        Alert.alert(
-          'Success!', 
-          'You have successfully claimed this show. You can now manage it and respond to reviews.',
-          [{ text: 'OK', onPress: () => fetchShowDetails() }]
-        );
-      } else {
-        Alert.alert('Error', error || 'Failed to claim show. Please try again later.');
-      }
-    } catch (error: any) {
-      console.error('Error claiming show:', error);
-      Alert.alert('Error', 'An unexpected error occurred while claiming the show.');
-    } finally {
-      setIsClaimingShow(false);
-    }
-  };
-
-  /**
-   * Navigates to the edit show screen
-   */
-  const navigateToEditShow = () => {
-    navigation.navigate('EditShow', { showId });
-  };
 
   const shareShow = async () => {
     try {
@@ -514,6 +553,85 @@ const toggleFavorite = async () => {
       console.error('Error formatting date:', e);
       return show.start_date || 'Date unavailable';
     }
+  };
+  
+  /* -------------------------------------------------------------- */
+  /* Helper: format a time string to 12-hour hh:mm                   */
+  /* -------------------------------------------------------------- */
+  const formatTime = (timeString?: string | null) => {
+    if (!timeString) return '';
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      console.error('Error formatting time:', e);
+      return timeString ?? '';
+    }
+  };
+  
+  /**
+   * Build a friendly start–end time string if the show includes hours.
+   * Accepts both snake_case (DB) and camelCase (sanity) variants.
+   */
+  const getFormattedShowHours = (show: any): string => {
+    if (!show) return 'Time not specified';
+
+    const start =
+      show.start_time ??
+      show.startTime ??
+      show.time ?? // legacy single-field fallback
+      null;
+    const end = show.end_time ?? show.endTime ?? null;
+
+    if (start && end && start !== end) {
+      return `${formatTime(start)} - ${formatTime(end)}`;
+    }
+
+    if (start) return formatTime(start);
+    if (end) return formatTime(end);
+    
+    // Try to extract time from description as a last resort
+    if (show.description) {
+      return extractTimeFromDescription(show.description) || 'Time not specified';
+    }
+    
+    return 'Time not specified';
+  };
+  
+  /**
+   * Attempts to extract time information from the show description
+   * using common patterns like "10am-4pm" or "10:00 AM to 5:00 PM"
+   */
+  const extractTimeFromDescription = (description: string): string | null => {
+    if (!description) return null;
+    
+    // Common time patterns:
+    // 1. 10am-4pm, 10 am - 4 pm
+    // 2. 10:00 AM to 5:00 PM, 10:00AM-5:00PM
+    // 3. 10 to 4, 10-4
+    
+    // Look for time patterns with AM/PM
+    const timePattern1 = /(\d{1,2})(:\d{2})?\s*(am|pm|AM|PM)\s*[-–—to]\s*(\d{1,2})(:\d{2})?\s*(am|pm|AM|PM)/;
+    const match1 = description.match(timePattern1);
+    if (match1) {
+      return `${match1[1]}${match1[2] || ''}${match1[3].toLowerCase()} - ${match1[4]}${match1[5] || ''}${match1[6].toLowerCase()}`;
+    }
+    
+    // Look for simple hour ranges (10-4)
+    const timePattern2 = /\b(\d{1,2})\s*[-–—to]\s*(\d{1,2})(\s*[ap]m)?\b/i;
+    const match2 = description.match(timePattern2);
+    if (match2) {
+      if (match2[3]) {
+        // Has am/pm suffix
+        return `${match2[1]}${match2[3].toLowerCase()} - ${match2[2]}${match2[3].toLowerCase()}`;
+      } else {
+        // No am/pm, assume it's like "10-4" meaning "10am-4pm"
+        return `${match2[1]}am - ${match2[2]}pm`;
+      }
+    }
+    
+    // No time pattern found
+    return null;
   };
   
   const openMapLocation = () => {
@@ -591,12 +709,6 @@ const toggleFavorite = async () => {
   return (
     <ScrollView style={styles.container}>
       {/* Show Image */}
-      {show.image ? (
-        <Image source={{ uri: show.image }} style={styles.image} />
-      ) : (
-        // Use branded placeholder image for consistency with list view
-        <Image source={placeholderShowImage} style={styles.image} resizeMode="cover" />
-      )}
       
       {/* Header Actions */}
       <View style={styles.actionsContainer}>
@@ -644,33 +756,38 @@ const toggleFavorite = async () => {
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{show.title}</Text>
         
-        <View style={styles.infoRow}>
-          <Ionicons name="calendar" size={20} color="#666666" style={styles.infoIcon} />
-          <Text style={styles.infoText}>{formatShowDate(show)}</Text>
+        <InfoRow icon="calendar" text={formatShowDate(show)} />
+        
+        {/* ------- Show Times Section ------- */}
+        <View style={styles.timeContainer}>
+          <SectionHeader>Show Hours</SectionHeader>
+          {/* Use the getFormattedShowHours function to display times */}
+          <Text style={styles.timeText}>
+            {getFormattedShowHours(show)}
+          </Text>
+
+          {/* Per-day hours handling (optional array) */}
+          {Array.isArray(show.show_days || show.showDays) &&
+            (show.show_days || show.showDays).map((day: any, idx: number) => (
+              <View key={idx} style={styles.dayTimeRow}>
+                <Text style={styles.dayText}>{day.date || `Day ${idx + 1}`}:</Text>
+                <Text style={styles.timeText}>
+                  {day.start_time || day.startTime ? formatTime(day.start_time || day.startTime) : ''}
+                  {(day.start_time || day.startTime) && (day.end_time || day.endTime) ? ' - ' : ''}
+                  {day.end_time || day.endTime ? formatTime(day.end_time || day.endTime) : ''}
+                </Text>
+              </View>
+            ))}
         </View>
         
-        <View style={styles.infoRow}>
-          <Ionicons name="time" size={20} color="#666666" style={styles.infoIcon} />
-          <Text style={styles.infoText}>{show.time || 'Time not specified'}</Text>
-        </View>
-        
-        <View style={styles.infoRow}>
-          <Ionicons name="location" size={20} color="#666666" style={styles.infoIcon} />
-          <Text style={styles.infoText}>{show.address || show.location || 'Location not specified'}</Text>
-        </View>
+        <InfoRow
+          icon="location"
+          text={show.address || show.location || 'Location not specified'}
+        />
         
         {show.entry_fee && (
-          <View style={styles.infoRow}>
-            <Ionicons name="cash" size={20} color="#666666" style={styles.infoIcon} />
-            {/* Wrap template literal in braces so it returns a single string */}
-            <Text style={styles.infoText}>
-              {`Entry Fee: ${
-                typeof show.entry_fee === 'number'
-                  ? `$${show.entry_fee.toFixed(2)}`
-                  : show.entry_fee
-              }`}
             </Text>
-          </View>
+          </InfoRow>
         )}
         
         {/* Show Claim Button for Show Organizers */}
@@ -704,7 +821,7 @@ const toggleFavorite = async () => {
         
         {show.organizer_id && show.profiles && (
           <View style={styles.organizerContainer}>
-            <Text style={styles.sectionTitle}>Organized by:</Text>
+            <SectionHeader>Organized by:</SectionHeader>
             <View style={styles.organizer}>
               {show.profiles.avatar_url ? (
                 <Image source={{ uri: show.profiles.avatar_url }} style={styles.organizerAvatar} />
@@ -723,13 +840,66 @@ const toggleFavorite = async () => {
         )}
         
         <View style={styles.descriptionContainer}>
-          <Text style={styles.sectionTitle}>About this show</Text>
+          <SectionHeader>About this show</SectionHeader>
           <Text style={styles.description}>{show.description || 'No description available'}</Text>
         </View>
 
+        {/* Show Claiming Section for Show Organizers */}
+        {isShowOrganizer && (
+          <View style={styles.claimContainer}>
+            {isShowClaimed && show.claimed_by === user?.id ? (
+              <View>
+                <View style={styles.claimedBadge}>
+                  <Text style={styles.claimedText}>You manage this show</Text>
+                </View>
+                <View style={styles.managementSection}>
+                  <Text style={styles.sectionTitle}>Show Management</Text>
+                  
+                  <TouchableOpacity 
+                    style={styles.managementButton}
+                    onPress={() => navigation.navigate('EditShow', { showId })}
+                  >
+                    <Text style={styles.buttonText}>Edit Show Details</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.managementButton}
+                    onPress={() => navigation.navigate('ManageDealers', { showId })}
+                  >
+                    <Text style={styles.buttonText}>Manage Dealers</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.managementButton}
+                    onPress={() => navigation.navigate('ShowAnalytics', { showId })}
+                  >
+                    <Text style={styles.buttonText}>View Analytics</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : !isShowClaimed ? (
+              <TouchableOpacity 
+                style={styles.claimButton}
+                onPress={handleClaimShow}
+                disabled={isClaimingShow}
+              >
+                {isClaimingShow ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.claimButtonText}>Claim This Show</Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.alreadyClaimedText}>
+                This show has already been claimed by another organizer.
+              </Text>
+            )}
+          </View>
+        )}
+
         {/* ---------------- Participating Dealers Section ---------------- */}        
         <View style={styles.mvpDealersContainer}> {/* Renamed for clarity, but keeping styling */}
-          <Text style={styles.sectionTitle}>Participating Dealers</Text> {/* Updated title */}
+          <SectionHeader>Participating Dealers</SectionHeader>
           {loadingDealers ? (
             <View style={styles.loadingDealersContainer}>
               <ActivityIndicator size="small" color="#FF6A00" />
@@ -836,21 +1006,20 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  image: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  imagePlaceholder: {
+  imageContainer: {
     width: '100%',
     height: 200,
     backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    position: 'relative',
   },
-  placeholderText: {
-    marginTop: 10,
-    color: '#999999',
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageLoader: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    zIndex: 1,
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -966,6 +1135,32 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
+  /* ----------  Show Time section styles ---------- */
+  timeContainer: {
+    marginVertical: 10,
+    padding: 15,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+  },
+  timeText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  noTimeText: {
+    fontSize: 16,
+    color: '#888',
+    fontStyle: 'italic',
+  },
+  dayTimeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 4,
+  },
+  dayText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
   /* ----------  Participating Dealers styles ---------- */
   mvpDealersContainer: { // Keeping old name for now, but semantically it's now all participating dealers
     marginTop: 24,
@@ -1031,6 +1226,60 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: '#666666',
+  },
+
+  /* ----------  Show Claiming styles ---------- */
+  claimContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#f5f9ff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e9f7',
+  },
+  claimButton: {
+    backgroundColor: '#4a90e2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  claimButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  claimedBadge: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginBottom: 16,
+  },
+  claimedText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  alreadyClaimedText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  managementSection: {
+    marginTop: 16,
+  },
+  managementButton: {
+    backgroundColor: '#2c3e50',
+    padding: 12,
+    borderRadius: 6,
+    marginVertical: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
 
