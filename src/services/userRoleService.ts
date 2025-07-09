@@ -16,11 +16,17 @@ export enum UserRole {
  *   globalThis.CSF_IS_TEST_MODE = true
  * during e2e / unit tests.
  */
-export let IS_TEST_MODE = false;
+// NOTE: changing this to **const** prevents runtime overrides in production.
+export const IS_TEST_MODE = false;
 
 // ---- Small helper to allow runtime toggling (used by tests) ----
-export const __setTestMode = (enabled: boolean) => {
-  IS_TEST_MODE = enabled;
+// In production builds this is a no-op to guarantee IS_TEST_MODE stays false.
+// Unit tests can mock the module to override this constant if needed.
+export const __setTestMode = (_enabled: boolean) => {
+  /* eslint-disable no-console */
+  console.warn(
+    '[userRoleService] __setTestMode is disabled in production – IS_TEST_MODE remains false'
+  );
 };
 
 /* ------------------------------------------------------------------
