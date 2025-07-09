@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Marker, Callout, Region } from 'react-native-maps';
-import ClusteredMapView from 'react-native-maps-super-cluster';
+// Use our patched version that renames deprecated lifecycle methods
+import FixedClusteredMapView from '../FixedClusteredMapView';
 import { Show, Coordinates } from '../../types';
 
 interface MapShowClusterProps {
@@ -138,7 +139,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
   );
 
   return (
-    <ClusteredMapView
+    <FixedClusteredMapView
       ref={ref}
       style={styles.map}
       data={validShows}
