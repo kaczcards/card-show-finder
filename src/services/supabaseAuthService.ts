@@ -1,6 +1,8 @@
 // src/services/supabaseAuthService.ts
 import { supabase } from '../supabase';
 import { User, UserRole, AuthCredentials, AuthState } from '../types';
+import NetInfo from '@react-native-community/netinfo';
+import { isSupabaseInitialized } from '../supabase';
 
 /**
  * Register a new user with email and password
@@ -21,6 +23,20 @@ export const registerUser = async (
   role: UserRole = UserRole.ATTENDEE
 ): Promise<User> => {
   try {
+    /* ---- Preconditions -------------------------------------------------- */
+    // 1) Supabase properly initialised?
+    if (!isSupabaseInitialized()) {
+      throw new Error(
+        'Supabase client not initialised – please check your environment variables (EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY).'
+      );
+    }
+
+    // 2) Device has network connectivity?
+    const netState = await NetInfo.fetch();
+    if (!netState.isConnected) {
+      throw new Error('No internet connection. Please connect to the internet and try again.');
+    }
+
     // Register user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -61,8 +77,52 @@ export const registerUser = async (
 
     return userData;
   } catch (error: any) {
+    /* ---- Enhanced error mapping ---------------------------------------- */
+    const rawMessage = error?.message || '';
+
+    // Duplicate user (already registered)
+    if (
+      rawMessage.toLowerCase().includes('user already registered') ||
+      rawMessage.toLowerCase().includes('already exists') ||
+      error?.status === 409 || // Supabase may respond with 409
+      error?.code === '23505'   // postgres unique violation
+    ) {
+      console.warn('Attempted to register an already-existing user.');
+      throw new Error('An account with this email already exists. Please sign in instead.');
+    }
+
+    // Network / fetch failures
+    if (rawMessage.toLowerCase().includes('network request failed')) {
+      throw new Error(
+        'Unable to reach authentication server. Please check your internet connection and try again.'
+      );
+    }
+
     console.error('Error registering user via Supabase signUp:', error);
-    throw new Error(error.message || 'Failed to register user');
+    throw new Error(rawMessage || 'Failed to register user');
+  }
+};
+
+/**
+ * Direct sign in with email and password - returns object with user and error
+ * @param email User's email
+ * @param password User's password
+ * @returns Object with user and error properties
+ */
+export const signInWithEmailPassword = async (email: string, password: string) => {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      return { user: null, error };
+    }
+
+    return { user: data.user, error: null };
+  } catch (err: any) {
+    return { user: null, error: err };
   }
 };
 
@@ -75,29 +135,36 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
   try {
     const { email, password } = credentials;
 
-    // Sign in with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Use the helper that returns `{ user, error }`
+    const result = await signInWithEmailPassword(email, password);
+    
+    // --> ADD THIS LINE <--
+    console.log("[AuthContext] Result received from service:", JSON.stringify(result, null, 2));
 
-    if (authError) {
+    // Check if there was an error
+    if (result.error) {
       // Check for specific "Email not confirmed" error
-      if (authError.message?.toLowerCase().includes('email not confirmed')) {
+      if (result.error.message?.toLowerCase().includes('email not confirmed')) {
         throw new Error(
           'Your email address has not been verified. Please check your inbox for a verification email or use the "Resend verification" button.'
         );
       }
-      throw authError;
+      
+      // Check for invalid credentials error
+      if (result.error.message?.toLowerCase().includes('invalid login credentials')) {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
+      }
+      
+      throw result.error;
     }
 
-    if (!authData.user) throw new Error('Login failed');
+    if (!result.user) throw new Error('Login failed');
 
     // Get user profile from the profiles table
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', authData.user.id)
+      .eq('id', result.user.id)
       .single();
 
     if (profileError) throw profileError;
@@ -105,8 +172,8 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
 
     // Convert from Supabase format to our app's User format
     const userData: User = {
-      id: authData.user.id,
-      email: authData.user.email || '',
+      id: result.user.id,
+      email: result.user.email || '',
       firstName: profileData.first_name,
       lastName: profileData.last_name || undefined,
       homeZipCode: profileData.home_zip_code,
@@ -116,7 +183,7 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
       subscriptionExpiry: profileData.subscription_expiry,
       createdAt: profileData.created_at,
       updatedAt: profileData.updated_at,
-      isEmailVerified: authData.user.email_confirmed_at !== null,
+      isEmailVerified: result.user.email_confirmed_at !== null,
       favoriteShows: profileData.favorite_shows || [],
       attendedShows: profileData.attended_shows || [],
       phoneNumber: profileData.phone_number,
