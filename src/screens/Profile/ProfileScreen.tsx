@@ -19,7 +19,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { UserRole, Badge } from '../../types';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as badgeService from '../../services/badgeService';
-import { supabase } from '../../supabase'; // ✅ DB access for favourite count
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
@@ -32,6 +31,9 @@ const ProfileScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   // session refresh loading
   const [isRefreshingRole, setIsRefreshingRole] = useState(false);
+  // Admin status
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(false);
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -50,31 +52,6 @@ const ProfileScreen: React.FC = () => {
     percent: number;
   } | null>(null);
 
-  /* ------------------------------------------------------------------ */
-  /* Favourite-shows count (authoritative DB lookup)                     */
-  /* ------------------------------------------------------------------ */
-  const [favoriteCount, setFavoriteCount] = useState<number>(0);
-
-  const fetchFavoriteCount = async () => {
-    if (!user?.id) return;
-    try {
-      const { count, error } = await supabase
-        .from('user_favorite_shows')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('[ProfileScreen] Failed to fetch favorite count', error);
-        return;
-      }
-
-      if (typeof count === 'number') {
-        setFavoriteCount(count);
-      }
-    } catch (err) {
-      console.error('[ProfileScreen] Unexpected error fetching favorite count', err);
-    }
-  };
 
   // Load user badges when the screen comes into focus
   useEffect(() => {
@@ -273,6 +250,11 @@ const ProfileScreen: React.FC = () => {
   // Navigate to Badges screen
   const navigateToBadges = () => {
     navigation.navigate('Badges' as never);
+  };
+
+  // Navigate to Admin Map screen
+  const navigateToAdminMap = () => {
+    navigation.navigate('Admin' as never, { screen: 'AdminMap' } as never);
   };
 
   // Retry loading badges if there was an error
@@ -598,6 +580,23 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Actions</Text>
           
+          {/* Admin Tools (visible only for admin users) */}
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={navigateToAdminMap}
+            >
+              <Ionicons name="construct-outline" size={20} color="#007AFF" />
+              <Text style={styles.actionButtonText}>Admin: Coordinate Validation</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#ccc"
+                style={styles.actionButtonIcon}
+              />
+            </TouchableOpacity>
+          )}
+
           {/* Dealer Show Participation (visible only for dealer-tier roles) */}
           {isDealer() && (
             <TouchableOpacity
