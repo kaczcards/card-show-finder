@@ -20,6 +20,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster from '../../components/MapShowCluster/index';
+import * as locationService from '../../services/locationService';
+import { getShows } from '../../services/showService';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -47,6 +49,9 @@ const MapScreen: React.FC<MapScreenProps> = ({
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [shows, setShows] = useState<Show[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Default filters
   const defaultFilters: ShowFilters = {
@@ -302,36 +307,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
     fetchShows(true);
   }, [fetchShows]);
 
-  // Fetch shows when filters or userLocation changes
-  useEffect(() => {
-    const fetchShows = async () => {
-      if (!userLocation) return;
-      
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Combine location with other filters
-        const showFilters: ShowFilters = {
-          ...filters,
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-        };
-        
-        const showsData = await getShows(showFilters);
-        setShows(showsData);
-      } catch (err: any) {
-        console.error('Error fetching shows:', err);
-        setError(err.message || 'Failed to fetch shows');
-        setShows([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchShows();
-  }, [filters, userLocation]);
-
   // Handle filter changes
   const handleFilterChange = (newFilters: ShowFilters) => {
     if (onFilterChange) {
@@ -493,6 +468,39 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {initialRegion ? (
+          <View style={styles.mapContainer}>
+            <MapView
+              ref={mapRef}
+              provider={PROVIDER_GOOGLE}
+              style={styles.map}
+              initialRegion={initialRegion}
+              showsUserLocation
+              showsMyLocationButton={false}
+              onRegionChangeComplete={handleRegionChangeComplete}
+            >
+              {renderMarkers()}
+            </MapView>
+
+            {/* Show empty state when no shows are found */}
+            {shows.length === 0 && !loading && renderEmptyState()}
+
+            {/* Filter Button */}
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setFilterVisible(true)}
+            >
+              <Ionicons name="options" size={24} color="#007AFF" />
+              <Text style={styles.filterButtonText}>Filters</Text>
+            </TouchableOpacity>
+
+            {/* My Location Button */}
             <TouchableOpacity
               style={styles.myLocationButton}
               onPress={centerOnUserLocation}
@@ -528,7 +536,14 @@ const MapScreen: React.FC<MapScreenProps> = ({
                 <ActivityIndicator size="large" color="#007AFF" />
               </View>
             )}
-          </>
+          </View>
+        ) : (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>
+              Loading map...
+            </Text>
+          </View>
         )}
       </ScrollView>
 
@@ -552,6 +567,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  mapContainer: {
+    flex: 1,
+    height: height,
+    position: 'relative',
   },
   loadingContainer: {
     flex: 1,
@@ -596,6 +616,22 @@ const styles = StyleSheet.create({
     width,
     height,
   },
+  filterButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   filterInfoContainer: {
     position: 'absolute',
     top: 16,
@@ -617,14 +653,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     flex: 1,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e6f2ff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
   },
   filterButtonText: {
     color: '#007AFF',
@@ -681,28 +709,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '500',
-  },
-  errorContainer: {
-    position: 'absolute',
-    top: 70,
-    left: 16,
-    right: 16,
-    backgroundColor: '#FFEBEE',
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  errorText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#D32F2F',
-    marginLeft: 8,
   },
   emptyStateContainer: {
     position: 'absolute',
@@ -774,7 +780,7 @@ const styles = StyleSheet.create({
   },
 
   /* ------------------------------------------------------------------ */
-  /* Newly-added: container + text for “filters applied” banner         */
+  /* Newly-added: container + text for "filters applied" banner         */
   /* ------------------------------------------------------------------ */
   filtersAppliedContainer: {
     flexDirection: 'row',
