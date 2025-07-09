@@ -5,6 +5,9 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -12,12 +15,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getUserWantList,
+  createWantList,
+  updateWantList,
+  shareWantList,
 } from '../../services/collectionService';
 import { getUpcomingShows } from '../../services/showService';
-import { WantList, Show, UserRole } from '../../types';
-
-// UI components
-import WantListEditor from '../../components/WantListEditor';
 
 const CollectionScreen: React.FC = () => {
   // ===== Auth =====
@@ -25,7 +27,6 @@ const CollectionScreen: React.FC = () => {
     authState: { user },
   } = useAuth();
   const userId = user?.id ?? '';
-  const userRole = user?.role || UserRole.ATTENDEE;
 
   // ===== Want List State =====
   const [wantList, setWantList] = useState<WantList | null>(null);
@@ -35,9 +36,6 @@ const CollectionScreen: React.FC = () => {
   const [upcomingShows, setUpcomingShows] = useState<Show[]>([]);
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
 
-  /* ------------------------------------------------------------------
-   * Data Loading
-   * ------------------------------------------------------------------ */
   const loadWantList = async () => {
     if (!userId) return;
     setLoadingWantList(true);
@@ -83,25 +81,6 @@ const CollectionScreen: React.FC = () => {
     }, [userId])
   );
 
-  // Render different content based on user role
-  const renderContent = () => {
-    // Check if user is a dealer or show organizer
-    const isDealerOrOrganizer = 
-      userRole === UserRole.DEALER || 
-      userRole === UserRole.MVP_DEALER || 
-      userRole === UserRole.SHOW_ORGANIZER;
-
-    return (
-      <View style={styles.contentContainer}>
-        {isDealerOrOrganizer && (
-          <View style={styles.dealerBanner}>
-            <Text style={styles.dealerBannerText}>
-              As a {userRole === UserRole.SHOW_ORGANIZER ? 'Show Organizer' : 'Dealer'}, 
-              your want list is visible to other users at shows you're participating in.
-            </Text>
-          </View>
-        )}
-        
         <WantListEditor
           wantList={wantList}
           userId={userId}
@@ -110,8 +89,6 @@ const CollectionScreen: React.FC = () => {
           isLoading={loadingWantList || loadingShows}
         />
       </View>
-    );
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,8 +97,6 @@ const CollectionScreen: React.FC = () => {
         <Text style={styles.headerTitle}>My Want List</Text>
       </View>
 
-      {/* Content */}
-      {renderContent()}
     </SafeAreaView>
   );
 };
@@ -142,19 +117,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  contentContainer: {
-    flex: 1,
-  },
-  dealerBanner: {
-    backgroundColor: '#e6f2ff',
-    padding: 12,
-    margin: 16,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#0057B8',
-  },
-  dealerBannerText: {
-    fontSize: 14,
     color: '#333',
     lineHeight: 20,
   },

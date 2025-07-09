@@ -134,6 +134,66 @@ export const showSeriesService = {
   },
 
   /**
+   * Get standalone, unclaimed shows (no organizer and not part of a series)
+   * @param options Optional limit and sort direction
+   * @returns Array of unclaimed Show objects
+   */
+  async getUnclaimedShows(options?: {
+    limit?: number;
+    orderDirection?: 'asc' | 'desc';
+  }): Promise<Show[]> {
+    let query = supabase
+      .from('shows')
+      .select('*')
+      .is('organizer_id', null)
+      .is('series_id', null);
+
+    // Order by start_date (default ascending)
+    query = query.order('start_date', {
+      ascending: options?.orderDirection !== 'desc'
+    });
+
+    // Apply limit if provided
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching unclaimed shows:', error);
+      throw new Error(`Failed to fetch unclaimed shows: ${error.message}`);
+    }
+
+    // Map rows to Show interface
+    return data.map(show => ({
+      id: show.id,
+      seriesId: show.series_id,
+      title: show.title,
+      description: show.description,
+      location: show.location,
+      address: show.address,
+      startDate: show.start_date,
+      endDate: show.end_date,
+      entryFee: show.entry_fee,
+      imageUrl: show.image_url,
+      rating: show.rating,
+      coordinates: show.coordinates
+        ? {
+            latitude: show.coordinates.coordinates[1],
+            longitude: show.coordinates.coordinates[0],
+          }
+        : undefined,
+      status: show.status,
+      organizerId: show.organizer_id,
+      features: show.features,
+      categories: show.categories,
+      createdAt: show.created_at,
+      updatedAt: show.updated_at,
+    }));
+  },
+
+  /**
    * Get reviews for a specific show series
    * @param seriesId Show series ID
    * @returns Array of reviews

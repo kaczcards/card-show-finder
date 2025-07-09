@@ -843,8 +843,8 @@ const toggleFavorite = async () => {
           <Text style={styles.actionText}>Review</Text>
         </TouchableOpacity>
         
-        {/* Broadcast Message button for organizers */}
-        {(isCurrentUserOrganizer || isMvpDealer) && (
+        {/* Broadcast Message button for organizers only */}
+        {isCurrentUserOrganizer && (
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setShowBroadcastModal(true)}

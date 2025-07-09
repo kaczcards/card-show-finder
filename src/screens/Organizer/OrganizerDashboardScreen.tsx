@@ -1,312 +1,620 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
+  ActivityIndicator,
+  Alert,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
+import { showSeriesService } from '../../services/showSeriesService';
+import { supabase } from '../../supabase';
+import OrganizerShowsList from '../../components/OrganizerShowsList';
+import UnclaimedShowsList from '../../components/UnclaimedShowsList';
 
-// Tab type definition
+// Define the tab names
 type TabName = 'shows' | 'claim' | 'recurring' | 'reviews' | 'broadcast';
 
-const OrganizerDashboardScreen: React.FC = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabName>('shows');
+// Dashboard metrics interface
+interface DashboardMetrics {
+  totalShows: number;
+  upcomingShows: number;
+  totalReviews: number;
+  averageRating: number | null;
+  preShowBroadcastsRemaining: number;
+  postShowBroadcastsRemaining: number;
+}
 
+const OrganizerDashboardScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { authState } = useAuth();
+  const user = authState?.user;
+  
+  // State variables
+  const [activeTab, setActiveTab] = useState<TabName>('shows');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    totalShows: 0,
+    upcomingShows: 0,
+    totalReviews: 0,
+    averageRating: null,
+    preShowBroadcastsRemaining: 2, // Default values
+    postShowBroadcastsRemaining: 1  // Default values
+  });
+  
+  // Check if user is a show organizer
+  const isShowOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
+  
+  // Fetch dashboard metrics
+  const fetchDashboardMetrics = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Get series owned by this organizer
+      const mySeries = await showSeriesService.getAllShowSeries({ 
+        organizerId: user.id 
+      });
+      
+      // Get all shows in these series
+      let allShows = [];
+      let upcomingCount = 0;
+      const now = new Date();
+      
+      for (const series of mySeries) {
+        const showsInSeries = await showSeriesService.getShowsInSeries(series.id);
+        allShows = [...allShows, ...showsInSeries];
+        
+        // Count upcoming shows (start date is in the future)
+        upcomingCount += showsInSeries.filter(show => 
+          new Date(show.startDate) > now
+        ).length;
+      }
+      
+      // Get reviews for all series
+      let totalReviews = 0;
+      let ratingSum = 0;
+      
+      for (const series of mySeries) {
+        if (series.reviewCount) {
+          totalReviews += series.reviewCount;
+        }
+        
+        if (series.averageRating && series.reviewCount) {
+          ratingSum += series.averageRating * series.reviewCount;
+        }
+      }
+      
+      // Calculate overall average rating
+      const averageRating = totalReviews > 0 ? ratingSum / totalReviews : null;
+      
+      // Get broadcast quotas from user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('pre_show_broadcasts_remaining, post_show_broadcasts_remaining')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+      }
+      
+      // Update metrics
+      setMetrics({
+        totalShows: allShows.length,
+        upcomingShows: upcomingCount,
+        totalReviews,
+        averageRating,
+        preShowBroadcastsRemaining: profile?.pre_show_broadcasts_remaining ?? 2,
+        postShowBroadcastsRemaining: profile?.post_show_broadcasts_remaining ?? 1
+      });
+      
+    } catch (err) {
+      console.error('Error fetching dashboard metrics:', err);
+      setError('Failed to load dashboard metrics. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+  
+  // Initial data fetch
+  useEffect(() => {
+    if (isShowOrganizer) {
+      fetchDashboardMetrics();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isShowOrganizer, user?.id]);
+  
+  // Handle refresh
+  const refreshShows = () => {
+    setIsRefreshing(true);
+    fetchDashboardMetrics();
+  };
+
+  // Keep ScrollView pull-to-refresh compatible
+  const handleRefresh = refreshShows;
+
+  // Refresh metrics every time the screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isShowOrganizer) {
+        fetchDashboardMetrics();
+      }
+    }, [isShowOrganizer, user?.id])
+  );
+  
+  // Render metrics card
+  const renderMetricsCard = () => {
+    return (
+      <View style={styles.metricsCard}>
+        <Text style={styles.metricsTitle}>Dashboard Overview</Text>
+        
+        <View style={styles.metricsGrid}>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{metrics.totalShows}</Text>
+            <Text style={styles.metricLabel}>Total Shows</Text>
+          </View>
+          
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{metrics.upcomingShows}</Text>
+            <Text style={styles.metricLabel}>Upcoming</Text>
+          </View>
+          
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>
+              {metrics.averageRating !== null ? metrics.averageRating.toFixed(1) : '-'}
+            </Text>
+            <Text style={styles.metricLabel}>Avg Rating</Text>
+          </View>
+          
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{metrics.totalReviews}</Text>
+            <Text style={styles.metricLabel}>Reviews</Text>
+          </View>
+        </View>
+        
+        <View style={styles.quotaContainer}>
+          <View style={styles.quotaItem}>
+            <Ionicons name="megaphone-outline" size={16} color="#0057B8" style={styles.quotaIcon} />
+            <Text style={styles.quotaText}>
+              Pre-show broadcasts: <Text style={styles.quotaValue}>{metrics.preShowBroadcastsRemaining}</Text> remaining
+            </Text>
+          </View>
+          
+          <View style={styles.quotaItem}>
+            <Ionicons name="chatbubble-outline" size={16} color="#0057B8" style={styles.quotaIcon} />
+            <Text style={styles.quotaText}>
+              Post-show broadcasts: <Text style={styles.quotaValue}>{metrics.postShowBroadcastsRemaining}</Text> remaining
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
+  
   // Render tab content
   const renderTabContent = () => {
     switch (activeTab) {
       case 'shows':
         return (
-          <ScrollView style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>My Shows</Text>
-            <Text style={styles.description}>
-              This tab will display all shows you have claimed ownership of. You'll be able to:
-            </Text>
-            <View style={styles.featureList}>
-              <Text style={styles.featureItem}>• View all your claimed shows</Text>
-              <Text style={styles.featureItem}>• Edit show details</Text>
-              <Text style={styles.featureItem}>• Add extra information like parking details, table counts, etc.</Text>
-              <Text style={styles.featureItem}>• Monitor show attendance and reviews</Text>
-            </View>
-            <View style={styles.placeholderCard}>
-              <Text style={styles.placeholderText}>Show listings will appear here</Text>
-              <Ionicons name="calendar" size={48} color="#ccc" />
-            </View>
-          </ScrollView>
+          <OrganizerShowsList
+            organizerId={user?.id || ''}
+            onRefresh={refreshShows}
+            isRefreshing={isRefreshing}
+          />
         );
         
       case 'claim':
         return (
-          <ScrollView style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>Claim Shows</Text>
-            <Text style={styles.description}>
-              This tab will allow you to claim ownership of shows. Once claimed, you can:
-            </Text>
-            <View style={styles.featureList}>
-              <Text style={styles.featureItem}>• Respond to reviews</Text>
-              <Text style={styles.featureItem}>• Send broadcast messages to attendees and dealers</Text>
-              <Text style={styles.featureItem}>• Manage show details and extra information</Text>
-              <Text style={styles.featureItem}>• Create recurring series</Text>
-            </View>
-            <View style={styles.placeholderCard}>
-              <Text style={styles.placeholderText}>Show claim form will appear here</Text>
-              <Ionicons name="flag" size={48} color="#ccc" />
-            </View>
-          </ScrollView>
+          <UnclaimedShowsList
+            organizerId={user?.id || ''}
+            onRefresh={refreshShows}
+            isRefreshing={isRefreshing}
+            onClaimSuccess={refreshShows}
+          />
         );
         
       case 'recurring':
         return (
-          <ScrollView style={styles.tabContent}>
+          <View style={styles.tabContent}>
             <Text style={styles.sectionTitle}>Recurring Shows</Text>
-            <Text style={styles.description}>
-              This tab will help you manage recurring show series. You'll be able to:
+            <Text style={styles.sectionDescription}>
+              Manage your recurring show series and create new occurrences.
             </Text>
             <View style={styles.featureList}>
-              <Text style={styles.featureItem}>• Mark a show as a series parent</Text>
-              <Text style={styles.featureItem}>• Add child shows to the series</Text>
-              <Text style={styles.featureItem}>• Remove shows from a series</Text>
+              <Text style={styles.featureItem}>• View all your recurring show series</Text>
+              <Text style={styles.featureItem}>• Add new dates to existing series</Text>
+              <Text style={styles.featureItem}>• Edit or cancel specific occurrences</Text>
               <Text style={styles.featureItem}>• View aggregate reviews across all shows in a series</Text>
             </View>
-            <View style={styles.placeholderCard}>
-              <Text style={styles.placeholderText}>Series management tools will appear here</Text>
-              <Ionicons name="repeat" size={48} color="#ccc" />
-            </View>
-          </ScrollView>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => Alert.alert('Coming Soon', 'This feature is under development.')}
+            >
+              <Ionicons name="calendar" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>Manage Recurring Shows</Text>
+            </TouchableOpacity>
+          </View>
         );
         
       case 'reviews':
         return (
-          <ScrollView style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>Manage Reviews</Text>
-            <Text style={styles.description}>
+          <View style={styles.tabContent}>
+            <Text style={styles.sectionTitle}>Reviews</Text>
+            <Text style={styles.sectionDescription}>
               This tab will allow you to respond to reviews of your shows. You'll be able to:
             </Text>
             <View style={styles.featureList}>
               <Text style={styles.featureItem}>• View all reviews for your shows</Text>
               <Text style={styles.featureItem}>• Respond to reviews with official comments</Text>
-              <Text style={styles.featureItem}>• Edit or remove your responses</Text>
-              <Text style={styles.featureItem}>• Track review metrics and trends</Text>
+              <Text style={styles.featureItem}>• Track your average rating over time</Text>
             </View>
-            <View style={styles.placeholderCard}>
-              <Text style={styles.placeholderText}>Reviews will appear here</Text>
-              <Ionicons name="star" size={48} color="#ccc" />
-            </View>
-          </ScrollView>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => Alert.alert('Coming Soon', 'This feature is under development.')}
+            >
+              <Ionicons name="star" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>View All Reviews</Text>
+            </TouchableOpacity>
+          </View>
         );
         
       case 'broadcast':
         return (
-          <ScrollView style={styles.tabContent}>
+          <View style={styles.tabContent}>
             <Text style={styles.sectionTitle}>Broadcast Messages</Text>
-            <Text style={styles.description}>
-              This tab will let you send broadcast messages to show attendees and dealers. You'll be able to:
+            <Text style={styles.sectionDescription}>
+              Send pre-show and post-show messages to attendees of your events.
             </Text>
             <View style={styles.featureList}>
-              <Text style={styles.featureItem}>• Send messages to all attendees, dealers, or both</Text>
-              <Text style={styles.featureItem}>• View your broadcast history</Text>
-              <Text style={styles.featureItem}>• Track your monthly broadcast quota</Text>
-              <Text style={styles.featureItem}>• Target messages to specific shows</Text>
+              <Text style={styles.featureItem}>• Send announcements before your show</Text>
+              <Text style={styles.featureItem}>• Follow up with attendees after the show</Text>
+              <Text style={styles.featureItem}>• View message history and engagement</Text>
+              <Text style={styles.featureItem}>• Target specific groups (attendees, dealers, etc.)</Text>
             </View>
-            <View style={styles.placeholderCard}>
-              <Text style={styles.placeholderText}>Broadcast tools will appear here</Text>
-              <Ionicons name="megaphone" size={48} color="#ccc" />
-            </View>
-            <View style={styles.quotaCard}>
-              <Text style={styles.quotaTitle}>Monthly Broadcast Quota</Text>
-              <Text style={styles.quotaText}>0/10 messages used</Text>
-              <Text style={styles.quotaNote}>Quota resets on the 1st of each month</Text>
-            </View>
-          </ScrollView>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => Alert.alert('Coming Soon', 'This feature is under development.')}
+            >
+              <Ionicons name="megaphone" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>Compose Broadcast</Text>
+            </TouchableOpacity>
+          </View>
         );
         
       default:
         return null;
     }
   };
-
-  // Render tabs
-  const renderTabs = () => (
-    <View style={styles.tabContainer}>
-      {(['shows', 'claim', 'recurring', 'reviews', 'broadcast'] as TabName[]).map(tab => (
-        <TouchableOpacity
-          key={tab}
-          style={[styles.tab, activeTab === tab && styles.activeTab]}
-          onPress={() => setActiveTab(tab)}
-        >
-          <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
-  // Check if user is a show organizer
-  if (!user || user.role !== 'SHOW_ORGANIZER') {
+  
+  // If user is not a show organizer, show upgrade prompt
+  if (!isShowOrganizer && !isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Show Organizer Dashboard</Text>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={48} color="#FF6A00" />
-          <Text style={styles.errorText}>
-            You need to have a SHOW_ORGANIZER role to access this dashboard.
+      <View style={styles.container}>
+        <View style={styles.upgradeContainer}>
+          <Ionicons name="alert-circle-outline" size={60} color="#FF6A00" />
+          <Text style={styles.upgradeTitle}>Show Organizer Access Required</Text>
+          <Text style={styles.upgradeText}>
+            This dashboard is only available to users with a Show Organizer account.
+            Upgrade your account to access tools for managing your card shows.
           </Text>
-          <Text style={styles.errorSubtext}>
-            Please upgrade your account to access organizer features.
-          </Text>
+          <TouchableOpacity 
+            style={styles.upgradeButton}
+            onPress={() => Alert.alert('Upgrade Account', 'Contact support to upgrade your account to Show Organizer.')}
+          >
+            <Text style={styles.upgradeButtonText}>Upgrade Account</Text>
+          </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
-
+  
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Show Organizer Dashboard</Text>
-      <Text style={styles.subtitle}>Phase 1 - Coming Soon</Text>
-      
-      {renderTabs()}
-      
-      <View style={styles.contentContainer}>
-        {renderTabContent()}
-      </View>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
+      >
+        {/* Dashboard Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Organizer Dashboard</Text>
+          <Text style={styles.headerSubtitle}>
+            Manage your shows, reviews, and messages
+          </Text>
+        </View>
+        
+        {/* Metrics Card */}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF6A00" />
+            <Text style={styles.loadingText}>Loading dashboard...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={fetchDashboardMetrics}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          renderMetricsCard()
+        )}
+        
+        {/* Tab Navigation */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabsContainer}
+        >
+          {(['shows', 'claim', 'recurring', 'reviews', 'broadcast'] as TabName[]).map(tab => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, activeTab === tab && styles.activeTab]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                {tab === 'shows' && 'My Shows'}
+                {tab === 'claim' && 'Unclaimed'}
+                {tab === 'recurring' && 'Recurring'}
+                {tab === 'reviews' && 'Reviews'}
+                {tab === 'broadcast' && 'Broadcast'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        
+        {/* Tab Content */}
+        {!isLoading && renderTabContent()}
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#F5F5F5',
   },
-  title: {
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  header: {
+    padding: 16,
+    backgroundColor: '#0057B8',
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginVertical: 16,
-    color: '#333',
+    color: '#FFFFFF',
   },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 16,
-    color: '#FF6A00',
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.8,
+    marginTop: 4,
   },
-  tabContainer: {
+  metricsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    margin: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  metricsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333333',
+  },
+  metricsGrid: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  metricItem: {
+    width: '48%',
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#0057B8',
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 4,
+  },
+  quotaContainer: {
+    marginTop: 8,
+    backgroundColor: '#F0F7FF',
+    borderRadius: 8,
+    padding: 12,
+  },
+  quotaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quotaIcon: {
+    marginRight: 8,
+  },
+  quotaText: {
+    fontSize: 14,
+    color: '#333333',
+  },
+  quotaValue: {
+    fontWeight: 'bold',
+    color: '#0057B8',
+  },
+  tabsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#EEEEEE',
   },
   tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: '#F0F0F0',
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#FF6A00',
+    backgroundColor: '#0057B8',
   },
   tabText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 14,
+    color: '#666666',
   },
   activeTabText: {
-    color: '#FF6A00',
-    fontWeight: 'bold',
-  },
-  contentContainer: {
-    flex: 1,
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
   tabContent: {
-    flex: 1,
+    backgroundColor: '#FFFFFF',
+    margin: 16,
     padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#333',
+    marginBottom: 8,
+    color: '#333333',
   },
-  description: {
-    fontSize: 16,
-    color: '#666',
+  sectionDescription: {
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
     marginBottom: 16,
-    lineHeight: 22,
   },
   featureList: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   featureItem: {
     fontSize: 14,
-    color: '#333',
-    marginBottom: 8,
-    paddingLeft: 8,
+    color: '#333333',
+    lineHeight: 24,
   },
-  placeholderCard: {
-    backgroundColor: '#fff',
+  actionButton: {
+    backgroundColor: '#FF6A00',
     borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  loadingContainer: {
     padding: 24,
-    marginBottom: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-    height: 150,
+    backgroundColor: '#FFFFFF',
+    margin: 16,
+    borderRadius: 12,
   },
-  placeholderText: {
-    fontSize: 16,
-    color: '#999',
-    marginBottom: 12,
-  },
-  quotaCard: {
-    backgroundColor: '#f0f8ff',
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  quotaTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#0057B8',
-  },
-  quotaText: {
+  loadingText: {
+    marginTop: 12,
+    color: '#666666',
     fontSize: 14,
-    color: '#333',
-    marginBottom: 4,
-  },
-  quotaNote: {
-    fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic',
   },
   errorContainer: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    margin: 16,
+    borderRadius: 12,
+  },
+  errorText: {
+    marginTop: 12,
+    marginBottom: 16,
+    color: '#FF6A00',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#0057B8',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  upgradeContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
   },
-  errorText: {
-    fontSize: 18,
-    textAlign: 'center',
+  upgradeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     marginTop: 16,
     marginBottom: 8,
-    color: '#333',
-  },
-  errorSubtext: {
-    fontSize: 14,
+    color: '#333333',
     textAlign: 'center',
-    color: '#666',
+  },
+  upgradeText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  upgradeButton: {
+    backgroundColor: '#FF6A00',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  upgradeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
