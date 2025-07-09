@@ -160,6 +160,11 @@ const MapScreen: React.FC<MapScreenProps> = ({
       
       setLoading(true);
       setError(null);
+      console.info('[MapScreen] Fetching shows with filters:', {
+        ...filters,
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      });
       
       try {
         // Combine location with other filters
@@ -170,16 +175,54 @@ const MapScreen: React.FC<MapScreenProps> = ({
         };
         
         const showsData = await getShows(showFilters);
+        console.info(
+          `[MapScreen] Received ${showsData.length} total show(s) from service.`,
+        );
+
+        // Extra diagnostics – count shows that actually have coordinates
+        const showsWithCoords = showsData.filter(
+          s =>
+            s.coordinates &&
+            typeof s.coordinates.latitude === 'number' &&
+            typeof s.coordinates.longitude === 'number',
+        );
+        console.info(
+          `[MapScreen] ${showsWithCoords.length}/${showsData.length} show(s) contain valid coordinates.`,
+        );
+
         setShows(showsData);
+
+        /* ---------------------------------------------------------
+         * Retry once automatically if nothing returned
+         * ------------------------------------------------------- */
+        if (showsData.length === 0 && retryRef.current < 1) {
+          retryRef.current += 1;
+          console.warn(
+            '[MapScreen] No shows returned – retrying in 2 seconds (attempt 1).',
+          );
+          setTimeout(fetchShows, 2000);
+        }
       } catch (err: any) {
-        console.error('Error fetching shows:', err);
-        setError(err.message || 'Failed to fetch shows');
+        console.error(
+          '[MapScreen] Error fetching shows with filters:',
+          err,
+        );
+        setError(
+          err.message ||
+            'Failed to fetch shows. Please check your internet connection or try again later.',
+        );
         setShows([]);
       } finally {
         setLoading(false);
       }
     };
     
+    // keep retry counter stable across renders
+    const retryRef = fetchShows.retryRef || { current: 0 };
+    // @ts-ignore – attach to function for persistence w/o extra ref
+    fetchShows.retryRef = retryRef;
+
+    retryRef.current = 0; // reset counter each dependency change
     fetchShows();
   }, [filters, userLocation]);
 

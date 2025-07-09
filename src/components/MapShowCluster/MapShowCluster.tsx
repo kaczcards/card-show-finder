@@ -24,6 +24,43 @@ interface MapShowClusterProps {
 }
 
 const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) => {
+  /* ------------------------------------------------------------------
+   * Utility – Validate / auto-correct possibly swapped coordinates
+   * ------------------------------------------------------------------
+   * Returns:
+   *   • corrected { latitude, longitude } if valid
+   *   • null if coordinates are unusable
+   * ------------------------------------------------------------------ */
+  const sanitizeCoordinates = (coords?: Coordinates | null): Coordinates | null => {
+    if (
+      !coords ||
+      typeof coords.latitude !== 'number' ||
+      typeof coords.longitude !== 'number'
+    ) {
+      return null;
+    }
+
+    const { latitude, longitude } = coords;
+    const latValid = latitude >= -90 && latitude <= 90;
+    const lngValid = longitude >= -180 && longitude <= 180;
+
+    // Already valid
+    if (latValid && lngValid) return coords;
+
+    // Attempt swap
+    const swappedLat = longitude;
+    const swappedLng = latitude;
+    const swappedLatValid = swappedLat >= -90 && swappedLat <= 90;
+    const swappedLngValid = swappedLng >= -180 && swappedLng <= 180;
+
+    if (swappedLatValid && swappedLngValid) {
+      return { latitude: swappedLat, longitude: swappedLng };
+    }
+
+    // Still invalid – give up
+    return null;
+  };
+
   const {
     shows,
     onShowPress,
@@ -54,9 +91,8 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Render an individual marker
   const renderMarker = (show: Show) => {
-    if (!show.coordinates || 
-        typeof show.coordinates.latitude !== 'number' || 
-        typeof show.coordinates.longitude !== 'number') {
+    const safeCoords = sanitizeCoordinates(show.coordinates);
+    if (!safeCoords) {
       return null;
     }
 
@@ -64,8 +100,8 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
       <Marker
         key={show.id}
         coordinate={{
-          latitude: show.coordinates.latitude,
-          longitude: show.coordinates.longitude,
+          latitude: safeCoords.latitude,
+          longitude: safeCoords.longitude,
         }}
         title={show.title}
         description={`${formatDate(show.startDate)} • ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`}
@@ -112,16 +148,15 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Convert Show objects to points for the clusterer
   const showToPoint = (show: Show) => {
-    if (!show.coordinates || 
-        typeof show.coordinates.latitude !== 'number' || 
-        typeof show.coordinates.longitude !== 'number') {
+    const safeCoords = sanitizeCoordinates(show.coordinates);
+    if (!safeCoords) {
       return null;
     }
 
     return {
       location: {
-        latitude: show.coordinates.latitude,
-        longitude: show.coordinates.longitude,
+        latitude: safeCoords.latitude,
+        longitude: safeCoords.longitude,
       },
       properties: {
         point_count: 0,
