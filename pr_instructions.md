@@ -1,74 +1,82 @@
-# How to Create the Pull Request (PR) Manually
+# How to Create the Pull Request (PR)
 
-Follow these quick steps to open your PR on GitHub and share the new **recurring-shows database schema** work.
-
----
-
-## 1. Open the Compare & PR Page
-
-1. Go to the repository in your browser  
-   `https://github.com/kaczcards/card-show-finder`
-2. GitHub usually shows a yellow banner saying **“Compare & pull request”** for recently pushed branches.  
-   • If you see it, click that button and skip to **Step 3**.  
-   • If you don’t, click **“Pull requests”** in the top menu, then **“New pull request”**.
+Follow these steps to open a PR for the **Show Organizer Series** feature branch.
 
 ---
 
-## 2. Select Branches to Compare
+## 1  Prerequisites
 
-| Field            | Value to choose                              |
-|------------------|----------------------------------------------|
-| **base:**        | `main` (this is the branch you want to merge **into**) |
-| **compare:**     | `implement-show-claiming-functionality` (the branch you just pushed) |
-
-GitHub will show the commits and file changes.  
-If everything looks correct, click **“Create pull request”**.
+- Local branch pushed: `feature/show-organizer-roles`
+- All CI checks passing locally (`npm run lint`, tests, etc.).
+- You have permission to open PRs in `kaczcards/card-show-finder`.
 
 ---
 
-## 3. Fill Out the PR Form
+## 2  Open the PR on GitHub
 
-Copy-paste (or adapt) the following:
+1. **Navigate to the repository**
 
-### Title
+   ```
+   https://github.com/kaczcards/card-show-finder
+   ```
+
+2. If GitHub has detected the new branch you will see a **“Compare & pull request”** banner.  
+   • Click **“Compare & pull request”** – *or* –  
+   • Manually select **“Pull requests” → “New pull request”**, then choose:
+
+   | Base | Compare |
+   |------|---------|
+   | `main` | `feature/show-organizer-roles` |
+
+3. Verify the diff looks correct (mostly files under `db_migrations/` and `supabase/functions/`).
+
+---
+
+## 3  Fill in PR Details
+
+| Field | What to enter |
+|-------|---------------|
+| **Title** | `Show Organizer Series: Recurring Show Support` |
+| **Description** | Copy-paste the block below (edit if needed). |
+
 ```
-Implement database schema for recurring shows (show_series) and organizer quotas
+### Overview
+Implements the *Show Organizer Series* feature set, replacing legacy `parent_show_id` logic with a dedicated `show_series` table. Adds per-show broadcast quotas, updated Edge Functions, and one-off data migration scripts.
+
+### What’s Included
+- `show_organizer_series_implementation.sql` – core schema & helper functions
+- Updated Edge Functions (`send-broadcast`, `reset-broadcast-quotas`)
+- Scripts: `execute_show_organizer_series_migration.js`, `migrate_shows_to_series.js`
+- README with migration/testing steps
+
+### Checklist
+- [ ] SQL migration tested in local Supabase project
+- [ ] Data migration script completed without errors
+- [ ] Edge Functions deployed & tested (`supabase functions deploy ...`)
+- [ ] Mobile app works against new schema
 ```
 
-### Description
-```
-This PR introduces the new database architecture for recurring card shows:
-
-### Key changes
-- **show_series** table: core identity for recurring shows.
-- Added **series_id** FK to `shows`.
-- Re-created **reviews** table to reference `series_id` (one rating stream per series).
-- Added `pre_show_broadcasts_remaining` and `post_show_broadcasts_remaining` columns to `profiles`.
-- Added full migration script: `db_migrations/recurring_shows_schema.sql`.
-- Updated TypeScript types and ReviewForm component to match the new schema.
-
-### Why
-Allows organizers to claim a single recurring show entity, aggregate reviews, and manage broadcast quotas.
+| Field | Recommended value |
+|-------|-------------------|
+| **Reviewers** | `@kaczcards/maintainers` |
+| **Labels** | `feature`, `backend`, `database` |
+| **Project / Milestone** | *Choose current sprint or release* |
 
 ---
 
-✅  Please review and merge when ready.  
-```
+## 4  Create the PR
 
-
----
-
-## 4. Create the PR
-
-Click **“Create pull request”** (green button).  
-That’s it! GitHub will take care of the rest and show your PR for review.
+- Click **“Create pull request”**.
+- Wait for GitHub Actions to run. Confirm all checks pass.
 
 ---
 
-### Need to edit later?
+## 5  Post-Creation Checklist
 
-1. Open the PR page.
-2. Click the **“⋯”** menu or **“Edit”** button near the title.
-3. Update the title or description, then click **“Save”**.
+- [ ] Respond to review comments promptly.
+- [ ] Once **approved** and **CI green**, merge with **“Squash & merge”**.
+- [ ] After merge, run the migration in production and deploy Edge Functions.
 
-Happy coding! :tada:
+---
+
+Happy shipping! 🎉

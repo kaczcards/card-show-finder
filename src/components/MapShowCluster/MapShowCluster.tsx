@@ -5,9 +5,12 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Linking,
+  Platform,
 } from 'react-native';
 import { Marker, Callout, Region } from 'react-native-maps';
-import ClusteredMapView from 'react-native-maps-super-cluster';
+// Use our patched version that renames deprecated lifecycle methods
+import FixedClusteredMapView from '../FixedClusteredMapView';
 import { Show, Coordinates } from '../../types';
 
 interface MapShowClusterProps {
@@ -23,6 +26,51 @@ interface MapShowClusterProps {
 }
 
 const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) => {
+  /* ------------------------------------------------------------------
+   * Utility – Validate / auto-correct possibly swapped coordinates
+   * ------------------------------------------------------------------
+   * Returns:
+   *   • corrected { latitude, longitude } if valid
+   *   • null if coordinates are unusable
+   * ------------------------------------------------------------------ */
+  const sanitizeCoordinates = (coords?: Coordinates | null): Coordinates | null => {
+    if (
+      !coords ||
+      typeof coords.latitude !== 'number' ||
+      typeof coords.longitude !== 'number'
+    ) {
+      return null;
+    }
+
+    const { latitude, longitude } = coords;
+    const latValid = latitude >= -90 && latitude <= 90;
+    const lngValid = longitude >= -180 && longitude <= 180;
+
+    // Already valid
+    if (latValid && lngValid) return coords;
+
+    // Attempt swap
+    const swappedLat = longitude;
+    const swappedLng = latitude;
+    const swappedLatValid = swappedLat >= -90 && swappedLat <= 90;
+    const swappedLngValid = swappedLng >= -180 && swappedLng <= 180;
+
+    if (swappedLatValid && swappedLngValid) {
+      return { latitude: swappedLat, longitude: swappedLng };
+    }
+
+    // Still invalid – give up
+    return null;
+  };
+
+  // Helper function to open address in maps app
+  const openMaps = (address: string) => {
+    if (!address) return;
+    const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
+    const url = `${scheme}${encodeURIComponent(address)}`;
+    Linking.openURL(url);
+  };
+
   const {
     shows,
     onShowPress,
@@ -53,9 +101,8 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Render an individual marker
   const renderMarker = (show: Show) => {
-    if (!show.coordinates || 
-        typeof show.coordinates.latitude !== 'number' || 
-        typeof show.coordinates.longitude !== 'number') {
+    const safeCoords = sanitizeCoordinates(show.coordinates);
+    if (!safeCoords) {
       return null;
     }
 
@@ -63,8 +110,8 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
       <Marker
         key={show.id}
         coordinate={{
-          latitude: show.coordinates.latitude,
-          longitude: show.coordinates.longitude,
+          latitude: safeCoords.latitude,
+          longitude: safeCoords.longitude,
         }}
         title={show.title}
         description={`${formatDate(show.startDate)} • ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`}
@@ -78,7 +125,10 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
               {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
                 ` - ${formatDate(show.endDate)}`}
             </Text>
-            <Text style={styles.calloutDetail}>
+            <Text 
+              style={styles.addressLink} 
+              onPress={() => openMaps(show.address)}
+            >
               {show.address}
             </Text>
             <Text style={styles.calloutDetail}>
@@ -111,16 +161,15 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Convert Show objects to points for the clusterer
   const showToPoint = (show: Show) => {
-    if (!show.coordinates || 
-        typeof show.coordinates.latitude !== 'number' || 
-        typeof show.coordinates.longitude !== 'number') {
+    const safeCoords = sanitizeCoordinates(show.coordinates);
+    if (!safeCoords) {
       return null;
     }
 
     return {
       location: {
-        latitude: show.coordinates.latitude,
-        longitude: show.coordinates.longitude,
+        latitude: safeCoords.latitude,
+        longitude: safeCoords.longitude,
       },
       properties: {
         point_count: 0,
@@ -137,37 +186,60 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
     typeof show.coordinates.longitude === 'number'
   );
 
+  // Add zoom controls
+  const handleZoom = (zoomIn = true) => {
+    if (ref && ref.current) {
+      ref.current.getCamera().then((cam: any) => {
+        cam.altitude /= zoomIn ? 2 : 0.5; // Halve altitude to zoom in, double to zoom out
+        ref.current.animateCamera(cam);
+      });
+    }
+  };
+
   return (
-    <ClusteredMapView
-      ref={ref}
-      style={styles.map}
-      data={validShows}
-      initialRegion={region}
-      region={region}
-      renderMarker={renderMarker}
-      renderCluster={renderCluster}
-      showsUserLocation={showsUserLocation}
-      loadingEnabled={loadingEnabled}
-      showsCompass={showsCompass}
-      showsScale={showsScale}
-      provider={provider}
-      onRegionChangeComplete={onRegionChangeComplete}
-      clusteringEnabled={true}
-      spiralEnabled={true}
-      zoomEnabled={true}
-      minZoom={4}
-      maxZoom={20}
-      edgePadding={{ top: 50, left: 50, bottom: 50, right: 50 }}
-      animateClusters={true}
-      spiderLineColor="#007AFF"
-      accessor="coordinates"
-      clusterPressMaxChildren={50}
-      nodeExtractor={showToPoint}
-    />
+    <View style={styles.container}>
+      <FixedClusteredMapView
+        ref={ref}
+        style={styles.map}
+        data={validShows}
+        initialRegion={region}
+        region={region}
+        renderMarker={renderMarker}
+        renderCluster={renderCluster}
+        showsUserLocation={showsUserLocation}
+        loadingEnabled={loadingEnabled}
+        showsCompass={showsCompass}
+        showsScale={showsScale}
+        provider={provider}
+        onRegionChangeComplete={onRegionChangeComplete}
+        clusteringEnabled={true}
+        spiralEnabled={true}
+        zoomEnabled={true}
+        minZoom={4}
+        maxZoom={20}
+        edgePadding={{ top: 50, left: 50, bottom: 50, right: 50 }}
+        animateClusters={true}
+        spiderLineColor="#007AFF"
+        accessor="coordinates"
+        clusterPressMaxChildren={50}
+        nodeExtractor={showToPoint}
+      />
+      <View style={styles.zoomControls}>
+        <TouchableOpacity style={styles.zoomButton} onPress={() => handleZoom(true)}>
+          <Text style={styles.zoomButtonText}>+</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomButton} onPress={() => handleZoom(false)}>
+          <Text style={styles.zoomButtonText}>-</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+  },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -192,6 +264,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 4,
+  },
+  addressLink: {
+    fontSize: 14,
+    color: '#007AFF',
+    marginBottom: 4,
+    textDecorationLine: 'underline',
   },
   calloutButton: {
     backgroundColor: '#007AFF',
@@ -222,6 +300,31 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  zoomControls: {
+    position: 'absolute',
+    top: 50,
+    right: 15,
+    backgroundColor: 'transparent',
+  },
+  zoomButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  zoomButtonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#007AFF',
   },
 });
 
