@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../supabase';
 import { ShowSeries, Review, Show } from '../types';
 
 /**
@@ -178,13 +178,17 @@ export const showSeriesService = {
    */
   async claimShowSeries(seriesId: string): Promise<{ success: boolean; message: string; series?: ShowSeries }> {
     try {
+      // Get current access token using new getSession() API
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
       const response = await fetch(
         `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/claim_show_series`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+            'Authorization': `Bearer ${accessToken}`
           },
           body: JSON.stringify({ seriesId })
         }
@@ -240,7 +244,8 @@ export const showSeriesService = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+            // Fetch access token using new getSession() API
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
           },
           body: JSON.stringify(params)
         }
