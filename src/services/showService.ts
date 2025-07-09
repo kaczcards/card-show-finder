@@ -17,25 +17,37 @@ const mapDbShowToAppShow = (row: any): Show => ({
   address: row.address,
   startDate: row.start_date,
   endDate: row.end_date,
+  startTime: row.start_time,
+  endTime: row.end_time,
   entryFee: row.entry_fee,
   description: row.description ?? undefined,
   imageUrl: row.image_url ?? undefined,
   rating: row.rating ?? undefined,
-  coordinates: row.coordinates && 
-    row.coordinates.coordinates && 
-    Array.isArray(row.coordinates.coordinates) && 
-    row.coordinates.coordinates.length >= 2
-    ? {
-        latitude: row.coordinates.coordinates[1],
-        longitude: row.coordinates.coordinates[0],
-      }
-    : undefined,
+  // Prefer explicit latitude / longitude columns (added in updated Supabase functions);
+  // fall back to legacy PostGIS object when they are not present.
+  coordinates:
+    typeof row.latitude === 'number' && typeof row.longitude === 'number'
+      ? {
+          latitude: row.latitude,
+          longitude: row.longitude,
+        }
+      : row.coordinates &&
+        row.coordinates.coordinates &&
+        Array.isArray(row.coordinates.coordinates) &&
+        row.coordinates.coordinates.length >= 2
+      ? {
+          latitude: row.coordinates.coordinates[1],
+          longitude: row.coordinates.coordinates[0],
+        }
+      : undefined,
   status: row.status as ShowStatus,
   organizerId: row.organizer_id,
   features: row.features ?? {},
   categories: row.categories ?? [],
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  seriesId: row.series_id,
+  websiteUrl: row.website_url,
 });
 
 /**
@@ -56,8 +68,12 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     // Ensure filters is a valid object
     filters = filters || {};
     
+    // Set default date filters if none provided (only future shows)
+    const startDate = filters.startDate || new Date().toISOString();
+    const endDate = filters.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+    
     /* -----------------------------------------------------------
-     * 1. Geo-aware query via RPC when lat/lng present
+     * 1. Geo-aware query via nearby_shows RPC when lat/lng present
      * --------------------------------------------------------- */
     if (
       typeof filters.latitude === 'number' &&
@@ -75,12 +91,76 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         );
       }
 
-      console.debug('[showService] Calling find_filtered_shows with params:', {
+      console.debug('[showService] Calling nearby_shows with params:', {
+        lat: filters.latitude,
+        long: filters.longitude,
+        radius_miles: radius,
+        start_date: startDate,
+        end_date: endDate,
+      });
+
+      // Call the new nearby_shows function as primary method
+      const { data: nearbyData, error: nearbyError } = await supabase.rpc(
+        'nearby_shows',
+        {
+          lat: filters.latitude,
+          long: filters.longitude,
+          radius_miles: radius,
+          start_date: startDate, // Always include a date range
+          end_date: endDate,    // to filter out past shows
+        }
+      );
+
+      if (nearbyError) {
+        console.warn(
+          '[showService] nearby_shows RPC failed – attempting fallback',
+          nearbyError.message
+        );
+      } else {
+        console.info(
+          `[showService] nearby_shows returned ${((nearbyData && Array.isArray(nearbyData)) ? nearbyData.length : 0)} show(s)`
+        );
+        
+        // Apply additional filters that weren't handled by the RPC
+        let filteredData = nearbyData;
+        
+        // Filter by max entry fee if specified
+        if (typeof filters.maxEntryFee === 'number' && Array.isArray(filteredData)) {
+          filteredData = filteredData.filter(show => 
+            show.entry_fee <= filters.maxEntryFee!
+          );
+        }
+        
+        // Filter by categories if specified
+        if (filters.categories && Array.isArray(filters.categories) && 
+            filters.categories.length > 0 && Array.isArray(filteredData)) {
+          filteredData = filteredData.filter(show => 
+            show.categories && 
+            filters.categories!.some(cat => show.categories.includes(cat))
+          );
+        }
+        
+        // Filter by features if specified
+        if (filters.features && Array.isArray(filters.features) && 
+            filters.features.length > 0 && Array.isArray(filteredData)) {
+          filteredData = filteredData.filter(show => 
+            show.features && 
+            filters.features!.every(feature => show.features[feature] === true)
+          );
+        }
+        
+        return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
+      }
+
+      /* -------------------------------------------------------
+       * 1b. Fallback to find_filtered_shows if nearby_shows fails
+       * ----------------------------------------------------- */
+      console.debug('[showService] Falling back to find_filtered_shows with params:', {
         center_lat: filters.latitude,
         center_lng: filters.longitude,
         radius_miles: radius,
-        start_date: filters.startDate ?? null,
-        end_date: filters.endDate ?? null,
+        start_date: startDate,
+        end_date: endDate,
         max_entry_fee: filters.maxEntryFee ?? null,
         show_categories: filters.categories ?? null,
         show_features: filters.features ?? null,
@@ -93,8 +173,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           center_lat: typeof filters.latitude === 'number' ? filters.latitude : null,
           center_lng: typeof filters.longitude === 'number' ? filters.longitude : null,
           radius_miles: typeof filters.radius === 'number' ? filters.radius : 25,
-          start_date: filters.startDate || null,
-          end_date: filters.endDate || null,
+          start_date: startDate,
+          end_date: endDate,
           max_entry_fee: typeof filters.maxEntryFee === 'number' ? filters.maxEntryFee : null,
           show_categories: Array.isArray(filters.categories) ? filters.categories : null,
           show_features: filters.features || null,
@@ -103,7 +183,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
       if (rpcError) {
         console.warn(
-          '[showService] find_filtered_shows RPC failed – attempting fallback',
+          '[showService] find_filtered_shows RPC failed – attempting second fallback',
           rpcError.message
         );
       } else {
@@ -114,7 +194,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       }
 
       /* -------------------------------------------------------
-       * 1b. Fallback to simple radius-only RPC if the above fails
+       * 1c. Fallback to simple radius-only RPC if the above fails
        * ----------------------------------------------------- */
       const { data: fbData, error: fbError } = await supabase.rpc(
         'find_shows_within_radius',
@@ -139,7 +219,15 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         console.info(
           `[showService] find_shows_within_radius returned ${((fbData && Array.isArray(fbData)) ? fbData.length : 0)} show(s)`
         );
-        return Array.isArray(fbData) ? fbData.map(mapDbShowToAppShow) : [];
+        
+        // Still need to filter by date even if using the radius-only RPC
+        let filteredData = Array.isArray(fbData) ? fbData : [];
+        filteredData = filteredData.filter(show => {
+          const showDate = new Date(show.start_date);
+          return showDate >= new Date(startDate) && showDate <= new Date(endDate);
+        });
+        
+        return filteredData.map(mapDbShowToAppShow);
       }
     }
 
@@ -152,12 +240,10 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       .eq('status', 'ACTIVE')
       .order('start_date', { ascending: true });
 
-    if (filters.startDate) {
-      query = query.gte('start_date', filters.startDate as any);
-    }
-    if (filters.endDate) {
-      query = query.lte('end_date', filters.endDate as any);
-    }
+    // Always apply date filters to show only future/current shows
+    query = query.gte('start_date', startDate as any);
+    query = query.lte('end_date', endDate as any);
+    
     if (typeof filters.maxEntryFee === 'number') {
       query = query.lte('entry_fee', filters.maxEntryFee);
     }
@@ -167,8 +253,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
     /* ---------- Log basic-query filters for debugging ---------- */
     console.debug('[showService] Executing basic query with filters:', {
-      startDate: filters.startDate,
-      endDate: filters.endDate,
+      startDate,
+      endDate,
       maxEntryFee: filters.maxEntryFee,
       categories: filters.categories,
       status: 'ACTIVE',
@@ -299,6 +385,104 @@ export const getUpcomingShows = async (params: {
   } catch (err: any) {
     console.error('Error fetching upcoming shows for user:', err);
     return { data: null, error: err.message ?? 'Unknown error' };
+  }
+};
+
+/**
+ * Claims a show for a show organizer.
+ *
+ * 1. Marks the show row as claimed (`claimed`, `claimed_by`, `claimed_at`).
+ * 2. Inserts a row in the `show_organizers` join table so we can
+ *    easily query which organisers manage which shows.
+ *
+ * On success returns `{ success: true, data: <updated show row> }`
+ * On failure returns `{ success: false, message: <reason> }`
+ */
+export const claimShow = async (
+  showId: string,
+  userId: string
+): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    /* --------------------------------------------------------
+     * 0. Verify user is a (paid) show organiser
+     * ------------------------------------------------------ */
+    const { data: profile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('role, is_paid')
+      .eq('id', userId)
+      .single();
+
+    if (profileErr) throw profileErr;
+    if (!profile) {
+      return {
+        success: false,
+        message: 'User profile not found',
+      };
+    }
+
+    const roleOk =
+      (profile.role ?? '').toString().toLowerCase() ===
+      'show_organizer';
+    const paidOk =
+      profile.is_paid === undefined
+        ? true // tolerate missing column
+        : !!profile.is_paid;
+
+    if (!roleOk || !paidOk) {
+      return {
+        success: false,
+        message:
+          'Only paid Show Organizers can claim shows. Please upgrade your plan.',
+      };
+    }
+
+    /* --------------------------------------------------------
+     * 1. Atomically flag the show as claimed IF not yet claimed
+     *    — PostgREST will return 0 rows if the condition fails.
+     * ------------------------------------------------------ */
+    const { data: updatedShow, error: updateError, count } =
+      await supabase
+        .from('shows')
+        .update({
+          claimed: true,
+          claimed_by: userId,
+          claimed_at: new Date().toISOString(),
+        })
+        .eq('id', showId)
+        .or('claimed.is.null,claimed.eq.false') // only update unclaimed
+        .select('*', { count: 'exact' })
+        .single();
+
+    if (updateError) throw updateError;
+
+    if (!updatedShow || count === 0) {
+      return {
+        success: false,
+        message: 'Show has already been claimed by another organiser.',
+      };
+    }
+
+    /* --------------------------------------------------------
+     * 2. Insert organiser ↔ show relation (ignore duplicates)
+     * ------------------------------------------------------ */
+    const { error: orgError } = await supabase
+      .from('show_organizers')
+      .insert(
+        {
+          show_id: showId,
+          user_id: userId,
+          role: 'owner',
+          created_at: new Date().toISOString(),
+        },
+        { ignoreDuplicates: true }
+      );
+
+    if (orgError) throw orgError;
+
+    return { success: true, data: updatedShow };
+  } catch (err: any) {
+    console.error('API error in claimShow:', err);
+    return { success: false, message: err.message || 'Failed to claim show' };
   }
 };
 

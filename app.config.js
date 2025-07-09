@@ -1,4 +1,42 @@
 const path = require('path');
+// --------------------------------------------------
+// Load environment variables from .env (if present)
+// --------------------------------------------------
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+
+// Grab the variables we need so we can validate them once
+const {
+  EXPO_PUBLIC_SUPABASE_URL,
+  EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+} = process.env;
+
+// --------------------------------------------------
+// Basic validation / helpful warnings
+// --------------------------------------------------
+if (!EXPO_PUBLIC_SUPABASE_URL) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[app.config.js] Missing environment variable: EXPO_PUBLIC_SUPABASE_URL. ' +
+      'Authentication requests will fail until this is provided.'
+  );
+}
+
+if (!EXPO_PUBLIC_SUPABASE_ANON_KEY) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[app.config.js] Missing environment variable: EXPO_PUBLIC_SUPABASE_ANON_KEY. ' +
+      'Authentication requests will fail until this is provided.'
+  );
+}
+
+if (!EXPO_PUBLIC_GOOGLE_MAPS_API_KEY) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[app.config.js] Missing environment variable: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY. ' +
+      'Map functionality may not work correctly.'
+  );
+}
 
 module.exports = {
   name: "card-show-finder",
@@ -10,8 +48,8 @@ module.exports = {
   newArchEnabled: true,
   scheme: "cardshowfinder",
   splash: {
-    image: "./assets/splash-icon.png",
-    resizeMode: "contain",
+    image: "./assets/splash.jpg",
+    resizeMode: "cover",
     backgroundColor: "#ffffff"
   },
   ios: {
@@ -39,9 +77,9 @@ module.exports = {
     favicon: "./assets/favicon.png"
   },
   extra: {
-    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
-    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
-    googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+    supabaseUrl: EXPO_PUBLIC_SUPABASE_URL,
+    supabaseAnonKey: EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    googleMapsApiKey: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
   },
   plugins: [
     [

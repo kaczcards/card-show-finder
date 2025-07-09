@@ -11,23 +11,30 @@ import {
   Image,
   Switch,
   Platform,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { UserRole } from '../../types';
-import { useNavigation } from '@react-navigation/native';
+import { UserRole, Badge } from '../../types';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
+import * as badgeService from '../../services/badgeService';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
-  const { user, isLoading, error } = authState;
+  // Pull favoriteCount from authState so it can be displayed below
+  const { user, isLoading, error, favoriteCount } = authState;
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   
   // State for edit mode
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // session refresh loading
   const [isRefreshingRole, setIsRefreshingRole] = useState(false);
+  // Admin status
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(false);
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -35,16 +42,55 @@ const ProfileScreen: React.FC = () => {
   const [homeZipCode, setHomeZipCode] = useState(user?.homeZipCode || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
 
-  // Log user object whenever it changes for debugging purposes
+  // State for badges
+  const [featuredBadges, setFeaturedBadges] = useState<Badge[]>([]);
+  const [isLoadingBadges, setIsLoadingBadges] = useState(false);
+  const [badgeError, setBadgeError] = useState<string | null>(null);
+  const [nextBadge, setNextBadge] = useState<Badge | null>(null);
+  const [badgeProgress, setBadgeProgress] = useState<{
+    current: number;
+    required: number;
+    percent: number;
+  } | null>(null);
+
+
+  // Load user badges when the screen comes into focus
   useEffect(() => {
-    if (user) {
-      console.log('User state updated in ProfileScreen:', {
-        role: user.role,
-        accountType: user.accountType,
-        subscriptionStatus: user.subscriptionStatus,
-      });
+    if (user && isFocused) {
+      loadUserBadges();
     }
-  }, [user]);
+  }, [user, isFocused]);
+
+  // Load user badges with improved error handling
+  const loadUserBadges = async () => {
+    if (!user) return;
+    
+    setIsLoadingBadges(true);
+    setBadgeError(null);
+    
+    try {
+      // Get featured badges - will return empty array if error occurs
+      const featured = await badgeService.getUserFeaturedBadges(user.id, 3);
+      setFeaturedBadges(featured || []);
+      
+      // Get next badge to earn - will return null if error occurs
+      const next = await badgeService.getUserNextBadge(user.id);
+      setNextBadge(next);
+      
+      // If there's a next badge, get progress - will return null if error occurs
+      if (next) {
+        const progress = await badgeService.getBadgeProgress(user.id, next.id);
+        setBadgeProgress(progress);
+      } else {
+        setBadgeProgress(null);
+      }
+    } catch (error: any) {
+      console.error('Error loading badges:', error);
+      setBadgeError(error.message || 'Failed to load badges');
+    } finally {
+      setIsLoadingBadges(false);
+    }
+  };
   
   // Handle logout
   const handleLogout = async () => {
@@ -120,16 +166,13 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  // Force-refresh JWT / role
+  // Force-refresh JWT / role - This function is fine and used by the button
   const handleRefreshRole = async () => {
     try {
       setIsRefreshingRole(true);
       const success = await refreshUserRole();
       if (success) {
         Alert.alert('Session Refreshed', 'Your account information has been updated.');
-        // The updated user object will be available in the next render.
-        // The useEffect hook above will log the new state.
-        console.log('Refresh successful. New state will be logged on re-render.');
       } else {
         Alert.alert('Refresh Failed', 'Unable to refresh session right now. Please try again later.');
       }
@@ -152,18 +195,27 @@ const ProfileScreen: React.FC = () => {
   // Check if user is a dealer (using current user directly)
   const isDealer = () => {
     if (!user) return false;
-    const currentRole = user.role?.toUpperCase();
-    return (
-      currentRole === UserRole.DEALER ||
-      currentRole === UserRole.MVP_DEALER ||
-      currentRole === UserRole.SHOW_ORGANIZER
-    );
+    const dealerLike =
+      user.role === UserRole.DEALER ||
+      user.role === UserRole.MVP_DEALER ||
+      user.role === UserRole.SHOW_ORGANIZER ||
+      user.accountType === 'dealer' ||
+      user.accountType === 'organizer';
+
+    /* Debug logging to diagnose access-control issues */
+    console.debug('[ProfileScreen] isDealer check', {
+      userId: user.id,
+      role: user.role,
+      accountType: user.accountType,
+      isDealer: dealerLike,
+    });
+
+    return dealerLike;
   };
   
   // Get role display name
-  const getRoleDisplayName = (role: UserRole | undefined | null) => {
-    if (!role) return 'Unknown';
-    switch (role.toUpperCase()) {
+  const getRoleDisplayName = (role: UserRole) => {
+    switch (role) {
       case UserRole.ATTENDEE:
         return 'Attendee';
       case UserRole.DEALER:
@@ -173,8 +225,41 @@ const ProfileScreen: React.FC = () => {
       case UserRole.SHOW_ORGANIZER:
         return 'Show Organizer';
       default:
+        // Add a console log here to debug what 'role' is if it hits 'Unknown'
+        console.warn('Unknown UserRole encountered:', role);
         return 'Unknown';
     }
+  };
+
+  // Get the color for a badge tier
+  const getBadgeColor = (tier: string) => {
+    switch (tier.toLowerCase()) {
+      case 'bronze':
+        return '#CD7F32';
+      case 'silver':
+        return '#C0C0C0';
+      case 'gold':
+        return '#FFD700';
+      case 'platinum':
+        return '#E5E4E2';
+      default:
+        return '#999999';
+    }
+  };
+
+  // Navigate to Badges screen
+  const navigateToBadges = () => {
+    navigation.navigate('Badges' as never);
+  };
+
+  // Navigate to Admin Map screen
+  const navigateToAdminMap = () => {
+    navigation.navigate('Admin' as never, { screen: 'AdminMap' } as never);
+  };
+
+  // Retry loading badges if there was an error
+  const handleRetryLoadBadges = () => {
+    loadUserBadges();
   };
   
   // If user is not loaded yet
@@ -226,6 +311,92 @@ const ProfileScreen: React.FC = () => {
               {isEditMode ? "Cancel" : "Edit Profile"}
             </Text>
           </TouchableOpacity>
+        </View>
+        
+        {/* Badges Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>My Badges</Text>
+            <TouchableOpacity onPress={navigateToBadges}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {isLoadingBadges ? (
+            <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 20 }} />
+          ) : badgeError ? (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle-outline" size={40} color="#FF3B30" />
+              <Text style={styles.errorText}>
+                There was an error loading your badges.
+              </Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={handleRetryLoadBadges}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : featuredBadges.length > 0 ? (
+            <View style={styles.badgesContainer}>
+              <FlatList
+                data={featuredBadges}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <View style={styles.badgeItem}>
+                    <View 
+                      style={[
+                        styles.badgeCircle, 
+                        { backgroundColor: getBadgeColor(item.tier) }
+                      ]}
+                    >
+                      <Ionicons name="trophy" size={28} color="white" />
+                    </View>
+                    <Text style={styles.badgeName}>{item.name}</Text>
+                    <Text style={styles.badgeTier}>{item.tier}</Text>
+                  </View>
+                )}
+                contentContainerStyle={styles.badgesList}
+              />
+              
+              {nextBadge && badgeProgress && (
+                <View style={styles.nextBadgeContainer}>
+                  <Text style={styles.nextBadgeTitle}>Next Badge:</Text>
+                  <View style={styles.nextBadgeContent}>
+                    <View style={[styles.nextBadgeIcon, { backgroundColor: getBadgeColor(nextBadge.tier) }]}>
+                      <Ionicons name="trophy-outline" size={24} color="white" />
+                    </View>
+                    <View style={styles.nextBadgeInfo}>
+                      <Text style={styles.nextBadgeName}>{nextBadge.name}</Text>
+                      <Text style={styles.nextBadgeDescription}>{nextBadge.description}</Text>
+                      <View style={styles.progressBarContainer}>
+                        <View style={styles.progressBarBackground}>
+                          <View 
+                            style={[
+                              styles.progressBar, 
+                              { width: `${badgeProgress.percent}%` }
+                            ]} 
+                          />
+                        </View>
+                        <Text style={styles.progressText}>
+                          {badgeProgress.current}/{badgeProgress.required} shows attended
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={styles.noBadgesContainer}>
+              <Ionicons name="trophy-outline" size={40} color="#cccccc" />
+              <Text style={styles.noBadgesText}>
+                You haven't earned any badges yet. Attend card shows to earn badges!
+              </Text>
+            </View>
+          )}
         </View>
         
         {/* Profile Information */}
@@ -343,9 +514,8 @@ const ProfileScreen: React.FC = () => {
               <Ionicons name="shield-checkmark-outline" size={20} color="#666" />
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Account Type</Text>
-                <Text style={styles.infoValue}>
-                  {getRoleDisplayName(user.role)} ({user.accountType || 'unknown'})
-                </Text>
+                {/* Display user.role directly, as it should now be correct from Supabase */}
+                <Text style={styles.infoValue}>{getRoleDisplayName(user.role)}</Text>
               </View>
             </View>
             
@@ -354,7 +524,14 @@ const ProfileScreen: React.FC = () => {
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Member Since</Text>
                 <Text style={styles.infoValue}>
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {(() => {
+                    // Ensure the day shown matches the value in the DB
+                    const date = new Date(user.createdAt);
+                    const utcDate = new Date(
+                      date.getTime() + date.getTimezoneOffset() * 60 * 1000
+                    );
+                    return utcDate.toLocaleDateString();
+                  })()}
                 </Text>
               </View>
             </View>
@@ -380,38 +557,6 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
         </View>
-
-        {/* Subscription Details Section - Conditional */}
-        {user.accountType !== 'collector' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Subscription Details</Text>
-            <View style={styles.infoList}>
-              <View style={styles.infoItem}>
-                <Ionicons name="card-outline" size={20} color="#666" />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Status</Text>
-                  <Text style={[
-                    styles.infoValue,
-                    user.subscriptionStatus === 'active' ? styles.statusActive : styles.statusInactive
-                  ]}>
-                    {user.subscriptionStatus?.charAt(0).toUpperCase() + user.subscriptionStatus?.slice(1)}
-                  </Text>
-                </View>
-              </View>
-              {user.subscriptionStatus === 'active' && user.subscriptionExpiry && (
-                <View style={styles.infoItem}>
-                  <Ionicons name="timer-outline" size={20} color="#666" />
-                  <View style={styles.infoTextContainer}>
-                    <Text style={styles.infoLabel}>Expires On</Text>
-                    <Text style={styles.infoValue}>
-                      {new Date(user.subscriptionExpiry).toLocaleDateString()}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
         
         {/* Statistics */}
         <View style={styles.section}>
@@ -419,7 +564,8 @@ const ProfileScreen: React.FC = () => {
           
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user.favoriteShows?.length || 0}</Text>
+              {/* Use authoritative DB-backed favourite count */}
+              <Text style={styles.statValue}>{favoriteCount}</Text>
               <Text style={styles.statLabel}>Favorite Shows</Text>
             </View>
             
@@ -434,8 +580,25 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Actions</Text>
           
-          {/* Dealer Show Participation (visible only for dealer-tier roles) */}
-          {isDealer() && (
+          {/* Admin Tools (visible only for admin users) */}
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={navigateToAdminMap}
+            >
+              <Ionicons name="construct-outline" size={20} color="#007AFF" />
+              <Text style={styles.actionButtonText}>Admin: Coordinate Validation</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#ccc"
+                style={styles.actionButtonIcon}
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* Manage Show Participation (visible only for MVP Dealers and Show Organizers) */}
+{(user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER) && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate('ShowParticipationScreen' as never)}
@@ -594,11 +757,147 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 16,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
     marginBottom: 16,
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  badgesContainer: {
+    marginBottom: 8,
+  },
+  badgesList: {
+    paddingBottom: 12,
+  },
+  badgeItem: {
+    alignItems: 'center',
+    marginRight: 16,
+    width: 100,
+  },
+  badgeCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  badgeName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  badgeTier: {
+    fontSize: 12,
+    color: '#666',
+    textTransform: 'capitalize',
+  },
+  noBadgesContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  noBadgesText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  nextBadgeContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  nextBadgeTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  nextBadgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  nextBadgeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  nextBadgeInfo: {
+    flex: 1,
+  },
+  nextBadgeName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
+  },
+  nextBadgeDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  progressBarContainer: {
+    marginTop: 4,
+  },
+  progressBarBackground: {
+    height: 6,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 3,
+    marginBottom: 4,
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#007AFF',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#666',
   },
   infoList: {
     paddingLeft: 8,
@@ -620,14 +919,6 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: '#333',
-  },
-  statusActive: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-  },
-  statusInactive: {
-    color: '#F44336',
-    fontWeight: 'bold',
   },
   verificationStatus: {
     flexDirection: 'row',

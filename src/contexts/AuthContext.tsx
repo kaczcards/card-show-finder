@@ -3,11 +3,20 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
+import { signInWithEmailPassword } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/userRoleService';
 
 // Define the shape of our auth context
 interface AuthContextType {
-  authState: AuthState;
+  authState: AuthState & { favoriteCount: number };
+  /**
+   * Convenience getters exposed alongside the full `authState`
+   * so that consuming components can access them directly without
+   * drilling into `authState`.
+   */
+  error: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
   login: (credentials: AuthCredentials) => Promise<User>;
   register: (
     email: string,
@@ -36,7 +45,10 @@ const defaultAuthState: AuthState = {
 
 // Create the context with default values
 const AuthContext = createContext<AuthContextType>({
-  authState: defaultAuthState,
+  authState: { ...defaultAuthState, favoriteCount: 0 },
+  error: defaultAuthState.error,
+  isLoading: defaultAuthState.isLoading,
+  isAuthenticated: defaultAuthState.isAuthenticated,
   login: async () => { throw new Error('AuthContext not initialized'); },
   register: async () => { throw new Error('AuthContext not initialized'); },
   logout: async () => { throw new Error('AuthContext not initialized'); },
@@ -51,6 +63,27 @@ const AuthContext = createContext<AuthContextType>({
 // Provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>(defaultAuthState);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+
+  // Function to fetch the count of user's favorite shows
+  const fetchFavoriteCount = async (userId: string) => {
+    if (!userId) {
+      setFavoriteCount(0);
+      return;
+    }
+
+    const { count, error } = await supabase
+      .from('user_favorite_shows')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error fetching favorite count:', error);
+      setFavoriteCount(0);
+    } else {
+      setFavoriteCount(count || 0);
+    }
+  };
 
   // Initialize auth state on app start
   useEffect(() => {
@@ -101,6 +134,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             error: null,
             isAuthenticated: true,
           });
+
+          // Fetch favorite count after user is loaded
+          fetchFavoriteCount(userData.id);
         } else {
           // No session found
           setAuthState({
@@ -163,6 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               error: null,
               isAuthenticated: true,
             });
+
+            // Fetch favorite count after user is loaded
+            fetchFavoriteCount(userData.id);
           } catch (error: any) {
             console.error('Error handling auth state change:', error);
             setAuthState(prev => ({
@@ -178,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             error: null,
             isAuthenticated: false,
           });
+          setFavoriteCount(0);
         }
       }
     );
@@ -193,28 +233,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
-    try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const userData = await supabaseAuthService.signInUser(credentials);
-      
-      setAuthState({
-        user: userData,
-        isLoading: false,
-        error: null,
-        isAuthenticated: true,
-      });
-      
-      return userData;
-    } catch (error: any) {
-      console.error('Login error:', error);
+    // 1. Immediately set the app to a "loading" state and clear old errors.
+    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+
+    // 2. Call the Supabase service to attempt the login.
+    const { data, error } = await supabaseAuthService.signInWithEmailPassword(
+      credentials.email,
+      credentials.password
+    );
+
+    // 3. Handle the response directly.
+    if (error) {
+      // FAILURE: If the service returns an error, update the state.
+      // Set the error message and turn off the loading indicator.
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to sign in',
-        isAuthenticated: false,
+        error: error.message,
+        isAuthenticated: false
       }));
-      throw error;
+      return Promise.reject(new Error(error.message));
+    } else if (data?.user) {
+      // SUCCESS: If the service returns a user, get their profile and update state.
+      const userData = await supabaseAuthService.getCurrentUser(data.user.id);
+      
+      if (userData) {
+        setAuthState({
+          user: userData,
+          isLoading: false,
+          error: null,
+          isAuthenticated: true
+        });
+        
+        // Fetch favorite count for the logged in user
+        fetchFavoriteCount(userData.id);
+        
+        return userData;
+      } else {
+        // EDGE CASE: If we couldn't get the user profile data.
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: "Failed to get user profile data.",
+          isAuthenticated: false
+        }));
+        return Promise.reject(new Error("Failed to get user profile data."));
+      }
+    } else {
+      // EDGE CASE: If there's no error but also no user, handle it.
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: "An unexpected error occurred. Please try again.",
+        isAuthenticated: false
+      }));
+      return Promise.reject(new Error("An unexpected error occurred. Please try again."));
     }
   };
   
@@ -246,6 +319,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: true,
       });
       
+      // New user has no favorites yet
+      setFavoriteCount(0);
+      
       return userData;
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -272,6 +348,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error: null,
         isAuthenticated: false,
       });
+      
+      // Reset favorite count on logout
+      setFavoriteCount(0);
     } catch (error: any) {
       console.error('Logout error:', error);
       setAuthState(prev => ({
@@ -367,6 +446,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         };
       });
+      
+      // Increment favorite count
+      setFavoriteCount(prev => prev + 1);
     } catch (error: any) {
       console.error('Add favorite show error:', error);
       setAuthState(prev => ({
@@ -398,6 +480,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         };
       });
+      
+      // Decrement favorite count (ensure it doesn't go below 0)
+      setFavoriteCount(prev => Math.max(0, prev - 1));
     } catch (error: any) {
       console.error('Remove favorite show error:', error);
       setAuthState(prev => ({
@@ -505,6 +590,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       });
       
+      // Also refresh the favorite count
+      fetchFavoriteCount(authState.user.id);
+      
       return true;
     } catch (e) {
       console.error('An unexpected error occurred in refreshUserRole:', e);
@@ -512,9 +600,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Context value
+  // Context value - ensuring error, isLoading, and isAuthenticated are always defined
   const contextValue: AuthContextType = {
-    authState,
+    authState: { ...authState, favoriteCount },
+    // Explicitly extract these properties from authState with fallbacks to ensure they're never undefined
+    error: authState?.error ?? null,
+    isLoading: authState?.isLoading ?? false,
+    isAuthenticated: authState?.isAuthenticated ?? false,
     login,
     register,
     logout,
