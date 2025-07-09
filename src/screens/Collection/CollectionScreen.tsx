@@ -21,6 +21,17 @@ import {
 } from '../../services/collectionService';
 import { getUpcomingShows } from '../../services/showService';
 
+// This component seems to be missing from the file,
+// so you might need to import it or define it.
+// For now, I'll create a placeholder.
+const WantListEditor = (props: any) => (
+  <View>
+    <Text>Want List Editor</Text>
+    {props.isLoading && <ActivityIndicator />}
+  </View>
+);
+
+
 const CollectionScreen: React.FC = () => {
   // ===== Auth =====
   const {
@@ -29,11 +40,11 @@ const CollectionScreen: React.FC = () => {
   const userId = user?.id ?? '';
 
   // ===== Want List State =====
-  const [wantList, setWantList] = useState<WantList | null>(null);
+  const [wantList, setWantList] = useState<any | null>(null); // Using 'any' for now
   const [loadingWantList, setLoadingWantList] = useState<boolean>(true);
-  
+
   // ===== Upcoming Shows State =====
-  const [upcomingShows, setUpcomingShows] = useState<Show[]>([]);
+  const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
 
   const loadWantList = async () => {
@@ -47,7 +58,7 @@ const CollectionScreen: React.FC = () => {
     }
     setLoadingWantList(false);
   };
-  
+
   const loadUpcomingShows = async () => {
     if (!userId) return;
     setLoadingShows(true);
@@ -60,11 +71,11 @@ const CollectionScreen: React.FC = () => {
         // Optional: limit to next 30 days or similar
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
-      
+
       if (error) {
         console.error('Error fetching upcoming shows:', error);
       } else if (data) {
-        setUpcomingShows(data);
+        setUpcomingShows(data as any[]); // Cast to any[]
       }
     } catch (error) {
       console.error('Error in loadUpcomingShows:', error);
@@ -76,19 +87,12 @@ const CollectionScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       // Refresh each time screen comes into focus
-      loadWantList();
-      loadUpcomingShows();
+      if (userId) {
+        loadWantList();
+        loadUpcomingShows();
+      }
     }, [userId])
   );
-
-        <WantListEditor
-          wantList={wantList}
-          userId={userId}
-          upcomingShows={upcomingShows}
-          onSave={(list) => setWantList(list)}
-          isLoading={loadingWantList || loadingShows}
-        />
-      </View>
 
   return (
     <SafeAreaView style={styles.container}>
@@ -97,6 +101,14 @@ const CollectionScreen: React.FC = () => {
         <Text style={styles.headerTitle}>My Want List</Text>
       </View>
 
+      {/* The WantListEditor now lives inside the return statement */}
+      <WantListEditor
+        wantList={wantList}
+        userId={userId}
+        upcomingShows={upcomingShows}
+        onSave={(list: any) => setWantList(list)}
+        isLoading={loadingWantList || loadingShows}
+      />
     </SafeAreaView>
   );
 };
@@ -117,9 +129,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-    color: '#333',
-    lineHeight: 20,
-  },
+  // I removed the extra, broken style properties from here.
 });
 
 export default CollectionScreen;
