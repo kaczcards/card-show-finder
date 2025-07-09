@@ -1,5 +1,5 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import screens
 import OrganizerDashboardScreen from '../screens/Organizer/OrganizerDashboardScreen';
@@ -22,7 +22,7 @@ export type OrganizerStackParamList = {
   EditShow: { showId: string };
 };
 
-const OrganizerStack = createStackNavigator<OrganizerStackParamList>();
+const OrganizerStack = createNativeStackNavigator<OrganizerStackParamList>();
 
 /**
  * OrganizerNavigator - Handles navigation between organizer screens
