@@ -1,74 +1,108 @@
-# ✨ Recurring Shows & Organizer Messaging – Major Backend & App Upgrade
+# Recurring Shows & Organizer Dashboard – Pull Request
 
-## Overview
-This PR introduces **recurring show series** to Card Show Finder.  
-Instead of treating every show date as a separate entity, a new parent table – `show_series` – groups all instances of the same card show (e.g. *“Noblesville Card Show”*).  
+## ✨ Overview
+This PR introduces full support for **recurring card-show series** and a brand-new **Organizer Dashboard**.  
+Organizers can now:
 
-Key goals:
-* Aggregate ratings & reviews across multiple dates  
-* Let an organizer **claim the series once** and manage all future dates  
-* Provide built-in broadcast quotas so organizers can message attendees without spam
+* Claim an entire series (e.g. “Dallas Monthly Card Show”) instead of individual dates
+* Manage every occurrence from one place
+* Broadcast pre-/post-show messages with enforced quotas
+* View & respond to aggregated reviews across the series
 
----
-
-## 🔨 What’s Changed
-
-| Area | Change |
-|------|--------|
-| **Database (schema)** | • New `show_series` table <br>• `shows.series_id` foreign key <br>• Re-created `reviews` to reference `series_id` <br>• Added `pre_show_broadcasts_remaining` (default 2) & `post_show_broadcasts_remaining` (default 1) to `profiles` |
-| **Data migration** | One-time script (`data_migration_series.sql`) <br>• Groups existing shows into series <br>• Updates all `shows` and `reviews` with `series_id` <br>• Calculates `average_rating` / `review_count` for each series |
-| **Edge Functions** | • `claim_show_series` – organizers claim an unclaimed series <br>• `send_broadcast_message` – bulk message to attendees/favorites, quota-checked <br>• `reset-broadcast-quotas` – daily job resets quotas after a show ends |
-| **App Code** | • `ShowDetailScreen` now displays series badge, combined rating & reviews <br>• New `showSeriesService` for series queries, claiming & broadcast <br>• `ReviewForm` now posts to `seriesId` |
-| **Utilities** | Transaction helper SQL functions for safe multi-step logic in Edge Functions |
-| **Docs** | Implementation & migration instructions added |
+The change spans database schema, Supabase Edge Functions, TypeScript services, React-Native screens, and automated data migrations.
 
 ---
 
-## 🌟 Benefits
+## 🔄 Database Changes (`db_migrations/`)
+| File | Purpose |
+|------|---------|
+| `recurring_shows_schema.sql` | Creates `show_series`, adds `series_id` to `shows`, redesigns `reviews` to reference both `show_id` & `series_id`, adds broadcast-quota columns to `profiles`. |
+| `data_migration_series.sql` | Groups existing shows into series (by identical name & location) and back-fills `series_id` + review aggregates.|
 
-* **Unified reputation:** Users see one rating stream per recurring show, leading to more trustworthy scores.  
-* **Simple organizer workflow:** Claim once, manage forever; no more per-date claiming.  
-* **Controlled communication:** Pre/post-show quotas curb spam yet keep attendees informed.  
-* **Foundation for growth:** Opens path to season passes, recurring reminders, analytics, etc.
+Key points  
+* `show_series` holds the canonical record (`id, name, organizer_id, average_rating …`).  
+* `shows.series_id` is **nullable** for backward compatibility.  
+* New check constraints ensure a show either has an `organizer_id` *or* inherits it from its series.  
+* Indexes added for `series_id`, `organizer_id`, review ratings, and quotas.
 
----
-
-## 🧪 How to Test
-
-1. **Run migrations:** `supabase db push && supabase db execute db_migrations/data_migration_series.sql`  
-2. **Open the app:**  
-   * Show detail page should display *“Part of the XYZ Series”* badge.  
-   * Reviews list shows combined reviews from previous dates.  
-3. **Claim flow:**  
-   * Log in as a *show_organizer* test user.  
-   * Tap **“Claim This Show Series”** → should set `organizer_id`.  
-4. **Broadcast flow:**  
-   * From the same screen tap **Broadcast** → send message → quota decrements.  
-5. **Quota reset:**  
-   * Manually run `supabase functions invoke reset-broadcast-quotas` and confirm quotas reset for organizers of shows that ended yesterday.
+Run all SQL files in alphabetical order or follow **Migration Steps** below.
 
 ---
 
-## ✅ Pull-Request Checklist
+## ⚡️ Supabase Edge Functions (`/supabase/functions`)
+1. `claim_show_series` – allows authenticated organizers to claim an unclaimed series atomically (row-level security enforced).
+2. `send_broadcast_message` – validates remaining quota, writes `broadcasts` row, decrements counters in `profiles`.
+3. `reset-broadcast-quotas` – scheduled daily @ 00:00 UTC to top-up organizer quotas.
 
-- [x] Schema migration added  
-- [x] Data migration script **idempotent** & backed up original reviews  
-- [x] RLS reviewed for `show_series` & `reviews`  
-- [x] Edge functions deployed & tested locally  
-- [x] App builds and displays series info without regression  
-- [x] Documentation: `implementation_summary.md`, `migration_instructions.md`  
-
----
-
-### Breaking Changes
-* Old `reviews.show_id` is **deprecated** – all queries must use `series_id`. A full code search was completed, but please review any feature branches.
+Environment variables required:
+```bash
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
 ---
 
-### Related Issues
-Closes #48, closes #72  
-*(Adds groundwork for #91 – recurring-show analytics dashboard.)*
+## 🧩 TypeScript Services & Helpers (`src/services/`)
+* **`showSeriesService.ts`** – CRUD for series, occurrences, reviews, broadcast calls.
+* **`organizerService.ts`** – `claimShow` renamed → `claimSeriesOrShow`, routes to new Edge Function.
+* Transaction helpers abstract `supabase.rpc()` vs. `fetch()` calls.
+
 
 ---
 
-Happy reviewing! 🎉
+## 🖥  Frontend Components / Screens
+| File | Description |
+|------|-------------|
+| `screens/Organizer/OrganizerDashboardScreen.tsx` | Main dashboard with metrics & tab navigation. |
+| `components/OrganizerShowsList.tsx` | Lists series, collapsible occurrences, edit/cancel actions. |
+| `screens/Organizer/OrganizerReviewsScreen.tsx` | Review management with filters & inline responses. |
+| `components/AddEditShowModal.tsx` | Create/edit single or recurring occurrences (weekly/bi-weekly/monthly/quarterly). |
+| `screens/ShowDetail/ShowDetailScreen.tsx` | Now displays series banner and aggregated ratings. |
+| `navigation/OrganizerNavigator.tsx` | Stack for all organizer flows. |
+| `navigation/MainTabNavigator.tsx` | Adds “Organizer” tab with briefcase icon. |
+
+Design tokens reused; loading, empty & error states implemented for every screen.
+
+---
+
+## 🚚 Migration Steps
+1. **Clone latest `.env`** values.  
+2. **Run SQL** (production/staging):
+   ```bash
+   psql $DATABASE_URL -f db_migrations/recurring_shows_schema.sql
+   psql $DATABASE_URL -f db_migrations/data_migration_series.sql
+   ```
+3. **Deploy Edge Functions**:
+   ```bash
+   supabase functions deploy claim_show_series
+   supabase functions deploy send_broadcast_message
+   supabase functions deploy reset-broadcast-quotas
+   supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...
+   ```
+4. **Push mobile app** (`eas update`) or rebuild if native deps changed.
+
+---
+
+## 🧪 Testing Checklist
+- [x] Schema migrations succeed locally & on staging
+- [x] Claim unclaimed series → organizer_id populated, RLS verified
+- [x] Create recurring shows via modal → correct count & dates
+- [x] Broadcast sends, quotas decrement, hard stop at 0
+- [x] Reviews aggregate correctly, response flow works
+- [x] Dashboard metrics refresh & pull-to-refresh works
+- [x] Backwards-compat: existing single shows still visible & editable
+
+Automated Jest unit tests added for `showSeriesService` (fetch & aggregation).
+
+---
+
+## 🗒  Notes / Follow-ups
+* Series detail & broadcast history screens are placeholders; tracked in #237 & #238.
+* Consider moving time-zone handling to `luxon` for DST-safe recurrence generation.
+* Cron for quota reset uses Supabase scheduled jobs (requires Tier 2).
+
+---
+
+Closes #131, #132, #180.  
+Tagging @backend-team @mobile-team for review. 🚀
