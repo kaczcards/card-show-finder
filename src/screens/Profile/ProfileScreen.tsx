@@ -19,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { UserRole, Badge } from '../../types';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as badgeService from '../../services/badgeService';
+import { supabase } from '../../supabase'; // ✅ DB access for favourite count
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
@@ -49,10 +50,37 @@ const ProfileScreen: React.FC = () => {
     percent: number;
   } | null>(null);
 
+  /* ------------------------------------------------------------------ */
+  /* Favourite-shows count (authoritative DB lookup)                     */
+  /* ------------------------------------------------------------------ */
+  const [favoriteCount, setFavoriteCount] = useState<number>(0);
+
+  const fetchFavoriteCount = async () => {
+    if (!user?.id) return;
+    try {
+      const { count, error } = await supabase
+        .from('user_favorite_shows')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('[ProfileScreen] Failed to fetch favorite count', error);
+        return;
+      }
+
+      if (typeof count === 'number') {
+        setFavoriteCount(count);
+      }
+    } catch (err) {
+      console.error('[ProfileScreen] Unexpected error fetching favorite count', err);
+    }
+  };
+
   // Load user badges when the screen comes into focus
   useEffect(() => {
     if (user && isFocused) {
       loadUserBadges();
+      fetchFavoriteCount();
     }
   }, [user, isFocused]);
 
@@ -190,13 +218,22 @@ const ProfileScreen: React.FC = () => {
   // Check if user is a dealer (using current user directly)
   const isDealer = () => {
     if (!user) return false;
-    return (
+    const dealerLike =
       user.role === UserRole.DEALER ||
       user.role === UserRole.MVP_DEALER ||
       user.role === UserRole.SHOW_ORGANIZER ||
       user.accountType === 'dealer' ||
-      user.accountType === 'organizer'
-    );
+      user.accountType === 'organizer';
+
+    /* Debug logging to diagnose access-control issues */
+    console.debug('[ProfileScreen] isDealer check', {
+      userId: user.id,
+      role: user.role,
+      accountType: user.accountType,
+      isDealer: dealerLike,
+    });
+
+    return dealerLike;
   };
   
   // Get role display name
@@ -545,7 +582,8 @@ const ProfileScreen: React.FC = () => {
           
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user.favoriteShows?.length || 0}</Text>
+              {/* Use authoritative DB-backed favourite count */}
+              <Text style={styles.statValue}>{favoriteCount}</Text>
               <Text style={styles.statLabel}>Favorite Shows</Text>
             </View>
             
