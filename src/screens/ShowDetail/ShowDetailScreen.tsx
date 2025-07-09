@@ -9,17 +9,18 @@ import {
   Linking,
   Share,
   ActivityIndicator,
-  Alert
+  Alert,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommonActions } from '@react-navigation/native';
 import * as userRoleService from '../../services/userRoleService';
-import { UserRole } from '../../types';
-
 import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
+import ReviewsList from '../../components/ReviewsList';
+import ReviewForm from '../../components/ReviewForm';
 
 const placeholderShowImage = require('../../../assets/images/placeholder-show.png');
 
@@ -112,6 +113,15 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   
+  // State for series information
+  const [showSeries, setShowSeries] = useState<ShowSeries | null>(null);
+  const [loadingSeries, setLoadingSeries] = useState(false);
+  
+  // State for reviews
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  
   // Check if user is show organizer
   const [isShowOrganizer, setIsShowOrganizer] = useState(false);
   const [isMvpDealer, setIsMvpDealer] = useState(false);
@@ -198,7 +208,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
        * ------------------------------------------------------------------ */
       const { data, error } = await supabase
         .from('shows')
-        .select('*')
+        .select('*, series_id') // Make sure to select series_id
         .eq('id', showId)
         .single();
 
@@ -226,18 +236,85 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         }
 
         setShow(data);
-        setIsShowClaimed(!!data.claimed);
 
         // Update navigation title
         navigation.setOptions({
           title: data.title || 'Show Details',
         });
+        
+        // Check if current user is the organizer of this show
+        setIsCurrentUserOrganizer(user?.id === data.organizer_id);
       }
     } catch (error) {
       console.error('Error fetching show details:', error);
       setError('Failed to load show details');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  /**
+   * Fetch the series information for this show
+   */
+  const fetchShowSeries = async (seriesId: string) => {
+    try {
+      setLoadingSeries(true);
+      const series = await showSeriesService.getShowSeriesById(seriesId);
+      setShowSeries(series);
+      
+      // If the series has an organizer, update the isCurrentUserOrganizer state
+      if (series?.organizerId && user?.id) {
+        setIsCurrentUserOrganizer(series.organizerId === user.id);
+      }
+    } catch (error) {
+      console.error('Error fetching show series:', error);
+    } finally {
+      setLoadingSeries(false);
+    }
+  };
+  
+  /**
+   * Fetch reviews for the series
+   */
+  const fetchSeriesReviews = async (seriesId: string) => {
+    try {
+      setLoadingReviews(true);
+      const seriesReviews = await showSeriesService.getSeriesReviews(seriesId);
+      setReviews(seriesReviews);
+    } catch (error) {
+      console.error('Error fetching series reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+  
+  /**
+   * Handle submitting a new review
+   */
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    if (!showSeries || !user) {
+      Alert.alert('Error', 'You must be logged in to submit a review.');
+      return;
+    }
+    
+    try {
+      const newReview = await showSeriesService.addSeriesReview({
+        seriesId: showSeries.id,
+        rating,
+        comment
+      });
+      
+      // Add the new review to the list
+      setReviews(prevReviews => [newReview, ...prevReviews]);
+      setShowReviewForm(false);
+      
+      // Refresh series data to get updated rating
+      fetchShowSeries(showSeries.id);
+      
+      Alert.alert('Success', 'Your review has been submitted. Thank you!');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      Alert.alert('Error', 'Failed to submit review. Please try again.');
     }
   };
   
@@ -682,6 +759,23 @@ const toggleFavorite = async () => {
     );
   };
   
+  /**
+   * Handle responding to a review
+   */
+  const handleRespondToReview = async (reviewId: string, response: string) => {
+    try {
+      await showSeriesService.respondToReview(reviewId, response);
+      // Refresh reviews after responding
+      if (showSeries) {
+        fetchSeriesReviews(showSeries.id);
+      }
+      Alert.alert('Success', 'Your response has been posted.');
+    } catch (error) {
+      console.error('Error responding to review:', error);
+      Alert.alert('Error', 'Failed to post response. Please try again.');
+    }
+  };
+  
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -740,6 +834,15 @@ const toggleFavorite = async () => {
           <Text style={styles.actionText}>Share</Text>
         </TouchableOpacity>
         
+        {/* Review button */}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowReviewForm(true)}
+        >
+          <Ionicons name="star-outline" size={24} color="#333333" />
+          <Text style={styles.actionText}>Review</Text>
+        </TouchableOpacity>
+        
         {/* Broadcast Message button for organizers */}
         {(isCurrentUserOrganizer || isMvpDealer) && (
           <TouchableOpacity
@@ -755,8 +858,7 @@ const toggleFavorite = async () => {
       {/* Show Details */}
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{show.title}</Text>
-        
-        <InfoRow icon="calendar" text={formatShowDate(show)} />
+     
         
         {/* ------- Show Times Section ------- */}
         <View style={styles.timeContainer}>
@@ -791,10 +893,10 @@ const toggleFavorite = async () => {
         )}
         
         {/* Show Claim Button for Show Organizers */}
-        {isShowOrganizer && !isCurrentUserOrganizer && !show.organizer_id && (
+        {isShowOrganizer && !isCurrentUserOrganizer && (
           <TouchableOpacity
             style={styles.claimShowButton}
-            onPress={handleClaimShow}
+            onPress={showSeries ? handleClaimShowSeries : handleClaimShow}
             disabled={isClaimingShow}
           >
             {isClaimingShow ? (
@@ -802,7 +904,9 @@ const toggleFavorite = async () => {
             ) : (
               <>
                 <Ionicons name="flag" size={20} color="#FFFFFF" style={styles.claimButtonIcon} />
-                <Text style={styles.claimButtonText}>Claim This Show</Text>
+                <Text style={styles.claimButtonText}>
+                  {showSeries ? 'Claim This Show Series' : 'Claim This Show'}
+                </Text>
               </>
             )}
           </TouchableOpacity>
@@ -819,25 +923,26 @@ const toggleFavorite = async () => {
           </TouchableOpacity>
         )}
         
-        {show.organizer_id && show.profiles && (
+        {/* Show organizer info - either from the show or series */}
+        {(show.organizer_id && show.profiles) || (showSeries && showSeries.organizerId) ? (
           <View style={styles.organizerContainer}>
             <SectionHeader>Organized by:</SectionHeader>
             <View style={styles.organizer}>
-              {show.profiles.avatar_url ? (
+              {show.profiles?.avatar_url ? (
                 <Image source={{ uri: show.profiles.avatar_url }} style={styles.organizerAvatar} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
                   <Text style={styles.avatarText}>
-                    {show.profiles.full_name?.[0] || show.profiles.username?.[0] || 'O'}
+                    {show.profiles?.full_name?.[0] || show.profiles?.username?.[0] || 'O'}
                   </Text>
                 </View>
               )}
               <Text style={styles.organizerName}>
-                {show.profiles.full_name || show.profiles.username || 'Unknown Organizer'}
+                {show.profiles?.full_name || show.profiles?.username || 'Show Organizer'}
               </Text>
             </View>
           </View>
-        )}
+        ) : null}
         
         <View style={styles.descriptionContainer}>
           <SectionHeader>About this show</SectionHeader>
@@ -939,7 +1044,26 @@ const toggleFavorite = async () => {
           )}
         </View>
 
-        {/* Show Features/Tags could be added here */}
+        {/* Reviews Section - Show if this is part of a series */}
+        {showSeries && (
+          <View style={styles.reviewsContainer}>
+            <Text style={styles.sectionTitle}>Reviews</Text>
+            {loadingReviews ? (
+              <View style={styles.loadingDealersContainer}>
+                <ActivityIndicator size="small" color="#FF6A00" />
+                <Text style={styles.loadingDealersText}>Loading reviews...</Text>
+              </View>
+            ) : (
+              <View style={styles.reviewsList}>
+                {reviews.length > 0 ? (
+                  <ReviewsList reviews={reviews} emptyMessage="Be the first to review this show!" />
+                ) : (
+                  <Text style={styles.noDataText}>No reviews yet. Be the first to leave a review!</Text>
+                )}
+              </View>
+            )}
+          </View>
+        )}
       </View>
       
       {/* Broadcast Message Modal */}
@@ -961,6 +1085,15 @@ const toggleFavorite = async () => {
           dealerId={selectedDealer.id}
           showId={showId}
           dealerName={selectedDealer.name}
+        />
+      )}
+      
+      {/* Review Form Modal */}
+      {showReviewForm && showSeries && (
+        <ReviewForm
+          seriesId={showSeries.id}
+          onSubmit={handleSubmitReview}
+          onCancel={() => setShowReviewForm(false)}
         />
       )}
     </ScrollView>
@@ -1045,6 +1178,42 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 16,
+  },
+  // Series badge styles
+  seriesBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0057B8',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  seriesBadgeIcon: {
+    marginRight: 6,
+  },
+  seriesBadgeText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  // Series rating styles
+  seriesRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    marginRight: 8,
+  },
+  starIcon: {
+    marginRight: 2,
+  },
+  ratingText: {
+    fontSize: 14,
+    color: '#666',
   },
   infoRow: {
     flexDirection: 'row',
@@ -1227,59 +1396,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
   },
-
-  /* ----------  Show Claiming styles ---------- */
-  claimContainer: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#f5f9ff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e9f7',
-  },
-  claimButton: {
-    backgroundColor: '#4a90e2',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  claimButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  claimedBadge: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-    marginBottom: 16,
-  },
-  claimedText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  alreadyClaimedText: {
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
-    textAlign: 'center',
-  },
-  managementSection: {
-    marginTop: 16,
-  },
-  managementButton: {
-    backgroundColor: '#2c3e50',
-    padding: 12,
-    borderRadius: 6,
-    marginVertical: 8,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: '600',
   },
 });
 
