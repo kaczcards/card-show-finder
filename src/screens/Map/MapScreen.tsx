@@ -20,6 +20,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster from '../../components/MapShowCluster/index';
+import * as locationService from '../../services/locationService'; // Assuming you have this service
+import { getShows } from '../../services/showService'; // Assuming you have this service
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -42,12 +44,15 @@ const MapScreen: React.FC<MapScreenProps> = ({
   onShowPress,
   initialUserLocation
 }) => {
-  const [filterVisible, setFilterVisible] = useState(false);
-  const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
-  const [initialRegion, setInitialRegion] = useState<Region | null>(null);
-  const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  
+    const [shows, setShows] = useState<Show[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [filterVisible, setFilterVisible] = useState(false);
+    const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
+    const [initialRegion, setInitialRegion] = useState<Region | null>(null);
+    const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
   // Default filters
   const defaultFilters: ShowFilters = {
     radius: 25,
@@ -63,8 +68,9 @@ const MapScreen: React.FC<MapScreenProps> = ({
   const filters = customFilters || localFilters;
 
   // Refs
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapView>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const retryRef = useRef(0);
 
   // Get auth context
   const { authState } = useAuth();
@@ -80,9 +86,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
   // Get user location
   const getUserLocation = useCallback(async () => {
     try {
-      // First check if we have permission
       const hasPermission = await locationService.checkLocationPermissions();
-      
+
       if (!hasPermission) {
         const granted = await locationService.requestLocationPermissions();
         if (!granted) {
@@ -90,25 +95,23 @@ const MapScreen: React.FC<MapScreenProps> = ({
           return null;
         }
       }
-      
-      // Get current location
+
       const location = await locationService.getCurrentLocation();
-      
+
       if (location) {
         console.log('Got user location:', location);
         setUserLocation(location);
         return location;
       } else if (user && user.homeZipCode) {
-        // Fall back to ZIP code if we can't get current location
         console.log('Falling back to user ZIP code:', user.homeZipCode);
         const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
-        
+
         if (zipData && zipData.coordinates) {
           setUserLocation(zipData.coordinates);
           return zipData.coordinates;
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error getting user location:', error);
@@ -122,67 +125,42 @@ const MapScreen: React.FC<MapScreenProps> = ({
       try {
         setLoading(true);
         setError(null);
-        
+
         let determinedLocation: Coordinates | null = null;
         let regionToSet: Region | null = null;
 
-        /* ---- 1) Try initialUserLocation first if provided ---- */
         if (initialUserLocation) {
           determinedLocation = initialUserLocation;
-          regionToSet = {
-            latitude: initialUserLocation.latitude,
-            longitude: initialUserLocation.longitude,
-            latitudeDelta: 0.5,
-            longitudeDelta: 0.5,
-          };
         }
 
-        /* ---- 2) Try live GPS if no initialUserLocation or it's null ---- */
         if (!determinedLocation) {
           const location = await getUserLocation();
           if (location) {
             determinedLocation = location;
-            regionToSet = {
-              latitude: location.latitude,
-              longitude: location.longitude,
-              latitudeDelta: 0.5,
-              longitudeDelta: 0.5,
-            };
           }
         }
 
-        /* ---- 3) Fallback to profile ZIP if still no location ---- */
         if (!determinedLocation && user?.homeZipCode) {
           const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
           if (zipData) {
             determinedLocation = zipData.coordinates;
-            regionToSet = {
-              latitude: zipData.coordinates.latitude,
-              longitude: zipData.coordinates.longitude,
-              latitudeDelta: 2,
-              longitudeDelta: 2,
-            };
           }
         }
 
-        /* ---- 4) Final fallback – US center if no location could be determined ---- */
-        if (!determinedLocation || !regionToSet) {
-          console.warn('No coordinates available, falling back to US center.');
-          determinedLocation = { latitude: 39.8283, longitude: -98.5795 };
-          regionToSet = {
-            latitude: 39.8283,
-            longitude: -98.5795,
-            latitudeDelta: 40,
-            longitudeDelta: 40,
-          };
+        if (!determinedLocation) {
+            console.warn('No coordinates available, falling back to US center.');
+            determinedLocation = { latitude: 39.8283, longitude: -98.5795 };
+            regionToSet = { ...determinedLocation, latitudeDelta: 40, longitudeDelta: 40 };
+        } else {
+            regionToSet = { ...determinedLocation, latitudeDelta: 0.5, longitudeDelta: 0.5 };
         }
+
 
         setUserLocation(determinedLocation);
         setInitialRegion(regionToSet);
         setCurrentRegion(regionToSet);
-        
-        // Set error if we couldn't get user location and don't have a ZIP code
-        if (!user || !user.homeZipCode) {
+
+        if (!initialUserLocation && !user?.homeZipCode) {
           setError('Could not determine your location. Please set your home ZIP code in your profile.');
         }
       } catch (error) {
@@ -206,77 +184,43 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   // Fetch shows based on location or ZIP code
   const fetchShows = useCallback(async (isRefreshing = false) => {
+    if (!userLocation) return;
     try {
       if (!isRefreshing) {
         setLoading(true);
       }
       setError(null);
-      
-      console.log('[MapScreen] Fetching shows using showService');
-      
-      // Create a copy of the filters to modify
-  /* -------------------------------------------------------------
-   * Build _authoritative_ filters for the API request.
-   * – Always within 25 miles of the user (spec)
-   * – Always within the next 30 days
-   * Anything coming from UI / parent that violates these bounds
-   * is ignored so we never fall back to test-data responses.
-   * ----------------------------------------------------------- */
-  const currentFilters: ShowFilters = { ...filters };
-  const today = new Date();
-  const thirtyDaysOut = new Date();
-  thirtyDaysOut.setDate(today.getDate() + 30);
 
-  currentFilters.radius = 25;              // force spec radius
-  currentFilters.startDate = today;        // today
-  currentFilters.endDate = thirtyDaysOut;  // +30 days
-      
-      // If we have user location, use it
-      if (userLocation) {
-        currentFilters.latitude = userLocation.latitude;
-        currentFilters.longitude = userLocation.longitude;
-      } else {
-        // Try to get user location again if we don't have it
-        const location = await getUserLocation();
-        
-        if (location) {
-          currentFilters.latitude = location.latitude;
-          currentFilters.longitude = location.longitude;
-        } else if (user && user.homeZipCode) {
-          // Fall back to ZIP code if we still can't get location
-          const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
-          
-          if (zipData && zipData.coordinates) {
-            currentFilters.latitude = zipData.coordinates.latitude;
-            currentFilters.longitude = zipData.coordinates.longitude;
-          } else {
-            throw new Error('Could not determine your location. Please check your home ZIP code.');
-          }
-        } else {
-          throw new Error('No location available. Please set your home ZIP code in your profile.');
-        }
-      }
-      
-      // Format dates as ISO strings if they're Date objects
-      if (currentFilters.startDate instanceof Date) {
-        currentFilters.startDate = currentFilters.startDate.toISOString();
-      }
-      
-      if (currentFilters.endDate instanceof Date) {
-        currentFilters.endDate = currentFilters.endDate.toISOString();
-      }
-      
+      const today = new Date();
+      const thirtyDaysOut = new Date();
+      thirtyDaysOut.setDate(today.getDate() + 30);
+
+      const currentFilters: ShowFilters = {
+          ...filters,
+          radius: 25,
+          startDate: today.toISOString(),
+          endDate: thirtyDaysOut.toISOString(),
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+      };
+
+
       console.log('[MapScreen] Filters being used:', currentFilters);
-      
-      // Use the improved getShows function from showService
       const showsData = await getShows(currentFilters);
-      
-      // Always ensure we're setting an array
+
       setShows(Array.isArray(showsData) ? showsData : []);
       console.log(`[MapScreen] Successfully fetched ${showsData.length} shows`);
+
+    if (showsData.length === 0 && retryRef.current < 1) {
+        retryRef.current += 1;
+        console.warn('[MapScreen] No shows returned – retrying in 2 seconds (attempt 1).');
+        setTimeout(() => fetchShows(), 2000);
+      } else {
+        retryRef.current = 0; // Reset on successful fetch
+      }
+
     } catch (error: any) {
       console.error('[MapScreen] Error fetching shows:', error);
-      // Set empty array to prevent map errors
       setShows([]);
       setError(error?.message || 'Failed to load card shows. Please try again.');
     } finally {
@@ -287,7 +231,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
     }
   }, [filters, userLocation, getUserLocation, user]);
 
-  // Load shows when screen is focused
+  // Load shows when screen is focused or when the initial region is set
   useFocusEffect(
     useCallback(() => {
       if (initialRegion) {
@@ -302,91 +246,14 @@ const MapScreen: React.FC<MapScreenProps> = ({
     fetchShows(true);
   }, [fetchShows]);
 
-  // Fetch shows when filters or userLocation changes
-  useEffect(() => {
-    const fetchShows = async () => {
-      if (!userLocation) return;
-      
-      setLoading(true);
-      setError(null);
-      console.info('[MapScreen] Fetching shows with filters:', {
-        ...filters,
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
-      });
-      
-      try {
-        // Combine location with other filters
-        const showFilters: ShowFilters = {
-          ...filters,
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-        };
-        
-        const showsData = await getShows(showFilters);
-        console.info(
-          `[MapScreen] Received ${showsData.length} total show(s) from service.`,
-        );
-
-        // Extra diagnostics – count shows that actually have coordinates
-        const showsWithCoords = showsData.filter(
-          s =>
-            s.coordinates &&
-            typeof s.coordinates.latitude === 'number' &&
-            typeof s.coordinates.longitude === 'number',
-        );
-        console.info(
-          `[MapScreen] ${showsWithCoords.length}/${showsData.length} show(s) contain valid coordinates.`,
-        );
-
-        setShows(showsData);
-
-        /* ---------------------------------------------------------
-         * Retry once automatically if nothing returned
-         * ------------------------------------------------------- */
-        if (showsData.length === 0 && retryRef.current < 1) {
-          retryRef.current += 1;
-          console.warn(
-            '[MapScreen] No shows returned – retrying in 2 seconds (attempt 1).',
-          );
-          setTimeout(fetchShows, 2000);
-        }
-      } catch (err: any) {
-        console.error(
-          '[MapScreen] Error fetching shows with filters:',
-          err,
-        );
-        setError(
-          err.message ||
-            'Failed to fetch shows. Please check your internet connection or try again later.',
-        );
-        setShows([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    // keep retry counter stable across renders
-    const retryRef = fetchShows.retryRef || { current: 0 };
-    // @ts-ignore – attach to function for persistence w/o extra ref
-    fetchShows.retryRef = retryRef;
-
-    retryRef.current = 0; // reset counter each dependency change
-    fetchShows();
-  }, [filters, userLocation]);
-
   // Handle filter changes
   const handleFilterChange = (newFilters: ShowFilters) => {
     if (onFilterChange) {
-      // If parent is managing filters, call the callback
       onFilterChange(newFilters);
     } else {
-      // Otherwise, update local state
       setLocalFilters(newFilters);
     }
     setFilterVisible(false);
-    // Fetch shows with new filters
-    fetchShows();
   };
 
   // Reset filters to defaults
@@ -396,8 +263,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
     } else {
       setLocalFilters(defaultFilters);
     }
-    // Fetch data with default filters
-    fetchShows();
   };
 
   // Navigate to show detail or call provided callback
@@ -418,25 +283,17 @@ const MapScreen: React.FC<MapScreenProps> = ({
   const centerOnUserLocation = async () => {
     try {
       setLoading(true);
-      
-      // Get current location
       const location = await getUserLocation();
-      
+
       if (location && mapRef.current) {
-        // Animate to user location
         const newRegion = {
           latitude: location.latitude,
           longitude: location.longitude,
           latitudeDelta: 0.1,
           longitudeDelta: 0.1,
         };
-        
         setCurrentRegion(newRegion);
-        
-        if (mapRef.current.animateToRegion) {
-          mapRef.current.animateToRegion(newRegion, 1000);
-        }
-        
+        mapRef.current.animateToRegion(newRegion, 1000);
         console.log('Centered map on user location:', location);
       } else {
         Alert.alert(
@@ -446,26 +303,19 @@ const MapScreen: React.FC<MapScreenProps> = ({
       }
     } catch (error) {
       console.error('Error centering on user location:', error);
-      Alert.alert(
-        'Error',
-        'Failed to center on your location. Please try again.'
-      );
+      Alert.alert('Error', 'Failed to center on your location. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+
   // Format date for callout with timezone correction
   const formatDate = (dateValue: Date | string) => {
     try {
       const date = new Date(dateValue);
-      if (isNaN(date.getTime())) {
-        return 'Unknown date';
-      }
-
-      // Adjust for timezone offset to ensure correct date display
+      if (isNaN(date.getTime())) return 'Unknown date';
       const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-
       return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     } catch (err) {
       return 'Unknown date';
@@ -474,21 +324,13 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   // Render map markers - with defensive coding
   const renderMarkers = () => {
-    if (!shows || !Array.isArray(shows) || shows.length === 0) {
-      return null;
-    }
-
+    if (!shows || !Array.isArray(shows) || shows.length === 0) return null;
     return shows
-      .filter(show => show && show.coordinates && 
-               typeof show.coordinates.latitude === 'number' && 
-               typeof show.coordinates.longitude === 'number')
+      .filter(show => show?.coordinates?.latitude && show.coordinates.longitude)
       .map((show) => (
         <Marker
           key={show.id}
-          coordinate={{
-            latitude: show.coordinates!.latitude,
-            longitude: show.coordinates!.longitude,
-          }}
+          coordinate={show.coordinates}
           title={show.title}
           description={`${formatDate(show.startDate)} • ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`}
           pinColor="#007AFF"
@@ -498,12 +340,10 @@ const MapScreen: React.FC<MapScreenProps> = ({
               <Text style={styles.calloutTitle}>{show.title}</Text>
               <Text style={styles.calloutDetail}>
                 {formatDate(show.startDate)}
-                {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
+                {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() &&
                   ` - ${formatDate(show.endDate)}`}
               </Text>
-              <Text style={styles.calloutDetail}>
-                {show.address}
-              </Text>
+              <Text style={styles.calloutDetail}>{show.address}</Text>
               <Text style={styles.calloutDetail}>
                 {show.entryFee === 0 ? 'Free Entry' : `Entry: $${show.entryFee}`}
               </Text>
@@ -519,7 +359,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
   // Render empty state when no shows are found
   const renderEmptyState = () => {
     if (loading || shows.length > 0) return null;
-    
     return (
       <View style={styles.emptyStateContainer}>
         <Ionicons name="map-outline" size={50} color="#007AFF" />
@@ -536,34 +375,55 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-            <TouchableOpacity
-              style={styles.myLocationButton}
-              onPress={centerOnUserLocation}
-            >
-              <Ionicons name="locate" size={24} color="#007AFF" />
+        <View style={styles.filterInfoContainer}>
+            <Text style={styles.filterInfoText}>
+                Showing shows within 25 miles
+            </Text>
+            <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(true)}>
+                <Ionicons name="filter" size={18} color="#007AFF" />
+                <Text style={styles.filterButtonText}>Filter</Text>
             </TouchableOpacity>
+        </View>
 
-            {/* Active Filters Display */}
-            {(filters.features?.length > 0 || filters.categories?.length > 0 || filters.maxEntryFee !== undefined) && (
-              <View style={styles.activeFiltersContainer}>
-                <Text style={styles.activeFiltersText}>
-                  {filters.features?.length > 0 && `${filters.features.length} features • `}
-                  {filters.categories?.length > 0 && `${filters.categories.length} categories • `}
-                  {filters.maxEntryFee !== undefined && `Max $${filters.maxEntryFee} • `}
-                  <Text style={styles.resetFiltersText} onPress={resetFilters}>Reset</Text>
-                </Text>
-              </View>
-            )}
-
-            {/* Loading Overlay */}
-            {loading && (
-              <View style={styles.loadingOverlay}>
+        {loading && !refreshing ? (
+            <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#007AFF" />
-              </View>
-            )}
-          </>
+                <Text style={styles.loadingText}>Finding nearby shows...</Text>
+            </View>
+        ) : error && !shows.length ? (
+            <View style={styles.errorContainer}>
+                 <Text style={styles.errorText}>{error}</Text>
+                 <TouchableOpacity style={styles.retryButton} onPress={() => fetchShows()}>
+                     <Text style={styles.retryButtonText}>Retry</Text>
+                 </TouchableOpacity>
+            </View>
+        ) : (
+            <MapShowCluster
+                region={currentRegion}
+                shows={shows}
+                onShowPress={handleShowPress}
+                onRegionChangeComplete={handleRegionChangeComplete}
+                mapRef={mapRef}
+            />
         )}
-      </ScrollView>
+
+      <TouchableOpacity
+        style={styles.myLocationButton}
+        onPress={centerOnUserLocation}
+      >
+        <Ionicons name="locate" size={24} color="#007AFF" />
+      </TouchableOpacity>
+
+      {(filters.features?.length > 0 || filters.categories?.length > 0 || filters.maxEntryFee !== undefined) && (
+        <View style={styles.activeFiltersContainer}>
+          <Text style={styles.activeFiltersText}>
+            {filters.features?.length > 0 && `${filters.features.length} features • `}
+            {filters.categories?.length > 0 && `${filters.categories.length} categories • `}
+            {filters.maxEntryFee !== undefined && `Max $${filters.maxEntryFee} • `}
+            <Text style={styles.resetFiltersText} onPress={resetFilters}>Reset</Text>
+          </Text>
+        </View>
+      )}
 
       {/* Filter Sheet */}
       <FilterSheet
@@ -590,40 +450,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    height: height - 100,
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
     color: '#666',
-  },
-  errorContainer: {
-    position: 'absolute',
-    top: 70,
-    left: 16,
-    right: 16,
-    backgroundColor: '#ffeeee',
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ff3b30',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#ff3b30',
-    marginBottom: 8,
-  },
-  retryButton: {
-    backgroundColor: '#ff3b30',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
   },
   map: {
     width,
@@ -631,9 +462,10 @@ const styles = StyleSheet.create({
   },
   filterInfoContainer: {
     position: 'absolute',
-    top: 16,
-    left: 16,
-    right: 16,
+    top: 10,
+    left: 10,
+    right: 10,
+    zIndex: 10, // Ensure it's on top
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -669,6 +501,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     right: 16,
+    zIndex: 10,
     backgroundColor: 'white',
     width: 50,
     height: 50,
@@ -716,38 +549,33 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   errorContainer: {
-    position: 'absolute',
-    top: 70,
-    left: 16,
-    right: 16,
-    backgroundColor: '#FFEBEE',
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: 'row',
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: 20,
   },
   errorText: {
-    flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     color: '#D32F2F',
-    marginLeft: 8,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  retryButtonText: {
+      color: 'white',
+      fontSize: 14,
+      fontWeight: '600',
   },
   emptyStateContainer: {
-    position: 'absolute',
-    top: '40%',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: 20,
-    margin: 20,
-    borderRadius: 8,
   },
   emptyStateTitle: {
     fontSize: 18,
@@ -774,11 +602,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -788,6 +612,7 @@ const styles = StyleSheet.create({
     bottom: 90,
     left: 16,
     right: 16,
+    zIndex: 10,
     backgroundColor: 'white',
     borderRadius: 8,
     padding: 12,

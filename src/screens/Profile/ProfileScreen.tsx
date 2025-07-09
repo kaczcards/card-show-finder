@@ -597,8 +597,8 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          {/* Dealer Show Participation (visible only for dealer-tier roles) */}
-          {isDealer() && (
+          {/* Manage Show Participation (visible only for MVP Dealers and Show Organizers) */}
+{(user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER) && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate('ShowParticipationScreen' as never)}
