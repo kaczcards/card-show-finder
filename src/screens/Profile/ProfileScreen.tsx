@@ -22,7 +22,8 @@ import * as badgeService from '../../services/badgeService';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
-  const { user, isLoading, error } = authState;
+  // Pull favoriteCount from authState so it can be displayed below
+  const { user, isLoading, error, favoriteCount } = authState;
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   
@@ -57,7 +58,6 @@ const ProfileScreen: React.FC = () => {
   useEffect(() => {
     if (user && isFocused) {
       loadUserBadges();
-      fetchFavoriteCount();
     }
   }, [user, isFocused]);
 

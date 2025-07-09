@@ -8,7 +8,7 @@ import { refreshUserSession } from '../services/userRoleService';
 
 // Define the shape of our auth context
 interface AuthContextType {
-  authState: AuthState;
+  authState: AuthState & { favoriteCount: number };
   /**
    * Convenience getters exposed alongside the full `authState`
    * so that consuming components can access them directly without
@@ -45,7 +45,7 @@ const defaultAuthState: AuthState = {
 
 // Create the context with default values
 const AuthContext = createContext<AuthContextType>({
-  authState: defaultAuthState,
+  authState: { ...defaultAuthState, favoriteCount: 0 },
   error: defaultAuthState.error,
   isLoading: defaultAuthState.isLoading,
   isAuthenticated: defaultAuthState.isAuthenticated,
@@ -63,6 +63,27 @@ const AuthContext = createContext<AuthContextType>({
 // Provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>(defaultAuthState);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+
+  // Function to fetch the count of user's favorite shows
+  const fetchFavoriteCount = async (userId: string) => {
+    if (!userId) {
+      setFavoriteCount(0);
+      return;
+    }
+
+    const { count, error } = await supabase
+      .from('user_favorite_shows')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error fetching favorite count:', error);
+      setFavoriteCount(0);
+    } else {
+      setFavoriteCount(count || 0);
+    }
+  };
 
   // Initialize auth state on app start
   useEffect(() => {
@@ -113,6 +134,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             error: null,
             isAuthenticated: true,
           });
+
+          // Fetch favorite count after user is loaded
+          fetchFavoriteCount(userData.id);
         } else {
           // No session found
           setAuthState({
@@ -175,6 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               error: null,
               isAuthenticated: true,
             });
+
+            // Fetch favorite count after user is loaded
+            fetchFavoriteCount(userData.id);
           } catch (error: any) {
             console.error('Error handling auth state change:', error);
             setAuthState(prev => ({
@@ -190,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             error: null,
             isAuthenticated: false,
           });
+          setFavoriteCount(0);
         }
       }
     );
@@ -236,6 +264,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           error: null,
           isAuthenticated: true
         });
+        
+        // Fetch favorite count for the logged in user
+        fetchFavoriteCount(userData.id);
+        
         return userData;
       } else {
         // EDGE CASE: If we couldn't get the user profile data.
@@ -287,6 +319,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: true,
       });
       
+      // New user has no favorites yet
+      setFavoriteCount(0);
+      
       return userData;
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -313,6 +348,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error: null,
         isAuthenticated: false,
       });
+      
+      // Reset favorite count on logout
+      setFavoriteCount(0);
     } catch (error: any) {
       console.error('Logout error:', error);
       setAuthState(prev => ({
@@ -408,6 +446,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         };
       });
+      
+      // Increment favorite count
+      setFavoriteCount(prev => prev + 1);
     } catch (error: any) {
       console.error('Add favorite show error:', error);
       setAuthState(prev => ({
@@ -439,6 +480,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         };
       });
+      
+      // Decrement favorite count (ensure it doesn't go below 0)
+      setFavoriteCount(prev => Math.max(0, prev - 1));
     } catch (error: any) {
       console.error('Remove favorite show error:', error);
       setAuthState(prev => ({
@@ -546,6 +590,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       });
       
+      // Also refresh the favorite count
+      fetchFavoriteCount(authState.user.id);
+      
       return true;
     } catch (e) {
       console.error('An unexpected error occurred in refreshUserRole:', e);
@@ -555,7 +602,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Context value - ensuring error, isLoading, and isAuthenticated are always defined
   const contextValue: AuthContextType = {
-    authState,
+    authState: { ...authState, favoriteCount },
     // Explicitly extract these properties from authState with fallbacks to ensure they're never undefined
     error: authState?.error ?? null,
     isLoading: authState?.isLoading ?? false,
