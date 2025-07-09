@@ -36,8 +36,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [isResending, setIsResending] = useState(false);
 
   // Get auth context
-  const { authState, login, clearError } = useAuth();
-  const { isLoading, error } = authState;
+  const { login, clearError, error, isLoading, isAuthenticated } = useAuth();
 
   // Handle login
   const handleLogin = async () => {
@@ -218,7 +217,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-// --- NEW STYLES ---
 const BRAND_COLORS = {
   primaryBlue: '#007AFF',
   primaryOrange: '#FF6A00',
@@ -247,12 +245,14 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     marginBottom: 40,
+    /* ---------- Drop-shadow for the logo ---------- */
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4, // Android
   },
   logo: {
-    // Enlarged splash/logo for better visual impact on welcome page
-    width: 150,
-    height: 150,
-    marginBottom: 16,
   },
   appName: {
     fontSize: 26,
