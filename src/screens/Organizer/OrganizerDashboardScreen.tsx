@@ -10,11 +10,13 @@ import {
   RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import { showSeriesService } from '../../services/showSeriesService';
 import { supabase } from '../../supabase';
+import OrganizerShowsList from '../../components/OrganizerShowsList';
+import UnclaimedShowsList from '../../components/UnclaimedShowsList';
 
 // Define the tab names
 type TabName = 'shows' | 'claim' | 'recurring' | 'reviews' | 'broadcast';
@@ -136,10 +138,22 @@ const OrganizerDashboardScreen: React.FC = () => {
   }, [isShowOrganizer, user?.id]);
   
   // Handle refresh
-  const handleRefresh = () => {
+  const refreshShows = () => {
     setIsRefreshing(true);
     fetchDashboardMetrics();
   };
+
+  // Keep ScrollView pull-to-refresh compatible
+  const handleRefresh = refreshShows;
+
+  // Refresh metrics every time the screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isShowOrganizer) {
+        fetchDashboardMetrics();
+      }
+    }, [isShowOrganizer, user?.id])
+  );
   
   // Render metrics card
   const renderMetricsCard = () => {
@@ -195,49 +209,21 @@ const OrganizerDashboardScreen: React.FC = () => {
     switch (activeTab) {
       case 'shows':
         return (
-          <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>My Shows</Text>
-            <Text style={styles.sectionDescription}>
-              Manage the shows and series you've claimed as an organizer.
-            </Text>
-            <View style={styles.featureList}>
-              <Text style={styles.featureItem}>• View all your claimed shows and series</Text>
-              <Text style={styles.featureItem}>• Edit show details and manage occurrences</Text>
-              <Text style={styles.featureItem}>• Monitor show attendance and reviews</Text>
-              <Text style={styles.featureItem}>• Send broadcast messages to attendees</Text>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => Alert.alert('Coming Soon', 'This feature is under development.')}
-            >
-              <Ionicons name="add-circle" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Add New Show</Text>
-            </TouchableOpacity>
-          </View>
+          <OrganizerShowsList
+            organizerId={user?.id || ''}
+            onRefresh={refreshShows}
+            isRefreshing={isRefreshing}
+          />
         );
         
       case 'claim':
         return (
-          <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>Unclaimed Shows</Text>
-            <Text style={styles.sectionDescription}>
-              Find and claim shows that don't have an organizer yet.
-            </Text>
-            <View style={styles.featureList}>
-              <Text style={styles.featureItem}>• Browse shows available to claim</Text>
-              <Text style={styles.featureItem}>• Claim ownership of recurring show series</Text>
-              <Text style={styles.featureItem}>• Verify your identity as the legitimate organizer</Text>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => Alert.alert('Coming Soon', 'This feature is under development.')}
-            >
-              <Ionicons name="search" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Find Shows to Claim</Text>
-            </TouchableOpacity>
-          </View>
+          <UnclaimedShowsList
+            organizerId={user?.id || ''}
+            onRefresh={refreshShows}
+            isRefreshing={isRefreshing}
+            onClaimSuccess={refreshShows}
+          />
         );
         
       case 'recurring':
