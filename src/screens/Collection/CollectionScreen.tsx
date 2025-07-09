@@ -31,11 +31,11 @@ const CollectionScreen: React.FC = () => {
   const userId = user?.id ?? '';
 
   // ===== Want List State =====
-  const [wantList, setWantList] = useState<WantList | null>(null);
+  const [wantList, setWantList] = useState<any | null>(null); // Using 'any' for now
   const [loadingWantList, setLoadingWantList] = useState<boolean>(true);
-  
+
   // ===== Upcoming Shows State =====
-  const [upcomingShows, setUpcomingShows] = useState<Show[]>([]);
+  const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
 
   const loadWantList = async () => {
@@ -49,7 +49,7 @@ const CollectionScreen: React.FC = () => {
     }
     setLoadingWantList(false);
   };
-  
+
   const loadUpcomingShows = async () => {
     if (!userId) return;
     setLoadingShows(true);
@@ -62,11 +62,11 @@ const CollectionScreen: React.FC = () => {
         // Optional: limit to next 30 days or similar
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
-      
+
       if (error) {
         console.error('Error fetching upcoming shows:', error);
       } else if (data) {
-        setUpcomingShows(data);
+        setUpcomingShows(data as any[]); // Cast to any[]
       }
     } catch (error) {
       console.error('Error in loadUpcomingShows:', error);
@@ -78,8 +78,10 @@ const CollectionScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       // Refresh each time screen comes into focus
-      loadWantList();
-      loadUpcomingShows();
+      if (userId) {
+        loadWantList();
+        loadUpcomingShows();
+      }
     }, [userId])
   );
 
@@ -100,7 +102,6 @@ const CollectionScreen: React.FC = () => {
           isLoading={loadingWantList || loadingShows}
         />
       </View>
-
     </SafeAreaView>
   );
 };

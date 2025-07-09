@@ -22,7 +22,8 @@ import * as badgeService from '../../services/badgeService';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
-  const { user, isLoading, error } = authState;
+  // Pull favoriteCount from authState so it can be displayed below
+  const { user, isLoading, error, favoriteCount } = authState;
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   
@@ -81,7 +82,6 @@ const ProfileScreen: React.FC = () => {
   useEffect(() => {
     if (user && isFocused) {
       loadUserBadges();
-      fetchFavoriteCount();
     }
   }, [user, isFocused]);
 
@@ -622,7 +622,7 @@ const ProfileScreen: React.FC = () => {
           )}
 
           {/* Manage Show Participation (visible only for MVP Dealers and Show Organizers) */}
-          {(user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER) && (
+{(user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER) && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate('ShowParticipationScreen' as never)}
