@@ -110,18 +110,25 @@ export const registerUser = async (
  * @returns Object with user and error properties
  */
 export const signInWithEmailPassword = async (email: string, password: string) => {
+  // Add debug logging
+  console.log('[AUTH SERVICE] signInWithEmailPassword - attempting login', { email });
+
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    // Enhanced error logging
     if (error) {
+      console.error('[AUTH SERVICE] Login error:', JSON.stringify(error, null, 2));
       return { user: null, error };
     }
 
+    console.log('[AUTH SERVICE] Login successful:', data.user?.id);
     return { user: data.user, error: null };
   } catch (err: any) {
+    console.error('[AUTH SERVICE] Unexpected error during login:', err);
     return { user: null, error: err };
   }
 };
@@ -132,14 +139,21 @@ export const signInWithEmailPassword = async (email: string, password: string) =
  * @returns Promise with the user data
  */
 export const signInUser = async (credentials: AuthCredentials): Promise<User> => {
+  // Initial debug log as requested
+  console.log('[AUTH SERVICE] signInUser called with email:', credentials.email);
+
   try {
     const { email, password } = credentials;
 
     // Use the helper that returns `{ user, error }`
     const result = await signInWithEmailPassword(email, password);
-    
-    // --> ADD THIS LINE <--
-    console.log("[AuthContext] Result received from service:", JSON.stringify(result, null, 2));
+
+    // Structured result logging
+    console.log('[AUTH SERVICE] Result from signInWithEmailPassword:', {
+      success: !!result.user,
+      hasError: !!result.error,
+      errorMessage: result.error?.message,
+    });
 
     // Check if there was an error
     if (result.error) {
