@@ -1,10 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-/**
- * reset-broadcast-quotas - Scheduled Edge Function
- * 
- * This function runs daily to reset broadcast message quotas for organizers
- * of shows that have just ended. It:
  * 
  * 1. Finds all shows that ended in the past 24 hours
  * 2. Identifies the organizers of those shows via their series
@@ -25,28 +18,6 @@ Deno.serve(async () => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Calculate the date range for shows that ended in the past 24 hours
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    console.log(`Looking for shows that ended between ${yesterday.toISOString()} and ${now.toISOString()}`);
-
-    // Find shows that ended in the past 24 hours
-    const { data: recentlyEndedShows, error: showsError } = await supabaseAdmin
-      .from("shows")
-      .select("id, title, end_date, series_id")
-      .gte("end_date", yesterday.toISOString())
-      .lte("end_date", now.toISOString())
-      .order("end_date", { ascending: false });
-
-    if (showsError) {
-      throw new Error(`Error fetching recently ended shows: ${showsError.message}`);
-    }
-
-    console.log(`Found ${recentlyEndedShows?.length || 0} shows that ended in the past 24 hours`);
-
-    if (!recentlyEndedShows || recentlyEndedShows.length === 0) {
       return new Response(
         JSON.stringify({ 
           message: "No shows ended in the past 24 hours, no quotas reset",
@@ -74,16 +45,6 @@ Deno.serve(async () => {
         { status: 200 }
       );
     }
-
-    // Get organizers of these series
-    const { data: seriesWithOrganizers, error: seriesError } = await supabaseAdmin
-      .from("show_series")
-      .select("id, name, organizer_id")
-      .in("id", seriesIds)
-      .not("organizer_id", "is", null); // Only include series with an organizer
-
-    if (seriesError) {
-      throw new Error(`Error fetching series organizers: ${seriesError.message}`);
     }
 
     console.log(`Found ${seriesWithOrganizers?.length || 0} series with organizers`);
