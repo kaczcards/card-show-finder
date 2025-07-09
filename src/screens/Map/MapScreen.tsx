@@ -18,6 +18,7 @@ import {
   getCurrentLocation,
   getZipCodeCoordinates,
 } from '../../services/locationService';
+import { getShows } from '../../services/showService';
 import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster from '../../components/MapShowCluster/index';
 
@@ -42,58 +43,9 @@ const MapScreen: React.FC<MapScreenProps> = ({
   onShowPress,
   initialUserLocation
 }) => {
-  // --- HARDCODED SHOWS DATA ---
-  // We are temporarily hardcoding show data to test if pins appear and to stop infinite logging.
-  // This bypasses the showService and Supabase.
-  const [shows, setShows] = useState<Show[]>([
-    {
-      id: "hardcoded-show-1",
-      title: "Sample Card Show A",
-      location: "Noblesville, IN",
-      address: "Moose Lodge, 950 Field Drive, Noblesville, IN 46060",
-      startDate: "2025-07-12T00:00:00+00:00",
-      endDate: "2025-07-12T00:00:00+00:00",
-      startTime: "09:00 AM",
-      endTime: "03:00 PM",
-      entryFee: 5,
-      description: "This is a hardcoded test show to check map pins. Should appear near Noblesville.",
-      status: ShowStatus.ACTIVE,
-      categories: ["Sports Cards"],
-      features: ["Autographs"],
-      organizerId: "test-organizer-1",
-      coordinates: {
-        latitude: 40.063948,
-        longitude: -85.976875
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: "hardcoded-show-2",
-      title: "Sample Card Show B",
-      location: "Indianapolis, IN",
-      address: "200 E. Market St, Indianapolis, IN 46204",
-      startDate: "2025-07-19T00:00:00+00:00",
-      endDate: "2025-07-19T00:00:00+00:00",
-      startTime: "10:00 AM",
-      endTime: "04:00 PM",
-      entryFee: 10,
-      description: "Another hardcoded test show. Should appear in Indianapolis.",
-      status: ShowStatus.ACTIVE,
-      categories: ["Memorabilia"],
-      features: ["Free Parking"],
-      organizerId: "test-organizer-2",
-      coordinates: {
-        latitude: 39.7684,
-        longitude: -86.1581
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ]);
-  const [loading, setLoading] = useState(false); // Set to false because data is hardcoded and immediately available
-  // --- END HARDCODED SHOWS DATA ---
-
+  const [shows, setShows] = useState<Show[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filterVisible, setFilterVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
@@ -201,6 +153,36 @@ const MapScreen: React.FC<MapScreenProps> = ({
     setupInitialRegion();
   }, [user, initialUserLocation]);
 
+  // Fetch shows when filters or userLocation changes
+  useEffect(() => {
+    const fetchShows = async () => {
+      if (!userLocation) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Combine location with other filters
+        const showFilters: ShowFilters = {
+          ...filters,
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+        };
+        
+        const showsData = await getShows(showFilters);
+        setShows(showsData);
+      } catch (err: any) {
+        console.error('Error fetching shows:', err);
+        setError(err.message || 'Failed to fetch shows');
+        setShows([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchShows();
+  }, [filters, userLocation]);
+
   // Handle filter changes
   const handleFilterChange = (newFilters: Partial<ShowFilters>) => {
     if (onFilterChange) {
@@ -259,17 +241,17 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      {loading && !initialRegion ? (
+      {loading && !shows.length ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading map...</Text>
+          <Text style={styles.loadingText}>Loading shows...</Text>
         </View>
       ) : (
         <>
           {initialRegion && (
             <MapShowCluster
               ref={mapRef}
-              shows={shows} // Now uses hardcoded 'shows' data
+              shows={shows}
               onShowPress={handleShowPress}
               region={currentRegion || initialRegion}
               showsUserLocation={true}
@@ -279,6 +261,24 @@ const MapScreen: React.FC<MapScreenProps> = ({
               provider="google"
               onRegionChangeComplete={handleRegionChangeComplete}
             />
+          )}
+
+          {/* Error message */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={() => {
+                  // Re-trigger the useEffect by updating userLocation
+                  if (userLocation) {
+                    setUserLocation({...userLocation});
+                  }
+                }}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* Filter info banner */}
@@ -337,6 +337,34 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  errorContainer: {
+    position: 'absolute',
+    top: 70,
+    left: 16,
+    right: 16,
+    backgroundColor: '#ffeeee',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ff3b30',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#ff3b30',
+    marginBottom: 8,
+  },
+  retryButton: {
+    backgroundColor: '#ff3b30',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   map: {
     width,

@@ -17,6 +17,8 @@ const mapDbShowToAppShow = (row: any): Show => ({
   address: row.address,
   startDate: row.start_date,
   endDate: row.end_date,
+  startTime: row.start_time,
+  endTime: row.end_time,
   entryFee: row.entry_fee,
   description: row.description ?? undefined,
   imageUrl: row.image_url ?? undefined,
@@ -36,6 +38,8 @@ const mapDbShowToAppShow = (row: any): Show => ({
   categories: row.categories ?? [],
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  seriesId: row.series_id,
+  websiteUrl: row.website_url,
 });
 
 /**
@@ -57,7 +61,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     filters = filters || {};
     
     /* -----------------------------------------------------------
-     * 1. Geo-aware query via RPC when lat/lng present
+     * 1. Geo-aware query via nearby_shows RPC when lat/lng present
      * --------------------------------------------------------- */
     if (
       typeof filters.latitude === 'number' &&
@@ -75,7 +79,71 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         );
       }
 
-      console.debug('[showService] Calling find_filtered_shows with params:', {
+      console.debug('[showService] Calling nearby_shows with params:', {
+        lat: filters.latitude,
+        long: filters.longitude,
+        radius_miles: radius,
+        start_date: filters.startDate ?? null,
+        end_date: filters.endDate ?? null,
+      });
+
+      // Call the new nearby_shows function as primary method
+      const { data: nearbyData, error: nearbyError } = await supabase.rpc(
+        'nearby_shows',
+        {
+          lat: filters.latitude,
+          long: filters.longitude,
+          radius_miles: radius,
+          start_date: filters.startDate || null,
+          end_date: filters.endDate || null,
+        }
+      );
+
+      if (nearbyError) {
+        console.warn(
+          '[showService] nearby_shows RPC failed – attempting fallback',
+          nearbyError.message
+        );
+      } else {
+        console.info(
+          `[showService] nearby_shows returned ${((nearbyData && Array.isArray(nearbyData)) ? nearbyData.length : 0)} show(s)`
+        );
+        
+        // Apply additional filters that weren't handled by the RPC
+        let filteredData = nearbyData;
+        
+        // Filter by max entry fee if specified
+        if (typeof filters.maxEntryFee === 'number' && Array.isArray(filteredData)) {
+          filteredData = filteredData.filter(show => 
+            show.entry_fee <= filters.maxEntryFee!
+          );
+        }
+        
+        // Filter by categories if specified
+        if (filters.categories && Array.isArray(filters.categories) && 
+            filters.categories.length > 0 && Array.isArray(filteredData)) {
+          filteredData = filteredData.filter(show => 
+            show.categories && 
+            filters.categories!.some(cat => show.categories.includes(cat))
+          );
+        }
+        
+        // Filter by features if specified
+        if (filters.features && Array.isArray(filters.features) && 
+            filters.features.length > 0 && Array.isArray(filteredData)) {
+          filteredData = filteredData.filter(show => 
+            show.features && 
+            filters.features!.every(feature => show.features[feature] === true)
+          );
+        }
+        
+        return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
+      }
+
+      /* -------------------------------------------------------
+       * 1b. Fallback to find_filtered_shows if nearby_shows fails
+       * ----------------------------------------------------- */
+      console.debug('[showService] Falling back to find_filtered_shows with params:', {
         center_lat: filters.latitude,
         center_lng: filters.longitude,
         radius_miles: radius,
@@ -103,7 +171,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
       if (rpcError) {
         console.warn(
-          '[showService] find_filtered_shows RPC failed – attempting fallback',
+          '[showService] find_filtered_shows RPC failed – attempting second fallback',
           rpcError.message
         );
       } else {
@@ -114,7 +182,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       }
 
       /* -------------------------------------------------------
-       * 1b. Fallback to simple radius-only RPC if the above fails
+       * 1c. Fallback to simple radius-only RPC if the above fails
        * ----------------------------------------------------- */
       const { data: fbData, error: fbError } = await supabase.rpc(
         'find_shows_within_radius',
