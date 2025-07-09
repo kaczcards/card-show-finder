@@ -11,6 +11,7 @@
 import { supabase } from '../supabase';
 import { Show } from '../types';
 import { addOrganizerResponse, updateOrganizerResponse, removeOrganizerResponse } from './reviewService';
+import { showSeriesService } from './showSeriesService';
 
 /**
  * Interface for broadcast message details
@@ -53,23 +54,48 @@ export interface RecurringShowDetails {
 
 /**
  * Claim ownership of a show
+ * This function now handles both individual shows and shows that are part of a series
  */
 export const claimShow = async (
   showId: string,
   organizerId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { data, error } = await supabase.rpc('claim_show', {
-      show_id: showId,
-      organizer_id: organizerId
-    });
+    // First, check if the show is part of a series
+    const { data: showData, error: showError } = await supabase
+      .from('shows')
+      .select('series_id')
+      .eq('id', showId)
+      .single();
 
-    if (error) {
-      console.error('Error claiming show:', error);
-      return { success: false, error: error.message };
+    if (showError) {
+      console.error('Error fetching show details:', showError);
+      return { success: false, error: showError.message };
     }
 
-    return { success: !!data, error: null };
+    // If the show is part of a series, claim the entire series
+    if (showData.series_id) {
+      console.log(`Show ${showId} is part of series ${showData.series_id}, claiming series instead`);
+      const result = await showSeriesService.claimShowSeries(showData.series_id);
+      
+      return { 
+        success: result.success, 
+        error: result.success ? null : (result.message || 'Failed to claim show series') 
+      };
+    }
+
+    // If the show is not part of a series, just update its organizer_id directly
+    const { error: updateError } = await supabase
+      .from('shows')
+      .update({ organizer_id: organizerId })
+      .eq('id', showId);
+
+    if (updateError) {
+      console.error('Error claiming individual show:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    return { success: true, error: null };
   } catch (err: any) {
     console.error('Unexpected error claiming show:', err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
