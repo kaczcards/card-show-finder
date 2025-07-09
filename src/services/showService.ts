@@ -23,15 +23,23 @@ const mapDbShowToAppShow = (row: any): Show => ({
   description: row.description ?? undefined,
   imageUrl: row.image_url ?? undefined,
   rating: row.rating ?? undefined,
-  coordinates: row.coordinates && 
-    row.coordinates.coordinates && 
-    Array.isArray(row.coordinates.coordinates) && 
-    row.coordinates.coordinates.length >= 2
-    ? {
-        latitude: row.coordinates.coordinates[1],
-        longitude: row.coordinates.coordinates[0],
-      }
-    : undefined,
+  // Prefer explicit latitude / longitude columns (added in updated Supabase functions);
+  // fall back to legacy PostGIS object when they are not present.
+  coordinates:
+    typeof row.latitude === 'number' && typeof row.longitude === 'number'
+      ? {
+          latitude: row.latitude,
+          longitude: row.longitude,
+        }
+      : row.coordinates &&
+        row.coordinates.coordinates &&
+        Array.isArray(row.coordinates.coordinates) &&
+        row.coordinates.coordinates.length >= 2
+      ? {
+          latitude: row.coordinates.coordinates[1],
+          longitude: row.coordinates.coordinates[0],
+        }
+      : undefined,
   status: row.status as ShowStatus,
   organizerId: row.organizer_id,
   features: row.features ?? {},
