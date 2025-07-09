@@ -40,7 +40,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.ATTENDEE);
 
   // Get auth context
-  const { register, error, clearError } = useAuth();
+  // FIX: Destructure authState from useAuth, then get error from authState
+  const { register, authState, clearError } = useAuth();
+  const { error } = authState; // Correctly access error from authState
 
   // Validate form
   const validateForm = () => {
@@ -94,7 +96,35 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );
     } catch (err: any) {
-      Alert.alert('Registration Failed', err.message || 'Please try again');
+      const message: string = err?.message || '';
+
+      // --- Account already exists ------------------------------------
+      if (/already exists|user already registered|account .* exists/i.test(message)) {
+        Alert.alert(
+          'Account Already Exists',
+          'An account with this email address already exists. Would you like to sign in instead?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Sign In',
+              onPress: () => handleNavigate('Login'),
+            },
+          ]
+        );
+        return;
+      }
+
+      // --- Network / offline errors ----------------------------------
+      if (/network request failed|internet|offline/i.test(message)) {
+        Alert.alert(
+          'No Internet Connection',
+          'Unable to reach the authentication server. Please check your internet connection and try again.'
+        );
+        return;
+      }
+
+      // --- Generic fallback ------------------------------------------
+      Alert.alert('Registration Failed', message || 'Please try again');
     } finally {
       setIsSubmitting(false);
     }
@@ -129,7 +159,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Sign up to find card shows near you</Text>
 
-            {error ? (
+            {error ? ( // This now correctly accesses error from authState
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error}</Text>
               </View>
@@ -311,15 +341,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Mini logo at bottom */}
-          <View style={styles.miniLogoContainer}>
-            <Image
-              source={require('../../../assets/splash-icon.png')}
-              style={styles.miniLogo}
-              resizeMode="contain"
-            />
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -342,27 +363,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 50,
     marginTop: 20,
+    /* ---------- Drop-shadow for the logo ---------- */
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 150,
+    height: 150,
     marginBottom: 10,
   },
   appName: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#FF6A00',
-  },
-
-  /* ----------  Mini-logo (bottom) ---------- */
-  miniLogoContainer: {
-    alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 10,
-  },
-  miniLogo: {
-    width: 60,
-    height: 60,
   },
   formContainer: {
     width: '100%',

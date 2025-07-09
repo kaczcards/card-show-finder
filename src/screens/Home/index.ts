@@ -1,6 +1,8 @@
 import HomeScreen from './HomeScreen';
+import HomeTabsScreen from './HomeTabsScreen';
 
-export { HomeScreen };
+// Named exports for flexibility
+export { HomeScreen, HomeTabsScreen };
 
-// Default export for convenience when importing the main screen
-export default HomeScreen;
+// Default export now points to the tabbed (List ↔︎ Map) experience
+export default HomeTabsScreen;

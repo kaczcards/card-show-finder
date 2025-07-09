@@ -21,6 +21,9 @@ export interface User {
   updatedAt: Date | string;
   phoneNumber?: string;
   profileImageUrl?: string;
+  /**
+   * Indicates whether the user's email has been verified.
+   */
   isEmailVerified: boolean;
   /**
    * Tier of account the user currently has.
@@ -39,16 +42,29 @@ export interface User {
    * Null for free collector accounts or when there is no active subscription.
    */
   subscriptionExpiry: Date | string | null;
-  favoriteShows?: string[]; // Array of show IDs
-  attendedShows?: string[]; // Array of show IDs for past shows
+  favoriteShows?: string[];   // Array of show IDs
+  attendedShows?: string[];   // Array of show IDs for past shows
   /**
    * Running counter of shows the user has attended.
    * This is incremented automatically when a user submits a post-show review.
    */
   showAttendanceCount?: number;
+  /**
+   * Number of pre-show broadcast messages the organizer can still send.
+   * Only relevant when role === UserRole.SHOW_ORGANIZER.
+   */
+  preShowBroadcastsRemaining?: number;
+  /**
+   * Number of post-show broadcast messages the organizer can still send.
+   * Only relevant when role === UserRole.SHOW_ORGANIZER.
+   */
+  postShowBroadcastsRemaining?: number;
+
 }
 
-// Authentication types
+/* ------------------------------------------------------------------
+ * Authentication helper types
+ * ------------------------------------------------------------------ */
 export interface AuthCredentials {
   email: string;
   password: string;
@@ -64,6 +80,11 @@ export interface AuthState {
 // Show-related types
 export interface Show {
   id: string;
+  /**
+   * Optional link to the parent Show Series if this is a recurring show.
+   * Null/undefined for one-off shows.
+   */
+  seriesId?: string;
   title: string;
   description?: string;
   location: string; // Venue name/location description
@@ -92,6 +113,35 @@ export enum ShowStatus {
   ACTIVE = 'ACTIVE' // Default in Supabase
 }
 
+/* ------------------------------------------------------------------
+ * Recurring Show Series
+ * ------------------------------------------------------------------ */
+export interface ShowSeries {
+  id: string;
+  /**
+   * The official name of the recurring show (e.g., "Noblesville Card Show").
+   */
+  name: string;
+  /**
+   * User ID of the organizer who claimed this series (nullable if unclaimed).
+   */
+  organizerId?: string | null;
+  /**
+   * General description of the show series.
+   */
+  description?: string;
+  /**
+   * Aggregate star rating across all reviews for the series.
+   */
+  averageRating?: number;
+  /**
+   * Total number of reviews the series has received.
+   */
+  reviewCount?: number;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+}
+
 export enum ShowFeature {
   ON_SITE_GRADING = 'On-site Grading',
   AUTOGRAPHS = 'Autograph Guests',
@@ -115,7 +165,10 @@ export enum CardCategory {
 // Review-related types
 export interface Review {
   id: string;
-  showId: string;
+  /**
+   * Foreign key to the parent show series being reviewed.
+   */
+  seriesId: string;
   userId: string;
   userName: string;
   rating: number; // 1-5
