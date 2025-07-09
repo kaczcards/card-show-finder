@@ -52,6 +52,30 @@ const ProfileScreen: React.FC = () => {
     percent: number;
   } | null>(null);
 
+  // ---------------------------------------------------------------------------
+  // Favorite shows – local count & helper
+  // ---------------------------------------------------------------------------
+  // State for favorite shows count
+  const [favoriteCount, setFavoriteCount] = useState(0);
+
+  // Function to fetch the count of user's favorite shows
+  const fetchFavoriteCount = async () => {
+    // Defensive: ensure we have a user object to read from
+    if (!user?.id) {
+      setFavoriteCount(0);
+      return;
+    }
+
+    try {
+      // We already receive the favourite shows array on the user object
+      const count = user.favoriteShows?.length || 0;
+      setFavoriteCount(count);
+    } catch (error) {
+      console.error('Error determining favorite count:', error);
+      setFavoriteCount(0);
+    }
+  };
+
 
   // Load user badges when the screen comes into focus
   useEffect(() => {
@@ -597,8 +621,8 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          {/* Dealer Show Participation (visible only for dealer-tier roles) */}
-          {isDealer() && (
+          {/* Manage Show Participation (visible only for MVP Dealers and Show Organizers) */}
+          {(user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER) && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate('ShowParticipationScreen' as never)}
