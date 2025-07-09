@@ -1,211 +1,149 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-
-// Interfaces for type safety
-interface Profile {
-  id: string;
-  role: string;
-  broadcast_message_count: number;
-  last_broadcast_reset_date: string | null;
-}
-
-interface ResetLogEntry {
-  id?: string;
-  executed_at: string;
-  profiles_updated: number;
-  status: 'success' | 'partial_success' | 'failure';
-  error_message?: string;
-}
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
- * This function resets the broadcast_message_count to 0 for all SHOW_ORGANIZER profiles
- * and updates their last_broadcast_reset_date to the current date.
+ * reset-broadcast-quotas - Scheduled Edge Function
  * 
- * It should be scheduled to run once per month using Supabase's scheduled functions.
+ * This function runs daily to reset broadcast message quotas for organizers
+ * of shows that have just ended. It:
  * 
- * To schedule this function:
- * 1. Deploy it with: supabase functions deploy reset-broadcast-quotas
- * 2. Create a schedule with: supabase functions schedule create monthly_broadcast_reset --function reset-broadcast-quotas --schedule "0 0 1 * *" --description "Reset broadcast quotas on the 1st of each month"
+ * 1. Finds all shows that ended in the past 24 hours
+ * 2. Identifies the organizers of those shows via their series
+ * 3. Resets their broadcast quotas to the default values:
+ *    - pre_show_broadcasts_remaining = 2
+ *    - post_show_broadcasts_remaining = 1
+ * 
+ * This ensures organizers can send messages for their next shows.
  */
-serve(async (req: Request) => {
-  // CORS headers
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Content-Type": "application/json",
-  };
-
-  // Handle preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers });
-  }
-
-  // Verify this is an authorized request
-  // For cron jobs, Supabase will send an Authorization header with the service role key
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return new Response(
-      JSON.stringify({ success: false, error: "Unauthorized" }),
-      { status: 401, headers }
-    );
-  }
-
+Deno.serve(async () => {
   try {
-    // Initialize Supabase client with service role key for admin operations
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Missing required environment variables");
-    }
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Create a log entry for this reset operation
+    console.log("Starting broadcast quota reset job...");
+    const startTime = Date.now();
+
+    // Create Supabase admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Calculate the date range for shows that ended in the past 24 hours
     const now = new Date();
-    const logEntry: ResetLogEntry = {
-      executed_at: now.toISOString(),
-      profiles_updated: 0,
-      status: "success",
-    };
-    
-    // Get all profiles with SHOW_ORGANIZER role
-    const { data: profiles, error: fetchError } = await supabase
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    console.log(`Looking for shows that ended between ${yesterday.toISOString()} and ${now.toISOString()}`);
+
+    // Find shows that ended in the past 24 hours
+    const { data: recentlyEndedShows, error: showsError } = await supabaseAdmin
+      .from("shows")
+      .select("id, title, end_date, series_id")
+      .gte("end_date", yesterday.toISOString())
+      .lte("end_date", now.toISOString())
+      .order("end_date", { ascending: false });
+
+    if (showsError) {
+      throw new Error(`Error fetching recently ended shows: ${showsError.message}`);
+    }
+
+    console.log(`Found ${recentlyEndedShows?.length || 0} shows that ended in the past 24 hours`);
+
+    if (!recentlyEndedShows || recentlyEndedShows.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          message: "No shows ended in the past 24 hours, no quotas reset",
+          timestamp: new Date().toISOString()
+        }),
+        { status: 200 }
+      );
+    }
+
+    // Get unique series IDs from the shows
+    const seriesIds = [...new Set(
+      recentlyEndedShows
+        .filter(show => show.series_id) // Filter out shows without a series
+        .map(show => show.series_id)
+    )];
+
+    console.log(`Found ${seriesIds.length} unique series for recently ended shows`);
+
+    if (seriesIds.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          message: "No series found for recently ended shows, no quotas reset",
+          timestamp: new Date().toISOString()
+        }),
+        { status: 200 }
+      );
+    }
+
+    // Get organizers of these series
+    const { data: seriesWithOrganizers, error: seriesError } = await supabaseAdmin
+      .from("show_series")
+      .select("id, name, organizer_id")
+      .in("id", seriesIds)
+      .not("organizer_id", "is", null); // Only include series with an organizer
+
+    if (seriesError) {
+      throw new Error(`Error fetching series organizers: ${seriesError.message}`);
+    }
+
+    console.log(`Found ${seriesWithOrganizers?.length || 0} series with organizers`);
+
+    if (!seriesWithOrganizers || seriesWithOrganizers.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          message: "No organizers found for recently ended shows, no quotas reset",
+          timestamp: new Date().toISOString()
+        }),
+        { status: 200 }
+      );
+    }
+
+    // Get unique organizer IDs
+    const organizerIds = [...new Set(
+      seriesWithOrganizers.map(series => series.organizer_id)
+    )];
+
+    console.log(`Resetting quotas for ${organizerIds.length} unique organizers`);
+
+    // Reset quotas for these organizers
+    const { data: updatedProfiles, error: updateError } = await supabaseAdmin
       .from("profiles")
-      .select("id, role, broadcast_message_count, last_broadcast_reset_date")
-      .eq("role", "SHOW_ORGANIZER");
-    
-    if (fetchError) {
-      logEntry.status = "failure";
-      logEntry.error_message = `Failed to fetch profiles: ${fetchError.message}`;
-      
-      // Log the failed operation
-      await logResetOperation(supabase, logEntry);
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Failed to fetch profiles",
-          details: fetchError.message
-        }),
-        { status: 500, headers }
-      );
+      .update({
+        pre_show_broadcasts_remaining: 2,
+        post_show_broadcasts_remaining: 1
+      })
+      .in("id", organizerIds)
+      .select("id, first_name, last_name, pre_show_broadcasts_remaining, post_show_broadcasts_remaining");
+
+    if (updateError) {
+      throw new Error(`Error resetting organizer quotas: ${updateError.message}`);
     }
-    
-    if (!profiles || profiles.length === 0) {
-      // No profiles to update, still consider this a success
-      await logResetOperation(supabase, logEntry);
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: "No SHOW_ORGANIZER profiles found to reset" 
-        }),
-        { status: 200, headers }
-      );
-    }
-    
-    // Reset broadcast_message_count and update last_broadcast_reset_date for all organizers
-    const updatePromises = profiles.map(async (profile: Profile) => {
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          broadcast_message_count: 0,
-          last_broadcast_reset_date: now.toISOString(),
-        })
-        .eq("id", profile.id);
-      
-      return { profileId: profile.id, success: !updateError, error: updateError };
-    });
-    
-    // Wait for all updates to complete
-    const updateResults = await Promise.all(updatePromises);
-    
-    // Count successful updates
-    const successfulUpdates = updateResults.filter(r => r.success).length;
-    logEntry.profiles_updated = successfulUpdates;
-    
-    // Check if any updates failed
-    const failedUpdates = updateResults.filter(r => !r.success);
-    if (failedUpdates.length > 0) {
-      logEntry.status = "partial_success";
-      logEntry.error_message = `Failed to update ${failedUpdates.length} of ${profiles.length} profiles`;
-    }
-    
-    // Log the reset operation
-    await logResetOperation(supabase, logEntry);
-    
-    // Return response
+
+    const executionTime = Date.now() - startTime;
+    console.log(`Successfully reset quotas for ${updatedProfiles?.length || 0} organizers in ${executionTime}ms`);
+
+    // Return success response
     return new Response(
       JSON.stringify({
-        success: true,
-        message: `Reset broadcast quotas for ${successfulUpdates} of ${profiles.length} organizers`,
-        timestamp: now.toISOString(),
-        failedUpdates: failedUpdates.length > 0 ? failedUpdates.map(f => f.profileId) : undefined,
+        message: "Broadcast quotas reset successfully",
+        organizersUpdated: updatedProfiles?.length || 0,
+        showsProcessed: recentlyEndedShows.length,
+        executionTimeMs: executionTime,
+        timestamp: new Date().toISOString()
       }),
-      { status: 200, headers }
+      { status: 200 }
     );
   } catch (error) {
-    console.error("Unexpected error in reset-broadcast-quotas function:", error);
+    console.error(`Error in reset-broadcast-quotas function: ${error.message}`);
     
-    // Try to log the error, but don't throw if this fails
-    try {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-      
-      if (supabaseUrl && supabaseServiceKey) {
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
-        
-        await logResetOperation(supabase, {
-          executed_at: new Date().toISOString(),
-          profiles_updated: 0,
-          status: "failure",
-          error_message: error instanceof Error ? error.message : String(error),
-        });
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-    
+    // Return error response
     return new Response(
       JSON.stringify({
-        success: false,
-        error: "An unexpected error occurred while resetting broadcast quotas",
-        details: error instanceof Error ? error.message : String(error),
+        error: "Failed to reset broadcast quotas",
+        details: error.message,
+        timestamp: new Date().toISOString()
       }),
-      { status: 500, headers }
+      { status: 500 }
     );
   }
 });
-
-/**
- * Helper function to log the reset operation to a broadcast_reset_logs table
- */
-async function logResetOperation(supabase: any, logEntry: ResetLogEntry): Promise<void> {
-  try {
-    // Check if the broadcast_reset_logs table exists, create it if not
-    const { error: checkError } = await supabase
-      .from("broadcast_reset_logs")
-      .select("id", { count: "exact", head: true })
-      .limit(1);
-    
-    if (checkError && checkError.code === "42P01") { // Table doesn't exist
-      // Create the table
-      await supabase.rpc("create_broadcast_reset_logs_table");
-    }
-    
-    // Insert the log entry
-    await supabase
-      .from("broadcast_reset_logs")
-      .insert([{
-        executed_at: logEntry.executed_at,
-        profiles_updated: logEntry.profiles_updated,
-        status: logEntry.status,
-        error_message: logEntry.error_message,
-      }]);
-  } catch (error) {
-    // Just log the error but don't throw, as this is a non-critical operation
-    console.error("Failed to log reset operation:", error);
-  }
-}
