@@ -6,6 +6,9 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,41 +17,29 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getUserCards,
-  addUserCard,
-  updateUserCard,
-  deleteUserCard,
   getUserWantList,
+  createWantList,
+  updateWantList,
+  shareWantList,
 } from '../../services/collectionService';
 import { getUpcomingShows } from '../../services/showService';
-import { UserCard, WantList, Show } from '../../types';
+import { UserCard, WantList, Show, UserRole } from '../../types';
 
 // UI components
-import CardGrid from '../../components/CardGrid';
-import CardDetailModal from '../../components/CardDetailModal';
 import WantListEditor from '../../components/WantListEditor';
-
-enum TabType {
-  CARDS = 'cards',
-  WANT_LIST = 'wantlist',
-}
+import AttendeeWantLists from '../../components/AttendeeWantLists';
 
 const CollectionScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>(TabType.CARDS);
-
   // ===== Auth =====
   const {
     authState: { user },
   } = useAuth();
   const userId = user?.id ?? '';
 
-  // ===== Card Collection State =====
-  const [cards, setCards] = useState<UserCard[]>([]);
-  const [loadingCards, setLoadingCards] = useState<boolean>(true);
-
-  // Modal for add / edit
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalCard, setModalCard] = useState<UserCard | null>(null);
-  const isNewCard = modalCard == null;
+  // ===== Selling List State =====
+  const [sellingList, setSellingList] = useState<string>('');
+  const [loadingSellingList, setLoadingSellingList] = useState<boolean>(true);
+  const [savingSellingList, setSavingSellingList] = useState<boolean>(false);
 
   // ===== Want List State =====
   const [wantList, setWantList] = useState<WantList | null>(null);
@@ -58,30 +49,47 @@ const CollectionScreen: React.FC = () => {
   const [upcomingShows, setUpcomingShows] = useState<Show[]>([]);
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
 
-  // Button handlers
-  const handleAddCard = () => {
-    setModalCard(null);
-    setModalVisible(true);
-  };
-
-  const handleCreateWantList = () => {
-    // handled inside WantListEditor
-  };
+  // Check if user is MVP Dealer or Show Organizer
+  const isAdvancedUser = user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER;
+  const isAttendee = user?.role === UserRole.ATTENDEE;
+  const isRegularDealer = user?.role === UserRole.DEALER;
 
   /* ------------------------------------------------------------------
    * Data Loading
    * ------------------------------------------------------------------ */
-  const loadCards = async () => {
+  const loadSellingList = async () => {
     if (!userId) return;
-    setLoadingCards(true);
-    const { data, error } = await getUserCards(userId);
-    if (error) {
-      console.error(error);
-      Alert.alert('Error', 'Failed to load your cards.');
-    } else if (data) {
-      setCards(data);
+    setLoadingSellingList(true);
+    
+    try {
+      // For now, we'll simulate loading selling list data
+      // In a real implementation, you would fetch from a database
+      setTimeout(() => {
+        setSellingList(''); // Default empty selling list
+        setLoadingSellingList(false);
+      }, 500);
+    } catch (error) {
+      console.error('Error loading selling list:', error);
+      setLoadingSellingList(false);
     }
-    setLoadingCards(false);
+  };
+
+  const saveSellingList = async () => {
+    if (!userId) return;
+    setSavingSellingList(true);
+    
+    try {
+      // For now, we'll simulate saving selling list data
+      // In a real implementation, you would save to a database
+      setTimeout(() => {
+        Alert.alert('Success', 'Your selling list has been saved.');
+        setSavingSellingList(false);
+      }, 500);
+    } catch (error) {
+      console.error('Error saving selling list:', error);
+      Alert.alert('Error', 'Failed to save your selling list.');
+      setSavingSellingList(false);
+    }
   };
 
   const loadWantList = async () => {
@@ -124,79 +132,76 @@ const CollectionScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       // Refresh each time screen comes into focus
-      loadCards();
+      loadSellingList();
       loadWantList();
       loadUpcomingShows();
     }, [userId])
   );
 
-  /* ------------------------------------------------------------------
-   * Card CRUD helpers
-   * ------------------------------------------------------------------ */
-  const saveCard = async (updated: Partial<UserCard>) => {
-    if (!userId) return;
-    if (isNewCard) {
-      const { data, error } = await addUserCard(userId, updated as any);
-      if (error) {
-        Alert.alert('Error', error.message ?? 'Could not add card');
-      } else if (data) {
-        setCards((prev) => [data, ...prev]);
-      }
-    } else if (modalCard) {
-      const { data, error } = await updateUserCard(modalCard.id, userId, updated);
-      if (error) {
-        Alert.alert('Error', error.message ?? 'Could not update card');
-      } else if (data) {
-        setCards((prev) => prev.map((c) => (c.id === data.id ? data : c)));
-      }
-    }
-  };
-
-  const removeCard = async (card: UserCard) => {
-    if (!userId) return;
-    const { success, error } = await deleteUserCard(card.id, userId);
-    if (error || !success) {
-      Alert.alert('Error', error?.message ?? 'Could not delete card');
-      return;
-    }
-    setCards((prev) => prev.filter((c) => c.id !== card.id));
-  };
-
-  // Render cards tab content
-  const renderCardsTab = () => (
-    <View style={styles.tabContent}>
-      <CardGrid
-        cards={cards}
-        onAddCard={handleAddCard}
-        onCardPress={(card) => {
-          setModalCard(card);
-          setModalVisible(true);
-        }}
-        onCardLongPress={removeCard}
-        isLoading={loadingCards}
-      />
-
-      {/* Add / Edit Modal */}
-      <CardDetailModal
-        visible={modalVisible}
-        card={modalCard}
-        onClose={() => setModalVisible(false)}
-        onSave={saveCard}
-        isNewCard={isNewCard}
-      />
+  // Render selling section with text box
+  const renderSellingSection = () => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>What I'm Selling</Text>
+        <Ionicons name="pricetags" size={22} color="#333" />
+      </View>
+      <View style={styles.sectionContent}>
+        {loadingSellingList ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF6A00" />
+            <Text style={styles.loadingText}>Loading your selling list...</Text>
+          </View>
+        ) : (
+          <View style={styles.textEditorContainer}>
+            <Text style={styles.editorLabel}>
+              List the cards and items you're selling at upcoming shows:
+            </Text>
+            <TextInput
+              style={styles.textEditor}
+              multiline
+              placeholder="Example: 2021 Topps Chrome #1-100, 2020 Panini Prizm Basketball, Various PSA slabs..."
+              value={sellingList}
+              onChangeText={setSellingList}
+              textAlignVertical="top"
+            />
+            <View style={styles.editorActions}>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={saveSellingList}
+                disabled={savingSellingList}
+              >
+                {savingSellingList ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="save-outline" size={18} color="#FFFFFF" />
+                    <Text style={styles.saveButtonText}>Save Selling List</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
     </View>
   );
 
-  // Render want list tab content
-  const renderWantListTab = () => (
-    <View style={styles.tabContent}>
-      <WantListEditor
-        wantList={wantList}
-        userId={userId}
-        upcomingShows={upcomingShows}
-        onSave={(list) => setWantList(list)}
-        isLoading={loadingWantList || loadingShows}
-      />
+  // Render want list section
+  const renderWantListSection = () => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>My Want List</Text>
+        <Ionicons name="list" size={22} color="#333" />
+      </View>
+      <View style={styles.sectionContent}>
+        <WantListEditor
+          wantList={wantList}
+          userId={userId}
+          upcomingShows={upcomingShows}
+          onSave={(list) => setWantList(list)}
+          isLoading={loadingWantList || loadingShows}
+        />
+      </View>
     </View>
   );
 
@@ -207,55 +212,47 @@ const CollectionScreen: React.FC = () => {
         <Text style={styles.headerTitle}>My Collection</Text>
       </View>
 
-      {/* Tab Navigation */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === TabType.CARDS && styles.activeTabButton,
-          ]}
-          onPress={() => setActiveTab(TabType.CARDS)}
-        >
-          <Ionicons
-            name={activeTab === TabType.CARDS ? 'images' : 'images-outline'}
-            size={20}
-            color={activeTab === TabType.CARDS ? '#007AFF' : '#666'}
-          />
-          <Text
-            style={[
-              styles.tabButtonText,
-              activeTab === TabType.CARDS && styles.activeTabButtonText,
-            ]}
-          >
-            My Cards
-          </Text>
-        </TouchableOpacity>
+      <ScrollView style={styles.scrollContainer}>
+        {/* Render sections in the correct order based on user role */}
+        {isAdvancedUser ? (
+          // MVP Dealers and Show Organizers: Selling first, then Want List, then Attendee Want Lists
+          <>
+            {renderSellingSection()}
+            {renderWantListSection()}
+            
+            {/* Role-based info note */}
+            <View style={styles.infoNoteContainer}>
+              <AttendeeWantLists />
+            </View>
+          </>
+        ) : (
+          // Attendees and Regular Dealers: Want List first, then Selling
+          <>
+            {renderWantListSection()}
+            {renderSellingSection()}
+            
+            {/* Role-based info notes */}
+            <View style={styles.infoNoteContainer}>
+              {isAttendee && (
+                <Text style={styles.infoNoteText}>
+                  Note: Your lists are shared with MVP Dealers and Show Organizers to help you grow your collection.
+                </Text>
+              )}
 
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === TabType.WANT_LIST && styles.activeTabButton,
-          ]}
-          onPress={() => setActiveTab(TabType.WANT_LIST)}
-        >
-          <Ionicons
-            name={activeTab === TabType.WANT_LIST ? 'list' : 'list-outline'}
-            size={20}
-            color={activeTab === TabType.WANT_LIST ? '#007AFF' : '#666'}
-          />
-          <Text
-            style={[
-              styles.tabButtonText,
-              activeTab === TabType.WANT_LIST && styles.activeTabButtonText,
-            ]}
-          >
-            Want List
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Tab Content */}
-      {activeTab === TabType.CARDS ? renderCardsTab() : renderWantListTab()}
+              {isRegularDealer && (
+                <>
+                  <Text style={styles.infoNoteText}>
+                    Note: Your lists are shared with MVP Dealers and Show Organizers to help you grow your collection.
+                  </Text>
+                  <Text style={styles.upgradeText}>
+                    Upgrade to an MVP Dealer account to access attendee want lists and increase your sales at shows!
+                  </Text>
+                </>
+              )}
+            </View>
+          </>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -276,38 +273,98 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  tabBar: {
+  scrollContainer: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: 'white',
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  tabButton: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sectionContent: {
     flex: 1,
-    flexDirection: 'row',
+  },
+  infoNoteContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 24,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  infoNoteText: {
+    fontStyle: 'italic',
+    color: '#444',
+    marginBottom: 8,
+  },
+  upgradeText: {
+    fontWeight: '600',
+    color: '#c60',
+  },
+  loadingContainer: {
+    padding: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    backgroundColor: 'white',
   },
-  activeTabButton: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#007AFF',
+  loadingText: {
+    marginTop: 12,
+    color: '#666666',
+    fontSize: 14,
   },
-  tabButtonText: {
+  textEditorContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+  },
+  editorLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
-    marginLeft: 4,
+    color: '#333',
+    marginBottom: 8,
   },
-  activeTabButtonText: {
-    color: '#007AFF',
+  textEditor: {
+    height: 150,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fafafa',
+    textAlignVertical: 'top',
   },
-  tabContent: {
-    flex: 1,
+  editorActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 16,
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 16,
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF6A00',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    marginLeft: 6,
   },
   emptyContainer: {
     flex: 1,

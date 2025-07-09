@@ -10,6 +10,8 @@ import DirectMessagesScreen from '../screens/Messages/DirectMessagesScreen';
 import NotificationsScreen from '../screens/Notifications';
 import ProfileNavigator from './ProfileNavigator';
 import OrganizerNavigator from './OrganizerNavigator';
+import { useAuth } from '../contexts/AuthContext';
+import { UserRole } from '../types';
 
 // --- Define your brand colors for consistency ---
 const BRAND_COLORS = {
@@ -37,6 +39,12 @@ const MainTab = createBottomTabNavigator<MainTabParamList>();
  * MainTabNavigator - Handles navigation between main app tabs
  */
 const MainTabNavigator: React.FC = () => {
+  // ---- Auth / Role ----
+  const {
+    authState: { user },
+  } = useAuth();
+  const isOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
+
   return (
     <MainTab.Navigator
       screenOptions={({ route }) => ({
@@ -98,13 +106,15 @@ const MainTabNavigator: React.FC = () => {
         name="My Shows"
         component={NotificationsScreen} // This component handles "My Shows"
       />
-      <MainTab.Screen
-        name="Organizer"
-        component={OrganizerNavigator}
-        options={{
-          headerShown: false, // OrganizerNavigator manages its own headers
-        }}
-      />
+      {isOrganizer && (
+        <MainTab.Screen
+          name="Organizer"
+          component={OrganizerNavigator}
+          options={{
+            headerShown: false, // OrganizerNavigator manages its own headers
+          }}
+        />
+      )}
       <MainTab.Screen
         name="My Collection"
         component={CollectionScreen} // This component handles "My Collection"
