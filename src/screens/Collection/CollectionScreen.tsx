@@ -20,6 +20,8 @@ import {
   shareWantList,
 } from '../../services/collectionService';
 import { getUpcomingShows } from '../../services/showService';
+// UI
+import WantListEditor from '../../components/WantListEditor';
 
 const CollectionScreen: React.FC = () => {
   // ===== Auth =====
@@ -81,6 +83,15 @@ const CollectionScreen: React.FC = () => {
     }, [userId])
   );
 
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Want List</Text>
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
         <WantListEditor
           wantList={wantList}
           userId={userId}
@@ -88,13 +99,6 @@ const CollectionScreen: React.FC = () => {
           onSave={(list) => setWantList(list)}
           isLoading={loadingWantList || loadingShows}
         />
-      </View>
-
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Want List</Text>
       </View>
 
     </SafeAreaView>
@@ -117,8 +121,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-    color: '#333',
-    lineHeight: 20,
+  content: {
+    flex: 1,
+    padding: 16,
   },
 });
 
