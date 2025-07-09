@@ -888,8 +888,10 @@ const toggleFavorite = async () => {
         />
         
         {show.entry_fee && (
-            </Text>
-          </InfoRow>
+          <InfoRow
+            icon="cash"
+            text={`Entry Fee: $${Number(show.entry_fee).toFixed(2)}`}
+          />
         )}
         
         {/* Show Claim Button for Show Organizers */}
