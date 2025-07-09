@@ -5,6 +5,8 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Linking,
+  Platform,
 } from 'react-native';
 import { Marker, Callout, Region } from 'react-native-maps';
 // Use our patched version that renames deprecated lifecycle methods
@@ -61,6 +63,14 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
     return null;
   };
 
+  // Helper function to open address in maps app
+  const openMaps = (address: string) => {
+    if (!address) return;
+    const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
+    const url = `${scheme}${encodeURIComponent(address)}`;
+    Linking.openURL(url);
+  };
+
   const {
     shows,
     onShowPress,
@@ -115,7 +125,10 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
               {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
                 ` - ${formatDate(show.endDate)}`}
             </Text>
-            <Text style={styles.calloutDetail}>
+            <Text 
+              style={styles.addressLink} 
+              onPress={() => openMaps(show.address)}
+            >
               {show.address}
             </Text>
             <Text style={styles.calloutDetail}>
@@ -173,37 +186,60 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
     typeof show.coordinates.longitude === 'number'
   );
 
+  // Add zoom controls
+  const handleZoom = (zoomIn = true) => {
+    if (ref && ref.current) {
+      ref.current.getCamera().then((cam: any) => {
+        cam.altitude /= zoomIn ? 2 : 0.5; // Halve altitude to zoom in, double to zoom out
+        ref.current.animateCamera(cam);
+      });
+    }
+  };
+
   return (
-    <FixedClusteredMapView
-      ref={ref}
-      style={styles.map}
-      data={validShows}
-      initialRegion={region}
-      region={region}
-      renderMarker={renderMarker}
-      renderCluster={renderCluster}
-      showsUserLocation={showsUserLocation}
-      loadingEnabled={loadingEnabled}
-      showsCompass={showsCompass}
-      showsScale={showsScale}
-      provider={provider}
-      onRegionChangeComplete={onRegionChangeComplete}
-      clusteringEnabled={true}
-      spiralEnabled={true}
-      zoomEnabled={true}
-      minZoom={4}
-      maxZoom={20}
-      edgePadding={{ top: 50, left: 50, bottom: 50, right: 50 }}
-      animateClusters={true}
-      spiderLineColor="#007AFF"
-      accessor="coordinates"
-      clusterPressMaxChildren={50}
-      nodeExtractor={showToPoint}
-    />
+    <View style={styles.container}>
+      <FixedClusteredMapView
+        ref={ref}
+        style={styles.map}
+        data={validShows}
+        initialRegion={region}
+        region={region}
+        renderMarker={renderMarker}
+        renderCluster={renderCluster}
+        showsUserLocation={showsUserLocation}
+        loadingEnabled={loadingEnabled}
+        showsCompass={showsCompass}
+        showsScale={showsScale}
+        provider={provider}
+        onRegionChangeComplete={onRegionChangeComplete}
+        clusteringEnabled={true}
+        spiralEnabled={true}
+        zoomEnabled={true}
+        minZoom={4}
+        maxZoom={20}
+        edgePadding={{ top: 50, left: 50, bottom: 50, right: 50 }}
+        animateClusters={true}
+        spiderLineColor="#007AFF"
+        accessor="coordinates"
+        clusterPressMaxChildren={50}
+        nodeExtractor={showToPoint}
+      />
+      <View style={styles.zoomControls}>
+        <TouchableOpacity style={styles.zoomButton} onPress={() => handleZoom(true)}>
+          <Text style={styles.zoomButtonText}>+</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomButton} onPress={() => handleZoom(false)}>
+          <Text style={styles.zoomButtonText}>-</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+  },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -228,6 +264,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 4,
+  },
+  addressLink: {
+    fontSize: 14,
+    color: '#007AFF',
+    marginBottom: 4,
+    textDecorationLine: 'underline',
   },
   calloutButton: {
     backgroundColor: '#007AFF',
@@ -258,6 +300,31 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  zoomControls: {
+    position: 'absolute',
+    top: 50,
+    right: 15,
+    backgroundColor: 'transparent',
+  },
+  zoomButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  zoomButtonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#007AFF',
   },
 });
 
