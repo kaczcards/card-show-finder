@@ -23,15 +23,23 @@ const mapDbShowToAppShow = (row: any): Show => ({
   description: row.description ?? undefined,
   imageUrl: row.image_url ?? undefined,
   rating: row.rating ?? undefined,
-  coordinates: row.coordinates && 
-    row.coordinates.coordinates && 
-    Array.isArray(row.coordinates.coordinates) && 
-    row.coordinates.coordinates.length >= 2
-    ? {
-        latitude: row.coordinates.coordinates[1],
-        longitude: row.coordinates.coordinates[0],
-      }
-    : undefined,
+  // Prefer explicit latitude / longitude columns (added in updated Supabase functions);
+  // fall back to legacy PostGIS object when they are not present.
+  coordinates:
+    typeof row.latitude === 'number' && typeof row.longitude === 'number'
+      ? {
+          latitude: row.latitude,
+          longitude: row.longitude,
+        }
+      : row.coordinates &&
+        row.coordinates.coordinates &&
+        Array.isArray(row.coordinates.coordinates) &&
+        row.coordinates.coordinates.length >= 2
+      ? {
+          latitude: row.coordinates.coordinates[1],
+          longitude: row.coordinates.coordinates[0],
+        }
+      : undefined,
   status: row.status as ShowStatus,
   organizerId: row.organizer_id,
   features: row.features ?? {},
@@ -60,6 +68,10 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     // Ensure filters is a valid object
     filters = filters || {};
     
+    // Set default date filters if none provided (only future shows)
+    const startDate = filters.startDate || new Date().toISOString();
+    const endDate = filters.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+    
     /* -----------------------------------------------------------
      * 1. Geo-aware query via nearby_shows RPC when lat/lng present
      * --------------------------------------------------------- */
@@ -83,8 +95,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         lat: filters.latitude,
         long: filters.longitude,
         radius_miles: radius,
-        start_date: filters.startDate ?? null,
-        end_date: filters.endDate ?? null,
+        start_date: startDate,
+        end_date: endDate,
       });
 
       // Call the new nearby_shows function as primary method
@@ -94,8 +106,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           lat: filters.latitude,
           long: filters.longitude,
           radius_miles: radius,
-          start_date: filters.startDate || null,
-          end_date: filters.endDate || null,
+          start_date: startDate, // Always include a date range
+          end_date: endDate,    // to filter out past shows
         }
       );
 
@@ -147,8 +159,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         center_lat: filters.latitude,
         center_lng: filters.longitude,
         radius_miles: radius,
-        start_date: filters.startDate ?? null,
-        end_date: filters.endDate ?? null,
+        start_date: startDate,
+        end_date: endDate,
         max_entry_fee: filters.maxEntryFee ?? null,
         show_categories: filters.categories ?? null,
         show_features: filters.features ?? null,
@@ -161,8 +173,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           center_lat: typeof filters.latitude === 'number' ? filters.latitude : null,
           center_lng: typeof filters.longitude === 'number' ? filters.longitude : null,
           radius_miles: typeof filters.radius === 'number' ? filters.radius : 25,
-          start_date: filters.startDate || null,
-          end_date: filters.endDate || null,
+          start_date: startDate,
+          end_date: endDate,
           max_entry_fee: typeof filters.maxEntryFee === 'number' ? filters.maxEntryFee : null,
           show_categories: Array.isArray(filters.categories) ? filters.categories : null,
           show_features: filters.features || null,
@@ -207,7 +219,15 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         console.info(
           `[showService] find_shows_within_radius returned ${((fbData && Array.isArray(fbData)) ? fbData.length : 0)} show(s)`
         );
-        return Array.isArray(fbData) ? fbData.map(mapDbShowToAppShow) : [];
+        
+        // Still need to filter by date even if using the radius-only RPC
+        let filteredData = Array.isArray(fbData) ? fbData : [];
+        filteredData = filteredData.filter(show => {
+          const showDate = new Date(show.start_date);
+          return showDate >= new Date(startDate) && showDate <= new Date(endDate);
+        });
+        
+        return filteredData.map(mapDbShowToAppShow);
       }
     }
 
@@ -220,12 +240,10 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       .eq('status', 'ACTIVE')
       .order('start_date', { ascending: true });
 
-    if (filters.startDate) {
-      query = query.gte('start_date', filters.startDate as any);
-    }
-    if (filters.endDate) {
-      query = query.lte('end_date', filters.endDate as any);
-    }
+    // Always apply date filters to show only future/current shows
+    query = query.gte('start_date', startDate as any);
+    query = query.lte('end_date', endDate as any);
+    
     if (typeof filters.maxEntryFee === 'number') {
       query = query.lte('entry_fee', filters.maxEntryFee);
     }
@@ -235,8 +253,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
     /* ---------- Log basic-query filters for debugging ---------- */
     console.debug('[showService] Executing basic query with filters:', {
-      startDate: filters.startDate,
-      endDate: filters.endDate,
+      startDate,
+      endDate,
       maxEntryFee: filters.maxEntryFee,
       categories: filters.categories,
       status: 'ACTIVE',
