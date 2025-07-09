@@ -60,6 +60,8 @@ export interface User {
    */
   postShowBroadcastsRemaining?: number;
 
+}
+
 /* ------------------------------------------------------------------
  * Authentication helper types
  * ------------------------------------------------------------------ */
