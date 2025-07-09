@@ -501,13 +501,23 @@ const MapScreen: React.FC<MapScreenProps> = ({
             </TouchableOpacity>
 
             {/* Active Filters Display */}
-            {(filters.features?.length > 0 || filters.categories?.length > 0 || filters.maxEntryFee !== undefined) && (
-              <View style={styles.activeFiltersContainer}>
-                <Text style={styles.activeFiltersText}>
-                  {filters.features?.length > 0 && `${filters.features.length} features • `}
-                  {filters.categories?.length > 0 && `${filters.categories.length} categories • `}
-                  {filters.maxEntryFee !== undefined && `Max $${filters.maxEntryFee} • `}
-                  <Text style={styles.resetFiltersText} onPress={resetFilters}>Reset</Text>
+            {(filters.features?.length > 0 ||
+              filters.categories?.length > 0 ||
+              filters.maxEntryFee !== undefined) && (
+              <View style={styles.filtersAppliedContainer}>
+                <Text style={styles.filtersAppliedText}>
+                  {filters.features?.length > 0 &&
+                    `${filters.features.length} features • `}
+                  {filters.categories?.length > 0 &&
+                    `${filters.categories.length} categories • `}
+                  {filters.maxEntryFee !== undefined &&
+                    `Max $${filters.maxEntryFee}`}
+                </Text>
+                <Text
+                  style={styles.resetFiltersText}
+                  onPress={resetFilters}
+                >
+                  Reset
                 </Text>
               </View>
             )}
@@ -761,6 +771,28 @@ const styles = StyleSheet.create({
   resetFiltersText: {
     color: '#007AFF',
     fontWeight: '600',
+  },
+
+  /* ------------------------------------------------------------------ */
+  /* Newly-added: container + text for “filters applied” banner         */
+  /* ------------------------------------------------------------------ */
+  filtersAppliedContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    marginVertical: 8,
+    borderRadius: 4,
+    position: 'absolute',
+    bottom: 90,
+    left: 16,
+    right: 16,
+  },
+  filtersAppliedText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
   },
 });
 
