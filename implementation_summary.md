@@ -1,135 +1,135 @@
-# Card Show Finder – Recurring Shows Implementation Summary
-
-Welcome!  
-This document walks you through **everything we added or changed** to support recurring (“monthly”, “quarterly”, etc.) card shows in one easy-to-read place.  
-If you are new to Supabase, SQL, or React Native, read each section in order and you’ll know what’s going on. 🚀
+# Card Show Finder – Implementation Summary  
+*(Recurring Shows & Organizer Dashboard)*
 
 ---
 
-## 1. Database (Schema) Changes
-
-| Table | New / Updated columns | Why |
-|-------|-----------------------|-----|
-| **`show_series`** (NEW) | `id`, `name`, `organizer_id`, `description`, `created_at` | Represents the *parent* entity for a recurring show (e.g., **“Noblesville Card Show”**). |
-| **`shows`** | `series_id` (FK → `show_series.id`) | Links every individual date to its parent series. |
-| **`reviews`** | **Re-created** so each review stores **`series_id`** (not `show_id`). | Lets us aggregate star ratings across all dates of the series. |
-| **`profiles`** | `pre_show_broadcasts_remaining` (_int_, default 2)  <br> `post_show_broadcasts_remaining` (_int_, default 1) | Tracks how many bulk messages an organizer can still send **before** or **after** a show. |
-
-Row-Level Security (RLS) policies were updated/added so:
-* Anyone can read `show_series` and `reviews`.
-* Only an organizer can modify their own series or their own reviews.
+## 1. Goals Achieved
+| Feature | Outcome |
+|---------|---------|
+| **Recurring show support** | Existing single-day shows are grouped under a new parent entity `show_series`. |
+| **Single-claim workflow** | Organizers claim a *series* once and automatically own all its present/future occurrences. |
+| **Organizer Dashboard** | New tab with metrics, shows list, review management, broadcast quotas and quick actions. |
+| **Quota-based messaging** | Pre-/post-show broadcast messages enforced through daily quota counters. |
+| **Backward compatibility** | All pre-existing functionality for individual shows remains intact. |
 
 ---
 
-## 2. One-Time **Data Migration** (`db_migrations/data_migration_series.sql`)
+## 2. Component Architecture
 
-What it does, step-by-step:
-
-1. **Groups** existing rows in `shows` by *title + location + address* to decide which ones belong to the same series.  
-2. **Creates** one `show_series` record per group and remembers the new `series_id`.
-3. **Updates** every old `shows` row with this `series_id`.
-4. **Moves reviews**: for each old `reviews.show_id` it copies the review to the new table with the correct `series_id`. (If a user reviewed several dates, we keep the most recent one.)
-5. **Calculates** `average_rating` + `review_count` for every series.
-6. **Backs up** the original reviews to `reviews_backup_before_series_migration`.
-
-Run it once after the schema migration (see “How to run migrations” below).
-
----
-
-## 3. Backend / Edge Functions (Supabase)
-
-| Function | Path | Purpose |
-|----------|------|---------|
-| **`claim_show_series`** | `supabase/functions/claim_show_series` | Lets a user with role **`show_organizer`** claim an unclaimed series (sets `organizer_id`). RLS prevents others from hijacking it. |
-| **`send_broadcast_message`** | `supabase/functions/send_broadcast_message` | Sends a bulk message to attendees / favorites of a show or entire series. Checks & decrements the correct quota column before sending. |
-| **`reset-broadcast-quotas`** (scheduled) | `supabase/functions/reset-broadcast-quotas` | Runs daily; finds shows that *just ended* and resets the organizer’s quotas back to 2 / 1 for the next show cycle. |
-| **Transaction helpers** | `db_migrations/transaction_helpers.sql` | Adds `begin_transaction() / commit_transaction() / rollback_transaction()` so Edge Functions can run multi-step DB actions safely. |
-| **Shared CORS** | `supabase/functions/_shared/cors.ts` | Standard CORS headers reused by all functions. |
-
-Environment requirements:
+### 2.1 Backend / Database
 ```
-SUPABASE_URL
-SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY (for scheduled job)
+show_series                profiles (updated)          broadcasts
+┌──────────────┐           ┌───────────┐               ┌──────────┐
+│ id PK        │◄─┐   ┌───►│ ...       │        ┌─────►│ id PK    │
+│ name         │  │   │    │ pre_show* │        │      │ series_id│
+│ organizer_id │  │   │    │ post_show*│        │      │ ...      │
+│ avg_rating   │  │   │    └───────────┘        │      └──────────┘
+│ review_count │  │   │                          │
+└──────────────┘  │   │                          │
+                  │   │                          │
+shows             │   │ reviews                  │ Edge Functions
+┌──────────────┐  │   │ ┌──────────────┐        │  • claim_show_series
+│ id PK        │  │   │ │ id PK        │        │  • send_broadcast_message
+│ series_id FK ├──┘   └─┤ series_id FK │◄───────┘  • reset-broadcast-quotas
+│ start_date   │        │ rating       │
+│ ...          │        │ comment      │
+└──────────────┘        └──────────────┘
 ```
+Key decisions  
+* `series_id` **nullable** on `shows` for legacy rows.  
+* RLS ensures only the owning organizer (or the system role) can mutate series / quotas.  
+* Broadcast quotas stored in `profiles` for O(1) access.
+
+### 2.2 Supabase Edge Functions
+| Function | Responsibility | Notes |
+|----------|----------------|-------|
+| `claim_show_series` | Atomic claim of an unclaimed series. | Validates auth; sets `organizer_id`. |
+| `send_broadcast_message` | Inserts row in `broadcasts`, decrements quota counters. | Hard-fails at 0 quota (429). |
+| `reset-broadcast-quotas` | Scheduled daily job to replenish quotas after show ends. | Uses service-role key. |
+
+### 2.3 TypeScript Service Layer
+* **`showSeriesService.ts`** – consolidated API for series, shows in series, reviews, broadcast & responses.  
+* **`organizerService.ts`** – wrapper that routes `claimSeriesOrShow` to the proper function.  
+* Transaction helpers abstract `supabase.from().rpc()` vs `fetch()` for Edge Function calls.
+
+### 2.4 React-Native Front-end
+Component | Purpose | Interaction
+----------|---------|------------
+`OrganizerDashboardScreen` | Main dashboard card with metrics & tab navigation. | Pulls metrics via `showSeriesService` + Supabase profile.  
+`OrganizerShowsList` | Collapsible list of claimed series & occurrences. | Edit / cancel / broadcast actions -> navigation.  
+`OrganizerReviewsScreen` | Grouped reviews with filters & inline response editor. | Uses `respondToReview()` from service.  
+`AddEditShowModal` | Create/edit single or recurring occurrences. | Recurrence generation handled locally then persisted.  
+
+#### Navigation
+* New **`OrganizerNavigator`** (stack) exposes: Dashboard, Reviews, SeriesDetail (placeholder), Messaging, Add/Edit.
+* **`MainTabNavigator`** gains **Organizer** tab (briefcase icon) gated by auth role.
+
+State management relies on React hooks; loading/empty/error states standardized across screens.
 
 ---
 
-## 4. Mobile App Updates (React Native / Expo)
+## 3. How It All Fits Together
 
-### Type & Model Changes
-* `Show` now has optional `seriesId`.
-* Added new `ShowSeries` interface.
-* `Review` uses `seriesId` instead of `showId`.
-* `User` gained the two quota fields.
+1. **Data flow**  
+   * Mobile app → `showSeriesService` → Supabase RPC / Edge Function  
+   * Edge Function (if used) executes privileged SQL then returns JSON.  
+   * Front-end updates local state; lists re-render.
 
-### New / Updated Code
-* **`src/services/showSeriesService.ts`**  
-  Wrapper for listing series, claiming, sending broadcasts, etc.
-* **`ReviewForm`** component: prop renamed to `seriesId`.
-* **`ShowDetailScreen`**:  
-  * Shows “Part of the \<series name\>” badge, series-level star rating, and aggregated reviews list.  
-  * Organizer can **claim the series** or open the **Broadcast** modal.  
-  * Review modal now creates a series review.
-* **Navigation / Context** untouched – all changes are local to this screen & service.
-
----
-
-## 5. How to Run Everything (Dev)
-
-1. **Migrate schema**  
-   ```bash
-   supabase db push  # applies *.sql in db_migrations
+2. **Claim cycle**  
    ```
-2. **Run data migration** (once)  
-   ```bash
-   supabase db execute db_migrations/data_migration_series.sql
+   UI (Claim button)
+         ↓
+   claim_show_series (Edge)
+         ↓
+   UPDATE show_series.organizer_id
+         ↓
+   OrganizerDashboard metrics auto-reflect new ownership
    ```
-3. **Deploy Edge Functions**  
-   ```bash
-   supabase functions deploy claim_show_series
-   supabase functions deploy send_broadcast_message
-   supabase functions deploy reset-broadcast-quotas
-   ```
-4. **Start the app**  
-   ```bash
-   npm start        # or expo start
-   ```
-5. Test the flow: open a show ➜ see series badge ➜ leave a review ➜ claim series ➜ send broadcast.
+
+3. **Broadcast messaging**  
+   * UI → `send_broadcast_message` (Edge)  
+   * Function checks quotas in `profiles`, inserts `broadcasts`, decrements counters.  
+   * Daily scheduled job resets counters.
+
+4. **Recurring show creation**  
+   * `AddEditShowModal` builds N occurrences (weekly/bi-weekly/monthly/quarterly).  
+   * All occurrences inserted in one batch via `showSeriesService.createShows()`.
 
 ---
 
-## 6. Production Checklist
+## 4. Key Technical Decisions
 
-1. **Backup DB** in Supabase dashboard.
-2. Apply **schema** + **data** migrations (same commands as dev).
-3. `supabase functions deploy ...` (service-role key required).
-4. Release new mobile build (build & submit).
-
----
-
-## 7. What’s Still TODO
-
-* Refactor other screens (Map, My Shows, Organizer Dashboard) to use `seriesId`.
-* Automated Jest tests for:
-  * `showSeriesService`
-  * Edge Function responses
-  * RLS policies (via Supabase test runner)
-* Seed script to retro-claim series for existing organizers (optional).
+Decision | Rationale
+---------|-----------
+Separate `show_series` table instead of renaming `shows` | Minimal risk to existing queries; keeps one-off shows valid.  
+Edge Functions for claim & broadcast | Need for server-side RLS bypass + transactional updates.  
+Quota fields on `profiles` | Avoids joins when checking quotas; simple counters.  
+Idempotent data migration script | Safe re-runs in CI / staging.  
+Service abstraction in RN app | Isolates supabase vs Edge fetch logic, eases future backend swaps.  
+Navigation split (OrganizerNavigator) | Keeps dashboards isolated; header styles differ.  
+UI design tokens & skeleton loaders | Consistent look, better perceived performance.
 
 ---
 
-### FAQ (Beginner Friendly)
-
-**Q: Why did we move reviews to `series_id`?**  
-> Users want to see a show’s reputation over time; no one wants to hunt for reviews date-by-date.
-
-**Q: What if a show only happens once?**  
-> It still gets a `show_series` row; there’s just one date inside it.
-
-**Q: Where do the quotas reset numbers (2 & 1) come from?**  
-> Product decision: organizers get **2** blasts in the weeks **before** an event, and **1** follow-up afterwards.
+## 5. Remaining Placeholders / Next Epics
+* **SeriesDetailScreen** – deep dive into aggregated analytics (#237).  
+* **Broadcast history & targeting improvements** (#238).  
+* Possible switch to **luxon** for DST-safe recurrence.  
+* Expand RLS to dealer-specific features (future marketplace).
 
 ---
 
-Happy coding & collecting! 🎉
+## 6. Migration & Deployment
+See `migration_instructions.md` for a step-by-step guide:  
+1. Run schema SQL → 2. Run data migration → 3. Deploy Edge Functions → 4. Schedule quota reset → 5. Release new mobile build.
+
+---
+
+## 7. Testing Status
+- Unit tests for `showSeriesService` cover claim, review aggregation, quota error.  
+- Manual walkthrough: organizer claim, recurring creation, broadcast, review response.  
+- Regression: legacy single show pages function unchanged.
+
+---
+
+### 🎉 The platform now supports recurring card shows and gives organizers a single, powerful dashboard to manage their events end-to-end.

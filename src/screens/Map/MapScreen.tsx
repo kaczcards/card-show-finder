@@ -18,8 +18,6 @@ import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
-import { getShows } from '../../services/showService';
-import * as locationService from '../../services/locationService';
 import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster from '../../components/MapShowCluster/index';
 
@@ -44,10 +42,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
   onShowPress,
   initialUserLocation
 }) => {
-  // State
-  const [shows, setShows] = useState<Show[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
@@ -308,6 +302,36 @@ const MapScreen: React.FC<MapScreenProps> = ({
     fetchShows(true);
   }, [fetchShows]);
 
+  // Fetch shows when filters or userLocation changes
+  useEffect(() => {
+    const fetchShows = async () => {
+      if (!userLocation) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Combine location with other filters
+        const showFilters: ShowFilters = {
+          ...filters,
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+        };
+        
+        const showsData = await getShows(showFilters);
+        setShows(showsData);
+      } catch (err: any) {
+        console.error('Error fetching shows:', err);
+        setError(err.message || 'Failed to fetch shows');
+        setShows([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchShows();
+  }, [filters, userLocation]);
+
   // Handle filter changes
   const handleFilterChange = (newFilters: ShowFilters) => {
     if (onFilterChange) {
@@ -469,86 +493,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        scrollEnabled={false}
-      >
-        {loading && !initialRegion ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading map...</Text>
-          </View>
-        ) : (
-          <>
-            {initialRegion && (
-              // Use MapShowCluster if available, otherwise fallback to standard MapView
-              MapShowCluster ? (
-                <MapShowCluster
-                  ref={mapRef}
-                  shows={shows}
-                  onShowPress={handleShowPress}
-                  region={currentRegion || initialRegion}
-                  showsUserLocation={true}
-                  loadingEnabled={true}
-                  showsCompass={true}
-                  showsScale={true}
-                  provider="google"
-                  onRegionChangeComplete={handleRegionChangeComplete}
-                />
-              ) : (
-                <MapView
-                  ref={mapRef}
-                  style={styles.map}
-                  provider={PROVIDER_GOOGLE}
-                  initialRegion={initialRegion}
-                  region={currentRegion || undefined}
-                  showsUserLocation
-                  showsMyLocationButton={false}
-                  showsCompass
-                  showsScale
-                  loadingEnabled
-                  onRegionChangeComplete={handleRegionChangeComplete}
-                >
-                  {renderMarkers()}
-                </MapView>
-              )
-            )}
-
-            {/* Error Message */}
-            {error && (
-              <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color="#D32F2F" />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-
-            {/* Empty State */}
-            {renderEmptyState()}
-
-            {/* Filter info banner */}
-            <View style={styles.filterInfoContainer}>
-              <Text style={styles.filterInfoText}>
-                {shows.length === 0
-                  ? 'No shows found'
-                  : shows.length === 1
-                  ? '1 show found'
-                  : `${shows.length} shows found`}
-                {' • '}Within 25 miles
-              </Text>
-              <TouchableOpacity
-                style={styles.filterButton}
-                onPress={() => setFilterVisible(true)}
-              >
-                <Ionicons name="options-outline" size={18} color="#007AFF" />
-                <Text style={styles.filterButtonText}>Filter</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* My Location Button */}
             <TouchableOpacity
               style={styles.myLocationButton}
               onPress={centerOnUserLocation}
@@ -609,6 +553,34 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  errorContainer: {
+    position: 'absolute',
+    top: 70,
+    left: 16,
+    right: 16,
+    backgroundColor: '#ffeeee',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ff3b30',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#ff3b30',
+    marginBottom: 8,
+  },
+  retryButton: {
+    backgroundColor: '#ff3b30',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   map: {
     width,
