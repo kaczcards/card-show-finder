@@ -4,6 +4,14 @@ import { User, UserRole, AuthCredentials, AuthState } from '../types';
 import NetInfo from '@react-native-community/netinfo';
 import { isSupabaseInitialized } from '../supabase';
 
+// ---------------------------------------------------------------------------
+// Development mode – set to `false` in production builds. When `true`, the
+// authentication flow will short-circuit after Supabase Auth login succeeds
+// and return a mock profile so developers can access the app without needing
+// a corresponding row in the `profiles` table.
+// ---------------------------------------------------------------------------
+const DEV_MODE = true;
+
 /**
  * Register a new user with email and password
  * @param email User's email
@@ -174,17 +182,109 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
 
     if (!result.user) throw new Error('Login failed');
 
+    /* ======= DEVELOPMENT MODE BYPASS ======= */
+    if (DEV_MODE) {
+      console.log('[AUTH SERVICE][DEV MODE] Bypassing profile fetch, returning mock user');
+      const nowIso = new Date().toISOString();
+      return {
+        id: result.user.id,
+        email: result.user.email || email,
+        firstName: 'Dev',
+        lastName: 'User',
+        homeZipCode: '12345',
+        role: UserRole.MVP_DEALER, // expose full feature set in dev
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        isEmailVerified: true,
+        accountType: 'collector',
+        subscriptionStatus: 'none',
+        subscriptionExpiry: null,
+        favoriteShows: [],
+        attendedShows: [],
+      };
+    }
+
+    /* ------------------------------------------------------------------
+     * ENHANCED LOGGING – Profile fetch
+     * ------------------------------------------------------------------ */
+    console.log('[AUTH SERVICE] Authentication successful – fetching user profile', {
+      userId: result.user.id,
+      email: result.user.email,
+    });
+
     // Get user profile from the profiles table
-    const { data: profileData, error: profileError } = await supabase
+    let { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', result.user.id)
       .single();
 
-    if (profileError) throw profileError;
-    if (!profileData) throw new Error('User profile not found');
+    /* -------- Auto-create profile if missing -------- */
+    const profileNotFound =
+      profileError &&
+        (profileError.code === 'PGRST116' ||
+          profileError.message?.toLowerCase().includes('not found')) ||
+      !profileData;
+
+    if (profileNotFound) {
+      console.log('[AUTH SERVICE] Profile not found – attempting to create default profile');
+
+      const defaultProfile = {
+        id: result.user.id,
+        email: result.user.email,
+        first_name: 'User',
+        last_name: '',
+        home_zip_code: '00000',
+        role: UserRole.ATTENDEE,
+        account_type: 'collector',
+        subscription_status: 'none',
+        subscription_expiry: null,
+        favorite_shows: [],
+        attended_shows: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert([defaultProfile])
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('[AUTH SERVICE] Failed to create default profile:', insertError);
+        throw insertError;
+      }
+
+      console.log('[AUTH SERVICE] Successfully created default profile');
+      profileData = newProfile;
+    } else if (profileError) {
+      // Any other profile-related error
+      console.error('[AUTH SERVICE] Error fetching profile:', {
+        code: profileError.code,
+        message: profileError.message,
+        details: profileError.details,
+        hint: profileError.hint,
+      });
+      throw profileError;
+    }
+
+    if (!profileData) {
+      console.error(
+        '[AUTH SERVICE] No profile found and automatic creation failed for user:',
+        result.user.id
+      );
+      throw new Error('User profile not found and could not be created');
+    }
+
+    console.log('[AUTH SERVICE] Profile fetched successfully:', {
+      firstName: profileData.first_name,
+      role: profileData.role,
+    });
 
     // Convert from Supabase format to our app's User format
+    console.log('[AUTH SERVICE] Transforming profile data to User format');
+
     const userData: User = {
       id: result.user.id,
       email: result.user.email || '',
@@ -204,9 +304,19 @@ export const signInUser = async (credentials: AuthCredentials): Promise<User> =>
       profileImageUrl: profileData.profile_image_url,
     };
 
+    console.log('[AUTH SERVICE] User data transformation complete:', {
+      id: userData.id,
+      email: userData.email,
+      role: userData.role,
+      isEmailVerified: userData.isEmailVerified,
+    });
+
     return userData;
   } catch (error: any) {
-    console.error('Error signing in:', error);
+    console.error('[AUTH SERVICE] Error in signInUser:', error);
+    if (error?.stack) {
+      console.error('[AUTH SERVICE] Error stack:', error.stack);
+    }
     throw error; // Pass through the error with our enhanced message
   }
 };
