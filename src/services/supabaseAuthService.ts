@@ -562,31 +562,27 @@ export const addShowToFavorites = async (
   showId: string
 ): Promise<void> => {
   try {
-    // Get current favorite shows
-    const { data, error: getError } = await supabase
-      .from('profiles')
-      .select('favorite_shows')
-      .eq('id', uid)
+    console.log('[AUTH SERVICE] Adding show to favorites:', { uid, showId });
+
+    // Insert into the user_favorite_shows table
+    // DB trigger will update favorite_shows_count automatically
+    const { error: insertError } = await supabase
+      .from('user_favorite_shows')
+      .insert([{ user_id: uid, show_id: showId }])
       .single();
 
-    if (getError) throw getError;
+    // Ignore duplicate-key errors (already favorited)
+    if (insertError && insertError.code !== '23505') {
+      throw insertError;
+    }
 
-    const favoriteShows = data?.favorite_shows || [];
-
-    // Only add if not already in favorites
-    if (!favoriteShows.includes(showId)) {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          favorite_shows: [...favoriteShows, showId],
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', uid);
-
-      if (updateError) throw updateError;
+    if (!insertError) {
+      console.log('[AUTH SERVICE] Show successfully added to favorites');
+    } else {
+      console.log('[AUTH SERVICE] Show already in favorites – no action needed');
     }
   } catch (error: any) {
-    console.error('Error adding show to favorites:', error);
+    console.error('[AUTH SERVICE] Error adding show to favorites:', error);
     throw new Error(error.message || 'Failed to add show to favorites');
   }
 };
@@ -602,29 +598,21 @@ export const removeShowFromFavorites = async (
   showId: string
 ): Promise<void> => {
   try {
-    // Get current favorite shows
-    const { data, error: getError } = await supabase
-      .from('profiles')
-      .select('favorite_shows')
-      .eq('id', uid)
-      .single();
+    console.log('[AUTH SERVICE] Removing show from favorites:', { uid, showId });
 
-    if (getError) throw getError;
+    // Delete from the user_favorite_shows table
+    // DB trigger will update favorite_shows_count automatically
+    const { error: deleteError } = await supabase
+      .from('user_favorite_shows')
+      .delete()
+      .eq('user_id', uid)
+      .eq('show_id', showId);
 
-    const favoriteShows = data?.favorite_shows || [];
+    if (deleteError) throw deleteError;
 
-    // Remove the show from favorites
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        favorite_shows: favoriteShows.filter(id => id !== showId),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', uid);
-
-    if (updateError) throw updateError;
+    console.log('[AUTH SERVICE] Show successfully removed from favorites');
   } catch (error: any) {
-    console.error('Error removing show from favorites:', error);
+    console.error('[AUTH SERVICE] Error removing show from favorites:', error);
     throw new Error(error.message || 'Failed to remove show from favorites');
   }
 };
