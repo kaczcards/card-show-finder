@@ -141,6 +141,18 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         // Apply additional filters that weren't handled by the RPC
         let filteredData = nearbyData;
         
+        // Ensure we're not showing past shows
+        if (Array.isArray(filteredData)) {
+          const today = new Date();
+          filteredData = filteredData.filter(show => {
+            // Parse the end date, ensuring timezone issues don't cause off-by-one errors
+            const showEndDate = new Date(show.end_date);
+            return showEndDate >= today;
+          });
+          
+          console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+        }
+        
         // Filter by max entry fee if specified
         if (typeof filters.maxEntryFee === 'number' && Array.isArray(filteredData)) {
           filteredData = filteredData.filter(show => 
@@ -207,7 +219,21 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         console.info(
           `[showService] find_filtered_shows returned ${((rpcData && Array.isArray(rpcData)) ? rpcData.length : 0)} show(s)`
         );
-        return Array.isArray(rpcData) ? rpcData.map(mapDbShowToAppShow) : [];
+        
+        // Ensure we're not showing past shows
+        let filteredData = rpcData;
+        if (Array.isArray(filteredData)) {
+          const today = new Date();
+          filteredData = filteredData.filter(show => {
+            // Parse the end date, ensuring timezone issues don't cause off-by-one errors
+            const showEndDate = new Date(show.end_date);
+            return showEndDate >= today;
+          });
+          
+          console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+        }
+        
+        return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
       }
 
       /* -------------------------------------------------------
@@ -237,11 +263,27 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           `[showService] find_shows_within_radius returned ${((fbData && Array.isArray(fbData)) ? fbData.length : 0)} show(s)`
         );
         
-        // Still need to filter by date even if using the radius-only RPC
+        // Apply date filtering since this RPC doesn't do it
         let filteredData = Array.isArray(fbData) ? fbData : [];
+        
+        // Ensure we're not showing past shows
+        if (Array.isArray(filteredData)) {
+          const today = new Date();
+          filteredData = filteredData.filter(show => {
+            // Parse the end date, ensuring timezone issues don't cause off-by-one errors
+            const showEndDate = new Date(show.end_date);
+            return showEndDate >= today;
+          });
+          
+          console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+        }
+        
+        // Apply date range filtering
         filteredData = filteredData.filter(show => {
-          const showDate = new Date(show.start_date);
-          return showDate >= new Date(startDate) && showDate <= new Date(endDate);
+          const showStartDate = new Date(show.start_date);
+          const filterStartDate = new Date(startDate);
+          const filterEndDate = new Date(endDate);
+          return showStartDate >= filterStartDate && showStartDate <= filterEndDate;
         });
         
         return filteredData.map(mapDbShowToAppShow);
@@ -259,7 +301,11 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
     // Always apply date filters to show only future/current shows
     query = query.gte('start_date', startDate as any);
-    query = query.lte('end_date', endDate as any);
+    query = query.lte('start_date', endDate as any);
+    
+    // Also ensure the end_date is not in the past
+    const today = new Date();
+    query = query.gte('end_date', today.toISOString() as any);
     
     if (typeof filters.maxEntryFee === 'number') {
       query = query.lte('entry_fee', filters.maxEntryFee);
@@ -272,6 +318,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     console.debug('[showService] Executing basic query with filters:', {
       startDate,
       endDate,
+      today: today.toISOString(),
       maxEntryFee: filters.maxEntryFee,
       categories: filters.categories,
       status: 'ACTIVE',
@@ -284,7 +331,21 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     console.info(
       `[showService] basic query returned ${((data && Array.isArray(data)) ? data.length : 0)} show(s)`
     );
-    return Array.isArray(data) ? data.map(mapDbShowToAppShow) : [];
+    
+    // Ensure we're not showing past shows
+    let filteredData = data;
+    if (Array.isArray(filteredData)) {
+      const today = new Date();
+      filteredData = filteredData.filter(show => {
+        // Parse the end date, ensuring timezone issues don't cause off-by-one errors
+        const showEndDate = new Date(show.end_date);
+        return showEndDate >= today;
+      });
+      
+      console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+    }
+    
+    return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
   } catch (err: any) {
     console.error('Error fetching shows:', err);
     throw new Error(err.message ?? 'Failed to fetch shows');
@@ -387,15 +448,32 @@ export const getUpcomingShows = async (params: {
     if (endDate) {
       showQuery = showQuery.lte('end_date', endDate as any);
     }
+    
+    // Also ensure the end_date is not in the past
+    const today = new Date();
+    showQuery = showQuery.gte('end_date', today.toISOString() as any);
 
     const { data: showRows, error: showError } = await showQuery;
 
     if (showError) {
       throw showError;
     }
+    
+    // Ensure we're not showing past shows
+    let filteredData = showRows;
+    if (Array.isArray(filteredData)) {
+      const today = new Date();
+      filteredData = filteredData.filter(show => {
+        // Parse the end date, ensuring timezone issues don't cause off-by-one errors
+        const showEndDate = new Date(show.end_date);
+        return showEndDate >= today;
+      });
+      
+      console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+    }
 
-    const mapped = Array.isArray(showRows)
-      ? showRows.map(mapDbShowToAppShow)
+    const mapped = Array.isArray(filteredData)
+      ? filteredData.map(mapDbShowToAppShow)
       : [];
 
     return { data: mapped, error: null };
