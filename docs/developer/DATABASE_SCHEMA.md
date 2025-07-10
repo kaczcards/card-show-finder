@@ -30,6 +30,10 @@ Secrets, keys and internal service-role credentials are **redacted** or replaced
 | [`conversations`](#conversations) | Direct / group / show chat threads |
 | [`conversation_participants`](#conversation_participants) | Users belonging to a conversation & their unread counts |
 | [`messages`](#messages) | Chat messages with read receipts |
+| [`reviews`](#reviews) | 1–5-star ratings & comments on recurring series |
+| [`badge_definitions`](#badge_definitions) | Master list of collectible badges |
+| [`user_badges`](#user_badges) | Junction table of which user owns which badge |
+| [`subscriptions`](#subscriptions) | Stripe subscription records & status |
 | *(dozens more utility tables live in `db_migrations/` – add here when promoted to production)* |
 
 ---
@@ -119,6 +123,77 @@ RLS
 RLS  
 * Only owner organizer may `SELECT` / `UPDATE`  
 * Reset Edge Function (`reset-broadcast-quotas`) runs as service role
+
+---
+
+### `reviews`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | `uuid` | **PK** |
+| `series_id` | `uuid` | FK → `show_series.id` |
+| `user_id` | `uuid` | FK → `auth.users.id` |
+| `rating` | `integer` | `CHECK 1–5` |
+| `comment` | `text` | Markdown allowed |
+| `organizer_reply` | `text` | Optional public response |
+| `created_at` | `timestamptz` | |
+| `updated_at` | `timestamptz` | Auto trigger |
+
+RLS  
+* `SELECT`: public  
+* `INSERT`: `user_id = auth.uid()`  
+* `UPDATE` / `DELETE`: `user_id = auth.uid()`
+
+---
+
+### `badge_definitions`
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | `uuid` | **PK** |
+| `code` | `text` | Unique slug, e.g. `first_favorite` |
+| `title` | `text` | Display name |
+| `description` | `text` | What the badge rewards |
+| `badge_type` | `badge_type` | Enum (see below) |
+| `icon_url` | `text` | Storage path |
+| `created_at` | `timestamptz` | |
+
+RLS – read-only  
+* `SELECT`: everyone  
+* No row creation from client (managed by admins)
+
+---
+
+### `user_badges`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `user_id` | `uuid` | **PK** composite |
+| `badge_id` | `uuid` | **PK** composite |
+| `awarded_at` | `timestamptz` | Defaults `now()` |
+
+RLS  
+* Row visible where `user_id = auth.uid()`  
+* Inserts executed by server triggers when criteria met
+
+---
+
+### `subscriptions`
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `id` | `uuid` | **PK** |
+| `user_id` | `uuid` | FK → `auth.users.id` |
+| `stripe_subscription_id` | `text` | External reference |
+| `plan` | `text` | `mvp_dealer`, `show_organizer` … |
+| `status` | `text` | `active`, `trialing`, `past_due`, `canceled` |
+| `current_period_end` | `timestamptz` | When next renewal occurs |
+| `created_at` | `timestamptz` | |
+| `updated_at` | `timestamptz` | |
+
+RLS  
+* `SELECT`: `user_id = auth.uid()`  
+* `INSERT/UPDATE`: performed by Stripe webhook Edge Function running with service-role
 
 ---
 
@@ -215,6 +290,7 @@ RLS
 | Enum | Values |
 |------|--------|
 | `conversation_type` | `direct` · `group` · `show` |
+| `badge_type` | `attendance` · `milestone` · `subscription` |
 
 ---
 
@@ -230,6 +306,9 @@ Edge-case business logic lives in SQL or Edge Functions:
 Full details live in **[developer/EDGE_FUNCTIONS.md](EDGE_FUNCTIONS.md)**.
 
 ---
+
+_Schema reference is partly auto-generated from migration scripts under **`db_migrations/`**.  
+Run `npm run docs:refresh-schema` (coming soon) after adding or altering tables to keep this file accurate._
 
 _Last regenerated: **[2025-07-10]** – commit `ab52d9c`_  
 Run the schema exporter script or update manually after every migration.
