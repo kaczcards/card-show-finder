@@ -67,10 +67,27 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
   try {
     // Ensure filters is a valid object
     filters = filters || {};
-    
-    // Set default date filters if none provided (only future shows)
-    const startDate = filters.startDate || new Date().toISOString();
-    const endDate = filters.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+
+    /* -----------------------------------------------------------
+     * Derive **normalized** filter values so every query path
+     * (RPCs & basic SELECT) uses the exact same parameters.
+     * --------------------------------------------------------- */
+    const toIso = (d: Date | string): string =>
+      d instanceof Date ? d.toISOString() : d;
+
+    // Default date range: today → +30 days (ISO strings)
+    const startDate = toIso(
+      filters.startDate ?? new Date()
+    );
+    const endDate = toIso(
+      filters.endDate ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    );
+
+    // Default radius: 25 mi
+    const radius =
+      typeof filters.radius === 'number' && !isNaN(filters.radius)
+        ? filters.radius
+        : 25;
     
     /* -----------------------------------------------------------
      * 1. Geo-aware query via nearby_shows RPC when lat/lng present
@@ -201,7 +218,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         {
           center_lat: typeof filters.latitude === 'number' ? filters.latitude : null,
           center_lng: typeof filters.longitude === 'number' ? filters.longitude : null,
-          radius_miles: typeof filters.radius === 'number' ? filters.radius : 25,
+          radius_miles: radius,
         }
       );
 
