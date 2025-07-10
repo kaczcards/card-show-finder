@@ -285,7 +285,8 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
       <FlatList
         ref={flatListRef}
         data={groupedMessages}
-        keyExtractor={(item) = removeClippedSubviews={false}> item.date}
+        keyExtractor={(item) => item.date}
+        removeClippedSubviews={false}
         renderItem={({ item }) => (
           <View>
             {renderDateSeparator(item.date)}
