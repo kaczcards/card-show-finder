@@ -253,6 +253,9 @@ const styles = StyleSheet.create({
     elevation: 4, // Android
   },
   logo: {
+    width: 150,
+    height: 150,
+    maxWidth: '80%',
   },
   appName: {
     fontSize: 26,
