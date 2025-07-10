@@ -680,10 +680,8 @@ CREATE POLICY conversation_participants_update_policy ON conversation_participan
     -- Users can only update their own participant records
     user_id = auth.uid()
   ) WITH CHECK (
-    -- Users can only update their own participant records
-    -- and cannot change certain fields
-    user_id = auth.uid() AND
-    NEW.can_reply = OLD.can_reply
+    -- Ensure the row being written still belongs to the caller
+    user_id = auth.uid()
   );
 
 -- =======================================================
