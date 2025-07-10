@@ -20,17 +20,8 @@ import {
   shareWantList,
 } from '../../services/collectionService';
 import { getUpcomingShows } from '../../services/showService';
-
-// This component seems to be missing from the file,
-// so you might need to import it or define it.
-// For now, I'll create a placeholder.
-const WantListEditor = (props: any) => (
-  <View>
-    <Text>Want List Editor</Text>
-    {props.isLoading && <ActivityIndicator />}
-  </View>
-);
-
+// UI
+import WantListEditor from '../../components/WantListEditor';
 
 const CollectionScreen: React.FC = () => {
   // ===== Auth =====
@@ -101,14 +92,16 @@ const CollectionScreen: React.FC = () => {
         <Text style={styles.headerTitle}>My Want List</Text>
       </View>
 
-      {/* The WantListEditor now lives inside the return statement */}
-      <WantListEditor
-        wantList={wantList}
-        userId={userId}
-        upcomingShows={upcomingShows}
-        onSave={(list: any) => setWantList(list)}
-        isLoading={loadingWantList || loadingShows}
-      />
+      {/* Content */}
+      <View style={styles.content}>
+        <WantListEditor
+          wantList={wantList}
+          userId={userId}
+          upcomingShows={upcomingShows}
+          onSave={(list) => setWantList(list)}
+          isLoading={loadingWantList || loadingShows}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -129,7 +122,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  // I removed the extra, broken style properties from here.
+  content: {
+    flex: 1,
+    padding: 16,
+  },
 });
 
 export default CollectionScreen;

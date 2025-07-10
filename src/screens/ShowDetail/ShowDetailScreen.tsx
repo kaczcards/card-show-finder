@@ -414,9 +414,10 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         <InfoRow icon="location" text={show.address || show.location || 'Location not specified'} />
 
         {show.entry_fee && (
-          <InfoRow icon="cash-outline">
-            <Text style={styles.infoText}>Entry Fee: {show.entry_fee}</Text>
-          </InfoRow>
+          <InfoRow
+            icon="cash"
+            text={`Entry Fee: $${Number(show.entry_fee).toFixed(2)}`}
+          />
         )}
 
         {isShowOrganizer && !isCurrentUserOrganizer && (
