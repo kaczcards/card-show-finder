@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import {
 import { supabase } from '../../supabase';
 import { Ionicons } from '@expo/vector-icons';
 import * as messagingService from '../../services/messagingService';
+import * as userRoleService from '../../services/userRoleService';
 
 // Function to generate a UUID without using crypto.randomUUID()
 const generateUUID = () => {
@@ -79,6 +80,9 @@ const DirectMessagesScreen: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [recipientId, setRecipientId] = useState('');
   const [showNewConversation, setShowNewConversation] = useState(false);
+  
+  // Cache for user profiles
+  const [userProfiles, setUserProfiles] = useState<Record<string, any>>({});
   
   // Add debug log
   const addDebugLog = (title: string, data: any) => {
@@ -211,6 +215,40 @@ const DirectMessagesScreen: React.FC = () => {
     }
   };
 
+  // Fetch a specific user's profile and cache it
+  const fetchAndCacheUserProfile = useCallback(async (userId: string) => {
+    // Return from cache if available
+    if (userProfiles[userId]) {
+      return userProfiles[userId];
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+      
+      if (data) {
+        // Cache the profile
+        setUserProfiles(prev => ({
+          ...prev,
+          [userId]: data
+        }));
+        return data;
+      }
+    } catch (err) {
+      console.error('Exception fetching user profile:', err);
+    }
+    
+    return null;
+  }, [userProfiles]);
+
   // Fetch user's conversations
   const fetchConversations = async (userId: string) => {
     try {
@@ -227,6 +265,16 @@ const DirectMessagesScreen: React.FC = () => {
         const updatedConversation = conversationsData.find(c => c.id === selectedConversation.id);
         if (updatedConversation) {
           setSelectedConversation(updatedConversation);
+        }
+      }
+      
+      // Fetch missing user profiles for conversations
+      for (const conversation of conversationsData) {
+        if (conversation.type === 'direct' && conversation.participants.length > 0) {
+          const otherParticipant = conversation.participants[0];
+          if (otherParticipant && !otherParticipant.display_name) {
+            fetchAndCacheUserProfile(otherParticipant.user_id);
+          }
         }
       }
     } catch (error) {
@@ -302,11 +350,32 @@ const DirectMessagesScreen: React.FC = () => {
       
     // For group chats, show count instead
     const isGroupChat = item.type !== 'direct' || item.participant_count > 2;
-    const displayName = isGroupChat 
-      ? `Group (${item.participant_count})` 
-      : otherParticipant?.display_name || `User ${otherParticipant?.user_id.substring(0, 8)}`;
+    
+    // Check if we have a cached profile for this user
+    const cachedProfile = otherParticipant 
+      ? userProfiles[otherParticipant.user_id] 
+      : null;
+    
+    // Determine display name with better fallback
+    let displayName = '';
+    if (isGroupChat) {
+      displayName = `Group (${item.participant_count})`;
+    } else if (otherParticipant?.display_name) {
+      displayName = otherParticipant.display_name;
+    } else if (cachedProfile?.full_name) {
+      displayName = cachedProfile.full_name;
+    } else if (cachedProfile?.username) {
+      displayName = cachedProfile.username;
+    } else {
+      displayName = 'Unknown User';
       
-    const photoUrl = !isGroupChat && otherParticipant?.photo_url;
+      // Fetch profile if missing
+      if (otherParticipant) {
+        fetchAndCacheUserProfile(otherParticipant.user_id);
+      }
+    }
+    
+    const photoUrl = !isGroupChat && (otherParticipant?.photo_url || cachedProfile?.avatar_url);
     
     return (
       <TouchableOpacity 
@@ -424,12 +493,6 @@ const DirectMessagesScreen: React.FC = () => {
         >
           <Ionicons name="bug" size={20} color="#999" />
         </TouchableOpacity>
-      </View>
-      
-      <View style={styles.banner}>
-        <Text style={styles.bannerText}>
-          TEST MODE: All messages visible to all roles
-        </Text>
       </View>
       
       {!currentUser ? (
@@ -651,15 +714,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     zIndex: 1,
-  },
-  banner: {
-    backgroundColor: '#FF9800',
-    padding: 8,
-  },
-  bannerText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
   },
   centeredContainer: {
     flex: 1,

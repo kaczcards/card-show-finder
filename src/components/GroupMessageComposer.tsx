@@ -228,16 +228,6 @@ const GroupMessageComposer: React.FC<GroupMessageComposerProps> = ({
                 </TouchableOpacity>
               </>
             )}
-            
-            {userRoleService.IS_TEST_MODE && (
-              <View style={styles.testModeContainer}>
-                <Text style={styles.testModeText}>TEST MODE ENABLED</Text>
-                <Text style={styles.testModeSubtext}>
-                  Role restrictions are bypassed for testing purposes.
-                  In production, only show organizers and MVP dealers can send broadcasts.
-                </Text>
-              </View>
-            )}
           </ScrollView>
         </View>
       </View>
@@ -345,23 +335,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
-  },
-  testModeContainer: {
-    marginTop: 20,
-    backgroundColor: '#FFF9C4',
-    borderRadius: 8,
-    padding: 12,
-  },
-  testModeText: {
-    fontWeight: 'bold',
-    color: '#F57F17',
-    textAlign: 'center',
-  },
-  testModeSubtext: {
-    marginTop: 4,
-    color: '#F57F17',
-    fontSize: 12,
-    textAlign: 'center',
   },
 });
 
