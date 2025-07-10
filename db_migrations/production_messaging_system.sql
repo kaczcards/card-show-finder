@@ -667,9 +667,9 @@ CREATE POLICY messages_insert_policy ON messages
     (
       NOT EXISTS (
         -- Check if there are any messages in this conversation
-        SELECT 1 FROM messages WHERE conversation_id = NEW.conversation_id
+        SELECT 1 FROM messages m WHERE m.conversation_id = conversation_id
       ) OR
-      can_user_reply(auth.uid(), NEW.conversation_id)
+      can_user_reply(auth.uid(), conversation_id)
     )
   );
 
