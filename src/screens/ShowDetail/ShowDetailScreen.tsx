@@ -211,7 +211,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
                 .from('profiles')
                 .select('id, first_name, last_name, profile_image_url, role, account_type')
                 .in('id', participantUserIds)
-                .or(`role.eq.MVP_DEALER,role.eq.DEALER`);
+                // Roles are stored lowercase in DB, so query accordingly
+                .or('role.eq.mvp_dealer,role.eq.dealer');
 
             if (profilesError) throw profilesError;
 

@@ -61,7 +61,9 @@ const ProfileScreen: React.FC = () => {
 
   /**
    * Fetch the authoritative favourite-show count from the DB.
-   * Reads the `favorite_shows_count` column maintained by triggers.
+   * Tries to read the `favorite_shows_count` column, but gracefully falls
+   * back to counting rows in `user_favorite_shows` when the column does
+   * not exist (e.g. migration hasn’t run yet).
    */
   const fetchFavoriteCount = useCallback(async () => {
     if (!user?.id) {
@@ -70,6 +72,9 @@ const ProfileScreen: React.FC = () => {
     }
 
     try {
+      /* -----------------------------------------------------------
+       * Try 1 – read the counter column directly
+       * --------------------------------------------------------- */
       const { data, error } = await supabase
         .from('profiles')
         .select('favorite_shows_count')
@@ -77,15 +82,55 @@ const ProfileScreen: React.FC = () => {
         .single();
 
       if (error) {
-        console.error('[ProfileScreen] Error fetching favorite_shows_count:', error);
+        console.log(
+          '[ProfileScreen] Error fetching favorite_shows_count:',
+          error.message
+        );
+
+        /* 42703 = column does not exist -> migration not applied yet  */
+        if (error.code === '42703') {
+          console.log(
+            '[ProfileScreen] Falling back to counting records in user_favorite_shows'
+          );
+
+          /* -----------------------------------------------------------
+           * Fallback – count rows in join table
+           * --------------------------------------------------------- */
+          const {
+            count,
+            error: countError,
+          } = await supabase
+            .from('user_favorite_shows')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id);
+
+          if (countError) {
+            console.error(
+              '[ProfileScreen] Error counting favorites:',
+              countError
+            );
+            return;
+          }
+
+          setLocalFavoriteCount(count || 0);
+          return;
+        }
+
+        // Other errors – log and exit early
+        console.error(
+          '[ProfileScreen] Unexpected error fetching favorite_shows_count:',
+          error
+        );
         return;
       }
 
+      // Success path – column exists
       const count = data?.favorite_shows_count ?? 0;
       console.log('[ProfileScreen] Fetched favorite_shows_count:', count);
       setLocalFavoriteCount(count);
     } catch (err) {
       console.error('[ProfileScreen] Unexpected error in fetchFavoriteCount:', err);
+      // keep previous count on unexpected error
     }
   }, [user?.id]);
 
