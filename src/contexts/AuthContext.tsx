@@ -250,21 +250,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
     // 2. Call the Supabase service to attempt the login.
-    const { data, error } = await supabaseAuthService.signInWithEmailPassword(
+    const result = await supabaseAuthService.signInWithEmailPassword(
       credentials.email,
       credentials.password
     );
 
     // 3. Handle the response directly.
-    if (error) {
+    if (result.error) {
       // FAILURE: If the service returns an error, update the state.
-      console.error('[AuthContext] Login failed with error:', error.message);
+      console.error('[AuthContext] Login failed with error:', result.error.message);
       
       // Set the error message and turn off the loading indicator.
       const newState = {
         ...authState,
         isLoading: false,
-        error: error.message,
+        error: result.error.message,
         isAuthenticated: false
       };
       
@@ -272,10 +272,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('[AuthContext] Auth state updated after login failure:', 
         { isAuthenticated: newState.isAuthenticated, hasError: !!newState.error });
       
-      return Promise.reject(new Error(error.message));
-    } else if (data?.user) {
+      return Promise.reject(new Error(result.error.message));
+    } else if (result.user) {
       // SUCCESS: If the service returns a user, get their profile and update state.
-      console.log('[AuthContext] Auth login succeeded – id:', data.user.id);
+      console.log('[AuthContext] Auth login succeeded – id:', result.user.id);
 
       // ---- Optional bypass for dev -------------------------------------------------
       if (BYPASS_PROFILE_FETCH) {
@@ -286,8 +286,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Create a complete mock user with all fields that might be used elsewhere
         const mockUser: User = {
-          id: data.user.id,
-          email: data.user.email ?? credentials.email,
+          id: result.user.id,
+          email: result.user.email ?? credentials.email,
           firstName: 'Dev',
           lastName: 'User',
           homeZipCode: '00000',
@@ -324,7 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // ---- Normal profile fetch ----------------------------------------------------
       console.log('[AuthContext] Fetching user profile from database...');
-      let userData = await supabaseAuthService.getCurrentUser(data.user.id);
+      let userData = await supabaseAuthService.getCurrentUser(result.user.id);
       
       if (userData) {
         console.log('[AuthContext] Profile fetch successful:', 
@@ -350,7 +350,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn(
           '[AuthContext] getCurrentUser returned null – attempting forceRefreshAndFetchProfile'
         );
-        userData = await forceRefreshAndFetchProfile(data.user.id);
+        userData = await forceRefreshAndFetchProfile(result.user.id);
 
         if (userData) {
           console.log('[AuthContext] Fallback profile fetch succeeded:', 
