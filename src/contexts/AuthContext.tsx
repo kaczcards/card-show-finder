@@ -11,6 +11,18 @@ interface AuthContextType {
   authState: AuthState & { favoriteCount: number };
   /**
    * Convenience getters exposed alongside the full `authState`
+
+    /* ------------------------------------------------------------------
+     * Build-time / runtime dev flag to bypass profile fetch
+     * ------------------------------------------------------------------
+     *  • Enabled automatically in Expo dev (`__DEV__`)
+     *  • Or via env   EXPO_PUBLIC_BYPASS_PROFILE_FETCH=true
+     * This lets developers log in with Auth only, even if the
+     * `profiles` row hasn’t been created yet.
+     * ------------------------------------------------------------------ */
+    const BYPASS_PROFILE_FETCH =
+      (__DEV__ && process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH !== 'false') ||
+      process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH === 'true';
    * so that consuming components can access them directly without
    * drilling into `authState`.
    */
@@ -255,7 +267,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return Promise.reject(new Error(error.message));
     } else if (data?.user) {
       // SUCCESS: If the service returns a user, get their profile and update state.
-      const userData = await supabaseAuthService.getCurrentUser(data.user.id);
+      console.log('[AuthContext] Auth login succeeded – id:', data.user.id);
+
+      // ---- Optional bypass for dev -------------------------------------------------
+      if (BYPASS_PROFILE_FETCH) {
+        console.warn(
+          '[AuthContext] BYPASS_PROFILE_FETCH active – skipping profile lookup, using auth payload only.'
+        );
+        const nowIso = new Date().toISOString();
+        const mockUser: User = {
+          id: data.user.id,
+          email: data.user.email ?? credentials.email,
+          firstName: 'Dev',
+          lastName: 'User',
+          homeZipCode: '00000',
+          role: UserRole.ATTENDEE,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+          isEmailVerified: data.user.email_confirmed_at !== null,
+          accountType: 'collector',
+          subscriptionStatus: 'none',
+          subscriptionExpiry: null,
+          favoriteShows: [],
+          attendedShows: [],
+        };
+        setAuthState({
+          user: mockUser,
+          isLoading: false,
+          error: null,
+          isAuthenticated: true,
+        });
+        fetchFavoriteCount(mockUser.id);
+        return mockUser;
+      }
+
+      // ---- Normal profile fetch ----------------------------------------------------
+      let userData = await supabaseAuthService.getCurrentUser(data.user.id);
       
       if (userData) {
         setAuthState({
@@ -270,14 +317,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         return userData;
       } else {
-        // EDGE CASE: If we couldn't get the user profile data.
+        console.warn(
+          '[AuthContext] getCurrentUser returned null – attempting forceRefreshAndFetchProfile'
+        );
+        userData = await forceRefreshAndFetchProfile(data.user.id);
+
+        if (userData) {
+          console.log('[AuthContext] Fallback profile fetch succeeded');
+          setAuthState({
+            user: userData,
+            isLoading: false,
+            error: null,
+            isAuthenticated: true,
+          });
+          fetchFavoriteCount(userData.id);
+          return userData;
+        }
+
+        // EDGE CASE: Still no profile after fallback
+        const msg =
+          'We were unable to load your profile information. Please try again later or contact support.';
         setAuthState(prev => ({
           ...prev,
           isLoading: false,
-          error: "Failed to get user profile data.",
-          isAuthenticated: false
+          error: msg,
+          isAuthenticated: false,
         }));
-        return Promise.reject(new Error("Failed to get user profile data."));
+        return Promise.reject(new Error(msg));
       }
     } else {
       // EDGE CASE: If there's no error but also no user, handle it.
