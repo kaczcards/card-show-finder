@@ -2,10 +2,10 @@ import { supabase } from '../supabase';
 
 // User role constants
 export enum UserRole {
-  ATTENDEE = 'ATTENDEE',
-  DEALER = 'DEALER',
-  MVP_DEALER = 'MVP_DEALER',
-  SHOW_ORGANIZER = 'SHOW_ORGANIZER',
+  ATTENDEE = 'attendee',
+  DEALER = 'dealer',
+  MVP_DEALER = 'mvp_dealer',
+  SHOW_ORGANIZER = 'show_organizer',
 }
 
 /**
@@ -19,15 +19,6 @@ export enum UserRole {
 // NOTE: changing this to **const** prevents runtime overrides in production.
 export const IS_TEST_MODE = false;
 
-// ---- Small helper to allow runtime toggling (used by tests) ----
-// In production builds this is a no-op to guarantee IS_TEST_MODE stays false.
-// Unit tests can mock the module to override this constant if needed.
-export const __setTestMode = (_enabled: boolean) => {
-  /* eslint-disable no-console */
-  console.warn(
-    '[userRoleService] __setTestMode is disabled in production – IS_TEST_MODE remains false'
-  );
-};
 
 /* ------------------------------------------------------------------
  * Utility helpers
@@ -53,11 +44,14 @@ export const normalizeRole = (role?: string | null): UserRole | null => {
  * Extend this enum as new features are added.
  */
 export enum Action {
-  SEND_MESSAGE = 'SEND_MESSAGE',
-  RECEIVE_MESSAGE = 'RECEIVE_MESSAGE',
+  SEND_DM = 'SEND_DM',
+  RECEIVE_DM = 'RECEIVE_DM',
+  REPLY_DM = 'REPLY_DM',
+  SEND_BROADCAST = 'SEND_BROADCAST',
   MANAGE_SHOWS = 'MANAGE_SHOWS', // create / edit show listings
   DEALER_PARTICIPATION = 'DEALER_PARTICIPATION',
   PREMIUM_FEATURE = 'PREMIUM_FEATURE',
+  MODERATE_MESSAGE = 'MODERATE_MESSAGE',
 }
 
 /**
@@ -66,24 +60,31 @@ export enum Action {
  */
 const ROLE_PERMISSIONS: Record<UserRole, Set<Action>> = {
   [UserRole.ATTENDEE]: new Set<Action>([
-    Action.SEND_MESSAGE,
+    Action.SEND_DM,
+    Action.RECEIVE_DM,
+    Action.REPLY_DM,
   ]),
   [UserRole.DEALER]: new Set<Action>([
-    Action.SEND_MESSAGE,
+    Action.RECEIVE_DM,
     Action.DEALER_PARTICIPATION,
   ]),
   [UserRole.MVP_DEALER]: new Set<Action>([
-    Action.SEND_MESSAGE,
-    Action.RECEIVE_MESSAGE,
+    Action.SEND_DM,
+    Action.RECEIVE_DM,
+    Action.REPLY_DM,
+    Action.SEND_BROADCAST,
     Action.DEALER_PARTICIPATION,
     Action.PREMIUM_FEATURE,
   ]),
   [UserRole.SHOW_ORGANIZER]: new Set<Action>([
-    Action.SEND_MESSAGE,
-    Action.RECEIVE_MESSAGE,
+    Action.SEND_DM,
+    Action.RECEIVE_DM,
+    Action.REPLY_DM,
+    Action.SEND_BROADCAST,
     Action.MANAGE_SHOWS,
     Action.DEALER_PARTICIPATION,
     Action.PREMIUM_FEATURE,
+    Action.MODERATE_MESSAGE,
   ]),
 };
 
@@ -96,6 +97,63 @@ export const canPerformAction = (userRole: UserRole, action: Action): boolean =>
   if (IS_TEST_MODE) return true;
   const allowed = ROLE_PERMISSIONS[userRole];
   return allowed ? allowed.has(action) : false;
+};
+
+/* ------------------------------------------------------------------
+ * Messaging-specific helpers
+ * ------------------------------------------------------------------ */
+
+/**
+ * Checks if a sender can initiate a DM to a recipient
+ * (show validation must be handled by caller when needed).
+ */
+export const canSendDirectMessage = (
+  senderRole: UserRole,
+  recipientRole: UserRole
+): boolean => {
+  if (IS_TEST_MODE) return true;
+
+  switch (senderRole) {
+    case UserRole.ATTENDEE:
+      return recipientRole === UserRole.MVP_DEALER;
+    case UserRole.MVP_DEALER:
+      return (
+        recipientRole === UserRole.ATTENDEE ||
+        recipientRole === UserRole.DEALER ||
+        recipientRole === UserRole.SHOW_ORGANIZER
+      );
+    case UserRole.SHOW_ORGANIZER:
+      return true; // can DM anyone
+    default:
+      return false;
+  }
+};
+
+/**
+ * Dealers are read-only, everyone else can reply.
+ */
+export const canReplyToMessage = (userRole: UserRole): boolean => {
+  if (IS_TEST_MODE) return true;
+  return userRole !== UserRole.DEALER;
+};
+
+/**
+ * Broadcast: MVP dealer (attendees only) or organizer (quota enforced server-side)
+ */
+export const canSendBroadcast = (userRole: UserRole): boolean => {
+  if (IS_TEST_MODE) return true;
+  return (
+    userRole === UserRole.MVP_DEALER ||
+    userRole === UserRole.SHOW_ORGANIZER
+  );
+};
+
+/**
+ * Show organizers (for their shows) & admins (handled elsewhere) can moderate.
+ */
+export const canModerateMessages = (userRole: UserRole): boolean => {
+  if (IS_TEST_MODE) return true;
+  return userRole === UserRole.SHOW_ORGANIZER;
 };
 
 /**
