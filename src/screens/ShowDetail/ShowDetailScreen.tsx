@@ -220,7 +220,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
                 id: profile.id,
                 name: `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() || profile.id.substring(0, 8),
                 profileImageUrl: profile.profile_image_url,
-                role: profile.role as UserRole,
+                // Normalise role to uppercase so downstream comparisons
+                // (`dealer.role === 'MVP_DEALER'`, etc.) work reliably.
+                role: ((profile.role ?? '') as string).toUpperCase() as UserRole,
                 accountType: profile.account_type,
             }));
             setParticipatingDealers(dealers);
