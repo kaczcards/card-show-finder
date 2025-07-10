@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole, Badge } from '../../types';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { supabase } from '../../supabase';
 import * as badgeService from '../../services/badgeService';
 
 const ProfileScreen: React.FC = () => {
@@ -25,7 +26,6 @@ const ProfileScreen: React.FC = () => {
   // Pull favoriteCount from authState so it can be displayed below
   const { user, isLoading, error, favoriteCount } = authState;
   const navigation = useNavigation();
-  const isFocused = useIsFocused();
   
   // State for edit mode
   const [isEditMode, setIsEditMode] = useState(false);
@@ -59,31 +59,49 @@ const ProfileScreen: React.FC = () => {
   // State for favorite shows count
   const [localFavoriteCount, setLocalFavoriteCount] = useState(0);
 
-  // Function to fetch the count of user's favorite shows
-  const fetchFavoriteCount = async () => {
-    // Defensive: ensure we have a user object to read from
+  /**
+   * Fetch the authoritative favourite-show count from the DB.
+   * Reads the `favorite_shows_count` column maintained by triggers.
+   */
+  const fetchFavoriteCount = useCallback(async () => {
     if (!user?.id) {
       setLocalFavoriteCount(0);
       return;
     }
 
     try {
-      // We already receive the favourite shows array on the user object
-      const count = user.favoriteShows?.length || 0;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('favorite_shows_count')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('[ProfileScreen] Error fetching favorite_shows_count:', error);
+        return;
+      }
+
+      const count = data?.favorite_shows_count ?? 0;
+      console.log('[ProfileScreen] Fetched favorite_shows_count:', count);
       setLocalFavoriteCount(count);
-    } catch (error) {
-      console.error('Error determining favorite count:', error);
-      setLocalFavoriteCount(0);
+    } catch (err) {
+      console.error('[ProfileScreen] Unexpected error in fetchFavoriteCount:', err);
     }
-  };
+  }, [user?.id]);
 
-
-  // Load user badges when the screen comes into focus
-  useEffect(() => {
-    if (user && isFocused) {
-      loadUserBadges();
-    }
-  }, [user, isFocused]);
+  /* ------------------------------------------------------------------
+   * Refresh data each time the screen gains focus
+   * ------------------------------------------------------------------ */
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[ProfileScreen] Screen focused – refreshing counts/badges');
+      fetchFavoriteCount();
+      if (user) {
+        loadUserBadges();
+      }
+      // no cleanup needed
+    }, [fetchFavoriteCount, user])
+  );
 
   // Load user badges with improved error handling
   const loadUserBadges = async () => {
