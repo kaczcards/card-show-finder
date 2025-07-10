@@ -84,16 +84,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const { count, error } = await supabase
-      .from('user_favorite_shows')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
+    try {
+      // Get the favorite_shows_count directly from the profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('favorite_shows_count')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching favorite count:', error);
-      setFavoriteCount(0);
-    } else {
-      setFavoriteCount(count || 0);
+      if (error) {
+        console.error('[AuthContext] Error fetching favorite_shows_count:', error);
+        return;
+      }
+
+      // Set the count from the profile data
+      const count = data?.favorite_shows_count || 0;
+      console.log('[AuthContext] Fetched favorite_shows_count:', count);
+      setFavoriteCount(count);
+    } catch (error) {
+      console.error('[AuthContext] Unexpected error in fetchFavoriteCount:', error);
+      // Keep the current count on error
     }
   };
 
@@ -138,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             attendedShows: profileData.attended_shows || [],
             phoneNumber: profileData.phone_number,
             profileImageUrl: profileData.profile_image_url,
+            favoriteShowsCount: profileData.favorite_shows_count || 0,
           };
           
           setAuthState({
@@ -147,8 +158,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAuthenticated: true,
           });
 
-          // Fetch favorite count after user is loaded
-          fetchFavoriteCount(userData.id);
+          // Set favorite count from profile data
+          setFavoriteCount(profileData.favorite_shows_count || 0);
         } else {
           // No session found
           setAuthState({
@@ -203,6 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               attendedShows: profileData.attended_shows || [],
               phoneNumber: profileData.phone_number,
               profileImageUrl: profileData.profile_image_url,
+              favoriteShowsCount: profileData.favorite_shows_count || 0,
             };
             
             setAuthState({
@@ -212,8 +224,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               isAuthenticated: true,
             });
 
-            // Fetch favorite count after user is loaded
-            fetchFavoriteCount(userData.id);
+            // Set favorite count from profile data
+            setFavoriteCount(profileData.favorite_shows_count || 0);
           } catch (error: any) {
             console.error('Error handling auth state change:', error);
             setAuthState(prev => ({
@@ -302,6 +314,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           attendedShows: [],
           phoneNumber: '555-123-4567', // Add mock phone number
           profileImageUrl: 'https://ui-avatars.com/api/?name=Dev+User&background=0D8ABC&color=fff', // Add mock profile image
+          favoriteShowsCount: 0, // Start with 0 favorites
         };
         
         // Update state with the mock user
@@ -316,8 +329,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[AuthContext] Auth state updated with mock user:', 
           { isAuthenticated: newState.isAuthenticated, userId: mockUser.id, role: mockUser.role });
         
-        // Fetch favorite count after user is loaded
-        fetchFavoriteCount(mockUser.id);
+        // Set favorite count to 0 for mock user
+        setFavoriteCount(0);
         
         return mockUser;
       }
@@ -554,30 +567,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
       
+      console.log('[AuthContext] Adding show to favorites:', showId);
+      
+      // Call the service to add the show to favorites
+      // The database trigger will automatically update the favorite_shows_count
       await supabaseAuthService.addShowToFavorites(authState.user.id, showId);
       
-      // Update local state
-      setAuthState(prev => {
-        if (!prev.user) return prev;
-        
-        const favoriteShows = [...(prev.user.favoriteShows || [])];
-        if (!favoriteShows.includes(showId)) {
-          favoriteShows.push(showId);
-        }
-        
-        return {
-          ...prev,
-          user: {
-            ...prev.user,
-            favoriteShows,
-          },
-        };
-      });
+      // Refresh the favorite count from the database
+      fetchFavoriteCount(authState.user.id);
       
-      // Increment favorite count
-      setFavoriteCount(prev => prev + 1);
+      console.log('[AuthContext] Show added to favorites successfully');
     } catch (error: any) {
-      console.error('Add favorite show error:', error);
+      console.error('[AuthContext] Error adding show to favorites:', error);
       setAuthState(prev => ({
         ...prev,
         error: error.message || 'Failed to add show to favorites',
@@ -593,25 +594,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
       
+      console.log('[AuthContext] Removing show from favorites:', showId);
+      
+      // Call the service to remove the show from favorites
+      // The database trigger will automatically update the favorite_shows_count
       await supabaseAuthService.removeShowFromFavorites(authState.user.id, showId);
       
-      // Update local state
-      setAuthState(prev => {
-        if (!prev.user) return prev;
-        
-        return {
-          ...prev,
-          user: {
-            ...prev.user,
-            favoriteShows: (prev.user.favoriteShows || []).filter(id => id !== showId),
-          },
-        };
-      });
+      // Refresh the favorite count from the database
+      fetchFavoriteCount(authState.user.id);
       
-      // Decrement favorite count (ensure it doesn't go below 0)
-      setFavoriteCount(prev => Math.max(0, prev - 1));
+      console.log('[AuthContext] Show removed from favorites successfully');
     } catch (error: any) {
-      console.error('Remove favorite show error:', error);
+      console.error('[AuthContext] Error removing show from favorites:', error);
       setAuthState(prev => ({
         ...prev,
         error: error.message || 'Failed to remove show from favorites',
@@ -689,6 +683,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         attendedShows: profile.attended_shows || [],
         phoneNumber: profile.phone_number ?? undefined,
         profileImageUrl: profile.profile_image_url ?? undefined,
+        favoriteShowsCount: profile.favorite_shows_count || 0,
       };
       console.log('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
 

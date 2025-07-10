@@ -140,19 +140,50 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const fetchShowDetails = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('shows')
-        .select('*, series_id, profiles (username, full_name, avatar_url)')
-        .eq('id', showId)
-        .single();
+      /* ------------------------------------------------------------------
+       * Step 1: Fetch the show row on its own (no joins)
+       * ------------------------------------------------------------------ */
+      const {
+        data: showData,
+        error: showError,
+      } = await supabase.from('shows').select('*').eq('id', showId).single();
 
-      if (error) throw error;
-      if (data) {
-        setShow(data);
-        navigation.setOptions({ title: data.title || 'Show Details' });
-        setIsCurrentUserOrganizer(user?.id === data.organizer_id);
-        setIsShowClaimed(!!data.claimed_by);
+      if (showError) throw showError;
+      if (!showData) throw new Error('Show not found');
+
+      /* ------------------------------------------------------------------
+       * Step 2: If the show has an organiser, fetch their profile
+       * ------------------------------------------------------------------ */
+      let organizerProfile: any = null;
+      if (showData.organizer_id) {
+        const {
+          data: profileData,
+          error: profileError,
+        } = await supabase
+          .from('profiles')
+          .select(
+            'id, first_name, last_name, profile_image_url, username, full_name, avatar_url'
+          )
+          .eq('id', showData.organizer_id)
+          .single();
+
+        if (!profileError && profileData) {
+          organizerProfile = profileData;
+        }
       }
+
+      /* ------------------------------------------------------------------
+       * Step 3: Combine the data and update component state
+       * ------------------------------------------------------------------ */
+      const combinedData = {
+        ...showData,
+        profiles: organizerProfile,
+      };
+
+      setShow(combinedData);
+      navigation.setOptions({ title: showData.title || 'Show Details' });
+      setIsCurrentUserOrganizer(user?.id === showData.organizer_id);
+      setIsShowClaimed(!!showData.claimed_by);
     } catch (error) {
       console.error('Error fetching show details:', error);
       setError('Failed to load show details');

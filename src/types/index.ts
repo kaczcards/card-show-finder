@@ -43,6 +43,11 @@ export interface User {
    */
   subscriptionExpiry: Date | string | null;
   favoriteShows?: string[];   // Array of show IDs
+  /**
+   * Count of shows the user has favorited.
+   * This is maintained automatically by database triggers when using user_favorite_shows table.
+   */
+  favoriteShowsCount?: number;
   attendedShows?: string[];   // Array of show IDs for past shows
   /**
    * Running counter of shows the user has attended.
