@@ -6,23 +6,23 @@ import * as supabaseAuthService from '../services/supabaseAuthService';
 import { signInWithEmailPassword } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/userRoleService';
 
+/* ------------------------------------------------------------------
+ * Build-time / runtime dev flag to bypass profile fetch
+ * ------------------------------------------------------------------
+ * • Enabled automatically in Expo dev (`__DEV__`)
+ * • Or via env  EXPO_PUBLIC_BYPASS_PROFILE_FETCH=true
+ *   Lets developers log in with Auth only, even if the
+ *   `profiles` row hasn’t been created yet.
+ * ------------------------------------------------------------------ */
+const BYPASS_PROFILE_FETCH =
+  (__DEV__ && process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH !== 'false') ||
+  process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH === 'true';
+
 // Define the shape of our auth context
 interface AuthContextType {
   authState: AuthState & { favoriteCount: number };
   /**
-   * Convenience getters exposed alongside the full `authState`
-
-    /* ------------------------------------------------------------------
-     * Build-time / runtime dev flag to bypass profile fetch
-     * ------------------------------------------------------------------
-     *  • Enabled automatically in Expo dev (`__DEV__`)
-     *  • Or via env   EXPO_PUBLIC_BYPASS_PROFILE_FETCH=true
-     * This lets developers log in with Auth only, even if the
-     * `profiles` row hasn’t been created yet.
-     * ------------------------------------------------------------------ */
-    const BYPASS_PROFILE_FETCH =
-      (__DEV__ && process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH !== 'false') ||
-      process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH === 'true';
+   * Convenience getters exposed alongside the full `authState`,
    * so that consuming components can access them directly without
    * drilling into `authState`.
    */
