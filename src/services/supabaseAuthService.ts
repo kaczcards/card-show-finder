@@ -10,7 +10,7 @@ import { isSupabaseInitialized } from '../supabase';
 // and return a mock profile so developers can access the app without needing
 // a corresponding row in the `profiles` table.
 // ---------------------------------------------------------------------------
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 /**
  * Register a new user with email and password
