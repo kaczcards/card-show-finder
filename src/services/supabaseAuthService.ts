@@ -10,7 +10,7 @@ import { isSupabaseInitialized } from '../supabase';
 // and return a mock profile so developers can access the app without needing
 // a corresponding row in the `profiles` table.
 // ---------------------------------------------------------------------------
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 /**
  * Register a new user with email and password
@@ -379,15 +379,89 @@ export const resetPassword = async (email: string): Promise<void> => {
  */
 export const getCurrentUser = async (uid: string): Promise<User | null> => {
   try {
-    // Get user profile from the profiles table
-    const { data: profileData, error } = await supabase
+    // ------------------------------------------------------------------
+    //  Debug – entry point
+    // ------------------------------------------------------------------
+    console.log('[AUTH SERVICE] getCurrentUser() – fetching profile for UID:', uid);
+
+    // ------------------------------------------------------------------
+    // 1) Fetch profile row
+    // ------------------------------------------------------------------
+    let { data: profileData, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', uid)
       .single();
 
-    if (error) throw error;
-    if (!profileData) return null;
+    // ------------------------------------------------------------------
+    // 2) Handle “profile not found” gracefully by creating a default row
+    // ------------------------------------------------------------------
+    const profileNotFound =
+      (error &&
+        (error.code === 'PGRST116' ||
+          error.message?.toLowerCase().includes('not found'))) ||
+      !profileData;
+
+    if (profileNotFound) {
+      console.warn(
+        '[AUTH SERVICE] getCurrentUser – profile missing, creating default profile for user:',
+        uid
+      );
+
+      const defaultProfile = {
+        id: uid,
+        email: (await supabase.auth.getUser()).data.user?.email,
+        first_name: 'User',
+        last_name: '',
+        home_zip_code: '00000',
+        role: UserRole.ATTENDEE,
+        account_type: 'collector',
+        subscription_status: 'none',
+        subscription_expiry: null,
+        favorite_shows: [],
+        attended_shows: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert([defaultProfile])
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error(
+          '[AUTH SERVICE] getCurrentUser – failed to create default profile:',
+          insertError
+        );
+        throw insertError;
+      }
+
+      profileData = newProfile;
+      error = null;
+      console.log('[AUTH SERVICE] getCurrentUser – default profile created successfully');
+    }
+
+    // ------------------------------------------------------------------
+    // 3) Any other Supabase error bubbles up
+    // ------------------------------------------------------------------
+    if (error) {
+      console.error('[AUTH SERVICE] getCurrentUser – Supabase error while fetching profile', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw error;
+    }
+
+    if (!profileData) {
+      console.error(
+        '[AUTH SERVICE] getCurrentUser – profile still missing after fallback creation'
+      );
+      return null;
+    }
 
     // Get current auth session to check email verification status
     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -412,9 +486,21 @@ export const getCurrentUser = async (uid: string): Promise<User | null> => {
       profileImageUrl: profileData.profile_image_url,
     };
 
+    // ------------------------------------------------------------------
+    //  Debug – success
+    // ------------------------------------------------------------------
+    console.log('[AUTH SERVICE] getCurrentUser – successfully mapped user', {
+      id: userData.id,
+      email: userData.email,
+      role: userData.role,
+    });
+
     return userData;
   } catch (error: any) {
-    console.error('Error getting current user:', error);
+    console.error('[AUTH SERVICE] getCurrentUser – caught exception:', {
+      message: error?.message,
+      stack: error?.stack,
+    });
     return null;
   }
 };

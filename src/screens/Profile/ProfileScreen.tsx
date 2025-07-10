@@ -57,23 +57,23 @@ const ProfileScreen: React.FC = () => {
   // Favorite shows – local count & helper
   // ---------------------------------------------------------------------------
   // State for favorite shows count
-  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [localFavoriteCount, setLocalFavoriteCount] = useState(0);
 
   // Function to fetch the count of user's favorite shows
   const fetchFavoriteCount = async () => {
     // Defensive: ensure we have a user object to read from
     if (!user?.id) {
-      setFavoriteCount(0);
+      setLocalFavoriteCount(0);
       return;
     }
 
     try {
       // We already receive the favourite shows array on the user object
       const count = user.favoriteShows?.length || 0;
-      setFavoriteCount(count);
+      setLocalFavoriteCount(count);
     } catch (error) {
       console.error('Error determining favorite count:', error);
-      setFavoriteCount(0);
+      setLocalFavoriteCount(0);
     }
   };
 
@@ -589,7 +589,7 @@ const ProfileScreen: React.FC = () => {
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               {/* Use authoritative DB-backed favourite count */}
-              <Text style={styles.statValue}>{favoriteCount}</Text>
+              <Text style={styles.statValue}>{localFavoriteCount}</Text>
               <Text style={styles.statLabel}>Favorite Shows</Text>
             </View>
             
