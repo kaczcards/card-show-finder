@@ -20,8 +20,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster from '../../components/MapShowCluster/index';
-import * as locationService from '../../services/locationService'; // Assuming you have this service
-import { getShows } from '../../services/showService'; // Assuming you have this service
+import * as locationService from '../../services/locationService';
+import { getShows } from '../../services/showService';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -44,14 +44,14 @@ const MapScreen: React.FC<MapScreenProps> = ({
   onShowPress,
   initialUserLocation
 }) => {
-    const [shows, setShows] = useState<Show[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-    const [filterVisible, setFilterVisible] = useState(false);
-    const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
-    const [initialRegion, setInitialRegion] = useState<Region | null>(null);
-    const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
-    const [error, setError] = useState<string | null>(null);
+  const [shows, setShows] = useState<Show[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
+  const [initialRegion, setInitialRegion] = useState<Region | null>(null);
+  const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Default filters
   const defaultFilters: ShowFilters = {
@@ -155,7 +155,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
             regionToSet = { ...determinedLocation, latitudeDelta: 0.5, longitudeDelta: 0.5 };
         }
 
-
         setUserLocation(determinedLocation);
         setInitialRegion(regionToSet);
         setCurrentRegion(regionToSet);
@@ -204,14 +203,13 @@ const MapScreen: React.FC<MapScreenProps> = ({
           longitude: userLocation.longitude,
       };
 
-
       console.log('[MapScreen] Filters being used:', currentFilters);
       const showsData = await getShows(currentFilters);
 
       setShows(Array.isArray(showsData) ? showsData : []);
       console.log(`[MapScreen] Successfully fetched ${showsData.length} shows`);
 
-    if (showsData.length === 0 && retryRef.current < 1) {
+      if (showsData.length === 0 && retryRef.current < 1) {
         retryRef.current += 1;
         console.warn('[MapScreen] No shows returned – retrying in 2 seconds (attempt 1).');
         setTimeout(() => fetchShows(), 2000);
@@ -308,7 +306,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
       setLoading(false);
     }
   };
-
 
   // Format date for callout with timezone correction
   const formatDate = (dateValue: Date | string) => {
@@ -446,6 +443,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
+  mapContainer: {
+    flex: 1,
+    height: height,
+    position: 'relative',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -459,6 +461,22 @@ const styles = StyleSheet.create({
   map: {
     width,
     height,
+  },
+  filterButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   filterInfoContainer: {
     position: 'absolute',
@@ -482,14 +500,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     flex: 1,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e6f2ff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
   },
   filterButtonText: {
     color: '#007AFF',
@@ -629,6 +639,24 @@ const styles = StyleSheet.create({
   resetFiltersText: {
     color: '#007AFF',
     fontWeight: '600',
+  },
+  filtersAppliedContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    marginVertical: 8,
+    borderRadius: 4,
+    position: 'absolute',
+    bottom: 90,
+    left: 16,
+    right: 16,
+  },
+  filtersAppliedText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
   },
 });
 
