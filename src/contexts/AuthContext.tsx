@@ -12,7 +12,7 @@ import { refreshUserSession } from '../services/userRoleService';
  * • Enabled automatically in Expo dev (`__DEV__`)
  * • Or via env  EXPO_PUBLIC_BYPASS_PROFILE_FETCH=true
  *   Lets developers log in with Auth only, even if the
- *   `profiles` row hasn’t been created yet.
+ *   `profiles` row hasn't been created yet.
  * ------------------------------------------------------------------ */
 const BYPASS_PROFILE_FETCH =
   (__DEV__ && process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH !== 'false') ||
@@ -246,6 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
     // 1. Immediately set the app to a "loading" state and clear old errors.
+    console.log('[AuthContext] Login attempt started for email:', credentials.email);
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
     // 2. Call the Supabase service to attempt the login.
@@ -257,13 +258,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 3. Handle the response directly.
     if (error) {
       // FAILURE: If the service returns an error, update the state.
+      console.error('[AuthContext] Login failed with error:', error.message);
+      
       // Set the error message and turn off the loading indicator.
-      setAuthState(prev => ({
-        ...prev,
+      const newState = {
+        ...authState,
         isLoading: false,
         error: error.message,
         isAuthenticated: false
-      }));
+      };
+      
+      setAuthState(newState);
+      console.log('[AuthContext] Auth state updated after login failure:', 
+        { isAuthenticated: newState.isAuthenticated, hasError: !!newState.error });
+      
       return Promise.reject(new Error(error.message));
     } else if (data?.user) {
       // SUCCESS: If the service returns a user, get their profile and update state.
@@ -275,42 +283,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           '[AuthContext] BYPASS_PROFILE_FETCH active – skipping profile lookup, using auth payload only.'
         );
         const nowIso = new Date().toISOString();
+        
+        // Create a complete mock user with all fields that might be used elsewhere
         const mockUser: User = {
           id: data.user.id,
           email: data.user.email ?? credentials.email,
           firstName: 'Dev',
           lastName: 'User',
           homeZipCode: '00000',
-          role: UserRole.ATTENDEE,
+          role: UserRole.MVP_DEALER, // Use MVP_DEALER to access all features
           createdAt: nowIso,
           updatedAt: nowIso,
-          isEmailVerified: data.user.email_confirmed_at !== null,
+          isEmailVerified: true, // Always verified in dev mode
           accountType: 'collector',
-          subscriptionStatus: 'none',
-          subscriptionExpiry: null,
+          subscriptionStatus: 'active', // Active subscription in dev mode
+          subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
           favoriteShows: [],
           attendedShows: [],
+          phoneNumber: '555-123-4567', // Add mock phone number
+          profileImageUrl: 'https://ui-avatars.com/api/?name=Dev+User&background=0D8ABC&color=fff', // Add mock profile image
         };
-        setAuthState({
+        
+        // Update state with the mock user
+        const newState = {
           user: mockUser,
           isLoading: false,
           error: null,
           isAuthenticated: true,
-        });
+        };
+        
+        setAuthState(newState);
+        console.log('[AuthContext] Auth state updated with mock user:', 
+          { isAuthenticated: newState.isAuthenticated, userId: mockUser.id, role: mockUser.role });
+        
+        // Fetch favorite count after user is loaded
         fetchFavoriteCount(mockUser.id);
+        
         return mockUser;
       }
 
       // ---- Normal profile fetch ----------------------------------------------------
+      console.log('[AuthContext] Fetching user profile from database...');
       let userData = await supabaseAuthService.getCurrentUser(data.user.id);
       
       if (userData) {
-        setAuthState({
+        console.log('[AuthContext] Profile fetch successful:', 
+          { userId: userData.id, role: userData.role });
+        
+        // Create new state with the user data
+        const newState = {
           user: userData,
           isLoading: false,
           error: null,
           isAuthenticated: true
-        });
+        };
+        
+        setAuthState(newState);
+        console.log('[AuthContext] Auth state updated after successful login:', 
+          { isAuthenticated: newState.isAuthenticated, userId: userData.id });
         
         // Fetch favorite count for the logged in user
         fetchFavoriteCount(userData.id);
@@ -323,37 +353,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userData = await forceRefreshAndFetchProfile(data.user.id);
 
         if (userData) {
-          console.log('[AuthContext] Fallback profile fetch succeeded');
-          setAuthState({
+          console.log('[AuthContext] Fallback profile fetch succeeded:', 
+            { userId: userData.id, role: userData.role });
+          
+          // Create new state with the user data from fallback
+          const newState = {
             user: userData,
             isLoading: false,
             error: null,
             isAuthenticated: true,
-          });
+          };
+          
+          setAuthState(newState);
+          console.log('[AuthContext] Auth state updated after fallback profile fetch:', 
+            { isAuthenticated: newState.isAuthenticated, userId: userData.id });
+          
           fetchFavoriteCount(userData.id);
           return userData;
         }
 
         // EDGE CASE: Still no profile after fallback
+        console.error('[AuthContext] All profile fetch attempts failed');
         const msg =
           'We were unable to load your profile information. Please try again later or contact support.';
-        setAuthState(prev => ({
-          ...prev,
+        
+        const newState = {
+          ...authState,
           isLoading: false,
           error: msg,
           isAuthenticated: false,
-        }));
+        };
+        
+        setAuthState(newState);
+        console.log('[AuthContext] Auth state updated after all profile fetch attempts failed:', 
+          { isAuthenticated: newState.isAuthenticated, hasError: !!newState.error });
+        
         return Promise.reject(new Error(msg));
       }
     } else {
       // EDGE CASE: If there's no error but also no user, handle it.
-      setAuthState(prev => ({
-        ...prev,
+      console.error('[AuthContext] No error but no user returned from auth service');
+      const msg = "An unexpected error occurred. Please try again.";
+      
+      const newState = {
+        ...authState,
         isLoading: false,
-        error: "An unexpected error occurred. Please try again.",
+        error: msg,
         isAuthenticated: false
-      }));
-      return Promise.reject(new Error("An unexpected error occurred. Please try again."));
+      };
+      
+      setAuthState(newState);
+      console.log('[AuthContext] Auth state updated after unexpected error:', 
+        { isAuthenticated: newState.isAuthenticated, hasError: !!newState.error });
+      
+      return Promise.reject(new Error(msg));
     }
   };
   
@@ -378,12 +431,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role
       );
       
-      setAuthState({
+      const newState = {
         user: userData,
         isLoading: false,
         error: null,
         isAuthenticated: true,
-      });
+      };
+      
+      setAuthState(newState);
+      console.log('[AuthContext] Auth state updated after registration:', 
+        { isAuthenticated: newState.isAuthenticated, userId: userData.id });
       
       // New user has no favorites yet
       setFavoriteCount(0);
@@ -408,12 +465,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       await supabaseAuthService.signOutUser();
       
-      setAuthState({
+      const newState = {
         user: null,
         isLoading: false,
         error: null,
         isAuthenticated: false,
-      });
+      };
+      
+      setAuthState(newState);
+      console.log('[AuthContext] Auth state updated after logout:', 
+        { isAuthenticated: newState.isAuthenticated });
       
       // Reset favorite count on logout
       setFavoriteCount(0);
