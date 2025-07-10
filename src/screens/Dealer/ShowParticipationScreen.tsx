@@ -615,22 +615,25 @@ const ShowParticipationScreen: React.FC = () => {
             )}
             
             <ScrollView style={styles.formContainer}>
-              {/* Added informational message */}
-              <View style={styles.infoMessageContainer}>
-                <Text style={styles.infoMessageText}>
-                  By registering for this show, your name will appear on the list of participating dealers for this show.
-                  Upgrade to an MVP Dealer subscription to unlock your full booth information being searchable and accessible to all attendees and collectors!
-                </Text>
-                <TouchableOpacity
-                  style={styles.infoUpgradeButton}
-                  onPress={() => {
-                    setRegistrationModalVisible(false); // Close current modal
-                    navigation.navigate('SubscriptionScreen' as never); // Navigate to subscription
-                  }}
-                >
-                  <Text style={styles.infoUpgradeButtonText}>Learn More about MVP</Text>
-                </TouchableOpacity>
-              </View>
+              {/* MVP upgrade banner - show ONLY to regular dealers */}
+              {user?.role === UserRole.DEALER && (
+                <View style={styles.infoMessageContainer}>
+                  <Text style={styles.infoMessageText}>
+                    By registering for this show, your name will appear on the list of participating dealers for this show.
+                    Upgrade to an MVP Dealer subscription to unlock your full booth information
+                    being searchable and accessible to all attendees and collectors!
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.infoUpgradeButton}
+                    onPress={() => {
+                      setRegistrationModalVisible(false); // Close current modal
+                      navigation.navigate('SubscriptionScreen' as never); // Navigate to subscription
+                    }}
+                  >
+                    <Text style={styles.infoUpgradeButtonText}>Learn More about MVP</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
               <Text style={styles.formSectionTitle}>Booth Information</Text>
               
