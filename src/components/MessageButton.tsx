@@ -216,9 +216,6 @@ const MessageButton: React.FC<MessageButtonProps> = ({
                 )}
               </TouchableOpacity>
               
-              {userRoleService.IS_TEST_MODE && (
-                <Text style={styles.testModeText}>TEST MODE: Role checks bypassed</Text>
-              )}
             </View>
           </View>
         </View>
@@ -327,12 +324,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  testModeText: {
-    marginTop: 10,
-    textAlign: 'center',
-    color: '#FF9800',
-    fontStyle: 'italic',
   },
 });
 

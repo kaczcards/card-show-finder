@@ -1,284 +1,291 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+// supabase/functions/send-broadcast/index.ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+import { corsHeaders } from "../_shared/cors.ts";
 
-// Types for request and response
+// Types for request body
 interface BroadcastRequest {
-  showId?: string;
-  seriesId?: string;
+  sender_id: string;
+  show_id: string;
+  recipient_roles: string[];
   message: string;
-  recipients: ('attendees' | 'dealers')[];
-  broadcastType: 'pre_show' | 'post_show';
+  is_pre_show?: boolean; // Optional override for testing
 }
 
+// Types for response
 interface BroadcastResponse {
+  conversation_id?: string;
   success: boolean;
-  error?: string;
-  data?: {
-    broadcastId: string;
-    sentAt: string;
-    recipientCount?: number;
+  message: string;
+  quota_remaining?: {
+    pre_show: number;
+    post_show: number;
   };
-}
-
-interface Profile {
-  id: string;
-  role: string;
-  broadcast_message_count?: number; // legacy – ignored
-  last_broadcast_reset_date?: string | null; // legacy – ignored
-  pre_show_broadcasts_remaining: number;
-  post_show_broadcasts_remaining: number;
-}
-
-interface Show {
-  id: string;
-  organizer_id: string;
-  series_id: string | null;
 }
 
 serve(async (req: Request) => {
-  // CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Content-Type': 'application/json',
-  };
-
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers });
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client with service role key for admin operations
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Initialize Supabase client with auth from request for user verification
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing authorization header' }),
-        { status: 401, headers }
-      );
+    // Create Supabase client with admin privileges
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing Supabase environment variables");
     }
-
-    // Create a client with the user's JWT for authentication checks
-    const supabaseClient = createClient(
-      supabaseUrl,
-      supabaseServiceKey,
-      {
-        global: {
-          headers: {
-            Authorization: authHeader,
-          },
-        },
-      }
-    );
-
-    // Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers }
-      );
-    }
-
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
     // Parse request body
-    const requestData: BroadcastRequest = await req.json();
-    const { showId, seriesId: rawSeriesId, message, recipients, broadcastType } = requestData;
-
-    // Validate broadcastType
-    if (broadcastType !== 'pre_show' && broadcastType !== 'post_show') {
-      return new Response(
-        JSON.stringify({ success: false, error: 'broadcastType must be "pre_show" or "post_show"' }),
-        { status: 400, headers },
-      );
-    }
-
-    // Validate request data
-    if (!message || message.trim().length === 0) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Message content cannot be empty' }),
-        { status: 400, headers }
-      );
-    }
-
-    if (message.length > 1000) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Message content cannot exceed 1000 characters' }),
-        { status: 400, headers }
-      );
-    }
-
-    if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'At least one recipient type must be specified' }),
-        { status: 400, headers }
-      );
-    }
-
-    // Verify user is a SHOW_ORGANIZER
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('id, role, pre_show_broadcasts_remaining, post_show_broadcasts_remaining')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profileData) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Failed to retrieve user profile' }),
-        { status: 500, headers }
-      );
-    }
-
-    const profile = profileData as Profile;
-    if (profile.role !== 'SHOW_ORGANIZER') {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Only show organizers can send broadcast messages' }),
-        { status: 403, headers }
-      );
-    }
-
-    // Derive seriesId if possible & verify ownership
-    let seriesId = rawSeriesId ?? null;
-
-    if (showId) {
-      const { data: showData, error: showError } = await supabaseAdmin
-        .from('shows')
-        .select('id, organizer_id, series_id')
-        .eq('id', showId)
-        .single();
-
-      if (showError || !showData) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'Show not found' }),
-          { status: 404, headers }
-        );
-      }
-
-      const show = showData as Show;
-      if (show.organizer_id !== user.id) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'You can only send broadcasts for shows you organize' }),
-          { status: 403, headers }
-        );
-      }
-
-      // populate seriesId from show if not explicitly supplied
-      if (!seriesId && show.series_id) {
-        seriesId = show.series_id;
-      }
-    }
-
-    // Check quota for this broadcast type
-    const quotaRemaining =
-      broadcastType === 'pre_show'
-        ? profile.pre_show_broadcasts_remaining
-        : profile.post_show_broadcasts_remaining;
-
-    if (quotaRemaining <= 0) {
+    const { sender_id, show_id, recipient_roles, message, is_pre_show } = await req.json() as BroadcastRequest;
+    
+    // Validate required fields
+    if (!sender_id || !message || !recipient_roles || recipient_roles.length === 0) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `You have no remaining ${broadcastType.replace('_', '-')} broadcasts`,
+          message: "Missing required fields: sender_id, message, and recipient_roles are required"
         }),
-        { status: 429, headers },
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
-
-    // Insert the broadcast log
-    const { data: broadcastData, error: broadcastError } = await supabaseAdmin
-      .from('broadcast_logs')
-      .insert([
-        {
-          organizer_id: user.id,
-          show_id: showId || null,
-          message_content: message,
-          series_id: seriesId,
-          broadcast_type: broadcastType,
-          recipients: recipients,
-          sent_at: now.toISOString(),
-        },
-      ])
-      .select('id, sent_at')
-      .single();
-
-    if (broadcastError || !broadcastData) {
+    
+    // Sanitize message (basic HTML stripping and length check)
+    const sanitizedMessage = message
+      .replace(/<[^>]*>?/gm, '') // Strip HTML tags
+      .trim()
+      .substring(0, 1000); // Limit to 1000 chars
+    
+    if (sanitizedMessage.length === 0) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Failed to log broadcast message' }),
-        { status: 500, headers }
+        JSON.stringify({
+          success: false,
+          message: "Message content cannot be empty"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
-
-    // Decrement the appropriate quota field
-    const quotaField =
-      broadcastType === 'pre_show'
-        ? 'pre_show_broadcasts_remaining'
-        : 'post_show_broadcasts_remaining';
-
-    const { error: updateError } = await supabaseAdmin
+    
+    // Normalize recipient roles to lowercase
+    const normalizedRoles = recipient_roles.map(role => role.toLowerCase());
+    
+    // Get sender profile to check role
+    const { data: senderProfile, error: profileError } = await supabase
       .from('profiles')
-      .update({ [quotaField]: quotaRemaining - 1 })
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Error updating broadcast count:', updateError);
-      // Continue despite error, as the message was sent
+      .select('id, role')
+      .eq('id', sender_id)
+      .single();
+    
+    if (profileError || !senderProfile) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Sender profile not found"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+      );
     }
-
-    // TODO: Implement actual message delivery logic
-    // This could involve push notifications, emails, etc.
-    // For now, we just log the broadcast
-
-    // Calculate approximate recipient count (for informational purposes)
-    let recipientCount = 0;
-    if (showId) {
-      // Count attendees and/or dealers for this specific show
-      const tables = [];
-      if (recipients.includes('attendees')) {
-        tables.push('show_participants');
+    
+    const senderRole = senderProfile.role.toLowerCase();
+    
+    // Check if sender has permission to broadcast
+    const isShowOrganizer = senderRole === 'show_organizer';
+    const isMvpDealer = senderRole === 'mvp_dealer';
+    
+    if (!isShowOrganizer && !isMvpDealer) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Only Show Organizers and MVP Dealers can send broadcast messages"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+    
+    // For MVP dealers, verify they're registered for the show
+    if (isMvpDealer) {
+      const { data: dealerRegistration, error: dealerError } = await supabase
+        .from('show_participants')
+        .select('id')
+        .eq('userid', sender_id)
+        .eq('showid', show_id)
+        .single();
+      
+      if (dealerError || !dealerRegistration) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "MVP Dealer must be registered for the show to broadcast messages"
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+        );
       }
-      if (recipients.includes('dealers')) {
-        tables.push('dealer_show_participation');
+      
+      // MVP dealers can only target attendees
+      if (!normalizedRoles.every(role => role === 'attendee')) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "MVP Dealers can only broadcast to attendees"
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+        );
       }
-
-      for (const table of tables) {
-        const { count } = await supabaseAdmin
-          .from(table)
-          .select('*', { count: 'exact', head: true })
-          .eq('showid', showId);
+    }
+    
+    // For show organizers, check and enforce broadcast quotas
+    let quotaRemaining = null;
+    
+    if (isShowOrganizer && show_id) {
+      // Get show information to determine if pre or post show
+      const { data: showData, error: showError } = await supabase
+        .from('shows')
+        .select('id, start_date, end_date')
+        .eq('id', show_id)
+        .single();
+      
+      if (showError || !showData) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Show not found"
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+        );
+      }
+      
+      // Determine if pre-show or post-show
+      let isPreShow = is_pre_show;
+      if (isPreShow === undefined) {
+        const now = new Date();
+        const startDate = new Date(showData.start_date);
+        isPreShow = now < startDate;
+      }
+      
+      // Get current quota
+      let { data: quotaData, error: quotaError } = await supabase
+        .from('broadcast_quotas')
+        .select('pre_show_remaining, post_show_remaining')
+        .eq('organizer_id', sender_id)
+        .eq('show_id', show_id)
+        .single();
+      
+      // If no quota record exists, create one with default values
+      if (quotaError || !quotaData) {
+        const { data: newQuota, error: createError } = await supabase
+          .from('broadcast_quotas')
+          .insert({
+            organizer_id: sender_id,
+            show_id: show_id,
+            pre_show_remaining: 2,
+            post_show_remaining: 1
+          })
+          .select()
+          .single();
         
-        recipientCount += count || 0;
+        if (createError || !newQuota) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "Failed to initialize broadcast quota"
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+          );
+        }
+        
+        quotaData = newQuota;
       }
+      
+      // Check if quota is available
+      const remainingQuota = isPreShow 
+        ? quotaData.pre_show_remaining 
+        : quotaData.post_show_remaining;
+      
+      if (remainingQuota <= 0) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: `You have used all your ${isPreShow ? 'pre-show' : 'post-show'} broadcast messages for this show`,
+            quota_remaining: {
+              pre_show: quotaData.pre_show_remaining,
+              post_show: quotaData.post_show_remaining
+            }
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+        );
+      }
+      
+      // Decrement quota
+      if (isPreShow) {
+        await supabase
+          .from('broadcast_quotas')
+          .update({ pre_show_remaining: quotaData.pre_show_remaining - 1, last_updated: new Date().toISOString() })
+          .eq('organizer_id', sender_id)
+          .eq('show_id', show_id);
+        
+        quotaData.pre_show_remaining -= 1;
+      } else {
+        await supabase
+          .from('broadcast_quotas')
+          .update({ post_show_remaining: quotaData.post_show_remaining - 1, last_updated: new Date().toISOString() })
+          .eq('organizer_id', sender_id)
+          .eq('show_id', show_id);
+        
+        quotaData.post_show_remaining -= 1;
+      }
+      
+      quotaRemaining = {
+        pre_show: quotaData.pre_show_remaining,
+        post_show: quotaData.post_show_remaining
+      };
     }
-
-    // Return success response
+    
+    // Call the create_broadcast_message function to handle the broadcast
+    const { data: result, error: broadcastError } = await supabase
+      .rpc('create_broadcast_message', {
+        p_sender_id: sender_id,
+        p_show_id: show_id,
+        p_message_text: sanitizedMessage,
+        p_recipient_roles: normalizedRoles,
+        p_is_pre_show: is_pre_show
+      });
+    
+    if (broadcastError || !result) {
+      console.error("Broadcast error:", broadcastError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: broadcastError?.message || "Failed to send broadcast message",
+          quota_remaining: quotaRemaining
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+    
+    // Return success with conversation ID
     return new Response(
       JSON.stringify({
         success: true,
-        data: {
-          broadcastId: broadcastData.id,
-          sentAt: broadcastData.sent_at,
-          recipientCount: recipientCount > 0 ? recipientCount : undefined,
-        },
+        message: "Broadcast message sent successfully",
+        conversation_id: result,
+        quota_remaining: quotaRemaining
       }),
-      { status: 200, headers }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+    
   } catch (error) {
-    console.error('Unexpected error in send-broadcast function:', error);
+    console.error("Unexpected error:", error);
+    
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'An unexpected error occurred while processing your request',
+        message: `Unexpected error: ${error.message}`
       }),
-      { status: 500, headers }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });

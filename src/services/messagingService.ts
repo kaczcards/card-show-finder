@@ -39,6 +39,12 @@ export interface BroadcastMessageParams {
   message: string;
   recipientRoles: UserRole[];
   showId?: string;
+  /**
+   * Optional override to explicitly mark the broadcast
+   * as pre-show (TRUE) or post-show (FALSE).  When omitted
+   * the edge-function infers this from current date vs show date.
+   */
+  isPreShow?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -334,6 +340,25 @@ export const startConversationFromProfile = async (
 };
 
 /**
+ * Get participants (excluding optional filters) of a conversation.
+ * Returned data structure mirrors Supabase `.from().select()` call so
+ * callers can destructure `{ data, error }` just like a direct query.
+ *
+ * NOTE: We intentionally keep this lightweight – any additional profile
+ * fields should be added by callers via `select()` if/when needed.
+ *
+ * @param conversationId The conversation to fetch participants for
+ */
+export const getConversationParticipants = async (
+  conversationId: string
+) => {
+  return supabase
+    .from('conversation_participants')
+    .select('user_id, display_name, photo_url')
+    .eq('conversation_id', conversationId);
+};
+
+/**
  * Get all conversations for the current user
  * @param userId The ID of the current user
  * @returns Array of conversations with last message and unread count
@@ -497,6 +522,38 @@ export const sendMessage = async (
   conversationId?: string
 ): Promise<Message> => {
   try {
+    /* ------------------------------------------------------------------
+     * Role-based permission checks
+     * ------------------------------------------------------------------ */
+    if (!userRoleService.IS_TEST_MODE) {
+      const [senderRole, recipientRole] = await Promise.all([
+        userRoleService.getUserRole(senderId),
+        userRoleService.getUserRole(recipientId),
+      ]);
+
+      if (!senderRole || !recipientRole) {
+        throw new Error('Unable to determine user roles');
+      }
+
+      // If conversation already exists the sender might just be replying
+      // – apply `canReply` check in that case.
+      if (conversationId) {
+        if (!userRoleService.canReplyToMessage(senderRole)) {
+          throw new Error('Your role does not allow replying to messages');
+        }
+      } else {
+        // New DM – validate sender→recipient rule
+        if (
+          !userRoleService.canSendDirectMessage(
+            senderRole,
+            recipientRole,
+          )
+        ) {
+          throw new Error('You are not allowed to start a conversation with this user');
+        }
+      }
+    }
+
     // Ensure we have a conversation ID
     const finalConversationId = conversationId || await createDirectConversation(senderId, recipientId);
     
@@ -626,61 +683,91 @@ export const sendBroadcastMessage = async (
   const { senderId, message, recipientRoles, showId } = params;
   
   try {
-    // Check if sender has permission to broadcast
-    const senderProfile = await userRoleService.getUserProfile(senderId);
-    if (!senderProfile) {
-      throw new Error('Sender profile not found');
-    }
-    
-    const senderRole = senderProfile.role as UserRole;
-    const canBroadcast = userRoleService.IS_TEST_MODE || 
-                        senderRole === UserRole.SHOW_ORGANIZER || 
-                        senderRole === UserRole.MVP_DEALER;
-    
-    if (!canBroadcast) {
-      throw new Error('You do not have permission to send broadcast messages');
-    }
-    
-    // Find all users with the specified roles
-    const { data: recipients, error: recipientsError } = await supabase
-      .from('profiles')
-      .select('id, role')
-      .in('role', recipientRoles);
-    
-    if (recipientsError) {
-      throw new Error('Failed to find recipients');
-    }
-    
-    if (!recipients || recipients.length === 0) {
-      throw new Error('No recipients found for the selected roles');
-    }
-    
-    // Filter out the sender from recipients to avoid duplicates
-    const recipientIds = recipients
-      .filter(user => user.id !== senderId)
-      .map(user => user.id);
-    
-    if (recipientIds.length === 0) {
-      throw new Error('No recipients to broadcast to after excluding yourself');
-    }
-    
-    // Create a group conversation for the broadcast
-    const conversationType = showId ? 'show' : 'group';
-    const conversationName = showId ? 'Show Announcement' : 'Broadcast Message';
-    
-    const conversationId = await createGroupConversation(
-      senderId,
-      recipientIds,
-      showId
+    // ------------------------------------------------------------------
+    // 1. Call the edge function which performs all permission / quota work
+    // ------------------------------------------------------------------
+
+    const { data, error } = await supabase.functions.invoke(
+      'send-broadcast',
+      {
+        body: {
+          sender_id: senderId,
+          message,
+          recipient_roles: recipientRoles,
+          show_id: showId,
+          is_pre_show: params.isPreShow,
+        },
+      },
     );
-    
-    // Send the initial message
-    await sendGroupMessage(senderId, conversationId, message);
-    
-    return conversationId;
+
+    if (error) {
+      console.error('[messagingService/sendBroadcastMessage] edge-function error', error);
+      throw new Error(error.message || 'Failed to send broadcast message');
+    }
+
+    if (!data?.conversation_id) {
+      throw new Error('Unexpected response from broadcast service');
+    }
+
+    return data.conversation_id as string;
   } catch (error) {
     console.error('Error in sendBroadcastMessage:', error);
     throw error;
+  }
+};
+
+// ---------------------------------------------------------------------------
+//  Moderation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Soft delete / moderate a message.  Only show organisers (their shows)
+ * or admins can perform this action (enforced server-side).
+ */
+export const moderateMessage = async (
+  moderatorId: string,
+  messageId: string,
+  reason = 'Content violation',
+): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc(
+      'moderate_delete_message',
+      {
+        p_message_id: messageId,
+        p_moderator_id: moderatorId,
+        p_reason: reason,
+      },
+    );
+    if (error) throw error;
+    return data as boolean;
+  } catch (err) {
+    console.error('[messagingService/moderateMessage]', err);
+    return false;
+  }
+};
+
+/**
+ * Report a message as inappropriate.  Anyone in the conversation can report.
+ */
+export const reportMessage = async (
+  reporterId: string,
+  messageId: string,
+  reason: string,
+): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc(
+      'report_message',
+      {
+        p_message_id: messageId,
+        p_reporter_id: reporterId,
+        p_reason: reason,
+      },
+    );
+    if (error) throw error;
+    return data as boolean;
+  } catch (err) {
+    console.error('[messagingService/reportMessage]', err);
+    return false;
   }
 };
 
