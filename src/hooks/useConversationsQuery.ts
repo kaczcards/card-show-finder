@@ -16,7 +16,7 @@ export const useConversationsQuery = (userId: string | null) => {
   const {
     data: conversations,
     isLoading,
-    error,
+    error: rawError,
     refetch
   } = useQuery<Conversation[], Error>({
     queryKey: ['conversations', userId],
@@ -27,7 +27,27 @@ export const useConversationsQuery = (userId: string | null) => {
     enabled: !!userId,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+    // Automatically retry (with exponential back-off) a few times
+    retry: 3,
+    retryDelay: attempt => Math.min(1000 * 2 ** attempt, 30_000),
+    // Log the error for observability
+    onError: (err) => {
+      /* eslint-disable no-console */
+      console.error('[useConversationsQuery] fetch error:', err);
+      /* eslint-enable no-console */
+    },
   });
+
+  /**
+   * Provide a simplified / structured error for consumers
+   * while also allowing access to the raw Error object.
+   */
+  const formattedError = rawError
+    ? {
+        message: rawError.message,
+        retry: () => refetch(),
+      }
+    : null;
 
   // Setup real-time subscription for new messages
   useEffect(() => {
@@ -168,7 +188,7 @@ export const useConversationsQuery = (userId: string | null) => {
   return {
     conversations: conversations || [],
     isLoading,
-    error,
+    error: formattedError,
     refetch,
     totalUnreadCount,
     markConversationAsRead: (conversationId: string) => 

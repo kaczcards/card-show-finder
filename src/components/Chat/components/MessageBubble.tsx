@@ -49,16 +49,33 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     id => id !== message.sender_id
   );
 
+  // Create accessibility label for the message
+  const getAccessibilityLabel = () => {
+    const sender = isCurrentUser ? 'You' : 'Other user';
+    const time = formatTime(message.created_at);
+    const status = isOptimistic 
+      ? 'Sending...' 
+      : (isCurrentUser && isRead ? 'Read' : '');
+    
+    return `${sender}: ${message.message_text}. Sent ${time}. ${status}`;
+  };
+
   return (
     <View style={[
       styles.messageRow,
       isCurrentUser ? styles.sentMessageRow : styles.receivedMessageRow
     ]}>
-      <View style={[
-        styles.messageBubble,
-        isCurrentUser ? styles.sentBubble : styles.receivedBubble,
-        isOptimistic && styles.optimisticBubble
-      ]}>
+      <View 
+        style={[
+          styles.messageBubble,
+          isCurrentUser ? styles.sentBubble : styles.receivedBubble,
+          isOptimistic && styles.optimisticBubble
+        ]}
+        accessible={true}
+        accessibilityRole="text"
+        accessibilityLabel={getAccessibilityLabel()}
+        accessibilityHint={isOptimistic ? "This message is still being sent" : undefined}
+      >
         <Text style={[
           styles.messageText,
           isCurrentUser ? styles.sentMessageText : styles.receivedMessageText
@@ -67,14 +84,35 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         </Text>
         
         {showTimestamp && (
-          <Text style={[
-            styles.messageTime,
-            isCurrentUser ? styles.sentMessageTime : styles.receivedMessageTime
-          ]}>
-            {formatTime(message.created_at)}
-            {isCurrentUser && isRead && ' • Read'}
-            {isOptimistic && ' • Sending...'}
-          </Text>
+          <View style={styles.messageStatusContainer}>
+            <Text 
+              style={[
+                styles.messageTime,
+                isCurrentUser ? styles.sentMessageTime : styles.receivedMessageTime
+              ]}
+              accessibilityLabel={`Sent ${formatTime(message.created_at)}`}
+            >
+              {formatTime(message.created_at)}
+            </Text>
+            
+            {isCurrentUser && isRead && (
+              <Text 
+                style={[styles.readStatus, styles.sentMessageTime]}
+                accessibilityLabel="Message has been read"
+              >
+                • Read
+              </Text>
+            )}
+            
+            {isOptimistic && (
+              <Text 
+                style={[styles.sendingStatus, styles.sentMessageTime]}
+                accessibilityLabel="Message is sending"
+              >
+                • Sending...
+              </Text>
+            )}
+          </View>
         )}
       </View>
     </View>
@@ -120,15 +158,28 @@ const styles = StyleSheet.create({
   receivedMessageText: {
     color: '#000000',
   },
+  messageStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
   messageTime: {
-    fontSize: 10,
-    alignSelf: 'flex-end',
+    fontSize: 11,
+    marginRight: 4,
+  },
+  readStatus: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  sendingStatus: {
+    fontSize: 11,
+    fontStyle: 'italic',
   },
   sentMessageTime: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   receivedMessageTime: {
-    color: '#999',
+    color: '#777',
   },
 });
 

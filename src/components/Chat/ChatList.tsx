@@ -111,7 +111,7 @@ const ChatList: React.FC<ChatListProps> = ({
       return (
         <ErrorState 
           error={conversationsError.message} 
-          onRetry={refetchConversations}
+          onRetry={conversationsError.retry ?? refetchConversations}
         />
       );
     }
@@ -174,6 +174,7 @@ const ChatList: React.FC<ChatListProps> = ({
           <ErrorState 
             error={messagesError.message}
             title="Couldn't load messages" 
+            onRetry={messagesError.retry}
           />
         ) : messages.length === 0 ? (
           <EmptyState 
@@ -205,6 +206,12 @@ const ChatList: React.FC<ChatListProps> = ({
             onChangeText={setMessageText}
             multiline
             maxLength={500}
+            editable={!isSendingMessage}
+            accessible
+            accessibilityLabel="Message input field"
+            accessibilityHint="Enter the message you want to send"
+            returnKeyType="send"
+            onSubmitEditing={handleSendMessage}
           />
           <TouchableOpacity
             style={[
@@ -213,6 +220,9 @@ const ChatList: React.FC<ChatListProps> = ({
             ]}
             disabled={!messageText.trim() || isSendingMessage}
             onPress={handleSendMessage}
+            accessibilityRole="button"
+            accessibilityLabel="Send message"
+            accessibilityState={{ disabled: !messageText.trim() || isSendingMessage, busy: isSendingMessage }}
           >
             {isSendingMessage ? (
               <Ionicons name="hourglass-outline" size={20} color="#fff" />
