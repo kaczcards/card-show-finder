@@ -71,7 +71,7 @@ const ChatList: React.FC<ChatListProps> = ({
         (c) => c.id === initialConversationId
       );
       if (conversation) {
-      //   handleSelectConversation(conversation);
+        handleSelectConversation(conversation);
       //   processedInitialIdRef.current = initialConversationId;
       }
       /* eslint-enable prefer-const */
