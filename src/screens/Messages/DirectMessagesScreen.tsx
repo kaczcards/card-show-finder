@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -74,20 +74,25 @@ const DirectMessagesScreen: React.FC = ({ route, navigation }) => {
   };
 
   // Handle creating a new conversation
-  const handleCreateNewConversation = () => {
+  // Stable reference (prevents ChatList re-render loop)
+  const handleCreateNewConversation = useCallback(() => {
     setShowNewConversation(true);
-  };
+  }, []);
 
   // Handle selecting a conversation
-  const handleSelectConversation = (conversation: Conversation) => {
-    // Update navigation title
-    const otherParticipant = conversation.participants?.[0];
-    const displayName = otherParticipant?.display_name || 'Conversation';
-    
-    navigation.setOptions({
-      title: displayName
-    });
-  };
+  // Stable reference (prevents ChatList re-render loop)
+  const handleSelectConversation = useCallback(
+    (conversation: Conversation) => {
+      // Update navigation title
+      const otherParticipant = conversation.participants?.[0];
+      const displayName = otherParticipant?.display_name || 'Conversation';
+
+      navigation.setOptions({
+        title: displayName,
+      });
+    },
+    [navigation],
+  );
 
   return (
     <SafeAreaView style={styles.container}>
