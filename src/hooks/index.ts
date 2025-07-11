@@ -1,5 +1,2 @@
-import { useShowDetailQuery } from './useShowDetailQuery';
-
-export {
-  useShowDetailQuery
-};
+export { useShowDetailQuery } from './useShowDetailQuery';
+export { useInfiniteShows } from './useInfiniteShows';
