@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   FlatList,
@@ -49,14 +49,25 @@ const ChatList: React.FC<ChatListProps> = ({
   } = useConversationsQuery(userId);
 
   // Find initial conversation if provided
+  // Track which initialConversationId we have already processed so we don't trigger
+  // handleSelectConversation on every render (which caused an infinite loop).
+  const processedInitialIdRef = useRef<string | null>(null);
+
   React.useEffect(() => {
-    if (initialConversationId && conversations.length > 0 && !selectedConversation) {
-      const conversation = conversations.find(c => c.id === initialConversationId);
+    if (
+      initialConversationId &&
+      conversations.length > 0 &&
+      processedInitialIdRef.current !== initialConversationId
+    ) {
+      const conversation = conversations.find(
+        (c) => c.id === initialConversationId
+      );
       if (conversation) {
         handleSelectConversation(conversation);
+        processedInitialIdRef.current = initialConversationId;
       }
     }
-  }, [initialConversationId, conversations, selectedConversation]);
+  }, [initialConversationId, conversations]);
 
   // Fetch messages for the selected conversation
   const {
