@@ -63,6 +63,45 @@ const mapDbShowToAppShow = (row: any): Show => ({
  */
 import { ShowFilters } from '../types';
 
+/* ------------------------------------------------------------------ */
+/* Pagination helper types                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Metadata describing pagination state returned from the
+ * `get_paginated_shows` RPC.
+ */
+export interface PaginationMeta {
+  totalCount: number;
+  pageSize: number;
+  currentPage: number;
+  totalPages: number;
+}
+
+/**
+ * Params accepted by `getPaginatedShows`.
+ * Inherits all normal ShowFilters plus `pageSize` & `page`.
+ * `latitude` and `longitude` are **required** because the RPC
+ * is geo-aware – calling code (e.g. HomeScreen) must supply them.
+ */
+export interface PaginatedShowsParams extends ShowFilters {
+  latitude: number;
+  longitude: number;
+  /** Number of rows per page (default: 20) */
+  pageSize?: number;
+  /** 1-based page index (default: 1)            */
+  page?: number;
+}
+
+/**
+ * Shape returned by `getPaginatedShows`.
+ */
+export interface PaginatedShowsResult {
+  data: Show[];
+  pagination: PaginationMeta;
+  error: string | null;
+}
+
 export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
   try {
     // Ensure filters is a valid object
@@ -353,6 +392,101 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
   
   // Safety return if we somehow get here without data
   return [];
+};
+
+/* ------------------------------------------------------------------ */
+/* Paginated / infinite-scroll helper                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Fetch shows in **paged** chunks using the `get_paginated_shows` RPC.
+ * Designed for infinite-scroll lists (Home screen, etc.).
+ */
+export const getPaginatedShows = async (
+  params: PaginatedShowsParams
+): Promise<PaginatedShowsResult> => {
+  try {
+    /* ---------------- Normalise & default params ----------------- */
+    const {
+      latitude,
+      longitude,
+      radius = 25,
+      startDate = new Date(),
+      endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      maxEntryFee = null,
+      categories = null,
+      features = null,
+      pageSize = 20,
+      page = 1,
+    } = params;
+
+    const toIso = (d: Date | string): string =>
+      d instanceof Date ? d.toISOString() : d;
+
+    /* ---------------------- RPC invocation ----------------------- */
+    const { data, error } = await supabase.rpc('get_paginated_shows', {
+      lat: latitude,
+      long: longitude,
+      radius_miles:
+        typeof radius === 'number' && !isNaN(radius) ? radius : 25,
+      start_date: toIso(startDate),
+      end_date: toIso(endDate),
+      max_entry_fee: typeof maxEntryFee === 'number' ? maxEntryFee : null,
+      categories,
+      features,
+      page_size: pageSize,
+      page,
+    });
+
+    if (error) throw error;
+
+    if (!data || data.error) {
+      // In case the function returns an error payload
+      const msg =
+        typeof data?.error === 'string'
+          ? data.error
+          : 'Failed to load shows';
+      return {
+        data: [],
+        pagination: {
+          totalCount: 0,
+          pageSize,
+          currentPage: page,
+          totalPages: 0,
+        },
+        error: msg,
+      };
+    }
+
+    // Extract rows & pagination metadata from JSONB payload
+    const rows = (data as any).data ?? [];
+    const paginationRaw = (data as any).pagination ?? {};
+
+    const mappedShows: Show[] = Array.isArray(rows)
+      ? rows.map(mapDbShowToAppShow)
+      : [];
+
+    const pagination: PaginationMeta = {
+      totalCount: Number(paginationRaw.total_count ?? 0),
+      pageSize: Number(paginationRaw.page_size ?? pageSize),
+      currentPage: Number(paginationRaw.current_page ?? page),
+      totalPages: Number(paginationRaw.total_pages ?? 0),
+    };
+
+    return { data: mappedShows, pagination, error: null };
+  } catch (err: any) {
+    console.error('[showService] Error in getPaginatedShows:', err);
+    return {
+      data: [],
+      pagination: {
+        totalCount: 0,
+        pageSize: params.pageSize ?? 20,
+        currentPage: params.page ?? 1,
+        totalPages: 0,
+      },
+      error: err.message ?? 'Failed to fetch paginated shows',
+    };
+  }
 };
 
 /**
