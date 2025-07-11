@@ -86,6 +86,15 @@ const ChatItem: React.FC<ChatItemProps> = ({
         isSelected && styles.selectedChatItem
       ]}
       onPress={() => onSelect(conversation)}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={`${displayName}. ${
+        hasUnread
+          ? `${conversation.unread_count} unread ${conversation.unread_count === 1 ? 'message' : 'messages'}.`
+          : 'No unread messages.'
+      } Last active ${formatLastActive(conversation.last_message_timestamp)}.`}
+      accessibilityHint="Double-tap to open the conversation."
+      accessibilityState={{ selected: isSelected }}
     >
       <View style={styles.avatarContainer}>
         {photoUrl ? (
@@ -98,7 +107,12 @@ const ChatItem: React.FC<ChatItemProps> = ({
           </View>
         )}
         {hasUnread && (
-          <View style={styles.unreadIndicator} />
+          /* Decorative unread badge – hide from screen readers */
+          <View
+            style={styles.unreadIndicator}
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+          />
         )}
       </View>
       
