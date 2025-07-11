@@ -73,7 +73,7 @@ $$;
 CREATE OR REPLACE FUNCTION get_conversation_messages(p_conversation_id UUID)
 RETURNS TABLE (
   id UUID,
-  conversation_id UUID,
+  convo_id UUID,
   sender_id UUID,
   message_text TEXT,
   created_at TIMESTAMPTZ,
@@ -94,7 +94,8 @@ BEGIN
       'username', p.username,
       'full_name', p.full_name,
       'avatar_url', p.avatar_url
-    ) AS sender_profile
+    ) AS sender_profile,
+    m.conversation_id AS convo_id
   FROM 
     messages m
   LEFT JOIN
