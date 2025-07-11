@@ -32,7 +32,17 @@ export const useConversationMessagesQuery = (
           .rpc('get_conversation_messages', { p_conversation_id: conversationId });
           
         if (error) throw error;
-        return data || [];
+
+        // Map SQL result (`convo_id`) back to `conversation_id`
+        const rows = (data || []) as any[];
+        return rows.map((row) => {
+          if (row.conversation_id === undefined && row.convo_id !== undefined) {
+            row.conversation_id = row.convo_id;
+          }
+          // Remove the helper column to satisfy the Message interface
+          delete row.convo_id;
+          return row as Message;
+        });
       } catch (err) {
         console.error('Error fetching messages with RPC, falling back to service:', err);
         // Fallback to the service method if RPC fails
