@@ -29,19 +29,23 @@ export const useConversationMessagesQuery = (
       try {
         // Use the RPC function for optimized fetching
         const { data, error } = await supabase
-          .rpc('get_conversation_messages', { p_conversation_id: conversationId });
+          .rpc('get_conversation_messages', { input_convo_id: conversationId });
           
         if (error) throw error;
 
-        // Map SQL result (`convo_id`) back to `conversation_id`
+        // Map SQL result fields to match our Message interface
         const rows = (data || []) as any[];
         return rows.map((row) => {
-          if (row.conversation_id === undefined && row.convo_id !== undefined) {
-            row.conversation_id = row.convo_id;
-          }
-          // Remove the helper column to satisfy the Message interface
-          delete row.convo_id;
-          return row as Message;
+          // Transform the data to match the Message interface
+          return {
+            id: row.message_id,
+            conversation_id: row.conversation_id,
+            sender_id: row.sender_id,
+            message_text: row.message_text,
+            created_at: row.created_at,
+            read_by_user_ids: row.read_by_user_ids,
+            sender_profile: row.sender_profile
+          } as Message;
         });
       } catch (err) {
         console.error('Error fetching messages with RPC, falling back to service:', err);
