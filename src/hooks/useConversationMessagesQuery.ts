@@ -7,6 +7,12 @@ import { Message } from '../services/messagingService';
 /**
  * Custom hook for fetching and managing messages for a specific conversation with React Query
  * Includes real-time updates and optimized data fetching
+ * 
+ * Integration with PostgreSQL RPC functions:
+ * - Uses 'get_conversation_messages' RPC function with 'input_convo_id' parameter
+ * - Defined in migration: 20250711120000_create_message_rpc.sql
+ * - Maps returned fields (message_id, etc.) to Message interface properties
+ * - Falls back to messagingService.getMessages() if RPC fails
  */
 export const useConversationMessagesQuery = (
   conversationId: string | null,
@@ -19,7 +25,7 @@ export const useConversationMessagesQuery = (
   const {
     data: messages,
     isLoading,
-    error,
+    error: rawError,
     refetch
   } = useQuery<Message[], Error>({
     queryKey: ['messages', conversationId],
@@ -28,11 +34,45 @@ export const useConversationMessagesQuery = (
       
       try {
         // Use the RPC function for optimized fetching
+        // This calls the PostgreSQL function 'get_conversation_messages' defined in
+        // migration 20250711120000_create_message_rpc.sql
         const { data, error } = await supabase
-          .rpc('get_conversation_messages', { p_conversation_id: conversationId });
+          .rpc('get_conversation_messages', { 
+            // Parameter name must match the SQL function parameter
+            input_convo_id: conversationId 
+          });
           
-        if (error) throw error;
-        return data || [];
+        if (error) {
+          console.warn('[useConversationMessagesQuery] RPC error:', error.message);
+          throw error;
+        }
+
+        // Validate returned data structure
+        if (!data || !Array.isArray(data)) {
+          console.warn('[useConversationMessagesQuery] RPC returned no data or invalid format');
+          throw new Error('Invalid data returned from RPC');
+        }
+
+        // Map SQL result fields to match our Message interface
+        // The field names from the RPC function (message_id, etc.) need to be mapped to our interface
+        const rows = data as any[];
+        return rows.map((row) => {
+          // Verify required fields exist
+          if (!row.message_id || !row.conversation_id) {
+            console.warn('[useConversationMessagesQuery] Missing required fields in message:', row);
+          }
+          
+          // Transform the data to match the Message interface
+          return {
+            id: row.message_id,
+            conversation_id: row.conversation_id,
+            sender_id: row.sender_id,
+            message_text: row.message_text,
+            created_at: row.created_at,
+            read_by_user_ids: row.read_by_user_ids,
+            sender_profile: row.sender_profile
+          } as Message;
+        });
       } catch (err) {
         console.error('Error fetching messages with RPC, falling back to service:', err);
         // Fallback to the service method if RPC fails
@@ -42,7 +82,24 @@ export const useConversationMessagesQuery = (
     enabled: !!conversationId,
     staleTime: 1000 * 60, // Consider data fresh for 1 minute
     cacheTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
+    // Retry a few times with exponential back-off
+    retry: 3,
+    retryDelay: attempt => Math.min(1000 * 2 ** attempt, 30_000),
+    // Log errors for easier debugging / observability
+    onError: (err) => {
+      /* eslint-disable no-console */
+      console.error('[useConversationMessagesQuery] fetch error:', err);
+      /* eslint-enable no-console */
+    },
   });
+
+  // Structured error exposed to consumers
+  const formattedError = rawError
+    ? {
+        message: rawError.message,
+        retry: () => refetch(),
+      }
+    : null;
 
   // Setup real-time subscription for new messages in this conversation
   useEffect(() => {
@@ -175,7 +232,7 @@ export const useConversationMessagesQuery = (
   return {
     messages: messages || [],
     isLoading,
-    error,
+    error: formattedError,
     refetch,
     allMessagesRead,
     sendMessage: (messageText: string) => sendMessageMutation.mutate({ messageText }),

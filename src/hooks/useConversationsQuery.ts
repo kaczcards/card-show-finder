@@ -7,6 +7,11 @@ import { Conversation, Message } from '../services/messagingService';
 /**
  * Custom hook for fetching and managing user conversations with React Query
  * Includes real-time updates and optimized data fetching
+ * 
+ * Integration with PostgreSQL RPC functions:
+ * - Uses 'get_user_conversations' RPC function with 'input_user_id' parameter
+ * - Defined in migration: 20250711121000_create_conversations_rpc.sql
+ * - Falls back to messagingService.getConversations() if RPC fails
  */
 export const useConversationsQuery = (userId: string | null) => {
   const queryClient = useQueryClient();
@@ -16,18 +21,75 @@ export const useConversationsQuery = (userId: string | null) => {
   const {
     data: conversations,
     isLoading,
-    error,
+    error: rawError,
     refetch
   } = useQuery<Conversation[], Error>({
     queryKey: ['conversations', userId],
     queryFn: async () => {
       if (!userId) return [];
-      return await messagingService.getConversations(userId);
+      try {
+        // 1. Attempt optimized RPC
+        // This calls the PostgreSQL function 'get_user_conversations' defined in
+        // migration 20250711121000_create_conversations_rpc.sql
+        const { data, error } = await supabase
+          .rpc('get_user_conversations', { 
+            // Parameter name must match the SQL function parameter
+            input_user_id: userId 
+          });
+
+        if (error) {
+          console.warn('[useConversationsQuery] RPC error:', error.message);
+          throw error;
+        }
+
+        // Validate returned data structure
+        if (data && Array.isArray(data)) {
+          // Verify the data has the expected structure
+          if (data.length > 0 && !data[0].id) {
+            console.warn('[useConversationsQuery] RPC returned unexpected data structure:', data[0]);
+            throw new Error('Invalid data structure returned from RPC');
+          }
+          return data as Conversation[];
+        }
+
+        // Defensive fallback (should not typically run)
+        console.warn('[useConversationsQuery] RPC returned no data, falling back to service');
+        return await messagingService.getConversations(userId);
+      } catch (err) {
+        // Log and fallback to legacy service
+        /* eslint-disable no-console */
+        console.warn(
+          '[useConversationsQuery] RPC failed, falling back to service:',
+          err,
+        );
+        /* eslint-enable no-console */
+        return await messagingService.getConversations(userId);
+      }
     },
     enabled: !!userId,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+    // Automatically retry (with exponential back-off) a few times
+    retry: 3,
+    retryDelay: attempt => Math.min(1000 * 2 ** attempt, 30_000),
+    // Log the error for observability
+    onError: (err) => {
+      /* eslint-disable no-console */
+      console.error('[useConversationsQuery] fetch error:', err);
+      /* eslint-enable no-console */
+    },
   });
+
+  /**
+   * Provide a simplified / structured error for consumers
+   * while also allowing access to the raw Error object.
+   */
+  const formattedError = rawError
+    ? {
+        message: rawError.message,
+        retry: () => refetch(),
+      }
+    : null;
 
   // Setup real-time subscription for new messages
   useEffect(() => {
@@ -168,7 +230,7 @@ export const useConversationsQuery = (userId: string | null) => {
   return {
     conversations: conversations || [],
     isLoading,
-    error,
+    error: formattedError,
     refetch,
     totalUnreadCount,
     markConversationAsRead: (conversationId: string) => 
