@@ -70,10 +70,10 @@ const ChatList: React.FC<ChatListProps> = ({
       const conversation = conversations.find(
         (c) => c.id === initialConversationId
       );
-      // if (conversation) {
+      if (conversation) {
       //   handleSelectConversation(conversation);
       //   processedInitialIdRef.current = initialConversationId;
-      // }
+      }
       /* eslint-enable prefer-const */
     }
     // ────────────────────────────────────────────────────────────────
