@@ -70,7 +70,7 @@ END;
 $$;
 
 -- Function to efficiently fetch all messages for a conversation with sender profiles
-CREATE OR REPLACE FUNCTION get_conversation_messages(conversation_id UUID)
+CREATE OR REPLACE FUNCTION get_conversation_messages(p_conversation_id UUID)
 RETURNS TABLE (
   id UUID,
   conversation_id UUID,
@@ -100,7 +100,7 @@ BEGIN
   LEFT JOIN
     profiles p ON m.sender_id = p.id
   WHERE 
-    m.conversation_id = get_conversation_messages.conversation_id
+    m.conversation_id = p_conversation_id
     AND m.is_deleted = FALSE
   ORDER BY 
     m.created_at ASC;
