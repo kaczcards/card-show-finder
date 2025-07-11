@@ -19,7 +19,7 @@ export const useConversationMessagesQuery = (
   const {
     data: messages,
     isLoading,
-    error,
+    error: rawError,
     refetch
   } = useQuery<Message[], Error>({
     queryKey: ['messages', conversationId],
@@ -56,7 +56,24 @@ export const useConversationMessagesQuery = (
     enabled: !!conversationId,
     staleTime: 1000 * 60, // Consider data fresh for 1 minute
     cacheTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
+    // Retry a few times with exponential back-off
+    retry: 3,
+    retryDelay: attempt => Math.min(1000 * 2 ** attempt, 30_000),
+    // Log errors for easier debugging / observability
+    onError: (err) => {
+      /* eslint-disable no-console */
+      console.error('[useConversationMessagesQuery] fetch error:', err);
+      /* eslint-enable no-console */
+    },
   });
+
+  // Structured error exposed to consumers
+  const formattedError = rawError
+    ? {
+        message: rawError.message,
+        retry: () => refetch(),
+      }
+    : null;
 
   // Setup real-time subscription for new messages in this conversation
   useEffect(() => {
@@ -189,7 +206,7 @@ export const useConversationMessagesQuery = (
   return {
     messages: messages || [],
     isLoading,
-    error,
+    error: formattedError,
     refetch,
     allMessagesRead,
     sendMessage: (messageText: string) => sendMessageMutation.mutate({ messageText }),
