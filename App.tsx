@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import context providers
 import { AuthProvider } from './src/contexts/AuthContext';
@@ -13,6 +14,20 @@ import { theme } from './src/constants/theme';
 
 // Import root navigator from navigation folder
 import RootNavigator from './src/navigation';
+
+/**
+ * React Query client – single instance shared across the app.
+ *  - staleTime:   30 seconds (data considered fresh for this long)
+ *  - cacheTime:    5 minutes (unused data kept in cache this long)
+ */
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000,      // 30 seconds
+      cacheTime: 5 * 60 * 1000,  // 5 minutes
+    },
+  },
+});
 
 /**
  * Main App component
@@ -69,13 +84,15 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </AuthProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }

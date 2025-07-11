@@ -29,9 +29,8 @@ import {
   ShowManagementButtons
 } from './components';
 
-// Import formatters and hooks
-import { formatShowDate } from './utils/formatters';
-import { useShowDetail } from './hooks/useShowDetail';
+// Import the new hook
+import { useShowDetailQuery } from '../../hooks/useShowDetailQuery';
 
 interface ShowDetailProps {
   route: any;
@@ -56,41 +55,22 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(null);
 
-  // Use the custom hook for show details
+  // Use the new custom hook for show details
   const {
     show,
+    organizer,
+    participatingDealers,
     loading,
     error,
     isFavorite,
     isShowOrganizer,
     isCurrentUserOrganizer,
     isClaimingShow,
-    participatingDealers,
-    loadingDealers,
     fetchShowDetails,
     toggleFavorite,
-    shareShow: shareShowDetails,
+    shareShow,
     openMapLocation
-  } = useShowDetail(
-    showId,
-    async (show) => {
-      if (!show) return;
-      try {
-        const message = `Check out this card show: ${show.title}\n\nWhen: ${formatShowDate(show)}\nWhere: ${show.location || show.address}\n\nShared from Card Show Finder app`;
-        await Share.share({ message, title: show.title });
-      } catch (error) {
-        console.error('Error sharing:', error);
-      }
-    },
-    (address) => {
-      const encodedAddress = encodeURIComponent(address);
-      const url = `https://maps.apple.com/?q=${encodedAddress}`;
-      Linking.openURL(url).catch(() => {
-        const googleUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-        Linking.openURL(googleUrl);
-      });
-    }
-  );
+  } = useShowDetailQuery(showId);
 
   // Set navigation title when show data is loaded
   useEffect(() => {
@@ -155,7 +135,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         isCurrentUserOrganizer={isCurrentUserOrganizer}
         onToggleFavorite={toggleFavorite}
         onOpenMap={openMapLocation}
-        onShare={shareShowDetails}
+        onShare={shareShow}
         onReview={() => setShowReviewForm(true)}
         onBroadcast={() => setShowBroadcastModal(true)}
       />
@@ -177,7 +157,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         />
         
         {/* Organizer Info */}
-        {show.profiles && <OrganizerInfo organizer={show.profiles} />}
+        {organizer && <OrganizerInfo organizer={organizer} />}
         
         {/* Show Description */}
         <ShowDescription description={show.description} />
@@ -185,7 +165,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         {/* Dealers List */}
         <DealersList
           dealers={participatingDealers}
-          isLoading={loadingDealers}
+          isLoading={false}
           onViewDealerDetails={handleViewDealerDetails}
           onMessageDealer={handleMessageDealer}
         />
