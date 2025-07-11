@@ -7,6 +7,12 @@ import { Message } from '../services/messagingService';
 /**
  * Custom hook for fetching and managing messages for a specific conversation with React Query
  * Includes real-time updates and optimized data fetching
+ * 
+ * Integration with PostgreSQL RPC functions:
+ * - Uses 'get_conversation_messages' RPC function with 'input_convo_id' parameter
+ * - Defined in migration: 20250711120000_create_message_rpc.sql
+ * - Maps returned fields (message_id, etc.) to Message interface properties
+ * - Falls back to messagingService.getMessages() if RPC fails
  */
 export const useConversationMessagesQuery = (
   conversationId: string | null,
@@ -28,14 +34,34 @@ export const useConversationMessagesQuery = (
       
       try {
         // Use the RPC function for optimized fetching
+        // This calls the PostgreSQL function 'get_conversation_messages' defined in
+        // migration 20250711120000_create_message_rpc.sql
         const { data, error } = await supabase
-          .rpc('get_conversation_messages', { input_convo_id: conversationId });
+          .rpc('get_conversation_messages', { 
+            // Parameter name must match the SQL function parameter
+            input_convo_id: conversationId 
+          });
           
-        if (error) throw error;
+        if (error) {
+          console.warn('[useConversationMessagesQuery] RPC error:', error.message);
+          throw error;
+        }
+
+        // Validate returned data structure
+        if (!data || !Array.isArray(data)) {
+          console.warn('[useConversationMessagesQuery] RPC returned no data or invalid format');
+          throw new Error('Invalid data returned from RPC');
+        }
 
         // Map SQL result fields to match our Message interface
-        const rows = (data || []) as any[];
+        // The field names from the RPC function (message_id, etc.) need to be mapped to our interface
+        const rows = data as any[];
         return rows.map((row) => {
+          // Verify required fields exist
+          if (!row.message_id || !row.conversation_id) {
+            console.warn('[useConversationMessagesQuery] Missing required fields in message:', row);
+          }
+          
           // Transform the data to match the Message interface
           return {
             id: row.message_id,
