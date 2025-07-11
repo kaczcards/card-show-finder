@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../supabase';
 import * as messagingService from '../services/messagingService';
 import { Message } from '../services/messagingService';
@@ -20,6 +20,11 @@ export const useConversationMessagesQuery = (
 ) => {
   const queryClient = useQueryClient();
   const [isSubscribed, setIsSubscribed] = useState(false);
+  /**
+   * Track whether we've already called `markConversationAsRead`
+   * for the current conversation to avoid an infinite render loop.
+   */
+  const hasMarkedAsReadRef = useRef<string | null>(null);
 
   // Main query to fetch messages for the conversation
   const {
@@ -139,16 +144,36 @@ export const useConversationMessagesQuery = (
 
   // Automatically mark conversation as read when viewing it
   useEffect(() => {
-    if (conversationId && userId && messages && messages.length > 0) {
-      messagingService.markConversationAsRead(conversationId, userId)
-        .then(() => {
-          // Update the conversations list to reflect read status
-          queryClient.invalidateQueries({
-            queryKey: ['conversations', userId],
-          });
-        })
-        .catch(err => console.error('Error marking conversation as read:', err));
+    // Reset the ref whenever the user switches conversations
+    if (hasMarkedAsReadRef.current !== conversationId) {
+      hasMarkedAsReadRef.current = null;
     }
+
+    // Preconditions
+    if (
+      !conversationId ||
+      !userId ||
+      !messages ||
+      messages.length === 0 ||
+      hasMarkedAsReadRef.current === conversationId // already marked
+    ) {
+      return;
+    }
+
+    messagingService
+      .markConversationAsRead(conversationId, userId)
+      .then(() => {
+        // Remember that we've marked this conversation
+        hasMarkedAsReadRef.current = conversationId;
+
+        // Update the conversations list to reflect read status
+        queryClient.invalidateQueries({
+          queryKey: ['conversations', userId],
+        });
+      })
+      .catch(err =>
+        console.error('Error marking conversation as read:', err)
+      );
   }, [conversationId, userId, messages, queryClient]);
 
   // Mutation for sending a new message
