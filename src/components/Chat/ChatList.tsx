@@ -54,29 +54,20 @@ const ChatList: React.FC<ChatListProps> = ({
   const processedInitialIdRef = useRef<string | null>(null);
 
   React.useEffect(() => {
-    // ────────────────────────────────────────────────────────────────
-    // DIAGNOSTIC: body intentionally commented out to isolate the
-    //             source of the “Maximum update depth exceeded” loop.
-    //             Do NOT remove this hook; we keep the dependencies
-    //             so React registers it, but it performs no actions.
-    //
     if (
       initialConversationId &&
       conversations.length > 0 &&
       processedInitialIdRef.current !== initialConversationId
     ) {
-      /* eslint-disable prefer-const */
-      // Only perform the lookup — keep the side-effects disabled for diagnostics
       const conversation = conversations.find(
         (c) => c.id === initialConversationId
       );
       if (conversation) {
         handleSelectConversation(conversation);
-      //   processedInitialIdRef.current = initialConversationId;
+        // Set the ref to prevent infinite loop
+        processedInitialIdRef.current = initialConversationId;
       }
-      /* eslint-enable prefer-const */
     }
-    // ────────────────────────────────────────────────────────────────
   }, [initialConversationId, conversations]);
 
   // Fetch messages for the selected conversation
