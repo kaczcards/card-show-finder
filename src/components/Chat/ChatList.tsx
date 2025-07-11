@@ -60,19 +60,19 @@ const ChatList: React.FC<ChatListProps> = ({
     //             Do NOT remove this hook; we keep the dependencies
     //             so React registers it, but it performs no actions.
     //
-    // if (
-    //   initialConversationId &&
-    //   conversations.length > 0 &&
-    //   processedInitialIdRef.current !== initialConversationId
-    // ) {
-    //   const conversation = conversations.find(
-    //     (c) => c.id === initialConversationId
-    //   );
-    //   if (conversation) {
-    //     handleSelectConversation(conversation);
-    //     processedInitialIdRef.current = initialConversationId;
-    //   }
-    // }
+    if (
+      initialConversationId &&
+      conversations.length > 0 &&
+      processedInitialIdRef.current !== initialConversationId
+    ) {
+      // const conversation = conversations.find(
+      //   (c) => c.id === initialConversationId
+      // );
+      // if (conversation) {
+      //   handleSelectConversation(conversation);
+      //   processedInitialIdRef.current = initialConversationId;
+      // }
+    }
     // ────────────────────────────────────────────────────────────────
   }, [initialConversationId, conversations]);
 
