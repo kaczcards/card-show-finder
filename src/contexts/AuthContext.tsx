@@ -4,7 +4,7 @@ import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
 import { signInWithEmailPassword } from '../services/supabaseAuthService';
-import { refreshUserSession } from '../services/userRoleService';
+import { refreshUserSession } from '../services/sessionService';
 
 /* ------------------------------------------------------------------
  * Build-time / runtime dev flag to bypass profile fetch

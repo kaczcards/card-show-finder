@@ -13,6 +13,9 @@
 // Authentication services
 export * as supabaseAuthService from './supabaseAuthService';
 
+// Session / token utilities
+export * as sessionService from './sessionService';
+
 // User role and permissions
 export * as userRoleService from './userRoleService';
 

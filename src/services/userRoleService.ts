@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { refreshUserSession } from './sessionService';
 
 // User role constants
 export enum UserRole {
@@ -311,25 +312,6 @@ export const canContactUser = (currentUserRole: UserRole, targetUserRole: UserRo
 /* ------------------------------------------------------------------
  * Session / role synchronisation helpers
  * ------------------------------------------------------------------ */
-
-/**
- * Forces Supabase to refresh the current JWT/session so that any recent
- * changes to the user's profile (e.g., role upgrades) are immediately
- * reflected in `supabase.auth`.
- */
-export const refreshUserSession = async (): Promise<{ success: boolean; error?: any }> => {
-  try {
-    const { error } = await supabase.auth.refreshSession();
-    if (error) {
-      console.error('Error refreshing Supabase session:', error);
-      return { success: false, error };
-    }
-    return { success: true };
-  } catch (err) {
-    console.error('Unexpected error in refreshUserSession:', err);
-    return { success: false, error: err };
-  }
-};
 
 /**
  * Convenience helper that:
