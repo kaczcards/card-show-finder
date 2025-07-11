@@ -39,21 +39,6 @@ interface ShowDetailProps {
   route: any;
   navigation: any;
 }
-// ******** AUTHENTICATION FIX *********
-import { createClient } from '@supabase/supabase-js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
-
-// Supabase client for direct auth check
-const directSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || Constants.expoConfig?.extra?.supabaseUrl;
-const directSupabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.expoConfig?.extra?.supabaseAnonKey;
-const directSupabase = createClient(directSupabaseUrl!, directSupabaseKey!, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-  },
-});
 
 /* -------------------------------------------------------------------------- */
 /* Utility presentation components (kept local to avoid extra files)          */
@@ -236,12 +221,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
 
   const checkIfFavorite = async () => {
     try {
-      const { data: { session } } = await directSupabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
         setIsFavorite(false);
         return;
       }
-      const { data, error } = await directSupabase
+      const { data, error } = await supabase
         .from('user_favorite_shows')
         .select()
         .eq('user_id', session.user.id)
@@ -255,7 +240,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
 
     const toggleFavorite = async () => {
         try {
-            const { data: { session }, error: sessionError } = await directSupabase.auth.getSession();
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
             if (sessionError || !session?.user) {
                 Alert.alert('Sign In Required', 'Please sign in to save favorites');
                 return;
@@ -263,7 +248,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
             const userId = session.user.id;
 
             if (isFavorite) {
-                const { error } = await directSupabase
+                const { error } = await supabase
                     .from('user_favorite_shows')
                     .delete()
                     .eq('user_id', userId)
@@ -271,7 +256,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
                 if (error) throw error;
                 setIsFavorite(false);
             } else {
-                const { error } = await directSupabase
+                const { error } = await supabase
                     .from('user_favorite_shows')
                     .insert([{ user_id: userId, show_id: showId }]);
                 if (error) throw error;
