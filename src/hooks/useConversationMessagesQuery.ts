@@ -29,7 +29,7 @@ export const useConversationMessagesQuery = (
       try {
         // Use the RPC function for optimized fetching
         const { data, error } = await supabase
-          .rpc('get_conversation_messages', { conversation_id: conversationId });
+          .rpc('get_conversation_messages', { p_conversation_id: conversationId });
           
         if (error) throw error;
         return data || [];
