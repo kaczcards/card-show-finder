@@ -329,7 +329,9 @@ const MapScreen: React.FC<MapScreenProps> = ({
           key={show.id}
           coordinate={show.coordinates}
           title={show.title}
-          description={`${formatDate(show.startDate)} • ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`}
+          description={`${formatDate(show.startDate)} • ${
+            show.entryFee == null || show.entryFee === 0 ? 'Free' : `$${show.entryFee}`
+          }`}
           pinColor="#007AFF"
         >
           <Callout onPress={() => handleShowPress(show.id)} tooltip>
@@ -342,7 +344,9 @@ const MapScreen: React.FC<MapScreenProps> = ({
               </Text>
               <Text style={styles.calloutDetail}>{show.address}</Text>
               <Text style={styles.calloutDetail}>
-                {show.entryFee === 0 ? 'Free Entry' : `Entry: $${show.entryFee}`}
+                {show.entryFee == null || show.entryFee === 0
+                  ? 'Free Entry'
+                  : `Entry: $${show.entryFee}`}
               </Text>
               <View style={styles.calloutButton}>
                 <Text style={styles.calloutButtonText}>View Details</Text>
