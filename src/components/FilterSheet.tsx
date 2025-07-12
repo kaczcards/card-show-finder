@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ShowFilters, ShowFeature, CardCategory } from '../types';
-import DatePicker from 'react-native-date-picker';
+// Temporarily commenting out DatePicker import to fix the crash
+// import DatePicker from 'react-native-date-picker';
 
 interface FilterSheetProps {
   visible: boolean;
@@ -266,6 +267,13 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
     return localFilters.categories?.includes(category) || false;
   };
 
+  // Temporarily handle showing the date picker - just update the text fields manually
+  const handleShowDatePicker = (type: 'start' | 'end') => {
+    console.log(`Would show date picker for ${type} date`);
+    // Simply provide a text field instruction instead of showing the date picker
+    alert(`Please enter the ${type === 'start' ? 'Start' : 'End'} date manually in YYYY-MM-DD format`);
+  };
+
   return (
     <Modal
       visible={visible}
@@ -340,34 +348,28 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
               
               <View style={styles.dateInputContainer}>
                 <Text style={styles.dateLabel}>Start Date:</Text>
-                <TouchableOpacity
-                  style={styles.dateInput}
-                  onPress={() => {
-                    setDatePickerType('start');
-                    setSelectedDate(localFilters.startDate || new Date());
-                    setDatePickerVisible(true);
-                  }}
-                >
-                  <Text style={[styles.dateInputText, !startDateText && styles.dateInputPlaceholder]}>
-                    {startDateText || 'Select Start Date'}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.dateInputRow}>
+                  <TextInput
+                    style={styles.dateInput}
+                    value={startDateText}
+                    onChangeText={handleStartDateChange}
+                    placeholder="YYYY-MM-DD"
+                    keyboardType="default"
+                  />
+                </View>
               </View>
               
               <View style={styles.dateInputContainer}>
                 <Text style={styles.dateLabel}>End Date:</Text>
-                <TouchableOpacity
-                  style={styles.dateInput}
-                  onPress={() => {
-                    setDatePickerType('end');
-                    setSelectedDate(localFilters.endDate || new Date());
-                    setDatePickerVisible(true);
-                  }}
-                >
-                  <Text style={[styles.dateInputText, !endDateText && styles.dateInputPlaceholder]}>
-                    {endDateText || 'Select End Date'}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.dateInputRow}>
+                  <TextInput
+                    style={styles.dateInput}
+                    value={endDateText}
+                    onChangeText={handleEndDateChange}
+                    placeholder="YYYY-MM-DD"
+                    keyboardType="default"
+                  />
+                </View>
               </View>
             </View>
 
@@ -440,34 +442,7 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Date Picker Modal */}
-          <DatePicker
-            modal
-            open={datePickerVisible}
-            date={selectedDate || new Date()}
-            mode="date"
-            onConfirm={(date) => {
-              setDatePickerVisible(false);
-              const formattedDate = date.toISOString().split('T')[0];
-              
-              if (datePickerType === 'start') {
-                setStartDateText(formattedDate);
-                setLocalFilters((prev) => ({
-                  ...prev,
-                  startDate: date,
-                }));
-              } else {
-                setEndDateText(formattedDate);
-                setLocalFilters((prev) => ({
-                  ...prev,
-                  endDate: date,
-                }));
-              }
-            }}
-            onCancel={() => {
-              setDatePickerVisible(false);
-            }}
-          />
+          {/* DatePicker has been removed and replaced with TextInput */}
         </Animated.View>
       </View>
     </Modal>
@@ -565,21 +540,17 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 8,
   },
+  dateInputRow: {
+    flexDirection: 'row',
+  },
   dateInput: {
+    flex: 1,
     height: 44,
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 12,
-    justifyContent: 'center',
-  },
-  dateInputText: {
     fontSize: 16,
-    color: '#333',
-    paddingVertical: 10,
-  },
-  dateInputPlaceholder: {
-    color: '#999',
   },
   textInput: {
     height: 44,

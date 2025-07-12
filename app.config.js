@@ -58,7 +58,8 @@ module.exports = {
     jsEngine: "jsc",
     infoPlist: {
       NSLocationWhenInUseUsageDescription: "Allow Card Show Finder to access your location so we can display nearby card shows."
-    }
+    },
+    bundleIdentifier: "com.kaczcards.cardshowfinder"
   },
   android: {
     adaptiveIcon: {
@@ -71,7 +72,8 @@ module.exports = {
       "ACCESS_FINE_LOCATION",
       "ACCESS_COARSE_LOCATION"
     ],
-    jsEngine: "jsc"
+    jsEngine: "jsc",
+    package: "com.kaczcards.cardshowfinder"
   },
   web: {
     favicon: "./assets/favicon.png"
