@@ -9,6 +9,7 @@ import {
   Linking,
   Platform,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Marker, Callout, Region } from 'react-native-maps';
 // Use our patched version that renames deprecated lifecycle methods
 import FixedClusteredMapView from '../FixedClusteredMapView';
@@ -27,6 +28,9 @@ interface MapShowClusterProps {
 }
 
 const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) => {
+  // Navigation (used as a fallback when parent doesn't supply onShowPress)
+  const navigation = useNavigation<any>();
+
   /* ------------------------------------------------------------------
    * Utility – Validate / auto-correct possibly swapped coordinates
    * ------------------------------------------------------------------
@@ -127,6 +131,20 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
     return `Entry: $${fee}`;
   };
 
+  /**
+   * Wrapper handler so the marker can still navigate even if the parent
+   * component forgot to pass `onShowPress`.  We fallback to React Navigation.
+   */
+  const navigateToShow = (showId: string) => {
+    if (props.onShowPress) {
+      props.onShowPress(showId);
+    } else {
+      // Fallback: push ShowDetail screen directly
+      // @ts-ignore – Route name exists in the main navigator
+      navigation.navigate('ShowDetail', { showId });
+    }
+  };
+
   // Render an individual marker
   const renderMarker = (show: Show) => {
     const safeCoords = sanitizeCoordinates(show.coordinates);
@@ -161,7 +179,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
             </Text>
             <TouchableOpacity
               style={styles.calloutButton}
-              onPress={() => onShowPress(show.id)}
+              onPress={() => navigateToShow(show.id)}
             >
               <Text style={styles.calloutButtonText}>View Details</Text>
             </TouchableOpacity>
