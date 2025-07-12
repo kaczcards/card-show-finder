@@ -14,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { CommonActions } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import * as userRoleService from '../../services/userRoleService';
-import GroupMessageComposer from '../../components/GroupMessageComposer';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
 
@@ -48,7 +47,6 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const user = authContext.authState?.user || null;
 
   // State for modals and UI elements
-  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [showSeries, setShowSeries] = useState<ShowSeries | null>(null);
   const [loadingSeries, setLoadingSeries] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -83,21 +81,6 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const handleViewDealerDetails = (dealerId: string, dealerName: string) => {
     setSelectedDealer({ id: dealerId, name: dealerName });
     setShowDealerDetailModal(true);
-  };
-
-  const handleMessageDealer = (dealerId: string, dealerName: string) => {
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{
-          name: 'MainTabs',
-          params: {
-            screen: 'Messages',
-            params: { recipientId: dealerId, recipientName: dealerName, isNewConversation: true },
-          },
-        }],
-      })
-    );
   };
 
   // Handle show management
@@ -137,7 +120,6 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         onOpenMap={openMapLocation}
         onShare={shareShow}
         onReview={() => setShowReviewForm(true)}
-        onBroadcast={() => setShowBroadcastModal(true)}
       />
 
       <View style={styles.detailsContainer}>
@@ -167,19 +149,10 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           dealers={participatingDealers}
           isLoading={false}
           onViewDealerDetails={handleViewDealerDetails}
-          onMessageDealer={handleMessageDealer}
         />
       </View>
 
       {/* Modals */}
-      <GroupMessageComposer
-        visible={showBroadcastModal}
-        onClose={() => setShowBroadcastModal(false)}
-        showId={showId}
-        showTitle={show.title}
-        onMessageSent={() => Alert.alert('Success', 'Broadcast message sent successfully')}
-      />
-      
       {selectedDealer && (
         <DealerDetailModal
           isVisible={showDealerDetailModal}

@@ -15,7 +15,6 @@ interface DealersListProps {
   dealers: Dealer[];
   isLoading: boolean;
   onViewDealerDetails: (dealerId: string, dealerName: string) => void;
-  onMessageDealer: (dealerId: string, dealerName: string) => void;
 }
 
 // Section header helper for consistent typography
@@ -26,8 +25,7 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 const DealersList: React.FC<DealersListProps> = ({
   dealers,
   isLoading,
-  onViewDealerDetails,
-  onMessageDealer
+  onViewDealerDetails
 }) => {
   return (
     <View style={styles.mvpDealersContainer}>
@@ -52,14 +50,6 @@ const DealersList: React.FC<DealersListProps> = ({
                 </Text>
               )}
               
-              {dealer.role === 'MVP_DEALER' && (
-                <TouchableOpacity 
-                  style={styles.messageDealerButton} 
-                  onPress={() => onMessageDealer(dealer.id, dealer.name)}
-                >
-                  <Text style={styles.messageDealerButtonText}>Message</Text>
-                </TouchableOpacity>
-              )}
             </View>
           ))}
         </View>

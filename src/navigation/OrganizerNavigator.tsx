@@ -8,7 +8,6 @@ import OrganizerReviewsScreen from '../screens/Organizer/OrganizerReviewsScreen'
 // These screens will be implemented later
 // Declaring them as placeholders for navigation
 const SeriesDetailScreen = () => null;
-const SendBroadcastScreen = () => null;
 const AddShowScreen = () => null;
 const EditShowScreen = () => null;
 
@@ -17,7 +16,6 @@ export type OrganizerStackParamList = {
   Dashboard: undefined;
   Reviews: undefined;
   SeriesDetail: { seriesId: string };
-  SendBroadcast: { showId: string; seriesId?: string };
   AddShow: { seriesId?: string };
   EditShow: { showId: string };
 };
@@ -66,13 +64,6 @@ const OrganizerNavigator: React.FC = () => {
         component={SeriesDetailScreen}
         options={{
           title: 'Series Details',
-        }}
-      />
-      <OrganizerStack.Screen
-        name="SendBroadcast"
-        component={SendBroadcastScreen}
-        options={{
-          title: 'Send Broadcast Message',
         }}
       />
       <OrganizerStack.Screen
