@@ -81,7 +81,7 @@ BEGIN
     'isFavoriteCount', (
       SELECT COUNT(*) 
       FROM public.user_favorite_shows 
-      WHERE show_id = get_show_details_by_id.show_id
+      WHERE public.user_favorite_shows.show_id = get_show_details_by_id.show_id
     )
   );
   
