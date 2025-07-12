@@ -330,7 +330,13 @@ const MapScreen: React.FC<MapScreenProps> = ({
           coordinate={show.coordinates}
           title={show.title}
           description={`${formatDate(show.startDate)} • ${
-            show.entryFee == null || show.entryFee === 0 ? 'Free' : `$${show.entryFee}`
+            show.entryFee === null ||
+            show.entryFee === undefined ||
+            show.entryFee === 0 ||
+            show.entryFee === 'null' ||
+            show.entryFee === ''
+              ? 'Free'
+              : `$${show.entryFee}`
           }`}
           pinColor="#007AFF"
         >
@@ -344,7 +350,11 @@ const MapScreen: React.FC<MapScreenProps> = ({
               </Text>
               <Text style={styles.calloutDetail}>{show.address}</Text>
               <Text style={styles.calloutDetail}>
-                {show.entryFee == null || show.entryFee === 0
+                {show.entryFee === null ||
+                show.entryFee === undefined ||
+                show.entryFee === 0 ||
+                show.entryFee === 'null' ||
+                show.entryFee === ''
                   ? 'Free Entry'
                   : `Entry: $${show.entryFee}`}
               </Text>
