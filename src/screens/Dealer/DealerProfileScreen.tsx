@@ -12,8 +12,6 @@ import {
 import { supabase } from '../../supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { useMessagePermissions } from '../../hooks/useMessagePermissions';
-import MessageButton from '../../components/MessageButton';
 import { UserRole } from '../../types'; // Import UserRole from types
 
 // Get dealer profile by ID
@@ -40,9 +38,6 @@ const DealerProfileScreen = ({ route, navigation }) => {
   // Booth information (specific to a show registration)
   const [boothInfo, setBoothInfo] = useState<any>(null);
   const [loadingBoothInfo, setLoadingBoothInfo] = useState(false);
-  
-  // Check if the current user can message this dealer
-  const { canMessage } = useMessagePermissions(dealerId, dealer?.role); // Use viewed dealer's role
   
   // Load dealer profile
   useEffect(() => {
@@ -157,16 +152,7 @@ const DealerProfileScreen = ({ route, navigation }) => {
         </View>
       </View>
       
-      {/* Message button (only if not viewing own profile and permissions allow) */}
-      {!isViewingOwnProfile && (
-        <View style={styles.actionContainer}>
-          <MessageButton 
-            profileId={dealerId}
-            profileRole={dealer.role} // Pass the viewed dealer's role
-            profileName={dealer.full_name || 'Dealer'}
-          />
-        </View>
-      )}
+      {/* Messaging disabled for launch – feature hidden */}
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Dealer Information</Text>
