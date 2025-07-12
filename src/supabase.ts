@@ -7,6 +7,19 @@ const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || Constants.expoConfig
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.expoConfig?.extra?.supabaseAnonKey || '';
 
 /* -------------------------------------------------------------------------- */
+/*  🔍 DIAGNOSTICS – PRINT SUPABASE CREDS IN DEV                              */
+/* -------------------------------------------------------------------------- */
+// NOTE: These values are **public** (anon key & project URL) so it's safe
+// to log them for debugging.  Remove or wrap behind an env‐guard before
+// shipping production builds if desired.
+console.log(
+  '\n================= [SUPABASE CONFIG] =================\n' +
+  `• SUPABASE URL : ${supabaseUrl || '<EMPTY>'}\n` +
+  `• ANON KEY     : ${supabaseAnonKey?.slice(0, 8) || '<EMPTY>'}…\n` +
+  '====================================================\n'
+);
+
+/* -------------------------------------------------------------------------- */
 /* 1. Guard-rails / configuration validation                                  */
 /* -------------------------------------------------------------------------- */
 
