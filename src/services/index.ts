@@ -25,5 +25,8 @@ export * from './errorService';
 // Messaging services
 export * as messagingService from './messagingService';
 
+// Subscription plan & type definitions (shared by subscription & Stripe services)
+export * as subscriptionTypes from './subscriptionTypes';
+
 // Any other services should be exported here
 // export * as exampleService from './exampleService';

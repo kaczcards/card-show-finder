@@ -1,6 +1,6 @@
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import { supabase } from '../supabase';
-import { SubscriptionPlan, SUBSCRIPTION_PLANS } from './subscriptionService';
+import { SubscriptionPlan, SUBSCRIPTION_PLANS } from './subscriptionTypes';
 import { UserRole } from './userRoleService';
 
 // --- Type Definitions ---
