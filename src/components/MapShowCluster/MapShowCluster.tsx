@@ -188,11 +188,29 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Add zoom controls
   const handleZoom = (zoomIn = true) => {
-    if (ref && ref.current) {
-      ref.current.getCamera().then((cam: any) => {
-        cam.altitude /= zoomIn ? 2 : 0.5; // Halve altitude to zoom in, double to zoom out
-        ref.current.animateCamera(cam);
-      });
+    if (
+      ref &&
+      // @ts-ignore – ref comes from forwardRef<any>
+      ref.current &&
+      typeof ref.current.getMapRef === 'function'
+    ) {
+      // FixedClusteredMapView exposes getMapRef() which returns the underlying MapView
+      const mapView = ref.current.getMapRef();
+      if (mapView) {
+        // Determine zoom factor
+        const factor = zoomIn ? 0.5 : 2; // smaller delta ⇒ zoom-in
+
+        // Calculate new region based on current prop `region`
+        const newRegion = {
+          latitude: region.latitude,
+          longitude: region.longitude,
+          latitudeDelta: region.latitudeDelta * factor,
+          longitudeDelta: region.longitudeDelta * factor,
+        };
+
+        // Animate the map to the new region
+        mapView.animateToRegion(newRegion, 300);
+      }
     }
   };
 
