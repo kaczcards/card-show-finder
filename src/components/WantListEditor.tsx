@@ -157,16 +157,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
       <View style={styles.instructionsContainer}>
         <Text style={styles.instructionsTitle}>Want List Instructions</Text>
         <Text style={styles.instructionsText}>
-          Create a list of cards you're looking to add to your collection. Be specific with:
-        </Text>
-        <View style={styles.bulletPoints}>
-          <Text style={styles.bulletPoint}>• Year, brand, and card number</Text>
-          <Text style={styles.bulletPoint}>• Player name and team</Text>
-          <Text style={styles.bulletPoint}>• Condition requirements (e.g., PSA 9+)</Text>
-          <Text style={styles.bulletPoint}>• Price range you're willing to pay</Text>
-        </View>
-        <Text style={styles.instructionsText}>
-          Your want list will be visible to MVP Dealers at shows you're attending, helping them prepare inventory that matches your interests.
+          Create a list of cards or sets you're looking to add to your collection. The more specific the better, as your list will be visible to MVP Dealers at shows you're attending so they can prepare inventory to help you meet that collecting goal.
         </Text>
       </View>
 

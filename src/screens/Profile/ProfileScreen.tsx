@@ -16,10 +16,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { UserRole, Badge } from '../../types';
+import { UserRole } from '../../types';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../supabase';
-import * as badgeService from '../../services/badgeService';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
@@ -42,17 +41,6 @@ const ProfileScreen: React.FC = () => {
   const [homeZipCode, setHomeZipCode] = useState(user?.homeZipCode || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
 
-  // State for badges
-  const [featuredBadges, setFeaturedBadges] = useState<Badge[]>([]);
-  const [isLoadingBadges, setIsLoadingBadges] = useState(false);
-  const [badgeError, setBadgeError] = useState<string | null>(null);
-  const [nextBadge, setNextBadge] = useState<Badge | null>(null);
-  const [badgeProgress, setBadgeProgress] = useState<{
-    current: number;
-    required: number;
-    percent: number;
-  } | null>(null);
-
   // ---------------------------------------------------------------------------
   // Favorite shows – local count & helper
   // ---------------------------------------------------------------------------
@@ -63,7 +51,7 @@ const ProfileScreen: React.FC = () => {
    * Fetch the authoritative favourite-show count from the DB.
    * Tries to read the `favorite_shows_count` column, but gracefully falls
    * back to counting rows in `user_favorite_shows` when the column does
-   * not exist (e.g. migration hasn’t run yet).
+   * not exist (e.g. migration hasn't run yet).
    */
   const fetchFavoriteCount = useCallback(async () => {
     if (!user?.id) {
@@ -141,43 +129,9 @@ const ProfileScreen: React.FC = () => {
     useCallback(() => {
       console.log('[ProfileScreen] Screen focused – refreshing counts/badges');
       fetchFavoriteCount();
-      if (user) {
-        loadUserBadges();
-      }
       // no cleanup needed
     }, [fetchFavoriteCount, user])
   );
-
-  // Load user badges with improved error handling
-  const loadUserBadges = async () => {
-    if (!user) return;
-    
-    setIsLoadingBadges(true);
-    setBadgeError(null);
-    
-    try {
-      // Get featured badges - will return empty array if error occurs
-      const featured = await badgeService.getUserFeaturedBadges(user.id, 3);
-      setFeaturedBadges(featured || []);
-      
-      // Get next badge to earn - will return null if error occurs
-      const next = await badgeService.getUserNextBadge(user.id);
-      setNextBadge(next);
-      
-      // If there's a next badge, get progress - will return null if error occurs
-      if (next) {
-        const progress = await badgeService.getBadgeProgress(user.id, next.id);
-        setBadgeProgress(progress);
-      } else {
-        setBadgeProgress(null);
-      }
-    } catch (error: any) {
-      console.error('Error loading badges:', error);
-      setBadgeError(error.message || 'Failed to load badges');
-    } finally {
-      setIsLoadingBadges(false);
-    }
-  };
   
   // Handle logout
   const handleLogout = async () => {
@@ -318,35 +272,9 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  // Get the color for a badge tier
-  const getBadgeColor = (tier: string) => {
-    switch (tier.toLowerCase()) {
-      case 'bronze':
-        return '#CD7F32';
-      case 'silver':
-        return '#C0C0C0';
-      case 'gold':
-        return '#FFD700';
-      case 'platinum':
-        return '#E5E4E2';
-      default:
-        return '#999999';
-    }
-  };
-
-  // Navigate to Badges screen
-  const navigateToBadges = () => {
-    navigation.navigate('Badges' as never);
-  };
-
   // Navigate to Admin Map screen
   const navigateToAdminMap = () => {
     navigation.navigate('Admin' as never, { screen: 'AdminMap' } as never);
-  };
-
-  // Retry loading badges if there was an error
-  const handleRetryLoadBadges = () => {
-    loadUserBadges();
   };
   
   // If user is not loaded yet
@@ -398,92 +326,6 @@ const ProfileScreen: React.FC = () => {
               {isEditMode ? "Cancel" : "Edit Profile"}
             </Text>
           </TouchableOpacity>
-        </View>
-        
-        {/* Badges Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>My Badges</Text>
-            <TouchableOpacity onPress={navigateToBadges}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {isLoadingBadges ? (
-            <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 20 }} />
-          ) : badgeError ? (
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle-outline" size={40} color="#FF3B30" />
-              <Text style={styles.errorText}>
-                There was an error loading your badges.
-              </Text>
-              <TouchableOpacity 
-                style={styles.retryButton}
-                onPress={handleRetryLoadBadges}
-              >
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : featuredBadges.length > 0 ? (
-            <View style={styles.badgesContainer}>
-              <FlatList
-                data={featuredBadges}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <View style={styles.badgeItem}>
-                    <View 
-                      style={[
-                        styles.badgeCircle, 
-                        { backgroundColor: getBadgeColor(item.tier) }
-                      ]}
-                    >
-                      <Ionicons name="trophy" size={28} color="white" />
-                    </View>
-                    <Text style={styles.badgeName}>{item.name}</Text>
-                    <Text style={styles.badgeTier}>{item.tier}</Text>
-                  </View>
-                )}
-                contentContainerStyle={styles.badgesList}
-              />
-              
-              {nextBadge && badgeProgress && (
-                <View style={styles.nextBadgeContainer}>
-                  <Text style={styles.nextBadgeTitle}>Next Badge:</Text>
-                  <View style={styles.nextBadgeContent}>
-                    <View style={[styles.nextBadgeIcon, { backgroundColor: getBadgeColor(nextBadge.tier) }]}>
-                      <Ionicons name="trophy-outline" size={24} color="white" />
-                    </View>
-                    <View style={styles.nextBadgeInfo}>
-                      <Text style={styles.nextBadgeName}>{nextBadge.name}</Text>
-                      <Text style={styles.nextBadgeDescription}>{nextBadge.description}</Text>
-                      <View style={styles.progressBarContainer}>
-                        <View style={styles.progressBarBackground}>
-                          <View 
-                            style={[
-                              styles.progressBar, 
-                              { width: `${badgeProgress.percent}%` }
-                            ]} 
-                          />
-                        </View>
-                        <Text style={styles.progressText}>
-                          {badgeProgress.current}/{badgeProgress.required} shows attended
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              )}
-            </View>
-          ) : (
-            <View style={styles.noBadgesContainer}>
-              <Ionicons name="trophy-outline" size={40} color="#cccccc" />
-              <Text style={styles.noBadgesText}>
-                You haven't earned any badges yet. Attend card shows to earn badges!
-              </Text>
-            </View>
-          )}
         </View>
         
         {/* Profile Information */}
@@ -855,52 +697,6 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '500',
   },
-  badgesContainer: {
-    marginBottom: 8,
-  },
-  badgesList: {
-    paddingBottom: 12,
-  },
-  badgeItem: {
-    alignItems: 'center',
-    marginRight: 16,
-    width: 100,
-  },
-  badgeCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  badgeName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  badgeTier: {
-    fontSize: 12,
-    color: '#666',
-    textTransform: 'capitalize',
-  },
-  noBadgesContainer: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  noBadgesText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 10,
-  },
   errorContainer: {
     alignItems: 'center',
     padding: 20,
@@ -923,62 +719,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '500',
-  },
-  nextBadgeContainer: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  nextBadgeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  nextBadgeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  nextBadgeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  nextBadgeInfo: {
-    flex: 1,
-  },
-  nextBadgeName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 4,
-  },
-  nextBadgeDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  progressBarContainer: {
-    marginTop: 4,
-  },
-  progressBarBackground: {
-    height: 6,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 3,
-    marginBottom: 4,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#007AFF',
-    borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#666',
   },
   infoList: {
     paddingLeft: 8,

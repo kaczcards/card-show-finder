@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.get_show_details_by_id(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS 23899
 DECLARE
   show_data JSONB;
   organizer_data JSONB;
@@ -54,7 +54,7 @@ BEGIN
         'profileImageUrl', p.profile_image_url,
         'role', UPPER(COALESCE(p.role, '')),
         'accountType', p.account_type,
-        'boothDetailsText', sp.booth_details_text
+        'boothDetailsText', sp.booth_location
       )
     ) AS dealers
   INTO dealers_data
@@ -95,7 +95,7 @@ EXCEPTION
       'errorCode', SQLSTATE
     );
 END;
-$$;
+23899;
 
 -- Grant execute permissions to authenticated and anonymous users
 GRANT EXECUTE ON FUNCTION public.get_show_details_by_id TO authenticated, anon;
