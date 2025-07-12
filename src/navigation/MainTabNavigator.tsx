@@ -6,7 +6,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/Home';
 import { MapScreen } from '../screens/Map';
 import CollectionScreen from '../screens/Collection';
-import DirectMessagesScreen from '../screens/Messages/DirectMessagesScreen';
 import NotificationsScreen from '../screens/Notifications';
 import ProfileNavigator from './ProfileNavigator';
 import OrganizerNavigator from './OrganizerNavigator';
@@ -28,7 +27,6 @@ export type MainTabParamList = {
   Map: undefined;
   "My Shows": undefined; // Renamed from Notifications
   "My Collection": undefined; // Renamed from Collection
-  Messages: undefined;
   Organizer: undefined;
   "My Profile": undefined; // Renamed from Profile
 };
@@ -60,8 +58,6 @@ const MainTabNavigator: React.FC = () => {
             iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'My Collection') {
             iconName = focused ? 'images' : 'images-outline';
-          } else if (route.name === 'Messages') {
-            iconName = focused ? 'mail' : 'mail-outline';
           } else if (route.name === 'My Profile') {
             iconName = focused ? 'person-circle' : 'person-circle-outline';
           } else if (route.name === 'Organizer') {
@@ -102,6 +98,7 @@ const MainTabNavigator: React.FC = () => {
         name="Map"
         component={MapScreen}
       />
+      {/* My Shows tab (re-added) */}
       <MainTab.Screen
         name="My Shows"
         component={NotificationsScreen} // This component handles "My Shows"
@@ -118,10 +115,6 @@ const MainTabNavigator: React.FC = () => {
       <MainTab.Screen
         name="My Collection"
         component={CollectionScreen} // This component handles "My Collection"
-      />
-      <MainTab.Screen
-        name="Messages"
-        component={DirectMessagesScreen}
       />
       <MainTab.Screen
         name="My Profile"

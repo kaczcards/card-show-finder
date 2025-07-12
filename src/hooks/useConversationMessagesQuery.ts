@@ -96,6 +96,39 @@ export const useConversationMessagesQuery = (
       console.error('[useConversationMessagesQuery] fetch error:', err);
       /* eslint-enable no-console */
     },
+    // Mark conversation as read when messages are successfully fetched
+    onSuccess: (data) => {
+      // Reset the ref whenever the user switches conversations
+      if (hasMarkedAsReadRef.current !== conversationId) {
+        hasMarkedAsReadRef.current = null;
+      }
+
+      // Preconditions
+      if (
+        !conversationId ||
+        !userId ||
+        !data ||
+        data.length === 0 ||
+        hasMarkedAsReadRef.current === conversationId // already marked
+      ) {
+        return;
+      }
+
+      messagingService
+        .markConversationAsRead(conversationId, userId)
+        .then(() => {
+          // Remember that we've marked this conversation
+          hasMarkedAsReadRef.current = conversationId;
+
+          // Update the conversations list to reflect read status
+          queryClient.invalidateQueries({
+            queryKey: ['conversations', userId],
+          });
+        })
+        .catch(err =>
+          console.error('Error marking conversation as read:', err)
+        );
+    }
   });
 
   // Structured error exposed to consumers
@@ -141,40 +174,6 @@ export const useConversationMessagesQuery = (
       setIsSubscribed(false);
     };
   }, [conversationId, queryClient, userId, isSubscribed]);
-
-  // Automatically mark conversation as read when viewing it
-  useEffect(() => {
-    // Reset the ref whenever the user switches conversations
-    if (hasMarkedAsReadRef.current !== conversationId) {
-      hasMarkedAsReadRef.current = null;
-    }
-
-    // Preconditions
-    if (
-      !conversationId ||
-      !userId ||
-      !messages ||
-      messages.length === 0 ||
-      hasMarkedAsReadRef.current === conversationId // already marked
-    ) {
-      return;
-    }
-
-    messagingService
-      .markConversationAsRead(conversationId, userId)
-      .then(() => {
-        // Remember that we've marked this conversation
-        hasMarkedAsReadRef.current = conversationId;
-
-        // Update the conversations list to reflect read status
-        queryClient.invalidateQueries({
-          queryKey: ['conversations', userId],
-        });
-      })
-      .catch(err =>
-        console.error('Error marking conversation as read:', err)
-      );
-  }, [conversationId, userId, messages, queryClient]);
 
   // Mutation for sending a new message
   const sendMessageMutation = useMutation({

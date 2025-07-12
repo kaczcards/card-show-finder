@@ -14,8 +14,7 @@ import {
   ActivityIndicator,
   Animated
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { supabase } from '../../supabase';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import ChatList, { Conversation } from '../../components/ChatList';
@@ -23,6 +22,7 @@ import ChatWindow from '../../components/ChatWindow';
 import * as messagingService from '../../services/messagingService';
 import * as userRoleService from '../../services/userRoleService';
 import { UserRole } from '../../services/userRoleService';
+import { useConversationsQuery } from '../../hooks/useConversationsQuery';
 
 const MessagesScreen: React.FC = ({ route }) => {
   const navigation = useNavigation();
@@ -34,17 +34,25 @@ const MessagesScreen: React.FC = ({ route }) => {
   const bannerOpacity = useRef(new Animated.Value(0)).current;
   
   // State
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  // Conversations come from the React-Query hook now
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [newConversationVisible, setNewConversationVisible] = useState(false);
   const [recipientId, setRecipientId] = useState('');
   const [initialMessage, setInitialMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const [showBanner, setShowBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
   
+  // ---------------------------------------------------------------------------
+  // React-Query hook for conversations
+  // ---------------------------------------------------------------------------
+  const {
+    conversations,
+    isLoading,
+    refetch: refetchConversations,
+    totalUnreadCount
+  } = useConversationsQuery(user?.id);
+
   // Handle direct navigation to a conversation
   useEffect(() => {
     if (initialConversationId && conversations.length > 0) {
@@ -68,87 +76,8 @@ const MessagesScreen: React.FC = ({ route }) => {
     }
   }, [totalUnreadCount]);
   
-  // Fetch conversations when screen focuses
-  useFocusEffect(
-    useCallback(() => {
-      if (user) {
-        fetchConversations();
-        fetchTotalUnreadCount();
-      } else {
-        setIsLoading(false);
-        setConversations([]);
-      }
-    }, [user])
-  );
-  
-  // Set up real-time subscription for new messages and conversations
-  useEffect(() => {
-    if (!user) return;
-    
-    // Subscribe to messages for all conversations
-    const messagesSubscription = supabase
-      .channel('messages_updates')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `recipient_id=eq.${user.id}` // Only messages where user is recipient
-      }, () => {
-        // Refresh conversations on any new message
-        fetchConversations();
-        fetchTotalUnreadCount();
-      })
-      .subscribe();
-    
-    // Subscribe to conversation updates
-    const conversationsSubscription = supabase
-      .channel('conversations_updates')
-      .on('postgres_changes', {
-        event: '*', // ALL, INSERT, UPDATE, DELETE
-        schema: 'public',
-        table: 'conversation_participants',
-        filter: `user_id=eq.${user.id}` // Only user's conversations
-      }, () => {
-        // Refresh conversations on any change
-        fetchConversations();
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(messagesSubscription);
-      supabase.removeChannel(conversationsSubscription);
-    };
-  }, [user]);
-  
-  // Fetch conversations from API
-  const fetchConversations = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      setIsLoading(true);
-      
-      const fetchedConversations = await messagingService.getConversations(user.id);
-      
-      setConversations(fetchedConversations);
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-      showTemporaryBanner('Failed to load conversations. Pull down to retry.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-  
-  // Fetch total unread message count
-  const fetchTotalUnreadCount = async () => {
-    if (!user) return;
-    
-    try {
-      const count = await messagingService.getTotalUnreadCount(user.id);
-      setTotalUnreadCount(count);
-    } catch (error) {
-      console.error('Error fetching unread count:', error);
-    }
-  };
+  // NOTE: manual fetching & realtime subscription logic removed –
+  //       React-Query hook + Supabase listeners inside it handle updates.
   
   // Show temporary error/success banner
   const showTemporaryBanner = (message: string, duration = 3000) => {
@@ -226,7 +155,7 @@ const MessagesScreen: React.FC = ({ route }) => {
       setInitialMessage('');
       
       // Refresh conversations list
-      await fetchConversations();
+      await refetchConversations();
       
       // Find and select the new conversation
       const newConversation = conversations.find(c => c.id === conversationId);
@@ -246,7 +175,7 @@ const MessagesScreen: React.FC = ({ route }) => {
   // Handle message sent callback
   const handleMessageSent = () => {
     // Refresh conversations to update last message info
-    fetchConversations();
+    refetchConversations();
   };
   
   // Reset current conversation view
@@ -399,7 +328,7 @@ const MessagesScreen: React.FC = ({ route }) => {
           <ChatList
             conversations={conversations}
             isLoading={isLoading}
-            onRefresh={fetchConversations}
+            onRefresh={refetchConversations}
             onSelectConversation={setSelectedConversation}
             onNewConversation={() => setNewConversationVisible(true)}
             currentUserId={user.id}

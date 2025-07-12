@@ -9,7 +9,6 @@ interface ShowHeaderActionsProps {
   onOpenMap: () => void;
   onShare: () => void;
   onReview: () => void;
-  onBroadcast: () => void;
 }
 
 const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
@@ -19,7 +18,6 @@ const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
   onOpenMap,
   onShare,
   onReview,
-  onBroadcast,
 }) => {
   return (
     <View style={styles.actionsContainer}>
@@ -46,13 +44,6 @@ const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
         <Ionicons name="star-outline" size={24} color="#333333" />
         <Text style={styles.actionText}>Review</Text>
       </TouchableOpacity>
-      
-      {isCurrentUserOrganizer && (
-        <TouchableOpacity style={styles.actionButton} onPress={onBroadcast}>
-          <Ionicons name="megaphone-outline" size={24} color="#FF6A00" />
-          <Text style={[styles.actionText, { color: '#FF6A00' }]}>Broadcast</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 };

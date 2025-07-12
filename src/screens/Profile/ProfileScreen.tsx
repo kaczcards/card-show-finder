@@ -742,12 +742,6 @@ const ProfileScreen: React.FC = () => {
             />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="notifications-outline" size={20} color="#007AFF" />
-            <Text style={styles.actionButtonText}>Notification Settings</Text>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" style={styles.actionButtonIcon} />
-          </TouchableOpacity>
-          
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
             <Text style={styles.logoutButtonText}>Logout</Text>

@@ -19,9 +19,7 @@ const DirectMessagesScreen: React.FC = ({ route, navigation }) => {
   const authContext = useAuth();
   const user = authContext.authState?.user || null;
   
-  // State for UI and debug
-  const [showDebug, setShowDebug] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any[]>([]);
+  // State for UI
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
@@ -31,12 +29,6 @@ const DirectMessagesScreen: React.FC = ({ route, navigation }) => {
   const recipientName = route.params?.recipientName;
   const isNewConversation = route.params?.isNewConversation;
   
-  // Add debug log
-  const addDebugLog = (title: string, data: any) => {
-    setDebugInfo(prev => [{ title, data, timestamp: new Date().toISOString() }, ...prev]);
-    console.log(`[DEBUG] ${title}:`, data);
-  };
-
   // Check user session on component mount
   useEffect(() => {
     if (user) {
@@ -47,7 +39,7 @@ const DirectMessagesScreen: React.FC = ({ route, navigation }) => {
     if (isNewConversation && recipientId) {
       setShowNewConversation(true);
     }
-  }, [user, recipientId, isNewConversation]);
+  }, [user?.id, recipientId, isNewConversation]); // depend on stable user id
 
   // Fetch user profile
   const fetchUserProfile = async (userId: string) => {
@@ -58,18 +50,13 @@ const DirectMessagesScreen: React.FC = ({ route, navigation }) => {
         .eq('id', userId)
         .single();
         
-      if (error) {
-        addDebugLog('Profile error', error.message);
-      } else if (data) {
+      if (!error && data) {
         setUserProfile(data);
-        addDebugLog('Profile found', { 
-          id: data.id, 
-          username: data.username,
-          role: data.role
-        });
+      } else if (error) {
+        console.log('[Profile error]', error.message);
       }
     } catch (err) {
-      addDebugLog('Profile fetch error', String(err));
+      console.log('[Profile fetch error]', String(err));
     }
   };
 
@@ -101,12 +88,6 @@ const DirectMessagesScreen: React.FC = ({ route, navigation }) => {
           {showNewConversation ? 'New Message' : 'Messages'}
         </Text>
         
-        <TouchableOpacity 
-          style={styles.debugButton}
-          onPress={() => setShowDebug(!showDebug)}
-        >
-          <Ionicons name="bug" size={20} color="#999" />
-        </TouchableOpacity>
       </View>
       
       {!user ? (
@@ -150,40 +131,6 @@ const DirectMessagesScreen: React.FC = ({ route, navigation }) => {
           initialConversationId={initialConversationId}
         />
       )}
-      
-      {showDebug && (
-        <View style={styles.debugPanel}>
-          <View style={styles.debugHeader}>
-            <Text style={styles.debugTitle}>Debug Info</Text>
-            <TouchableOpacity onPress={() => setShowDebug(false)}>
-              <Ionicons name="close" size={20} color="#333" />
-            </TouchableOpacity>
-          </View>
-          
-          <Text style={styles.debugInfo}>
-            User: {user ? user.id : 'Not logged in'}
-          </Text>
-          <Text style={styles.debugInfo}>
-            Role: {userProfile?.role || 'Unknown'}
-          </Text>
-          
-          <ScrollView style={styles.debugScroll}>
-            {debugInfo.map((log, index) => (
-              <View key={`${log.timestamp}-${index}`} style={styles.logItem}>
-                <Text style={styles.logTitle}>
-                  {log.title} - {new Date(log.timestamp).toLocaleTimeString()}
-                </Text>
-                <Text style={styles.logData}>
-                  {typeof log.data === 'object' 
-                    ? JSON.stringify(log.data, null, 2) 
-                    : String(log.data)
-                  }
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
     </SafeAreaView>
   );
 };
@@ -206,11 +153,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
     textAlign: 'center',
-  },
-  debugButton: {
-    position: 'absolute',
-    right: 16,
-    zIndex: 1,
   },
   centeredContainer: {
     flex: 1,
@@ -255,47 +197,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 24,
   },
-  debugPanel: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderTopWidth: 1,
-    borderTopColor: '#E1E1E1',
-    height: 200,
-  },
-  debugHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E1E1E1',
-  },
-  debugTitle: {
-    fontWeight: 'bold',
-  },
-  debugInfo: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 12,
-  },
-  debugScroll: {
-    flex: 1,
-  },
-  logItem: {
-    padding: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  logTitle: {
-    fontWeight: 'bold',
-    fontSize: 11,
-  },
-  logData: {
-    fontSize: 10,
-    fontFamily: 'monospace',
-  }
 });
 
 export default DirectMessagesScreen;
