@@ -54,7 +54,8 @@ BEGIN
         'profileImageUrl', p.profile_image_url,
         'role', UPPER(COALESCE(p.role, '')),
         'accountType', p.account_type,
-        'boothDetailsText', sp.booth_location
+        -- Expose the booth location using the new camel-cased property name
+        'boothLocation', sp.booth_location
       )
     ) AS dealers
   INTO dealers_data

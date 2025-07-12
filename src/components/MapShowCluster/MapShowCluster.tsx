@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Alert,
   Linking,
   Platform,
 } from 'react-native';
@@ -66,9 +67,27 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
   // Helper function to open address in maps app
   const openMaps = (address: string) => {
     if (!address) return;
-    const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
-    const url = `${scheme}${encodeURIComponent(address)}`;
-    Linking.openURL(url);
+
+    try {
+      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
+      const url = `${scheme}${encodeURIComponent(address)}`;
+
+      Linking.openURL(url).catch(err => {
+        console.error('Error opening native maps app:', err);
+
+        // Fallback: open Google Maps in the browser
+        const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          address,
+        )}`;
+        Linking.openURL(webUrl).catch(e => {
+          console.error('Error opening maps in browser:', e);
+          Alert.alert('Error', 'Could not open maps application.');
+        });
+      });
+    } catch (error) {
+      console.error('Error processing maps URL:', error);
+      Alert.alert('Error', 'Could not open maps application.');
+    }
   };
 
   const {
@@ -99,6 +118,15 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
     }
   };
 
+  // Helper function to format entry fee
+  const formatEntryFee = (fee: number | string | null | undefined) => {
+    if (fee === 0 || fee === '0') return 'Free Entry';
+    if (fee === null || fee === undefined || fee === '' || isNaN(Number(fee))) {
+      return 'Entry Fee: TBD';
+    }
+    return `Entry: $${fee}`;
+  };
+
   // Render an individual marker
   const renderMarker = (show: Show) => {
     const safeCoords = sanitizeCoordinates(show.coordinates);
@@ -114,7 +142,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
           longitude: safeCoords.longitude,
         }}
         title={show.title}
-        description={`${formatDate(show.startDate)} • ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`}
+        description={`${formatDate(show.startDate)} • ${formatEntryFee(show.entryFee).replace('Entry: ', '')}`}
         pinColor="#007AFF"
       >
         <Callout tooltip>
@@ -125,13 +153,16 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
               {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
                 ` - ${formatDate(show.endDate)}`}
             </Text>
-            <TouchableOpacity 
-              {show.address}
-            </Text>
+            <TouchableOpacity onPress={() => openMaps(show.address)}>
+              <Text style={styles.addressLink}>{show.address}</Text>
+            </TouchableOpacity>
             <Text style={styles.calloutDetail}>
-              {show.entryFee === 0 ? 'Free Entry' : `Entry: $${show.entryFee}`}
+              {formatEntryFee(show.entryFee)}
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
+              style={styles.calloutButton}
+              onPress={() => onShowPress(show.id)}
+            >
               <Text style={styles.calloutButtonText}>View Details</Text>
             </TouchableOpacity>
           </View>
@@ -185,11 +216,29 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Add zoom controls
   const handleZoom = (zoomIn = true) => {
-    if (ref && ref.current) {
-      ref.current.getCamera().then((cam: any) => {
-        cam.altitude /= zoomIn ? 2 : 0.5; // Halve altitude to zoom in, double to zoom out
-        ref.current.animateCamera(cam);
-      });
+    if (
+      ref &&
+      // @ts-ignore – ref comes from forwardRef<any>
+      ref.current &&
+      typeof ref.current.getMapRef === 'function'
+    ) {
+      // FixedClusteredMapView exposes getMapRef() which returns the underlying MapView
+      const mapView = ref.current.getMapRef();
+      if (mapView) {
+        // Determine zoom factor
+        const factor = zoomIn ? 0.5 : 2; // smaller delta ⇒ zoom-in
+
+        // Calculate new region based on current prop `region`
+        const newRegion = {
+          latitude: region.latitude,
+          longitude: region.longitude,
+          latitudeDelta: region.latitudeDelta * factor,
+          longitudeDelta: region.longitudeDelta * factor,
+        };
+
+        // Animate the map to the new region
+        mapView.animateToRegion(newRegion, 300);
+      }
     }
   };
 
@@ -262,7 +311,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
   },
-  addressLink: {
   addressContainer: {
     marginBottom: 4,
   },
