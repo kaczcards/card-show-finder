@@ -117,7 +117,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
         description={`${formatDate(show.startDate)} • ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`}
         pinColor="#007AFF"
       >
-        <Callout onPress={() => onShowPress(show.id)} tooltip>
+        <Callout tooltip>
           <View style={styles.calloutContainer}>
             <Text style={styles.calloutTitle}>{show.title}</Text>
             <Text style={styles.calloutDetail}>
@@ -125,16 +125,13 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
               {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
                 ` - ${formatDate(show.endDate)}`}
             </Text>
-            <Text 
-              style={styles.addressLink} 
-              onPress={() => openMaps(show.address)}
-            >
+            <TouchableOpacity 
               {show.address}
             </Text>
             <Text style={styles.calloutDetail}>
               {show.entryFee === 0 ? 'Free Entry' : `Entry: $${show.entryFee}`}
             </Text>
-            <TouchableOpacity style={styles.calloutButton}>
+            <TouchableOpacity 
               <Text style={styles.calloutButtonText}>View Details</Text>
             </TouchableOpacity>
           </View>
@@ -263,6 +260,10 @@ const styles = StyleSheet.create({
   calloutDetail: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 4,
+  },
+  addressLink: {
+  addressContainer: {
     marginBottom: 4,
   },
   addressLink: {
