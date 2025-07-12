@@ -8,6 +8,7 @@ import {
   Dimensions,
   Alert,
   Platform,
+  Linking,
   RefreshControl,
   ScrollView,
 } from 'react-native';
@@ -277,6 +278,32 @@ const MapScreen: React.FC<MapScreenProps> = ({
     setCurrentRegion(region);
   };
 
+  // ---------------------------------------------------------------------------
+  // Open address in native maps application (Task 2)
+  // ---------------------------------------------------------------------------
+  const openMapLocation = (address: string) => {
+    if (!address) return;
+
+    try {
+      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
+      const encodedAddress = encodeURIComponent(address);
+      const url = `${scheme}${encodedAddress}`;
+
+      Linking.openURL(url).catch((err) => {
+        console.error('Error opening native maps app:', err);
+        // Fallback to Google Maps in browser
+        const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+        Linking.openURL(webUrl).catch((e) => {
+          console.error('Error opening web maps:', e);
+          Alert.alert('Error', 'Could not open maps application.');
+        });
+      });
+    } catch (error) {
+      console.error('Error processing maps URL:', error);
+      Alert.alert('Error', 'Could not open maps application.');
+    }
+  };
+
   // Center map on user location
   const centerOnUserLocation = async () => {
     try {
@@ -370,7 +397,11 @@ const MapScreen: React.FC<MapScreenProps> = ({
                 {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() &&
                   ` - ${formatDate(show.endDate)}`}
               </Text>
-              <Text style={styles.calloutDetail}>{show.address}</Text>
+              <TouchableOpacity onPress={() => openMapLocation(show.address)}>
+                <Text style={[styles.calloutDetail, styles.addressLink]}>
+                  {show.address}
+                </Text>
+              </TouchableOpacity>
               <Text style={styles.calloutDetail}>
                 {isEntryFree(show.entryFee)
                   ? 'Free Entry'
@@ -577,6 +608,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 4,
+  },
+  /* Makes address appear as a clickable link */
+  addressLink: {
+    color: '#0066CC',
+    textDecorationLine: 'underline',
   },
   calloutButton: {
     backgroundColor: '#007AFF',
