@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.get_show_details_by_id(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS 23899
+AS $$
 DECLARE
   show_data JSONB;
   organizer_data JSONB;
@@ -96,7 +96,7 @@ EXCEPTION
       'errorCode', SQLSTATE
     );
 END;
-23899;
+$$;
 
 -- Grant execute permissions to authenticated and anonymous users
 GRANT EXECUTE ON FUNCTION public.get_show_details_by_id TO authenticated, anon;
