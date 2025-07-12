@@ -361,6 +361,12 @@ const MyShowsScreen: React.FC = () => {
         <Text style={styles.cardSubtitle}>
           {formatDate(item.startDate)} • {item.location}
         </Text>
+        
+        {/* Add additional date display in bottom-right corner with proper formatting */}
+        <Text style={styles.cardDate}>
+          {formatDate(item.startDate)}
+        </Text>
+        
         {alreadyReviewed && (
           <ReviewsList
             reviews={reviews.filter((r) => r.showId === item.id)}
@@ -533,6 +539,12 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     fontSize: 14,
     color: '#666',
+  },
+  cardDate: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'right',
+    marginTop: 4,
   },
   emptyContainer: {
     flex: 1,
