@@ -124,9 +124,16 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Helper function to format entry fee
   const formatEntryFee = (fee: number | string | null | undefined) => {
-    if (fee === 0 || fee === '0') return 'Free Entry';
-    if (fee === null || fee === undefined || fee === '' || isNaN(Number(fee))) {
-      return 'Entry Fee: TBD';
+    // Treat any “zero-ish” / missing value as free admission
+    if (
+      fee === 0 ||
+      fee === '0' ||
+      fee === null ||
+      fee === undefined ||
+      fee === '' ||
+      isNaN(Number(fee))
+    ) {
+      return 'Free Entry';
     }
     return `Entry: $${fee}`;
   };
