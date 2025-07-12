@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ShowFilters, ShowFeature, CardCategory } from '../types';
+import DatePicker from 'react-native-date-picker';
 
 interface FilterSheetProps {
   visible: boolean;
@@ -44,6 +45,11 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   const [startDateText, setStartDateText] = useState('');
   const [endDateText, setEndDateText] = useState('');
   const [maxEntryFeeText, setMaxEntryFeeText] = useState('');
+
+  // Date picker state
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [datePickerType, setDatePickerType] = useState<'start' | 'end'>('start');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Reset local filters when the component becomes visible
   useEffect(() => {
@@ -334,24 +340,34 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
               
               <View style={styles.dateInputContainer}>
                 <Text style={styles.dateLabel}>Start Date:</Text>
-                <TextInput
+                <TouchableOpacity
                   style={styles.dateInput}
-                  value={startDateText}
-                  onChangeText={handleStartDateChange}
-                  placeholder="YYYY-MM-DD"
-                  keyboardType="numbers-and-punctuation"
-                />
+                  onPress={() => {
+                    setDatePickerType('start');
+                    setSelectedDate(localFilters.startDate || new Date());
+                    setDatePickerVisible(true);
+                  }}
+                >
+                  <Text style={[styles.dateInputText, !startDateText && styles.dateInputPlaceholder]}>
+                    {startDateText || 'Select Start Date'}
+                  </Text>
+                </TouchableOpacity>
               </View>
               
               <View style={styles.dateInputContainer}>
                 <Text style={styles.dateLabel}>End Date:</Text>
-                <TextInput
+                <TouchableOpacity
                   style={styles.dateInput}
-                  value={endDateText}
-                  onChangeText={handleEndDateChange}
-                  placeholder="YYYY-MM-DD"
-                  keyboardType="numbers-and-punctuation"
-                />
+                  onPress={() => {
+                    setDatePickerType('end');
+                    setSelectedDate(localFilters.endDate || new Date());
+                    setDatePickerVisible(true);
+                  }}
+                >
+                  <Text style={[styles.dateInputText, !endDateText && styles.dateInputPlaceholder]}>
+                    {endDateText || 'Select End Date'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -423,6 +439,35 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
               <Text style={styles.applyButtonText}>Apply Filters</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Date Picker Modal */}
+          <DatePicker
+            modal
+            open={datePickerVisible}
+            date={selectedDate || new Date()}
+            mode="date"
+            onConfirm={(date) => {
+              setDatePickerVisible(false);
+              const formattedDate = date.toISOString().split('T')[0];
+              
+              if (datePickerType === 'start') {
+                setStartDateText(formattedDate);
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  startDate: date,
+                }));
+              } else {
+                setEndDateText(formattedDate);
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  endDate: date,
+                }));
+              }
+            }}
+            onCancel={() => {
+              setDatePickerVisible(false);
+            }}
+          />
         </Animated.View>
       </View>
     </Modal>
@@ -526,7 +571,15 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 12,
+    justifyContent: 'center',
+  },
+  dateInputText: {
     fontSize: 16,
+    color: '#333',
+    paddingVertical: 10,
+  },
+  dateInputPlaceholder: {
+    color: '#999',
   },
   textInput: {
     height: 44,
