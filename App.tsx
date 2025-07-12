@@ -35,8 +35,47 @@ const queryClient = new QueryClient({
  */
 export default function App() {
   const [isReady, setIsReady] = useState(false);
+  const [netStatus, setNetStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [netError, setNetError] = useState<string | null>(null);
 
   useEffect(() => {
+    /**
+     * Quick network diagnostic – attempts to fetch a known-good public
+     * JSON endpoint with a 5 second timeout.  Logs full details so we
+     * know whether basic DNS + HTTPS are working in the running
+     * environment (simulator / device).
+     */
+    const testConnectivity = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const TEST_URL = 'https://jsonplaceholder.typicode.com/todos/1';
+      console.log('[Diagnostics] Pinging public endpoint:', TEST_URL);
+      try {
+        const resp = await fetch(TEST_URL, { signal: controller.signal });
+        console.log(
+          `[Diagnostics] Fetch completed – status: ${resp.status} ${resp.ok ? '(OK)' : '(ERR)'}`
+        );
+        if (!resp.ok) {
+          setNetStatus('error');
+          setNetError(`HTTP ${resp.status}`);
+          return;
+        }
+        const data = await resp.json();
+        console.log('[Diagnostics] Response JSON:', data);
+        setNetStatus('success');
+      } catch (err: any) {
+        const msg =
+          err?.name === 'AbortError'
+            ? 'Timeout after 5s'
+            : err?.message || 'Unknown error';
+        console.error('[Diagnostics] Network test failed:', msg);
+        setNetStatus('error');
+        setNetError(msg);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
     // Perform any initialization tasks here
     const prepare = async () => {
       try {
@@ -45,6 +84,8 @@ export default function App() {
         
         // Small artificial delay to ensure everything is loaded
         await new Promise(resolve => setTimeout(resolve, 500));
+        // Run connectivity test (does not block app start)
+        await testConnectivity();
       } catch (e) {
         console.warn('Error initializing app:', e);
       } finally {
@@ -71,6 +112,27 @@ export default function App() {
           size={64}
           color={theme.colors.primary.main}
         />
+
+        {/* ----- Network status indicator ----- */}
+        <Text
+          style={{
+            marginTop: theme.spacing.spacing.medium,
+            fontSize: theme.typography.fontSize.body,
+            color:
+              netStatus === 'success'
+                ? 'green'
+                : netStatus === 'error'
+                ? 'red'
+                : theme.colors.text.secondary,
+          }}
+        >
+          {netStatus === 'idle'
+            ? 'Checking network…'
+            : netStatus === 'success'
+            ? 'Network OK'
+            : `Network error: ${netError}`}
+        </Text>
+
         <Text style={{
           marginTop: theme.spacing.spacing.medium,
           /* Slightly larger start-up text for improved readability */
