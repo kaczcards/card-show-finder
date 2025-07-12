@@ -125,13 +125,16 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
               {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
                 ` - ${formatDate(show.endDate)}`}
             </Text>
-            <TouchableOpacity 
-              {show.address}
-            </Text>
+            <TouchableOpacity onPress={() => openMaps(show.address)}>
+              <Text style={styles.addressLink}>{show.address}</Text>
+            </TouchableOpacity>
             <Text style={styles.calloutDetail}>
               {show.entryFee === 0 ? 'Free Entry' : `Entry: $${show.entryFee}`}
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
+              style={styles.calloutButton}
+              onPress={() => onShowPress(show.id)}
+            >
               <Text style={styles.calloutButtonText}>View Details</Text>
             </TouchableOpacity>
           </View>
@@ -262,7 +265,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
   },
-  addressLink: {
   addressContainer: {
     marginBottom: 4,
   },
