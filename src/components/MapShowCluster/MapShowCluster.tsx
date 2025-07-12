@@ -158,23 +158,9 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
       console.log('Using parent onShowPress handler');
       props.onShowPress(showId);
     } else if (navigation) {
-      // Fallback: navigate directly using React Navigation
+      // Fallback: navigate directly using React Navigation with the correct screen name
       console.log('Using navigation fallback to ShowDetail screen');
-      // Ensure we're using the correct screen name - "ShowDetail" (not "ShowDetails")
-      try {
-        navigation.navigate('ShowDetail', { showId });
-        console.log('Navigation to ShowDetail successful');
-      } catch (error) {
-        console.error('Navigation error:', error);
-        // Try the alternative name as a last resort
-        try {
-          console.log('Trying alternative screen name "ShowDetails"');
-          navigation.navigate('ShowDetails', { showId });
-        } catch (altError) {
-          console.error('Alternative navigation also failed:', altError);
-          Alert.alert('Navigation Error', 'Could not navigate to show details.');
-        }
-      }
+      navigation.navigate('ShowDetail', { showId });
     } else {
       console.error('No navigation method available');
       Alert.alert('Error', 'Cannot navigate to show details at this time.');
