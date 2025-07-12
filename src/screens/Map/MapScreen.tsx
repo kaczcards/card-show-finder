@@ -407,9 +407,12 @@ const MapScreen: React.FC<MapScreenProps> = ({
                   ? 'Free Entry'
                   : `Entry: $${show.entryFee}`}
               </Text>
-              <View style={styles.calloutButton}>
+              <TouchableOpacity
+                style={styles.calloutButton}
+                onPress={() => navigation.navigate('ShowDetail', { showId: show.id })}
+              >
                 <Text style={styles.calloutButtonText}>View Details</Text>
-              </View>
+              </TouchableOpacity>
             </View>
           </Callout>
         </Marker>
