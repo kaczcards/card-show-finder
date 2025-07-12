@@ -118,6 +118,15 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
     }
   };
 
+  // Helper function to format entry fee
+  const formatEntryFee = (fee: number | string | null | undefined) => {
+    if (fee === 0 || fee === '0') return 'Free Entry';
+    if (fee === null || fee === undefined || fee === '' || isNaN(Number(fee))) {
+      return 'Entry Fee: TBD';
+    }
+    return `Entry: $${fee}`;
+  };
+
   // Render an individual marker
   const renderMarker = (show: Show) => {
     const safeCoords = sanitizeCoordinates(show.coordinates);
@@ -133,7 +142,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
           longitude: safeCoords.longitude,
         }}
         title={show.title}
-        description={`${formatDate(show.startDate)} • ${show.entryFee === 0 ? 'Free' : `$${show.entryFee}`}`}
+        description={`${formatDate(show.startDate)} • ${formatEntryFee(show.entryFee).replace('Entry: ', '')}`}
         pinColor="#007AFF"
       >
         <Callout tooltip>
@@ -148,7 +157,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
               <Text style={styles.addressLink}>{show.address}</Text>
             </TouchableOpacity>
             <Text style={styles.calloutDetail}>
-              {show.entryFee === 0 ? 'Free Entry' : `Entry: $${show.entryFee}`}
+              {formatEntryFee(show.entryFee)}
             </Text>
             <TouchableOpacity
               style={styles.calloutButton}
