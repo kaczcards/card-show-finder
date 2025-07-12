@@ -428,11 +428,11 @@ const MapScreen: React.FC<MapScreenProps> = ({
             </View>
         ) : (
             <MapShowCluster
+                ref={mapRef}
                 region={currentRegion}
                 shows={shows}
                 onShowPress={handleShowPress}
                 onRegionChangeComplete={handleRegionChangeComplete}
-                mapRef={mapRef}
             />
         )}
 
