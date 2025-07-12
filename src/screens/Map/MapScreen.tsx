@@ -319,6 +319,34 @@ const MapScreen: React.FC<MapScreenProps> = ({
     }
   };
 
+  /**
+   * Determine if a show entry fee should be considered free.
+   * Adds verbose logging so we can see the raw value coming from the API.
+   */
+  const isEntryFree = (fee: any): boolean => {
+    // Diagnostic log – remove or reduce verbosity once confirmed working
+    console.log(
+      `[MapScreen] [DEBUG] entryFee raw value:`,
+      fee,
+      '| type:',
+      typeof fee
+    );
+
+    if (fee === null || fee === undefined) return true;
+    if (typeof fee === 'number') return fee <= 0;
+
+    // Handle string representations
+    const feeStr = String(fee).trim().toLowerCase();
+    return (
+      feeStr === '' ||
+      feeStr === '0' ||
+      feeStr === '$0' ||
+      feeStr === 'null' ||
+      feeStr === '$null' ||
+      feeStr === 'free'
+    );
+  };
+
   // Render map markers - with defensive coding
   const renderMarkers = () => {
     if (!shows || !Array.isArray(shows) || shows.length === 0) return null;
@@ -330,13 +358,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
           coordinate={show.coordinates}
           title={show.title}
           description={`${formatDate(show.startDate)} • ${
-            show.entryFee === null ||
-            show.entryFee === undefined ||
-            show.entryFee === 0 ||
-            show.entryFee === 'null' ||
-            show.entryFee === ''
-              ? 'Free'
-              : `$${show.entryFee}`
+            isEntryFree(show.entryFee) ? 'Free' : `$${show.entryFee}`
           }`}
           pinColor="#007AFF"
         >
@@ -350,11 +372,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
               </Text>
               <Text style={styles.calloutDetail}>{show.address}</Text>
               <Text style={styles.calloutDetail}>
-                {show.entryFee === null ||
-                show.entryFee === undefined ||
-                show.entryFee === 0 ||
-                show.entryFee === 'null' ||
-                show.entryFee === ''
+                {isEntryFree(show.entryFee)
                   ? 'Free Entry'
                   : `Entry: $${show.entryFee}`}
               </Text>
