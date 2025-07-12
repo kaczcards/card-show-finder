@@ -13,7 +13,7 @@ interface Dealer {
   profileImageUrl?: string;
   role: UserRole;
   accountType?: string;
-  boothDetailsText?: string;
+  boothLocation?: string;
 }
 
 interface ShowDetails {
