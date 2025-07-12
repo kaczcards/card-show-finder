@@ -70,11 +70,18 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Helper function to open address in maps app
   const openMaps = (address: string) => {
-    if (!address) return;
+    if (!address) {
+      console.log('No address provided to openMaps');
+      return;
+    }
+
+    console.log('Opening map location for address:', address);
 
     try {
       const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
       const url = `${scheme}${encodeURIComponent(address)}`;
+
+      console.log('Attempting to open URL:', url);
 
       Linking.openURL(url).catch(err => {
         console.error('Error opening native maps app:', err);
@@ -83,6 +90,8 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
         const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
           address,
         )}`;
+        console.log('Falling back to web URL:', webUrl);
+
         Linking.openURL(webUrl).catch(e => {
           console.error('Error opening maps in browser:', e);
           Alert.alert('Error', 'Could not open maps application.');
@@ -124,7 +133,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
   // Helper function to format entry fee
   const formatEntryFee = (fee: number | string | null | undefined) => {
-    // Treat any “zero-ish” / missing value as free admission
+    // Treat any "zero-ish" / missing value as free admission
     if (
       fee === 0 ||
       fee === '0' ||
@@ -143,12 +152,18 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
    * component forgot to pass `onShowPress`.  We fallback to React Navigation.
    */
   const navigateToShow = (showId: string) => {
+    console.log('View Details button pressed for show ID:', showId);
+    
     if (props.onShowPress) {
+      console.log('Using parent onShowPress handler');
       props.onShowPress(showId);
-    } else {
-      // Fallback: push ShowDetail screen directly
-      // @ts-ignore – Route name exists in the main navigator
+    } else if (navigation) {
+      // Fallback: navigate directly using React Navigation with the correct screen name
+      console.log('Using navigation fallback to ShowDetail screen');
       navigation.navigate('ShowDetail', { showId });
+    } else {
+      console.error('No navigation method available');
+      Alert.alert('Error', 'Cannot navigate to show details at this time.');
     }
   };
 
