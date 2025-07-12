@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Alert,
   Linking,
   Platform,
 } from 'react-native';
@@ -66,9 +67,27 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
   // Helper function to open address in maps app
   const openMaps = (address: string) => {
     if (!address) return;
-    const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
-    const url = `${scheme}${encodeURIComponent(address)}`;
-    Linking.openURL(url);
+
+    try {
+      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
+      const url = `${scheme}${encodeURIComponent(address)}`;
+
+      Linking.openURL(url).catch(err => {
+        console.error('Error opening native maps app:', err);
+
+        // Fallback: open Google Maps in the browser
+        const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          address,
+        )}`;
+        Linking.openURL(webUrl).catch(e => {
+          console.error('Error opening maps in browser:', e);
+          Alert.alert('Error', 'Could not open maps application.');
+        });
+      });
+    } catch (error) {
+      console.error('Error processing maps URL:', error);
+      Alert.alert('Error', 'Could not open maps application.');
+    }
   };
 
   const {
