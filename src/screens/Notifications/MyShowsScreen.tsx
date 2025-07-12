@@ -283,12 +283,10 @@ const MyShowsScreen: React.FC = () => {
     }
   };
   
-  const handleViewDealerBooth = (show: Show) => {
-    // Navigate to show detail screen
-    navigation.navigate('ShowDetail' as never, { id: show.id } as never);
+  const navigateToShowDetail = (show: Show) => {
+    // Navigate to show detail screen with correct parameter name
+    navigation.navigate('ShowDetail' as never, { showId: show.id } as never);
   };
-
-  /* -------------------------  Renderers  ---------------------------- */
 
   /**
    * Format date with timezone adjustment to avoid off-by-one-day issues.
@@ -309,14 +307,17 @@ const MyShowsScreen: React.FC = () => {
 
   // FlatList item renderer for upcoming shows
   const renderUpcomingItem = ({ item }: { item: Show }) => (
-    <View style={styles.card}>
+    <TouchableOpacity 
+      style={styles.card}
+      onPress={() => navigateToShowDetail(item)}
+    >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{item.title}</Text>
         <View style={styles.cardActions}>
           {showsWithBoothInfo[item.id] && (
             <TouchableOpacity 
               style={styles.boothButton}
-              onPress={() => handleViewDealerBooth(item)}
+              onPress={() => navigateToShowDetail(item)}
             >
               <Ionicons name="business" size={20} color="#007AFF" />
               <Text style={styles.boothText}>Booth Info</Text>
@@ -330,7 +331,7 @@ const MyShowsScreen: React.FC = () => {
       <Text style={styles.cardSubtitle}>
         {formatDate(item.startDate)} • {item.location}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 
   // FlatList item renderer for past shows
@@ -344,7 +345,7 @@ const MyShowsScreen: React.FC = () => {
             {showsWithBoothInfo[item.id] && (
               <TouchableOpacity 
                 style={styles.boothButton}
-                onPress={() => handleViewDealerBooth(item)}
+                onPress={() => navigateToShowDetail(item)}
               >
                 <Ionicons name="business" size={20} color="#007AFF" />
                 <Text style={styles.boothText}>Booth Info</Text>
