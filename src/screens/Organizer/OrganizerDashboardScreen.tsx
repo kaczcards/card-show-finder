@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  RefreshControl
+  RefreshControl,
+  SectionList,
+  SectionListData
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -29,6 +30,15 @@ interface DashboardMetrics {
   averageRating: number | null;
   preShowBroadcastsRemaining: number;
   postShowBroadcastsRemaining: number;
+}
+
+// Section types for our SectionList
+type SectionType = 'header' | 'metrics' | 'tabs' | 'content';
+
+// Interface for our section data
+interface DashboardSection {
+  type: SectionType;
+  data: Array<any>;
 }
 
 const OrganizerDashboardScreen: React.FC = () => {
@@ -143,9 +153,6 @@ const OrganizerDashboardScreen: React.FC = () => {
     fetchDashboardMetrics();
   };
 
-  // Keep ScrollView pull-to-refresh compatible
-  const handleRefresh = refreshShows;
-
   // Refresh metrics every time the screen gains focus
   useFocusEffect(
     React.useCallback(() => {
@@ -200,6 +207,29 @@ const OrganizerDashboardScreen: React.FC = () => {
             </Text>
           </View>
         </View>
+      </View>
+    );
+  };
+
+  // Render tabs navigation
+  const renderTabsNavigation = () => {
+    return (
+      <View style={styles.tabsContainer}>
+        {(['shows', 'claim', 'recurring', 'reviews', 'broadcast'] as TabName[]).map(tab => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.activeTab]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+              {tab === 'shows' && 'My Shows'}
+              {tab === 'claim' && 'Unclaimed'}
+              {tab === 'recurring' && 'Recurring'}
+              {tab === 'reviews' && 'Reviews'}
+              {tab === 'broadcast' && 'Broadcast'}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     );
   };
@@ -301,7 +331,90 @@ const OrganizerDashboardScreen: React.FC = () => {
         return null;
     }
   };
-  
+
+  // Generate sections for SectionList
+  const sections = useMemo(() => {
+    if (!isShowOrganizer && !isLoading) {
+      return [];
+    }
+
+    const dashboardSections: DashboardSection[] = [
+      {
+        type: 'header',
+        data: [{ key: 'header' }]
+      },
+      {
+        type: 'metrics',
+        data: [{ key: 'metrics' }]
+      },
+      {
+        type: 'tabs',
+        data: [{ key: 'tabs' }]
+      },
+      {
+        type: 'content',
+        data: [{ key: 'content' }]
+      }
+    ];
+
+    return dashboardSections;
+  }, [isShowOrganizer, isLoading, activeTab]);
+
+  // Render section items
+  const renderSectionItem = ({ item, section }: { item: any, section: SectionListData<any> }) => {
+    const sectionType = section.type;
+
+    switch (sectionType) {
+      case 'header':
+        return (
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Organizer Dashboard</Text>
+            <Text style={styles.headerSubtitle}>
+              Manage your shows, reviews, and messages
+            </Text>
+          </View>
+        );
+
+      case 'metrics':
+        if (isLoading) {
+          return (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#FF6A00" />
+              <Text style={styles.loadingText}>Loading dashboard...</Text>
+            </View>
+          );
+        } else if (error) {
+          return (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={fetchDashboardMetrics}>
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        } else {
+          return renderMetricsCard();
+        }
+
+      case 'tabs':
+        return renderTabsNavigation();
+
+      case 'content':
+        if (!isLoading) {
+          return (
+            <View style={styles.contentContainer}>
+              {renderTabContent()}
+            </View>
+          );
+        }
+        return null;
+
+      default:
+        return null;
+    }
+  };
+
   // If user is not a show organizer, show upgrade prompt
   if (!isShowOrganizer && !isLoading) {
     return (
@@ -326,64 +439,17 @@ const OrganizerDashboardScreen: React.FC = () => {
   
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
+      <SectionList
+        sections={sections}
+        renderItem={renderSectionItem}
+        renderSectionHeader={() => null}
+        keyExtractor={(item) => item.key}
+        stickySectionHeadersEnabled={false}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={refreshShows} />
         }
-      >
-        {/* Dashboard Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Organizer Dashboard</Text>
-          <Text style={styles.headerSubtitle}>
-            Manage your shows, reviews, and messages
-          </Text>
-        </View>
-        
-        {/* Metrics Card */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF6A00" />
-            <Text style={styles.loadingText}>Loading dashboard...</Text>
-          </View>
-        ) : error ? (
-          <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={fetchDashboardMetrics}>
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          renderMetricsCard()
-        )}
-        
-        {/* Tab Navigation */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsContainer}
-        >
-          {(['shows', 'claim', 'recurring', 'reviews', 'broadcast'] as TabName[]).map(tab => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-                {tab === 'shows' && 'My Shows'}
-                {tab === 'claim' && 'Unclaimed'}
-                {tab === 'recurring' && 'Recurring'}
-                {tab === 'reviews' && 'Reviews'}
-                {tab === 'broadcast' && 'Broadcast'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        
-        {/* Tab Content */}
-        {!isLoading && renderTabContent()}
-      </ScrollView>
+        contentContainerStyle={styles.sectionListContent}
+      />
     </View>
   );
 };
@@ -393,8 +459,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
-  scrollContent: {
+  sectionListContent: {
     paddingBottom: 20,
+  },
+  contentContainer: {
+    flex: 1,
   },
   header: {
     padding: 16,
@@ -474,6 +543,7 @@ const styles = StyleSheet.create({
     color: '#0057B8',
   },
   tabsContainer: {
+    flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
