@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import {
   View,
   Text,
@@ -26,12 +26,17 @@ interface UnclaimedShowsListProps {
   onClaimSuccess?: () => void; // Callback when a show is successfully claimed
 }
 
-const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
+// Ref interface so parent components (e.g., Dashboard) can manually trigger a refetch
+export interface UnclaimedShowsListRef {
+  refetch: () => Promise<void>;
+}
+
+const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListProps>(({
   organizerId,
   onRefresh,
   isRefreshing = false,
   onClaimSuccess
-}) => {
+}, ref) => {
   // Use the custom hook to fetch and manage unclaimed shows data
   const { 
     unclaimedItems, 
@@ -42,6 +47,18 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
   
   // State for tracking which items are being claimed
   const [claimingInProgress, setClaimingInProgress] = useState<Record<string, boolean>>({});
+
+  /**
+   * Expose an imperative refetch method so parent components can force a data
+   * refresh immediately after external actions (e.g. claiming a show).
+   * We memoise it with useCallback to avoid re-creating the function on every
+   * render which would break the ref identity.
+   */
+  const refetch = useCallback(async () => {
+    await refreshUnclaimedShows();
+  }, [refreshUnclaimedShows]);
+
+  useImperativeHandle(ref, () => ({ refetch }), [refetch]);
   
   // Handle claiming a show or series
   const handleClaim = async (item: UnclaimedItem) => {

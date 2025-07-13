@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,10 @@ interface OrganizerShowsListProps {
   isRefreshing?: boolean;
 }
 
+export interface OrganizerShowsListRef {
+  refetch: () => Promise<void>;
+}
+
 interface SeriesWithShows {
   series: ShowSeries;
   shows: Show[];
@@ -29,11 +33,11 @@ interface SeriesWithShows {
   nextShow?: Show | null;
 }
 
-const OrganizerShowsList: React.FC<OrganizerShowsListProps> = ({
+const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListProps>(({
   organizerId,
   onRefresh,
   isRefreshing = false
-}) => {
+}, ref) => {
   const navigation = useNavigation();
   
   // State variables
@@ -43,8 +47,8 @@ const OrganizerShowsList: React.FC<OrganizerShowsListProps> = ({
   const [standaloneShows, setStandaloneShows] = useState<Show[]>([]);
   const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
   
-  // Fetch organizer's shows
-  const fetchOrganizerShows = async () => {
+  // Fetch organizer's shows using useCallback
+  const fetchOrganizerShows = useCallback(async () => {
     if (!organizerId) return;
     
     try {
@@ -108,12 +112,17 @@ const OrganizerShowsList: React.FC<OrganizerShowsListProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizerId]);
+  
+  // Expose the refetch function to parent components
+  useImperativeHandle(ref, () => ({
+    refetch: fetchOrganizerShows
+  }));
   
   // Initial data fetch
   useEffect(() => {
     fetchOrganizerShows();
-  }, [organizerId]);
+  }, [fetchOrganizerShows]);
   
   // Toggle series expansion
   const toggleSeriesExpansion = (seriesId: string) => {
@@ -401,7 +410,7 @@ const OrganizerShowsList: React.FC<OrganizerShowsListProps> = ({
       onRefresh={onRefresh || fetchOrganizerShows}
     />
   );
-};
+});
 
 const styles = StyleSheet.create({
   listContainer: {
