@@ -122,6 +122,14 @@ export const showSeriesService = {
       throw new Error(`Failed to fetch shows in series: ${error.message}`);
     }
 
+    // Guard – ensure we have an array before proceeding
+    if (!data || !Array.isArray(data)) {
+      console.warn(
+        '[showSeriesService.getShowsInSeries] Expected array; returning empty array instead.',
+      );
+      return [];
+    }
+
     // Map the data to match the Show interface
     return data.map(show => ({
       id: show.id,
@@ -135,10 +143,7 @@ export const showSeriesService = {
       entryFee: show.entry_fee,
       imageUrl: show.image_url,
       rating: show.rating,
-      coordinates: show.coordinates ? {
-        latitude: show.coordinates.coordinates[1],
-        longitude: show.coordinates.coordinates[0]
-      } : undefined,
+      coordinates: this.extractSafeCoordinates(show.coordinates),
       status: show.status,
       organizerId: show.organizer_id,
       features: show.features,
@@ -208,12 +213,7 @@ export const showSeriesService = {
       entryFee: show.entry_fee,
       imageUrl: show.image_url,
       rating: show.rating,
-      coordinates: show.coordinates
-        ? {
-            latitude: show.coordinates.coordinates[1],
-            longitude: show.coordinates.coordinates[0],
-          }
-        : undefined,
+      coordinates: this.extractSafeCoordinates(show.coordinates),
       status: show.status,
       organizerId: show.organizer_id,
       features: show.features,
@@ -221,6 +221,45 @@ export const showSeriesService = {
       createdAt: show.created_at,
       updatedAt: show.updated_at,
     }));
+  },
+
+  /**
+   * Safely extract coordinates from PostGIS data format
+   * @param coordinatesData Raw coordinates data from database
+   * @returns Formatted coordinates or undefined if invalid
+   */
+  extractSafeCoordinates(coordinatesData: any): { latitude: number; longitude: number } | undefined {
+    // Check if coordinates exist at all
+    if (!coordinatesData) {
+      return undefined;
+    }
+    
+    try {
+      // Check if coordinates has the expected structure
+      if (!coordinatesData.coordinates || 
+          !Array.isArray(coordinatesData.coordinates) || 
+          coordinatesData.coordinates.length < 2) {
+        console.warn('[showSeriesService] Invalid coordinates structure:', coordinatesData);
+        return undefined;
+      }
+      
+      // Verify the coordinates are valid numbers
+      const longitude = Number(coordinatesData.coordinates[0]);
+      const latitude = Number(coordinatesData.coordinates[1]);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        console.warn('[showSeriesService] Invalid coordinate values:', coordinatesData.coordinates);
+        return undefined;
+      }
+      
+      return {
+        latitude,
+        longitude
+      };
+    } catch (error) {
+      console.error('[showSeriesService] Error extracting coordinates:', error);
+      return undefined;
+    }
   },
 
   /**
@@ -244,6 +283,14 @@ export const showSeriesService = {
     if (error) {
       console.error('Error fetching series reviews:', error);
       throw new Error(`Failed to fetch series reviews: ${error.message}`);
+    }
+
+    // Guard – ensure we have an array before proceeding
+    if (!data || !Array.isArray(data)) {
+      console.warn(
+        '[showSeriesService.getSeriesReviews] Expected array; returning empty array instead.',
+      );
+      return [];
     }
 
     return data.map(review => ({
