@@ -32,20 +32,46 @@ export const useUnclaimedShows = (organizerId: string) => {
       
       // Get unclaimed series
       console.log('[useUnclaimedShows] Fetching unclaimed series');
-      const unclaimedSeries = await showSeriesService.getAllShowSeries({ 
+      const unclaimedSeries = await showSeriesService.getAllShowSeries({
         organizerId: null // Passing null to get unclaimed series
       });
-      console.log(`[useUnclaimedShows] Found ${unclaimedSeries.length} unclaimed series`);
+      console.log('[useUnclaimedShows] Raw series response:', unclaimedSeries);
+
+      // Guard – ensure we have a valid array
+      const safeSeries: ShowSeries[] = Array.isArray(unclaimedSeries)
+        ? unclaimedSeries
+        : (() => {
+            console.warn(
+              '[useUnclaimedShows] Expected array for series – received',
+              typeof unclaimedSeries
+            );
+            return [];
+          })();
+      console.log(`[useUnclaimedShows] Found ${safeSeries.length} unclaimed series`);
       
       // Get unclaimed standalone shows (not part of any series)
       console.log('[useUnclaimedShows] Fetching unclaimed standalone shows');
       const unclaimedStandaloneShows = await showSeriesService.getUnclaimedShows();
-      console.log(`[useUnclaimedShows] Found ${unclaimedStandaloneShows.length} unclaimed standalone shows`);
+      console.log(
+        '[useUnclaimedShows] Raw standalone shows response:',
+        unclaimedStandaloneShows
+      );
+
+      // Guard – ensure we have a valid array
+      const safeShows: Show[] = Array.isArray(unclaimedStandaloneShows)
+        ? unclaimedStandaloneShows
+        : (() => {
+            console.warn(
+              '[useUnclaimedShows] Expected array for standalone shows – received',
+              typeof unclaimedStandaloneShows
+            );
+            return [];
+          })();
+      console.log(
+        `[useUnclaimedShows] Found ${safeShows.length} unclaimed standalone shows`
+      );
       
       // Combine into a single list
-      const safeSeries: ShowSeries[] = Array.isArray(unclaimedSeries) ? unclaimedSeries : [];
-      const safeShows: Show[] = Array.isArray(unclaimedStandaloneShows) ? unclaimedStandaloneShows : [];
-
       const combinedItems: UnclaimedItem[] = [
         ...safeSeries
           .filter((s): s is ShowSeries => !!s) // type-guard against undefined
