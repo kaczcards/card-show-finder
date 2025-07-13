@@ -4,11 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Import screens
 import OrganizerDashboardScreen from '../screens/Organizer/OrganizerDashboardScreen';
 import OrganizerReviewsScreen from '../screens/Organizer/OrganizerReviewsScreen';
+import AddShowScreen from '../screens/Organizer/AddShowScreen';
 
 // These screens will be implemented later
 // Declaring them as placeholders for navigation
 const SeriesDetailScreen = () => null;
-const AddShowScreen = () => null;
 const EditShowScreen = () => null;
 
 // Define navigation types for organizer stack
