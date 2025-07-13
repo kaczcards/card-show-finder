@@ -35,10 +35,17 @@ interface DashboardMetrics {
 // Section types for our SectionList
 type SectionType = 'header' | 'metrics' | 'tabs' | 'content';
 
+// Interface for section data items
+interface SectionItem {
+  id: string;
+  sectionType: SectionType;
+  index: number;
+}
+
 // Interface for our section data
 interface DashboardSection {
   type: SectionType;
-  data: Array<any>;
+  data: Array<SectionItem>;
 }
 
 const OrganizerDashboardScreen: React.FC = () => {
@@ -338,22 +345,39 @@ const OrganizerDashboardScreen: React.FC = () => {
       return [];
     }
 
+    // Create unique section items with section type and index
     const dashboardSections: DashboardSection[] = [
       {
         type: 'header',
-        data: [{ key: 'header' }]
+        data: [{ 
+          id: `header-item-${Date.now()}`, 
+          sectionType: 'header', 
+          index: 0 
+        }]
       },
       {
         type: 'metrics',
-        data: [{ key: 'metrics' }]
+        data: [{ 
+          id: `metrics-item-${Date.now()}`, 
+          sectionType: 'metrics', 
+          index: 0 
+        }]
       },
       {
         type: 'tabs',
-        data: [{ key: 'tabs' }]
+        data: [{ 
+          id: `tabs-item-${Date.now()}`, 
+          sectionType: 'tabs', 
+          index: 0 
+        }]
       },
       {
         type: 'content',
-        data: [{ key: 'content' }]
+        data: [{ 
+          id: `content-item-${Date.now()}-${activeTab}`, 
+          sectionType: 'content', 
+          index: 0 
+        }]
       }
     ];
 
@@ -361,8 +385,8 @@ const OrganizerDashboardScreen: React.FC = () => {
   }, [isShowOrganizer, isLoading, activeTab]);
 
   // Render section items
-  const renderSectionItem = ({ item, section }: { item: any, section: SectionListData<any> }) => {
-    const sectionType = section.type;
+  const renderSectionItem = ({ item, section }: { item: SectionItem, section: SectionListData<SectionItem> }) => {
+    const sectionType = section.type as SectionType;
 
     switch (sectionType) {
       case 'header':
@@ -443,7 +467,7 @@ const OrganizerDashboardScreen: React.FC = () => {
         sections={sections}
         renderItem={renderSectionItem}
         renderSectionHeader={() => null}
-        keyExtractor={(item) => item.key}
+        keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled={false}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={refreshShows} />
