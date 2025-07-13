@@ -484,4 +484,115 @@ export const showSeriesService = {
 
     return true;
   }
+
+  /* ------------------------------------------------------------------
+   * NEW METHODS
+   * ----------------------------------------------------------------*/
+
+  /**
+   * Internal helper – map a raw Supabase row into a typed Show object
+   */
+  mapShowRow(row: any): Show {
+    return {
+      id: row.id,
+      seriesId: row.series_id,
+      title: row.title,
+      description: row.description,
+      location: row.location,
+      address: row.address,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      entryFee: row.entry_fee,
+      imageUrl: row.image_url,
+      rating: row.rating,
+      coordinates: this.extractSafeCoordinates(row.coordinates),
+      status: row.status,
+      organizerId: row.organizer_id,
+      features: row.features,
+      categories: row.categories,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  },
+
+  /**
+   * Create a brand-new standalone show (not attached to any series)
+   * @param showData Partial show data (requires organizerId at minimum)
+   */
+  async createStandaloneShow(showData: Omit<
+    Show,
+    'id' | 'seriesId' | 'rating' | 'createdAt' | 'updatedAt' | 'coordinates'
+  > & { seriesId?: null }): Promise<{ success: boolean; show?: Show; error?: string }> {
+    try {
+      const payload = {
+        ...showData,
+        series_id: null,
+        // Supabase expects camelCase -> snake_case conversion
+        start_date: showData.startDate,
+        end_date: showData.endDate,
+        entry_fee: showData.entryFee,
+      };
+
+      const { data, error } = await supabase
+        .from('shows')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error creating standalone show:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, show: this.mapShowRow(data) };
+    } catch (err) {
+      console.error('Unexpected error creating standalone show:', err);
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      };
+    }
+  },
+
+  /**
+   * Add a new show to an existing series
+   * @param seriesId The series to attach the new show to
+   * @param showData Basic show fields (organizerId optional – inherits from series if omitted)
+   */
+  async addShowToSeries(
+    seriesId: string,
+    showData: Omit<
+      Show,
+      'id' | 'seriesId' | 'rating' | 'createdAt' | 'updatedAt' | 'coordinates'
+    >
+  ): Promise<{ success: boolean; show?: Show; error?: string }> {
+    try {
+      const payload = {
+        ...showData,
+        series_id: seriesId,
+        start_date: showData.startDate,
+        end_date: showData.endDate,
+        entry_fee: showData.entryFee,
+      };
+
+      const { data, error } = await supabase
+        .from('shows')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error adding show to series:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, show: this.mapShowRow(data) };
+    } catch (err) {
+      console.error('Unexpected error adding show to series:', err);
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      };
+    }
+  }
 };
