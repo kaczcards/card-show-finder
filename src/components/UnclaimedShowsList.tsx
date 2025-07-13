@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ShowSeries, Show } from '../types';
 import { showSeriesService } from '../services/showSeriesService';
 import { claimShow } from '../services/organizerService';
-import { useUnclaimedShows } from '../hooks';
+import { useUnclaimedShows, UnclaimedItem } from '../hooks/useUnclaimedShows';
 
 // Default placeholder image
 const placeholderShowImage = require('../../assets/images/placeholder-show.png');
@@ -44,15 +44,14 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
   const [claimingInProgress, setClaimingInProgress] = useState<Record<string, boolean>>({});
   
   // Handle claiming a show or series
-  const handleClaim = async (item: any) => {
+  const handleClaim = async (item: UnclaimedItem) => {
     // Basic validation – bail early if the payload is malformed
-    if (!item || !item.type) {
+    if (!item || !item.type || !item.data) {
       console.warn('[UnclaimedShows] handleClaim called with invalid item', item);
       return;
     }
 
-    const itemId =
-      item.type === 'series' ? item.series?.id : item.show?.id;
+    const itemId = item.data.id;
 
     if (!itemId) {
       console.warn('[UnclaimedShows] Missing ID while claiming', item);
@@ -60,7 +59,6 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
     }
 
     try {
-      
       // Set claiming in progress for this item
       setClaimingInProgress(prev => ({ ...prev, [itemId]: true }));
       
@@ -105,7 +103,7 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
     } finally {
       // Guard – itemId may be undefined if earlier validation failed
       if (itemId) {
-      setClaimingInProgress(prev => ({ ...prev, [itemId]: false }));
+        setClaimingInProgress(prev => ({ ...prev, [itemId]: false }));
       }
     }
   };
@@ -121,7 +119,7 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
   };
   
   // Render a series item
-  const renderSeriesItem = (series?: ShowSeries) => {
+  const renderSeriesItem = (series: ShowSeries) => {
     if (!series) return null; // Safety-net: avoid rendering invalid data
     const isClaimingInProgress = claimingInProgress[series.id] || false;
     
@@ -176,7 +174,7 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
         
         <TouchableOpacity 
           style={[styles.claimButton, isClaimingInProgress && styles.claimButtonDisabled]}
-          onPress={() => handleClaim({ type: 'series', series })}
+          onPress={() => handleClaim({ type: 'series', data: series })}
           disabled={isClaimingInProgress}
         >
           {isClaimingInProgress ? (
@@ -193,7 +191,7 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
   };
   
   // Render a show item
-  const renderShowItem = (show?: Show) => {
+  const renderShowItem = (show: Show) => {
     if (!show) return null;
     const isClaimingInProgress = claimingInProgress[show.id] || false;
     
@@ -226,7 +224,7 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
         
         <TouchableOpacity 
           style={[styles.claimButton, isClaimingInProgress && styles.claimButtonDisabled]}
-          onPress={() => handleClaim({ type: 'show', show })}
+          onPress={() => handleClaim({ type: 'show', data: show })}
           disabled={isClaimingInProgress}
         >
           {isClaimingInProgress ? (
@@ -243,14 +241,17 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
   };
   
   // Render an item (either series or show)
-  const renderItem = ({ item }: { item: any }) => {
-    if (!item) return null;
-    if (item.type === 'series' && item.series) {
-      return renderSeriesItem(item.series);
+  const renderItem = ({ item }: { item: UnclaimedItem }) => {
+    if (!item || !item.data) return null;
+    
+    if (item.type === 'series') {
+      return renderSeriesItem(item.data as ShowSeries);
     }
-    if (item.type === 'show' && item.show) {
-      return renderShowItem(item.show);
+    
+    if (item.type === 'show') {
+      return renderShowItem(item.data as Show);
     }
+    
     console.warn('[UnclaimedShows] Skipped rendering invalid item', item);
     return null;
   };
@@ -312,8 +313,8 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
       renderItem={renderItem}
       keyExtractor={(item, index) =>
         item.type === 'series'
-          ? `series-${item.series?.id ?? index}`
-          : `show-${item.show?.id ?? index}`
+          ? `series-${item.data.id ?? index}`
+          : `show-${item.data.id ?? index}`
       }
       contentContainerStyle={styles.listContainer}
       refreshControl={
