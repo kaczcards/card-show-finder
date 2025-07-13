@@ -154,8 +154,8 @@ const OrganizerDashboardScreen: React.FC = () => {
     }
   }, [isShowOrganizer, user?.id]);
   
-  // Handle refresh
-  const refreshShows = () => {
+  // Unified refresh for metrics and child lists
+  const fullRefresh = () => {
     setIsRefreshing(true);
     fetchDashboardMetrics();
   };
@@ -248,7 +248,7 @@ const OrganizerDashboardScreen: React.FC = () => {
         return (
           <OrganizerShowsList
             organizerId={user?.id || ''}
-            onRefresh={refreshShows}
+            onRefresh={fullRefresh}
             isRefreshing={isRefreshing}
           />
         );
@@ -257,9 +257,9 @@ const OrganizerDashboardScreen: React.FC = () => {
         return (
           <UnclaimedShowsList
             organizerId={user?.id || ''}
-            onRefresh={refreshShows}
+            onRefresh={fullRefresh}
             isRefreshing={isRefreshing}
-            onClaimSuccess={refreshShows}
+            onClaimSuccess={fullRefresh}
           />
         );
         
@@ -470,7 +470,7 @@ const OrganizerDashboardScreen: React.FC = () => {
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled={false}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={refreshShows} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={fullRefresh} />
         }
         contentContainerStyle={styles.sectionListContent}
       />
