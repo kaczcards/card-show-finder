@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DatePicker from 'react-native-date-picker';
 import { showSeriesService } from '../../services/showSeriesService';
 import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
 import { useAuth } from '../../contexts/AuthContext';
@@ -56,24 +56,18 @@ const AddShowScreen: React.FC = () => {
     });
   };
 
-  // Handle date changes
-  const onStartDateChange = (event: any, selectedDate?: Date) => {
+  // Helpers to handle confirmed dates from the DatePicker modal
+  const handleStartConfirm = (date: Date) => {
     setShowStartDatePicker(false);
-    if (selectedDate) {
-      setStartDate(selectedDate);
-      
-      // If end date is before the new start date, update it
-      if (endDate < selectedDate) {
-        setEndDate(selectedDate);
-      }
+    setStartDate(date);
+    if (endDate < date) {
+      setEndDate(date);
     }
   };
 
-  const onEndDateChange = (event: any, selectedDate?: Date) => {
+  const handleEndConfirm = (date: Date) => {
     setShowEndDatePicker(false);
-    if (selectedDate) {
-      setEndDate(selectedDate);
-    }
+    setEndDate(date);
   };
 
   // Validate form
@@ -254,25 +248,27 @@ const AddShowScreen: React.FC = () => {
             
             {errors.dates && <Text style={styles.errorText}>{errors.dates}</Text>}
             
-            {showStartDatePicker && (
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display="default"
-                onChange={onStartDateChange}
-                minimumDate={new Date()}
-              />
-            )}
-            
-            {showEndDatePicker && (
-              <DateTimePicker
-                value={endDate}
-                mode="date"
-                display="default"
-                onChange={onEndDateChange}
-                minimumDate={startDate}
-              />
-            )}
+            {/* Start Date Picker Modal */}
+            <DatePicker
+              modal
+              open={showStartDatePicker}
+              date={startDate}
+              mode="date"
+              minimumDate={new Date()}
+              onConfirm={handleStartConfirm}
+              onCancel={() => setShowStartDatePicker(false)}
+            />
+
+            {/* End Date Picker Modal */}
+            <DatePicker
+              modal
+              open={showEndDatePicker}
+              date={endDate}
+              mode="date"
+              minimumDate={startDate}
+              onConfirm={handleEndConfirm}
+              onCancel={() => setShowEndDatePicker(false)}
+            />
           </View>
 
           {/* Entry Fee */}
