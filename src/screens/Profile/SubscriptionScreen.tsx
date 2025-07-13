@@ -54,6 +54,9 @@ const SubscriptionScreen: React.FC = () => {
     error: subsError,
   } = useUserSubscriptions();
 
+  // Extract the current subscription from the array (there will be only one item)
+  const currentSubscription = subscriptions && subscriptions.length > 0 ? subscriptions[0] : null;
+
   useEffect(() => {
     if (user) {
       loadSubscriptionDetails();
@@ -497,6 +500,10 @@ const SubscriptionScreen: React.FC = () => {
       );
     }
     
+    // Use the currentSubscription from our mapped data if available
+    const activeStatus = currentSubscription?.status === 'active' || subscriptionDetails?.status === 'active';
+    const expiredStatus = currentSubscription?.status === 'expired' || subscriptionDetails?.status === 'expired';
+    
     const isUpgrade = user.accountType === 'collector' || 
       (user.accountType === 'dealer' && selectedPlan?.type === SubscriptionPlanType.ORGANIZER);
       
@@ -507,7 +514,7 @@ const SubscriptionScreen: React.FC = () => {
       ((user.accountType === 'dealer' && selectedPlan?.type === SubscriptionPlanType.DEALER) ||
        (user.accountType === 'organizer' && selectedPlan?.type === SubscriptionPlanType.ORGANIZER));
        
-    const hasExpired = subscriptionDetails?.status === 'expired';
+    const hasExpired = expiredStatus;
     
     let buttonText = 'Select a Plan';
     if (selectedPlan) {
@@ -519,7 +526,7 @@ const SubscriptionScreen: React.FC = () => {
     
     return (
       <View style={styles.actionButtonsContainer}>
-        {user.accountType !== 'collector' && subscriptionDetails?.status === 'active' && (
+        {user.accountType !== 'collector' && activeStatus && (
           <TouchableOpacity 
             style={styles.cancelButton}
             onPress={handleCancel}
