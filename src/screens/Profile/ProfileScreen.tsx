@@ -190,6 +190,12 @@ const ProfileScreen: React.FC = () => {
     
     try {
       setIsSubmitting(true);
+      console.log('[ProfileScreen] Saving profile changes:', {
+        firstName,
+        lastName: lastName || undefined,
+        homeZipCode,
+        phoneNumber: phoneNumber || undefined,
+      });
       
       await updateProfile({
         firstName,
@@ -199,9 +205,11 @@ const ProfileScreen: React.FC = () => {
       });
       
       setIsEditMode(false);
+      console.log('[ProfileScreen] Profile updated successfully');
       Alert.alert('Success', 'Profile updated successfully');
     } catch (err: any) {
-      Alert.alert('Update Failed', error || 'Please try again');
+      console.error('[ProfileScreen] Error updating profile:', err);
+      Alert.alert('Update Failed', err.message || 'Please try again');
     } finally {
       setIsSubmitting(false);
     }
