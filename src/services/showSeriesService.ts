@@ -483,7 +483,7 @@ export const showSeriesService = {
     }
 
     return true;
-  }
+  },
 
   /* ------------------------------------------------------------------
    * NEW METHODS

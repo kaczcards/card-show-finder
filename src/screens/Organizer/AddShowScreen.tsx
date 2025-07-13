@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import DatePicker from 'react-native-date-picker';
 import { showSeriesService } from '../../services/showSeriesService';
 import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,8 +34,8 @@ const AddShowScreen: React.FC = () => {
   const [entryFee, setEntryFee] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [startDateText, setStartDateText] = useState('');
+  const [endDateText, setEndDateText] = useState('');
   
   // Categories and features (optional)
   const [categories, setCategories] = useState<string[]>([]);
@@ -56,18 +55,19 @@ const AddShowScreen: React.FC = () => {
     });
   };
 
-  // Helpers to handle confirmed dates from the DatePicker modal
-  const handleStartConfirm = (date: Date) => {
-    setShowStartDatePicker(false);
-    setStartDate(date);
-    if (endDate < date) {
-      setEndDate(date);
-    }
-  };
+  // When component mounts, initialise text fields
+  React.useEffect(() => {
+    setStartDateText(formatDate(startDate));
+    setEndDateText(formatDate(endDate));
+  }, []);
 
-  const handleEndConfirm = (date: Date) => {
-    setShowEndDatePicker(false);
-    setEndDate(date);
+  /**
+   * Attempt to parse a user entered date string.
+   * Falls back to current value if parsing fails.
+   */
+  const tryParseDate = (value: string, current: Date): Date => {
+    const parsed = new Date(value);
+    return isNaN(parsed.getTime()) ? current : parsed;
   };
 
   // Validate form
@@ -228,47 +228,37 @@ const AddShowScreen: React.FC = () => {
           <View style={styles.formGroup}>
             <Text style={styles.label}>Event Dates*</Text>
             
-            {/* Start Date */}
-            <TouchableOpacity 
-              style={styles.dateButton}
-              onPress={() => setShowStartDatePicker(true)}
-            >
+            {/* Start Date Input */}
+            <View style={styles.dateInputWrapper}>
               <Ionicons name="calendar-outline" size={20} color="#0057B8" style={styles.dateIcon} />
-              <Text style={styles.dateText}>Start: {formatDate(startDate)}</Text>
-            </TouchableOpacity>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={startDateText}
+                onChangeText={(text) => {
+                  setStartDateText(text);
+                  setStartDate(tryParseDate(text, startDate));
+                }}
+                placeholder="Start date (e.g., 2025-04-22)"
+                placeholderTextColor="#999"
+              />
+            </View>
             
-            {/* End Date */}
-            <TouchableOpacity 
-              style={styles.dateButton}
-              onPress={() => setShowEndDatePicker(true)}
-            >
+            {/* End Date Input */}
+            <View style={styles.dateInputWrapper}>
               <Ionicons name="calendar-outline" size={20} color="#0057B8" style={styles.dateIcon} />
-              <Text style={styles.dateText}>End: {formatDate(endDate)}</Text>
-            </TouchableOpacity>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={endDateText}
+                onChangeText={(text) => {
+                  setEndDateText(text);
+                  setEndDate(tryParseDate(text, endDate));
+                }}
+                placeholder="End date (e.g., 2025-04-24)"
+                placeholderTextColor="#999"
+              />
+            </View>
             
             {errors.dates && <Text style={styles.errorText}>{errors.dates}</Text>}
-            
-            {/* Start Date Picker Modal */}
-            <DatePicker
-              modal
-              open={showStartDatePicker}
-              date={startDate}
-              mode="date"
-              minimumDate={new Date()}
-              onConfirm={handleStartConfirm}
-              onCancel={() => setShowStartDatePicker(false)}
-            />
-
-            {/* End Date Picker Modal */}
-            <DatePicker
-              modal
-              open={showEndDatePicker}
-              date={endDate}
-              mode="date"
-              minimumDate={startDate}
-              onConfirm={handleEndConfirm}
-              onCancel={() => setShowEndDatePicker(false)}
-            />
           </View>
 
           {/* Entry Fee */}
@@ -429,6 +419,18 @@ const styles = StyleSheet.create({
     height: 120,
   },
   dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F7FF',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  /**
+   * Wrapper used for the icon + TextInput date fields
+   * Very similar to `dateButton` but purpose-built for editable inputs.
+   */
+  dateInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F0F7FF',
