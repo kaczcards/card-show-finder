@@ -29,33 +29,39 @@ export const useUnclaimedShows = (organizerId: string) => {
       setIsLoading(true);
       setError(null);
       
-      // Get unclaimed series
-      const unclaimedSeries = await showSeriesService.getAllShowSeries({
-        organizerId: null // Passing null to get unclaimed series
-      });
-      
-      // CRITICAL DEBUG LOG - This log will show exactly what is coming back from the service
-      console.log('[DEBUG] Value of unclaimedSeries:', unclaimedSeries);
-      
-      // Get unclaimed standalone shows (not part of any series)
-      const unclaimedStandaloneShows = await showSeriesService.getUnclaimedShows();
-      
-      // CRITICAL DEBUG LOG - This log will show exactly what is coming back from the service
-      console.log('[DEBUG] Value of unclaimedStandaloneShows:', unclaimedStandaloneShows);
+      let unclaimedSeries: ShowSeries[] = [];
+      let unclaimedStandaloneShows: Show[] = [];
 
-      // --- THIS IS THE PRODUCTION-QUALITY FIX ---
-      // Default to an empty array if the service returns a falsy value (null, undefined, etc.)
-      const safeSeries = unclaimedSeries || [];
-      const safeShows = unclaimedStandaloneShows || [];
-      // ------------------------------------------
-      
-      console.log('[DEBUG] Using safeSeries:', safeSeries);
-      console.log('[DEBUG] Using safeShows:', safeShows);
-      
-      // Now, it is 100% safe to combine and map these arrays
+      /* -----------------------------------------
+       * 1️⃣  Fetch series – isolate failures here
+       * ----------------------------------------*/
+      try {
+        console.log('[useUnclaimedShows] Attempting to fetch series…');
+        unclaimedSeries = await showSeriesService.getAllShowSeries({
+          organizerId: null
+        });
+        console.log('[useUnclaimedShows] Successfully fetched series:', unclaimedSeries);
+      } catch (seriesErr) {
+        console.error('CRASHED INSIDE: getAllShowSeries', seriesErr);
+        throw seriesErr; // bubble up to outer catch
+      }
+
+      /* -------------------------------------------------
+       * 2️⃣  Fetch standalone shows – isolate failures here
+       * ------------------------------------------------*/
+      try {
+        console.log('[useUnclaimedShows] Attempting to fetch standalone shows…');
+        unclaimedStandaloneShows = await showSeriesService.getUnclaimedShows();
+        console.log('[useUnclaimedShows] Successfully fetched standalone shows:', unclaimedStandaloneShows);
+      } catch (showsErr) {
+        console.error('CRASHED INSIDE: getUnclaimedShows', showsErr);
+        throw showsErr; // bubble up to outer catch
+      }
+
+      // Combine and map the two lists
       const combinedItems = [
-        ...safeSeries.map(series => ({ type: 'series', data: series })),
-        ...safeShows.map(show => ({ type: 'show', data: show }))
+        ...unclaimedSeries.map(series => ({ type: 'series', data: series })),
+        ...unclaimedStandaloneShows.map(show => ({ type: 'show', data: show }))
       ];
       
       // Sort by date (most recent first)
