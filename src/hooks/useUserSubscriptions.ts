@@ -29,12 +29,17 @@ export const useUserSubscriptions = () => {
 
         console.log('[useUserSubscriptions] Fetching subscriptions for user:', user.id);
 
-        // Query user subscriptions from Supabase
+        /* --------------------------------------------------------------
+         * Subscription info lives in the `profiles` table, not a separate
+         * `user_subscriptions` table. We fetch the three relevant columns
+         * and map them to an array with one element so existing screens
+         * that expect `subscriptions.find(...)` keep working.
+         * -------------------------------------------------------------- */
         const { data, error: supabaseError } = await supabase
-          .from('user_subscriptions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .from('profiles')
+          .select('subscription_status, subscription_expiry, account_type')
+          .eq('id', user.id)
+          .single();
 
         // Handle Supabase error
         if (supabaseError) {
@@ -42,9 +47,19 @@ export const useUserSubscriptions = () => {
           throw new Error(supabaseError.message || 'Failed to fetch subscription data');
         }
 
-        // Set subscriptions data (empty array if no data)
-        setSubscriptions(data || []);
-        console.log('[useUserSubscriptions] Fetched subscriptions:', data?.length || 0);
+        // Map the profile row into the shape expected by the UI
+        const mapped = data
+          ? [
+              {
+                status: data.subscription_status,
+                expiry: data.subscription_expiry,
+                accountType: data.account_type,
+              },
+            ]
+          : [];
+
+        setSubscriptions(mapped);
+        console.log('[useUserSubscriptions] Fetched subscriptions:', mapped.length);
       } catch (err) {
         console.error('[useUserSubscriptions] Unexpected error:', err);
         setError(err instanceof Error ? err : new Error('An unknown error occurred'));
