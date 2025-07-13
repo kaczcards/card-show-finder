@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,8 +16,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import { showSeriesService } from '../../services/showSeriesService';
 import { supabase } from '../../supabase';
-import OrganizerShowsList from '../../components/OrganizerShowsList';
+import OrganizerShowsList, { OrganizerShowsListRef } from '../../components/OrganizerShowsList';
 import UnclaimedShowsList from '../../components/UnclaimedShowsList';
+
+// Define interface for UnclaimedShowsList ref
+interface UnclaimedShowsListRef {
+  refetch: () => Promise<void>;
+}
 
 // Define the tab names
 type TabName = 'shows' | 'claim' | 'recurring' | 'reviews' | 'broadcast';
@@ -52,6 +57,10 @@ const OrganizerDashboardScreen: React.FC = () => {
   const navigation = useNavigation();
   const { authState } = useAuth();
   const user = authState?.user;
+  
+  // Refs for list components
+  const organizerShowsListRef = useRef<OrganizerShowsListRef>(null);
+  const unclaimedShowsListRef = useRef<UnclaimedShowsListRef>(null);
   
   // State variables
   const [activeTab, setActiveTab] = useState<TabName>('shows');
@@ -141,7 +150,6 @@ const OrganizerDashboardScreen: React.FC = () => {
       setError('Failed to load dashboard metrics. Please try again.');
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
   };
   
@@ -157,7 +165,23 @@ const OrganizerDashboardScreen: React.FC = () => {
   // Unified refresh for metrics and child lists
   const fullRefresh = () => {
     setIsRefreshing(true);
+    
+    // Fetch dashboard metrics
     fetchDashboardMetrics();
+    
+    // Refresh both list components using their refs
+    if (organizerShowsListRef.current) {
+      organizerShowsListRef.current.refetch();
+    }
+    
+    if (unclaimedShowsListRef.current) {
+      unclaimedShowsListRef.current.refetch();
+    }
+    
+    // Set isRefreshing to false after a timeout to ensure smooth UX
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000);
   };
 
   // Refresh metrics every time the screen gains focus
@@ -247,6 +271,7 @@ const OrganizerDashboardScreen: React.FC = () => {
       case 'shows':
         return (
           <OrganizerShowsList
+            ref={organizerShowsListRef}
             organizerId={user?.id || ''}
             onRefresh={fullRefresh}
             isRefreshing={isRefreshing}
@@ -256,6 +281,7 @@ const OrganizerDashboardScreen: React.FC = () => {
       case 'claim':
         return (
           <UnclaimedShowsList
+            ref={unclaimedShowsListRef}
             organizerId={user?.id || ''}
             onRefresh={fullRefresh}
             isRefreshing={isRefreshing}
