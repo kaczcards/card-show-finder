@@ -43,19 +43,29 @@ export const useUnclaimedShows = (organizerId: string) => {
       console.log(`[useUnclaimedShows] Found ${unclaimedStandaloneShows.length} unclaimed standalone shows`);
       
       // Combine into a single list
+      const safeSeries: ShowSeries[] = Array.isArray(unclaimedSeries) ? unclaimedSeries : [];
+      const safeShows: Show[] = Array.isArray(unclaimedStandaloneShows) ? unclaimedStandaloneShows : [];
+
       const combinedItems: UnclaimedItem[] = [
-        ...unclaimedSeries.map(series => ({ type: 'series', series } as UnclaimedItem)),
-        ...unclaimedStandaloneShows.map(show => ({ type: 'show', show } as UnclaimedItem))
+        ...safeSeries
+          .filter((s): s is ShowSeries => !!s) // type-guard against undefined
+          .map(series => ({ type: 'series', series } as UnclaimedItem)),
+        ...safeShows
+          .filter((sh): sh is Show => !!sh)
+          .map(show => ({ type: 'show', show } as UnclaimedItem)),
       ];
       
       // Sort by date (most recent first)
-      combinedItems.sort((a, b) => {
-        const dateA = a.type === 'show' ? new Date(a.show!.startDate) : 
-          (a.series!.nextShowDate ? new Date(a.series!.nextShowDate) : new Date(0));
-        const dateB = b.type === 'show' ? new Date(b.show!.startDate) : 
-          (b.series!.nextShowDate ? new Date(b.series!.nextShowDate) : new Date(0));
-        return dateA.getTime() - dateB.getTime();
-      });
+      const getItemDate = (item: UnclaimedItem): number => {
+        if (item.type === 'show') {
+          const raw = item.show?.startDate;
+          return raw ? new Date(raw).getTime() : Number.MAX_SAFE_INTEGER;
+        }
+        const raw = item.series?.nextShowDate;
+        return raw ? new Date(raw).getTime() : Number.MAX_SAFE_INTEGER;
+      };
+
+      combinedItems.sort((a, b) => getItemDate(a) - getItemDate(b));
       
       console.log(`[useUnclaimedShows] Fetch complete. Total unclaimed items: ${combinedItems.length}`);
       setUnclaimedItems(combinedItems);
