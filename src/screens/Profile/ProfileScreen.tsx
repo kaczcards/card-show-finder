@@ -22,8 +22,10 @@ import { supabase } from '../../supabase';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
-  // Pull favoriteCount from authState so it can be displayed below
-  const { user, isLoading, error, favoriteCount } = authState;
+  // Pull favoriteCount from authState so it can be displayed below.
+  // We intentionally omit `authState.error` from UI display here; each action
+  // (e.g., saveChanges) surfaces its own errors inline.
+  const { user, isLoading, favoriteCount } = authState;
   const navigation = useNavigation();
   
   // State for edit mode

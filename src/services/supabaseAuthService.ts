@@ -517,12 +517,13 @@ export const updateUserProfile = async (
 ): Promise<void> => {
   try {
     /* ------------------------------------------------------------------
-     * STEP 1 · Update base profile fields that are guaranteed to exist
+     * Build single update object with all provided fields
      * ------------------------------------------------------------------ */
-    const baseUpdates: Record<string, any> = {
+    const profileUpdates: Record<string, any> = {
       first_name: userData.firstName,
-      last_name: userData.lastName || '',
+      last_name: userData.lastName ?? '',
       home_zip_code: userData.homeZipCode,
+      phone_number: userData.phoneNumber,
       profile_image_url: userData.profileImageUrl,
       account_type: userData.accountType,
       subscription_status: userData.subscriptionStatus,
@@ -530,46 +531,24 @@ export const updateUserProfile = async (
       updated_at: new Date().toISOString(),
     };
 
-    console.log('[AUTH SERVICE] updateUserProfile – applying base profile updates', {
+    // Remove undefined values to avoid unintentionally overwriting fields
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(profileUpdates).filter(([, value]) => value !== undefined)
+    );
+
+    console.log('[AUTH SERVICE] updateUserProfile – applying profile updates', {
       uid,
-      fields: Object.keys(baseUpdates).filter(Boolean),
+      fields: Object.keys(cleanUpdates),
     });
 
-    const { error: baseError } = await supabase
+    const { error } = await supabase
       .from('profiles')
-      .update(baseUpdates)
+      .update(cleanUpdates)
       .eq('id', uid);
 
-    if (baseError) {
-      console.error('[AUTH SERVICE] updateUserProfile – base update failed', baseError);
-      throw baseError;
-    }
-
-    /* ------------------------------------------------------------------
-     * STEP 2 · Update phone_number column separately (may not exist)
-     * ------------------------------------------------------------------ */
-    if (typeof userData.phoneNumber !== 'undefined') {
-      console.log('[AUTH SERVICE] updateUserProfile – attempting phone_number update');
-
-      const { error: phoneError } = await supabase
-        .from('profiles')
-        .update({
-          phone_number: userData.phoneNumber,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', uid);
-
-      if (phoneError) {
-        // 42703 => column does not exist
-        if (phoneError.code === '42703') {
-          console.warn(
-            '[AUTH SERVICE] updateUserProfile – phone_number column missing in DB, skipping update'
-          );
-        } else {
-          console.error('[AUTH SERVICE] updateUserProfile – phone_number update failed', phoneError);
-          throw phoneError;
-        }
-      }
+    if (error) {
+      console.error('[AUTH SERVICE] updateUserProfile – update failed', error);
+      throw error;
     }
 
     // Update user metadata in Supabase Auth if name is being updated
