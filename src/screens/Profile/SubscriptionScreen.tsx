@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
+import { useUserSubscriptions } from '../../hooks/useUserSubscriptions';
 import {
   SUBSCRIPTION_PLANS,
   getSubscriptionDetails,
@@ -44,6 +45,15 @@ const SubscriptionScreen: React.FC = () => {
   const LIGHT_GRAY = '#f0f0f0';
   const DARK_GRAY = '#666666';
   
+  /* ------------------------------------------------------------------
+   * Subscriptions – fetch via dedicated hook
+   * ------------------------------------------------------------------ */
+  const {
+    subscriptions,
+    isLoading: subsLoading,
+    error: subsError,
+  } = useUserSubscriptions();
+
   useEffect(() => {
     if (user) {
       loadSubscriptionDetails();
@@ -97,6 +107,11 @@ const SubscriptionScreen: React.FC = () => {
   };
   
   const handlePurchase = async () => {
+    // Guard: subscription data must be ready
+    if (subsLoading) {
+      Alert.alert('Please wait', 'Subscription data is still loading. Try again shortly.');
+      return;
+    }
     if (!user || !selectedPlan) return;
     
     setProcessingPayment(true);
@@ -122,6 +137,10 @@ const SubscriptionScreen: React.FC = () => {
   };
   
   const handleRenewal = async () => {
+    if (subsLoading) {
+      Alert.alert('Please wait', 'Subscription data is still loading. Try again shortly.');
+      return;
+    }
     if (!user || !selectedPlan) return;
     
     setProcessingPayment(true);
@@ -147,6 +166,10 @@ const SubscriptionScreen: React.FC = () => {
   };
   
   const handleCancel = async () => {
+    if (subsLoading) {
+      Alert.alert('Please wait', 'Subscription data is still loading. Try again shortly.');
+      return;
+    }
     if (!user) return;
     
     Alert.alert(
@@ -466,6 +489,13 @@ const SubscriptionScreen: React.FC = () => {
   
   const renderActionButtons = () => {
     if (!user) return null;
+    if (subsLoading) {
+      return (
+        <View style={styles.actionButtonsContainer}>
+          <ActivityIndicator color={ORANGE} />
+        </View>
+      );
+    }
     
     const isUpgrade = user.accountType === 'collector' || 
       (user.accountType === 'dealer' && selectedPlan?.type === SubscriptionPlanType.ORGANIZER);
@@ -517,7 +547,9 @@ const SubscriptionScreen: React.FC = () => {
     );
   };
   
-  if (loading) {
+  const combinedLoading = loading || subsLoading;
+
+  if (combinedLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={ORANGE} />
@@ -529,6 +561,15 @@ const SubscriptionScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <Text style={styles.screenTitle}>Subscription Management</Text>
+
+      {/* Error banner if subscription fetch failed */}
+      {subsError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>
+            Failed to load subscription data. Some actions may be unavailable.
+          </Text>
+        </View>
+      )}
       
       {renderCurrentSubscription()}
       {renderPlanSelector()}
@@ -811,6 +852,16 @@ const styles = StyleSheet.create({
   },
   processingButton: {
     backgroundColor: '#666666',
+  },
+  errorBanner: {
+    backgroundColor: '#ffe5e5',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 12,
+  },
+  errorBannerText: {
+    color: '#cc0000',
+    textAlign: 'center',
   },
   cancelButton: {
     padding: 16,
