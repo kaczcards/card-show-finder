@@ -40,9 +40,24 @@ export const showSeriesService = {
 
     const { data, error } = await query;
 
+    // Debug log the raw response
+    console.log('[showSeriesService.getAllShowSeries] Raw Supabase response:', {
+      dataType: Array.isArray(data) ? 'array' : typeof data,
+      length: Array.isArray(data) ? data.length : 'n/a',
+      error,
+    });
+
     if (error) {
       console.error('Error fetching show series:', error);
       throw new Error(`Failed to fetch show series: ${error.message}`);
+    }
+
+    // Guard – ensure we have an array before proceeding
+    if (!data || !Array.isArray(data)) {
+      console.warn(
+        '[showSeriesService.getAllShowSeries] Expected array; returning empty array instead.',
+      );
+      return [];
     }
 
     return data.map(series => ({
@@ -160,9 +175,24 @@ export const showSeriesService = {
 
     const { data, error } = await query;
 
+    // Debug log the raw response
+    console.log('[showSeriesService.getUnclaimedShows] Raw Supabase response:', {
+      dataType: Array.isArray(data) ? 'array' : typeof data,
+      length: Array.isArray(data) ? data.length : 'n/a',
+      error,
+    });
+
     if (error) {
       console.error('Error fetching unclaimed shows:', error);
       throw new Error(`Failed to fetch unclaimed shows: ${error.message}`);
+    }
+
+    // Guard – ensure we have an array; otherwise return empty list
+    if (!data || !Array.isArray(data)) {
+      console.warn(
+        '[showSeriesService.getUnclaimedShows] Expected array; returning empty array instead.',
+      );
+      return [];
     }
 
     // Map rows to Show interface
