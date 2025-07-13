@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ShowSeries, Show } from '../types';
 import { showSeriesService } from '../services/showSeriesService';
 import { claimShow } from '../services/organizerService';
+import { useUnclaimedShows } from '../hooks';
 
 // Default placeholder image
 const placeholderShowImage = require('../../assets/images/placeholder-show.png');
@@ -25,70 +26,25 @@ interface UnclaimedShowsListProps {
   onClaimSuccess?: () => void; // Callback when a show is successfully claimed
 }
 
-interface UnclaimedItem {
-  type: 'series' | 'show';
-  series?: ShowSeries;
-  show?: Show;
-}
-
 const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
   organizerId,
   onRefresh,
   isRefreshing = false,
   onClaimSuccess
 }) => {
-  // State variables
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [unclaimedItems, setUnclaimedItems] = useState<UnclaimedItem[]>([]);
+  // Use the custom hook to fetch and manage unclaimed shows data
+  const { 
+    unclaimedItems, 
+    isLoading, 
+    error, 
+    refreshUnclaimedShows 
+  } = useUnclaimedShows(organizerId);
+  
+  // State for tracking which items are being claimed
   const [claimingInProgress, setClaimingInProgress] = useState<Record<string, boolean>>({});
   
-  // Fetch unclaimed shows and series
-  const fetchUnclaimedShows = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Get unclaimed series
-      const unclaimedSeries = await showSeriesService.getAllShowSeries({ 
-        organizerId: null // Passing null to get unclaimed series
-      });
-      
-      // Get unclaimed standalone shows (not part of any series)
-      const unclaimedStandaloneShows = await showSeriesService.getUnclaimedShows();
-      
-      // Combine into a single list
-      const combinedItems: UnclaimedItem[] = [
-        ...unclaimedSeries.map(series => ({ type: 'series', series } as UnclaimedItem)),
-        ...unclaimedStandaloneShows.map(show => ({ type: 'show', show } as UnclaimedItem))
-      ];
-      
-      // Sort by date (most recent first)
-      combinedItems.sort((a, b) => {
-        const dateA = a.type === 'show' ? new Date(a.show!.startDate) : 
-          (a.series!.nextShowDate ? new Date(a.series!.nextShowDate) : new Date(0));
-        const dateB = b.type === 'show' ? new Date(b.show!.startDate) : 
-          (b.series!.nextShowDate ? new Date(b.series!.nextShowDate) : new Date(0));
-        return dateA.getTime() - dateB.getTime();
-      });
-      
-      setUnclaimedItems(combinedItems);
-      
-    } catch (err) {
-      console.error('Error fetching unclaimed shows:', err);
-      setError('Failed to load unclaimed shows. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Initial data fetch
-  useEffect(() => {
-    fetchUnclaimedShows();
-  }, [organizerId]);
-  
   // Handle claiming a show or series
-  const handleClaim = async (item: UnclaimedItem) => {
+  const handleClaim = async (item: any) => {
     try {
       const itemId = item.type === 'series' ? item.series!.id : item.show!.id;
       
@@ -105,10 +61,8 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
       }
       
       if ((result.success === true) || (result.error === null)) {
-        // Success - remove item from list
-        setUnclaimedItems(prev => prev.filter(i => 
-          (i.type === 'series' ? i.series!.id !== itemId : i.show!.id !== itemId)
-        ));
+        // Success - refresh the list to remove the claimed item
+        refreshUnclaimedShows();
         
         // Show success message
         Alert.alert(
@@ -272,7 +226,7 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
   };
   
   // Render an item (either series or show)
-  const renderItem = ({ item }: { item: UnclaimedItem }) => {
+  const renderItem = ({ item }: { item: any }) => {
     if (item.type === 'series') {
       return renderSeriesItem(item.series!);
     } else {
@@ -281,7 +235,7 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
   };
   
   // Loading state
-  if (loading && !isRefreshing) {
+  if (isLoading && !isRefreshing) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF6A00" />
@@ -295,10 +249,10 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
     return (
       <View style={styles.errorContainer}>
         <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>{error.message || 'Failed to load unclaimed shows. Please try again.'}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={fetchUnclaimedShows}
+          onPress={refreshUnclaimedShows}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -342,7 +296,7 @@ const UnclaimedShowsList: React.FC<UnclaimedShowsListProps> = ({
       refreshControl={
         <RefreshControl 
           refreshing={isRefreshing} 
-          onRefresh={onRefresh || fetchUnclaimedShows} 
+          onRefresh={onRefresh || refreshUnclaimedShows} 
         />
       }
       ListHeaderComponent={
