@@ -6,8 +6,7 @@ import { showSeriesService } from '../services/showSeriesService';
 // Interface for combined unclaimed items (shows or series)
 export interface UnclaimedItem {
   type: 'series' | 'show';
-  series?: ShowSeries;
-  show?: Show;
+  data: ShowSeries | Show;
 }
 
 /**
@@ -31,64 +30,42 @@ export const useUnclaimedShows = (organizerId: string) => {
       setError(null);
       
       // Get unclaimed series
-      console.log('[useUnclaimedShows] Fetching unclaimed series');
       const unclaimedSeries = await showSeriesService.getAllShowSeries({
         organizerId: null // Passing null to get unclaimed series
       });
-      console.log('[useUnclaimedShows] Raw series response:', unclaimedSeries);
-
-      // Guard – ensure we have a valid array
-      const safeSeries: ShowSeries[] = Array.isArray(unclaimedSeries)
-        ? unclaimedSeries
-        : (() => {
-            console.warn(
-              '[useUnclaimedShows] Expected array for series – received',
-              typeof unclaimedSeries
-            );
-            return [];
-          })();
-      console.log(`[useUnclaimedShows] Found ${safeSeries.length} unclaimed series`);
+      
+      // CRITICAL DEBUG LOG - This log will show exactly what is coming back from the service
+      console.log('[DEBUG] Value of unclaimedSeries:', unclaimedSeries);
       
       // Get unclaimed standalone shows (not part of any series)
-      console.log('[useUnclaimedShows] Fetching unclaimed standalone shows');
       const unclaimedStandaloneShows = await showSeriesService.getUnclaimedShows();
-      console.log(
-        '[useUnclaimedShows] Raw standalone shows response:',
-        unclaimedStandaloneShows
-      );
-
-      // Guard – ensure we have a valid array
-      const safeShows: Show[] = Array.isArray(unclaimedStandaloneShows)
-        ? unclaimedStandaloneShows
-        : (() => {
-            console.warn(
-              '[useUnclaimedShows] Expected array for standalone shows – received',
-              typeof unclaimedStandaloneShows
-            );
-            return [];
-          })();
-      console.log(
-        `[useUnclaimedShows] Found ${safeShows.length} unclaimed standalone shows`
-      );
       
-      // Combine into a single list
-      const combinedItems: UnclaimedItem[] = [
-        ...safeSeries
-          .filter((s): s is ShowSeries => !!s) // type-guard against undefined
-          .map(series => ({ type: 'series', series } as UnclaimedItem)),
-        ...safeShows
-          .filter((sh): sh is Show => !!sh)
-          .map(show => ({ type: 'show', show } as UnclaimedItem)),
+      // CRITICAL DEBUG LOG - This log will show exactly what is coming back from the service
+      console.log('[DEBUG] Value of unclaimedStandaloneShows:', unclaimedStandaloneShows);
+
+      // --- THIS IS THE PRODUCTION-QUALITY FIX ---
+      // Default to an empty array if the service returns a falsy value (null, undefined, etc.)
+      const safeSeries = unclaimedSeries || [];
+      const safeShows = unclaimedStandaloneShows || [];
+      // ------------------------------------------
+      
+      console.log('[DEBUG] Using safeSeries:', safeSeries);
+      console.log('[DEBUG] Using safeShows:', safeShows);
+      
+      // Now, it is 100% safe to combine and map these arrays
+      const combinedItems = [
+        ...safeSeries.map(series => ({ type: 'series', data: series })),
+        ...safeShows.map(show => ({ type: 'show', data: show }))
       ];
       
       // Sort by date (most recent first)
       const getItemDate = (item: UnclaimedItem): number => {
         if (item.type === 'show') {
-          const raw = item.show?.startDate;
-          return raw ? new Date(raw).getTime() : Number.MAX_SAFE_INTEGER;
+          const show = item.data as Show;
+          return show?.startDate ? new Date(show.startDate).getTime() : Number.MAX_SAFE_INTEGER;
         }
-        const raw = item.series?.nextShowDate;
-        return raw ? new Date(raw).getTime() : Number.MAX_SAFE_INTEGER;
+        const series = item.data as ShowSeries;
+        return series?.nextShowDate ? new Date(series.nextShowDate).getTime() : Number.MAX_SAFE_INTEGER;
       };
 
       combinedItems.sort((a, b) => getItemDate(a) - getItemDate(b));
