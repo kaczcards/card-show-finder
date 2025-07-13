@@ -13,18 +13,27 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
 import { useUserSubscriptions } from '../../hooks/useUserSubscriptions';
+/* -------------------------------------------------------------
+ * Subscription service – functions that act on the database
+ * ----------------------------------------------------------- */
 import {
-  SUBSCRIPTION_PLANS,
   getSubscriptionDetails,
   getSubscriptionTimeRemaining,
   initiateSubscriptionPurchase,
   renewSubscription,
   cancelSubscription,
   formatExpiryDate,
+} from '../../services/subscriptionService';
+
+/* -------------------------------------------------------------
+ * Subscription constants / enums – exported from subscriptionTypes
+ * ----------------------------------------------------------- */
+import {
+  SUBSCRIPTION_PLANS,
   SubscriptionPlan,
   SubscriptionPlanType,
   SubscriptionDuration,
-} from '../../services/subscriptionService';
+} from '../../services/subscriptionTypes';
 
 const SubscriptionScreen: React.FC = () => {
   const { authState, refreshUserRole } = useAuth(); // Destructure refreshUserRole from useAuth
