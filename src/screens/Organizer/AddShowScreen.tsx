@@ -16,6 +16,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { showSeriesService } from '../../services/showSeriesService';
 import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
 import { useAuth } from '../../contexts/AuthContext';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type AddShowScreenRouteProp = RouteProp<OrganizerStackParamList, 'AddShow'>;
 
@@ -30,7 +31,11 @@ const AddShowScreen: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [address, setAddress] = useState('');
+  // ─────────────────────────  Structured address  ──────────────────────────
+  const [street,     setStreet]     = useState('');
+  const [city,       setCity]       = useState('');
+  const [stateProv,  setStateProv]  = useState('');   // 2–letter state / province
+  const [zipCode,    setZipCode]    = useState('');
   const [entryFee, setEntryFee] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
@@ -45,8 +50,8 @@ const AddShowScreen: React.FC = () => {
   const [endPeriod, setEndPeriod]   = useState<'AM' | 'PM'>('PM');
 
   // Calendar-modal visibility (actual UI to be added in follow-up patch)
-  const [showStartCalendar, setShowStartCalendar] = useState(false);
-  const [showEndCalendar,   setShowEndCalendar]   = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker,   setShowEndPicker]   = useState(false);
   
   // Categories and features (optional)
   const [categories, setCategories] = useState<string[]>([]);
@@ -95,8 +100,19 @@ const AddShowScreen: React.FC = () => {
       newErrors.location = 'Location is required';
     }
 
-    if (!address.trim()) {
-      newErrors.address = 'Address is required';
+    if (!street.trim()) {
+      newErrors.street = 'Street address is required';
+    }
+    if (!city.trim()) {
+      newErrors.city = 'City is required';
+    }
+    if (!stateProv.trim()) {
+      newErrors.stateProv = 'State is required';
+    }
+    if (!zipCode.trim()) {
+      newErrors.zipCode = 'ZIP code is required';
+    } else if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipCode)) {
+      newErrors.zipCode = 'ZIP code is invalid';
     }
 
     // Combine date+time for proper comparison
@@ -157,7 +173,11 @@ const AddShowScreen: React.FC = () => {
         title,
         description,
         location,
-        address,
+        address: `${street}, ${city}, ${stateProv} ${zipCode}`,
+        street,
+        city,
+        state: stateProv,
+        zipCode,
         startDate: startDate.toISOString(), // persisted without time portion in this step
         endDate: endDate.toISOString(),
         entryFee: entryFee ? Number(entryFee) : 0,
@@ -248,16 +268,55 @@ const AddShowScreen: React.FC = () => {
 
           {/* Address */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Full Address*</Text>
+            <Text style={styles.label}>Street Address*</Text>
             <TextInput
-              style={[styles.input, errors.address && styles.inputError]}
-              value={address}
-              onChangeText={setAddress}
-              placeholder="Street address, city, state, zip"
+              style={[styles.input, errors.street && styles.inputError]}
+              value={street}
+              onChangeText={setStreet}
+              placeholder="123 Main St."
               placeholderTextColor="#999"
-              multiline
             />
-            {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
+            {errors.street && <Text style={styles.errorText}>{errors.street}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>City*</Text>
+            <TextInput
+              style={[styles.input, errors.city && styles.inputError]}
+              value={city}
+              onChangeText={setCity}
+              placeholder="Anytown"
+              placeholderTextColor="#999"
+            />
+            {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>State*</Text>
+            <TextInput
+              style={[styles.input, errors.stateProv && styles.inputError]}
+              value={stateProv}
+              onChangeText={txt => setStateProv(txt.toUpperCase())}
+              placeholder="CA"
+              placeholderTextColor="#999"
+              maxLength={2}
+              autoCapitalize="characters"
+            />
+            {errors.stateProv && <Text style={styles.errorText}>{errors.stateProv}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>ZIP Code*</Text>
+            <TextInput
+              style={[styles.input, errors.zipCode && styles.inputError]}
+              value={zipCode}
+              onChangeText={setZipCode}
+              placeholder="90210"
+              placeholderTextColor="#999"
+              keyboardType="number-pad"
+              maxLength={10}
+            />
+            {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
           </View>
 
           {/* Dates */}
@@ -277,7 +336,7 @@ const AddShowScreen: React.FC = () => {
                 placeholder="Start date (e.g., 2025-04-22)"
                 placeholderTextColor="#999"
               />
-              <TouchableOpacity onPress={() => setShowStartCalendar(true)}>
+              <TouchableOpacity onPress={() => setShowStartPicker(true)}>
                 <Ionicons name="chevron-down" size={20} color="#0057B8" />
               </TouchableOpacity>
             </View>
@@ -323,7 +382,7 @@ const AddShowScreen: React.FC = () => {
                 placeholder="End date (e.g., 2025-04-24)"
                 placeholderTextColor="#999"
               />
-              <TouchableOpacity onPress={() => setShowEndCalendar(true)}>
+              <TouchableOpacity onPress={() => setShowEndPicker(true)}>
                 <Ionicons name="chevron-down" size={20} color="#0057B8" />
               </TouchableOpacity>
             </View>
@@ -359,17 +418,38 @@ const AddShowScreen: React.FC = () => {
             {errors.dates && <Text style={styles.errorText}>{errors.dates}</Text>}
           </View>
 
-          {/* ----- Calendar Modal(s) placeholder (UI in next patch) ----- */}
-          {/* These modals will be replaced with full calendar grid in follow-up */}
-          {showStartCalendar && (
-            <View style={styles.modalBackdrop}>
-              <TouchableOpacity style={styles.modalBackdrop} onPress={() => setShowStartCalendar(false)} />
-            </View>
+          {/* ----- DateTimePicker (cross-platform) ----- */}
+          {showStartPicker && (
+            <DateTimePicker
+              testID="startDatePicker"
+              value={startDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              onChange={(_, selected) => {
+                setShowStartPicker(false);
+                if (selected) {
+                  setStartDate(selected);
+                  setStartDateText(
+                    formatDateTime(selected, startHour, startMinute, startPeriod),
+                  );
+                }
+              }}
+            />
           )}
-          {showEndCalendar && (
-            <View style={styles.modalBackdrop}>
-              <TouchableOpacity style={styles.modalBackdrop} onPress={() => setShowEndCalendar(false)} />
-            </View>
+          {showEndPicker && (
+            <DateTimePicker
+              testID="endDatePicker"
+              value={endDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              onChange={(_, selected) => {
+                setShowEndPicker(false);
+                if (selected) {
+                  setEndDate(selected);
+                  setEndDateText(formatDateTime(selected, endHour, endMinute, endPeriod));
+                }
+              }}
+            />
           )}
 
           {/* Entry Fee */}
