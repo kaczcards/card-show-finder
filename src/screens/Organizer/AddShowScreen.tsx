@@ -17,6 +17,7 @@ import { showSeriesService } from '../../services/showSeriesService';
 import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
 import { useAuth } from '../../contexts/AuthContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { supabase } from '../../supabase';
 
 type AddShowScreenRouteProp = RouteProp<OrganizerStackParamList, 'AddShow'>;
 
@@ -204,48 +205,39 @@ const AddShowScreen: React.FC = () => {
       console.log('  - Start Date:', fullStartDate);
       console.log('  - End Date:', fullEndDate);
       
-      /**
-       * IMPORTANT:
-       * showSeriesService.createStandaloneShow(...) expects camel-case keys that
-       * match the `Show` interface.  It then converts to the snake_case column
-       * names internally.  Passing snake_case keys from this screen caused
-       * `start_date` / `end_date` to be overwritten with **undefined**, which
-       * the DB rejected with the NOT-NULL constraint error you are seeing.
-       *
-       * Therefore we build the payload using *camelCase* keys only .
-       */
+      // Create payload with snake_case keys matching database schema exactly
       const showData = {
-        title,
-        description,
-        location,
+        title: title,
+        description: description,
+        location: location,
         address: `${street}, ${city}, ${stateProv} ${zipCode}`,
-        organizerId: userId,
+        organizer_id: userId,
         status: 'ACTIVE',
-        entryFee: entryFee ? Number(entryFee) : 0,
-        // camelCase date props – the service will map them to start_date/end_date
-        startDate: fullStartDate,
-        endDate: fullEndDate,
-        // Optional JSON/array columns
+        entry_fee: entryFee ? Number(entryFee) : 0,
+        start_date: fullStartDate,
+        end_date: fullEndDate,
         features: features.length > 0
           ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
           : null,
         categories: categories.length > 0 ? categories : null,
-        // For standalone shows pass null so the service adds series_id: null
-        seriesId: seriesId || null,
+        series_id: seriesId || null
       };
       
       console.log('[AddShowScreen] Sending payload to server:', JSON.stringify(showData, null, 2));
 
-      // Call the appropriate service method
-      const result = seriesId 
-        ? await showSeriesService.addShowToSeries(seriesId, showData)
-        : await showSeriesService.createStandaloneShow(showData);
+      // Bypass the service layer and use Supabase directly to avoid field name conversion issues
+      const { data, error } = await supabase
+        .from('shows')
+        .insert(showData)
+        .select('*')
+        .single();
 
-      if (result.error) {
-        throw new Error(result.error);
+      if (error) {
+        console.error('Error creating show:', error);
+        throw new Error(error.message);
       }
 
-      console.log('[AddShowScreen] Show created successfully:', result);
+      console.log('[AddShowScreen] Show created successfully:', data);
       
       Alert.alert(
         'Success',
@@ -292,6 +284,15 @@ const AddShowScreen: React.FC = () => {
       Alert.alert('Debug Error', 'Failed to run schema debug helper.');
     }
   }, []);
+
+  // Debug function to log date picker selection
+  const logDateSelection = (type: 'start' | 'end', date: Date | undefined) => {
+    console.log(`[DatePicker] ${type} date selected:`, date);
+    console.log(`[DatePicker] Current startDate:`, startDate);
+    console.log(`[DatePicker] Current endDate:`, endDate);
+    console.log(`[DatePicker] Are dates equal:`, 
+      date && startDate && date.toDateString() === startDate.toDateString());
+  };
 
   return (
     <KeyboardAvoidingView
@@ -495,6 +496,7 @@ const AddShowScreen: React.FC = () => {
               onChange={(_, selected) => {
                 setShowStartPicker(false);
                 if (selected) {
+                  logDateSelection('start', selected);
                   setStartDate(selected);
                   setStartDateText(
                     formatDateTime(selected, startHour, startMinute, startPeriod),
@@ -509,10 +511,11 @@ const AddShowScreen: React.FC = () => {
               value={endDate}
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              minimumDate={startDate}
+              // Removed minimumDate constraint to allow same-day selection
               onChange={(_, selected) => {
                 setShowEndPicker(false);
                 if (selected) {
+                  logDateSelection('end', selected);
                   setEndDate(selected);
                   setEndDateText(formatDateTime(selected, endHour, endMinute, endPeriod));
                 }
