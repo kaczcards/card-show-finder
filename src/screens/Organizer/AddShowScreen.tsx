@@ -88,6 +88,34 @@ const AddShowScreen: React.FC = () => {
     return isNaN(parsed.getTime()) ? current : parsed;
   };
 
+  // Format a date for PostgreSQL (YYYY-MM-DD format)
+  const formatDateForPostgres = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Combine date and time into a full datetime string for PostgreSQL
+  const getFullDateForPostgres = (
+    date: Date,
+    hr: string,
+    min: string,
+    period: 'AM' | 'PM'
+  ): string => {
+    const h = parseInt(hr, 10) % 12 + (period === 'PM' ? 12 : 0);
+    const m = parseInt(min, 10) || 0;
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(h).padStart(2, '0');
+    const minute = String(m).padStart(2, '0');
+    
+    // Format: YYYY-MM-DD HH:MM:SS+00 (UTC)
+    return `${year}-${month}-${day} ${hour}:${minute}:00+00`;
+  };
+
   // Validate form
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -138,8 +166,9 @@ const AddShowScreen: React.FC = () => {
     const fullStart = getFullDate(startDate, startHour, startMinute, startPeriod);
     const fullEnd   = getFullDate(endDate,   endHour,   endMinute,   endPeriod);
 
-    if (fullStart >= fullEnd) {
-      newErrors.dates = 'End date & time must be after start date & time';
+    // Allow same-day events as long as end time is after start time
+    if (fullStart.getTime() >= fullEnd.getTime()) {
+      newErrors.dates = 'End time must be after start time';
     }
 
     if (entryFee && isNaN(Number(entryFee))) {
@@ -167,25 +196,45 @@ const AddShowScreen: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      console.log('[AddShowScreen] Creating new show...');
+      // Create full datetime objects with time components
+      const fullStartDate = getFullDateForPostgres(startDate, startHour, startMinute, startPeriod);
+      const fullEndDate = getFullDateForPostgres(endDate, endHour, endMinute, endPeriod);
       
+      console.log('[AddShowScreen] Date values being sent:');
+      console.log('  - Start Date:', fullStartDate);
+      console.log('  - End Date:', fullEndDate);
+      
+      /**
+       * IMPORTANT:
+       * showSeriesService.createStandaloneShow(...) expects camel-case keys that
+       * match the `Show` interface.  It then converts to the snake_case column
+       * names internally.  Passing snake_case keys from this screen caused
+       * `start_date` / `end_date` to be overwritten with **undefined**, which
+       * the DB rejected with the NOT-NULL constraint error you are seeing.
+       *
+       * Therefore we build the payload using *camelCase* keys only .
+       */
       const showData = {
         title,
         description,
         location,
         address: `${street}, ${city}, ${stateProv} ${zipCode}`,
-        street,
-        city,
-        state: stateProv,
-        zipCode,
-        startDate: startDate.toISOString(), // persisted without time portion in this step
-        endDate: endDate.toISOString(),
-        entryFee: entryFee ? Number(entryFee) : 0,
         organizerId: userId,
-        seriesId: seriesId || null,
+        status: 'ACTIVE',
+        entryFee: entryFee ? Number(entryFee) : 0,
+        // camelCase date props – the service will map them to start_date/end_date
+        startDate: fullStartDate,
+        endDate: fullEndDate,
+        // Optional JSON/array columns
+        features: features.length > 0
+          ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
+          : null,
         categories: categories.length > 0 ? categories : null,
-        features: features.length > 0 ? features : null,
+        // For standalone shows pass null so the service adds series_id: null
+        seriesId: seriesId || null,
       };
+      
+      console.log('[AddShowScreen] Sending payload to server:', JSON.stringify(showData, null, 2));
 
       // Call the appropriate service method
       const result = seriesId 
