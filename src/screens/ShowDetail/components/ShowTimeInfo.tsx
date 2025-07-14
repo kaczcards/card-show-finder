@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { formatDateRange } from '../../../utils/dateUtils';
 
 interface ShowTimeInfoProps {
   show: {
@@ -20,6 +21,9 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 );
 
 const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
+  /* ---------- Date helpers ---------- */
+  const formattedDate = formatDateRange(show.start_date, show.end_date);
+
   const formatTime = (timeString?: string | null) => {
     if (!timeString) return '';
     try {
@@ -61,6 +65,13 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
 
   return (
     <View style={styles.timeContainer}>
+      {/* Show Date Section */}
+      <SectionHeader>Show Date</SectionHeader>
+      <Text style={styles.timeText}>
+        {formattedDate || 'Date not specified'}
+      </Text>
+
+      {/* Show Hours Section */}
       <SectionHeader>Show Hours</SectionHeader>
       <Text style={styles.timeText}>{getFormattedShowHours(show)}</Text>
     </View>
