@@ -281,6 +281,18 @@ const AddShowScreen: React.FC = () => {
     );
   };
 
+  /* ------------------------------------------------------------------
+   * DEBUG HELPERS
+   * ----------------------------------------------------------------*/
+  const handleDebugSchema = React.useCallback(async () => {
+    try {
+      await showSeriesService.debugShowsTableColumns();
+      Alert.alert('Debug', 'Schema columns logged to console.');
+    } catch (e) {
+      Alert.alert('Debug Error', 'Failed to run schema debug helper.');
+    }
+  }, []);
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -289,6 +301,12 @@ const AddShowScreen: React.FC = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.formContainer}>
+          {/* Debug helper button */}
+          <TouchableOpacity style={styles.debugButton} onPress={handleDebugSchema}>
+            <Ionicons name="bug-outline" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Text style={styles.debugText}>Debug Schema</Text>
+          </TouchableOpacity>
+
           {/* Title */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Show Title*</Text>
@@ -491,6 +509,7 @@ const AddShowScreen: React.FC = () => {
               value={endDate}
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              minimumDate={startDate}
               onChange={(_, selected) => {
                 setShowEndPicker(false);
                 if (selected) {
@@ -765,6 +784,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  /* ---------- Debug button styles ---------- */
+  debugButton: {
+    backgroundColor: '#333333',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginBottom: 16,
+  },
+  debugText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 
