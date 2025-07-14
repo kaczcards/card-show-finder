@@ -486,6 +486,52 @@ export const showSeriesService = {
   },
 
   /* ------------------------------------------------------------------
+   * DEBUG HELPERS
+   * ----------------------------------------------------------------*/
+
+  /**
+   * Debug helper – print out the column names that PostgREST/Supabase
+   * currently believes exist on the `shows` table.  This is useful for
+   * diagnosing “column not found in schema cache” errors without leaving
+   * the code-base.  Note: we simply fetch a single row (if it exists) and
+   * introspect the keys; if the table is empty we still log the shape of
+   * the response object so you can verify what PostgREST is returning.
+   *
+   * Usage (example):
+   *   await showSeriesService.debugShowsTableColumns();
+   */
+  async debugShowsTableColumns(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('shows')
+        // fetch at most 1 row – we only need keys, not data volume
+        .select('*')
+        .limit(1);
+
+      if (error) {
+        console.error('[debugShowsTableColumns] Supabase error:', error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        // Even if there are no rows, Supabase will still return column meta
+        console.warn(
+          '[debugShowsTableColumns] Table returned zero rows.  ' +
+          'Column keys may be incomplete if the cache is stale.',
+        );
+        console.log('[debugShowsTableColumns] Raw response keys:', Object.keys(data ?? {}));
+      } else {
+        console.log(
+          '[debugShowsTableColumns] Column keys detected:',
+          Object.keys(data[0]),
+        );
+      }
+    } catch (err) {
+      console.error('[debugShowsTableColumns] Unexpected error:', err);
+    }
+  },
+
+  /* ------------------------------------------------------------------
    * NEW METHODS
    * ----------------------------------------------------------------*/
 
