@@ -1,174 +1,175 @@
 /**
- * Date utility functions for formatting and manipulating dates
+ * dateUtils.ts
+ * Utility functions for date formatting and manipulation
  */
 
 /**
- * Formats a date as a relative time string (e.g., "just now", "5 minutes ago", "yesterday")
- * @param date The date to format
- * @param now Optional reference date (defaults to current time)
- * @returns Human-readable relative time string
- */
-export const formatRelativeTime = (date: Date, now: Date = new Date()): string => {
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  // Handle future dates
-  if (seconds < 0) {
-    // For small future differences (within a minute), treat as "just now"
-    if (seconds > -60) {
-      return 'just now';
-    }
-    return formatFutureTime(date, now);
-  }
-  
-  // Handle past dates
-  if (seconds < 30) {
-    return 'just now';
-  }
-  
-  if (seconds < 60) {
-    return 'less than a minute ago';
-  }
-  
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return minutes === 1 ? 'a minute ago' : `${minutes} minutes ago`;
-  }
-  
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return hours === 1 ? 'an hour ago' : `${hours} hours ago`;
-  }
-  
-  const days = Math.floor(hours / 24);
-  if (days === 1) {
-    return 'yesterday';
-  }
-  
-  if (days < 7) {
-    return `${days} days ago`;
-  }
-  
-  const weeks = Math.floor(days / 7);
-  if (weeks === 1) {
-    return 'last week';
-  }
-  
-  if (weeks < 5) {
-    return `${weeks} weeks ago`;
-  }
-  
-  const months = Math.floor(days / 30);
-  if (months === 1) {
-    return 'last month';
-  }
-  
-  if (months < 12) {
-    return `${months} months ago`;
-  }
-  
-  const years = Math.floor(days / 365);
-  return years === 1 ? 'last year' : `${years} years ago`;
-};
-
-/**
- * Helper function to format future dates
- * @param date Future date
- * @param now Reference date
- * @returns Human-readable future time string
- */
-const formatFutureTime = (date: Date, now: Date): string => {
-  const seconds = Math.floor((date.getTime() - now.getTime()) / 1000);
-  
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return minutes === 1 ? 'in a minute' : `in ${minutes} minutes`;
-  }
-  
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return hours === 1 ? 'in an hour' : `in ${hours} hours`;
-  }
-  
-  const days = Math.floor(hours / 24);
-  if (days === 1) {
-    return 'tomorrow';
-  }
-  
-  if (days < 7) {
-    return `in ${days} days`;
-  }
-  
-  const weeks = Math.floor(days / 7);
-  if (weeks === 1) {
-    return 'next week';
-  }
-  
-  if (weeks < 5) {
-    return `in ${weeks} weeks`;
-  }
-  
-  const months = Math.floor(days / 30);
-  if (months === 1) {
-    return 'next month';
-  }
-  
-  if (months < 12) {
-    return `in ${months} months`;
-  }
-  
-  const years = Math.floor(days / 365);
-  return years === 1 ? 'next year' : `in ${years} years`;
-};
-
-/**
- * Format a date as a short date string (e.g., "Jan 1, 2023")
- * @param date The date to format
+ * Format a date to a human-readable string
+ * @param date Date object or ISO string
+ * @param options Intl.DateTimeFormatOptions to customize the format
  * @returns Formatted date string
  */
-export const formatShortDate = (date: Date): string => {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
+export const formatDate = (
+  date: Date | string | undefined | null,
+  options: Intl.DateTimeFormatOptions = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  }
+): string => {
+  if (!date) return '';
+  
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', options);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return typeof date === 'string' ? date : '';
+  }
 };
 
 /**
- * Format a date as a time string (e.g., "3:45 PM")
- * @param date The date to format
- * @returns Formatted time string
+ * Format a time string from a date
+ * @param timeString Date string or Date object
+ * @returns Formatted time string (e.g., "7:00 PM")
  */
-export const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
+export const formatTime = (timeString?: Date | string | null): string => {
+  if (!timeString) return '';
+  
+  try {
+    const date = typeof timeString === 'string' ? new Date(timeString) : timeString;
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    console.error('Error formatting time:', e);
+    return typeof timeString === 'string' ? timeString : '';
+  }
 };
 
 /**
- * Format a date for display in a message timestamp (e.g., "Jan 1 at 3:45 PM")
- * @param date The date to format
- * @returns Formatted date and time string
+ * Check if two dates represent the same day
+ * @param date1 First date
+ * @param date2 Second date
+ * @returns True if both dates are on the same day
  */
-export const formatMessageTimestamp = (date: Date): string => {
+export const isSameDay = (
+  date1: Date | string | undefined | null,
+  date2: Date | string | undefined | null
+): boolean => {
+  if (!date1 || !date2) return false;
+  
+  try {
+    const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+    const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+    
+    return (
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+    );
+  } catch (error) {
+    console.error('Error comparing dates:', error);
+    return false;
+  }
+};
+
+/**
+ * Format a date range intelligently, handling one-day shows
+ * @param startDate Start date
+ * @param endDate End date
+ * @param options Intl.DateTimeFormatOptions to customize the format
+ * @returns Formatted date range string
+ */
+export const formatDateRange = (
+  startDate: Date | string | undefined | null,
+  endDate: Date | string | undefined | null,
+  options: Intl.DateTimeFormatOptions = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  }
+): string => {
+  if (!startDate) return '';
+  
+  // If no end date or same as start date, just show the start date
+  if (!endDate || isSameDay(startDate, endDate)) {
+    return formatDate(startDate, options);
+  }
+  
+  // Otherwise, show the range
+  return `${formatDate(startDate, options)} to ${formatDate(endDate, options)}`;
+};
+
+/**
+ * Get relative time description (e.g., "2 days ago", "in 3 hours")
+ * @param date Date to compare against now
+ * @returns Human-readable relative time
+ */
+export const getRelativeTimeDescription = (date: Date | string): string => {
   const now = new Date();
-  const isToday = date.getDate() === now.getDate() && 
-                  date.getMonth() === now.getMonth() && 
-                  date.getFullYear() === now.getFullYear();
+  const targetDate = typeof date === 'string' ? new Date(date) : date;
+  const diffMs = targetDate.getTime() - now.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
   
-  if (isToday) {
-    return formatTime(date);
+  if (diffDays < -30) {
+    return formatDate(targetDate, { year: 'numeric', month: 'short', day: 'numeric' });
+  } else if (diffDays < -1) {
+    return `${Math.abs(diffDays)} days ago`;
+  } else if (diffDays === -1) {
+    return 'Yesterday';
+  } else if (diffHours < 0) {
+    return `${Math.abs(diffHours)} hours ago`;
+  } else if (diffMinutes < 0) {
+    return `${Math.abs(diffMinutes)} minutes ago`;
+  } else if (diffSeconds < 0) {
+    return 'Just now';
+  } else if (diffSeconds < 60) {
+    return 'In a few seconds';
+  } else if (diffMinutes < 60) {
+    return `In ${diffMinutes} minute${diffMinutes === 1 ? '' : 's'}`;
+  } else if (diffHours < 24) {
+    return `In ${diffHours} hour${diffHours === 1 ? '' : 's'}`;
+  } else if (diffDays < 30) {
+    return `In ${diffDays} day${diffDays === 1 ? '' : 's'}`;
+  } else {
+    return formatDate(targetDate, { year: 'numeric', month: 'short', day: 'numeric' });
   }
+};
+
+/**
+ * Check if a date is in the past
+ * @param date Date to check
+ * @returns True if the date is in the past
+ */
+export const isPastDate = (date: Date | string | undefined | null): boolean => {
+  if (!date) return false;
   
-  const isThisYear = date.getFullYear() === now.getFullYear();
-  
-  if (isThisYear) {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    }) + ' at ' + formatTime(date);
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj < new Date();
+  } catch (error) {
+    console.error('Error checking if date is past:', error);
+    return false;
   }
+};
+
+/**
+ * Extract month and day from a date
+ * @param date Date to extract from
+ * @returns Formatted month and day (e.g., "Jul 20")
+ */
+export const getMonthAndDay = (date: Date | string | undefined | null): string => {
+  if (!date) return '';
   
-  return formatShortDate(date);
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch (error) {
+    console.error('Error getting month and day:', error);
+    return '';
+  }
 };
