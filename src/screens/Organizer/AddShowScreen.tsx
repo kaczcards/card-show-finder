@@ -138,8 +138,9 @@ const AddShowScreen: React.FC = () => {
     const fullStart = getFullDate(startDate, startHour, startMinute, startPeriod);
     const fullEnd   = getFullDate(endDate,   endHour,   endMinute,   endPeriod);
 
-    if (fullStart >= fullEnd) {
-      newErrors.dates = 'End date & time must be after start date & time';
+    // Modified validation to allow same-day events as long as end time is after start time
+    if (fullStart > fullEnd) {
+      newErrors.dates = 'End time must be after start time';
     }
 
     if (entryFee && isNaN(Number(entryFee))) {
@@ -169,15 +170,12 @@ const AddShowScreen: React.FC = () => {
     try {
       console.log('[AddShowScreen] Creating new show...');
       
+      // Only include fields that exist in the database schema
       const showData = {
         title,
         description,
         location,
         address: `${street}, ${city}, ${stateProv} ${zipCode}`,
-        street,
-        city,
-        state: stateProv,
-        zipCode,
         startDate: startDate.toISOString(), // persisted without time portion in this step
         endDate: endDate.toISOString(),
         entryFee: entryFee ? Number(entryFee) : 0,
