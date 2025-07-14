@@ -138,8 +138,8 @@ const AddShowScreen: React.FC = () => {
     const fullStart = getFullDate(startDate, startHour, startMinute, startPeriod);
     const fullEnd   = getFullDate(endDate,   endHour,   endMinute,   endPeriod);
 
-    // Modified validation to allow same-day events as long as end time is after start time
-    if (fullStart > fullEnd) {
+    // Modified validation to allow same-day events as long as end time is not before start time
+    if (fullStart >= fullEnd) {
       newErrors.dates = 'End time must be after start time';
     }
 
@@ -170,19 +170,21 @@ const AddShowScreen: React.FC = () => {
     try {
       console.log('[AddShowScreen] Creating new show...');
       
-      // Only include fields that exist in the database schema
+      // Create payload with explicit snake_case keys matching database schema
+      // Only include fields that are expected by the database
       const showData = {
-        title,
-        description,
-        location,
+        title: title,
+        description: description,
+        location: location,
         address: `${street}, ${city}, ${stateProv} ${zipCode}`,
-        startDate: startDate.toISOString(), // persisted without time portion in this step
-        endDate: endDate.toISOString(),
-        entryFee: entryFee ? Number(entryFee) : 0,
-        organizerId: userId,
-        seriesId: seriesId || null,
-        categories: categories.length > 0 ? categories : null,
+        organizer_id: userId,
+        status: 'ACTIVE',
+        entry_fee: entryFee ? Number(entryFee) : 0,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
         features: features.length > 0 ? features : null,
+        categories: categories.length > 0 ? categories : null,
+        series_id: seriesId || null
       };
 
       // Call the appropriate service method
