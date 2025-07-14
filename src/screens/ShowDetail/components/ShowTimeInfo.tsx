@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { formatDateRange } from '../../../utils/dateUtils';
 
 interface ShowTimeInfoProps {
   show: {
@@ -20,6 +21,14 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 );
 
 const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
+  /* ---------- Date helpers ---------- */
+  const formattedDate = formatDateRange(show.start_date, show.end_date);
+
+  /**
+   * Safely format a time string.  Accepts:
+   *  • ISO-8601 strings,  • plain “HH:MM” text,  • “7pm” shorthand.
+   * Falls back to raw string when Date parsing fails.
+   */
   const formatTime = (timeString?: string | null) => {
     if (!timeString) return '';
     try {
@@ -29,18 +38,48 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
     }
   };
 
-  const getFormattedShowHours = (show: any): string => {
-    if (!show) return 'Time not specified';
-    const start = show.start_time ?? show.startTime ?? show.time ?? null;
-    const end = show.end_time ?? show.endTime ?? null;
+  /**
+   * Build an array of candidate time fields so we can be flexible with
+   * organiser-supplied payloads.
+   */
+  const extractTimeCandidates = (record: any): (string | undefined)[] => [
+    record.start_time,
+    record.startTime,
+    record.timeStart,
+    record.time,
+    record.begin_time,
+  ];
 
-    if (start && end && start !== end) return `${formatTime(start)} - ${formatTime(end)}`;
-    if (start) return formatTime(start);
-    if (end) return formatTime(end);
+  const extractEndTimeCandidates = (record: any): (string | undefined)[] => [
+    record.end_time,
+    record.endTime,
+    record.timeEnd,
+    record.finish_time,
+  ];
 
-    if (show.description) {
-      return extractTimeFromDescription(show.description) || 'Time not specified';
+  const getFormattedShowHours = (showRecord: any): string => {
+    if (!showRecord) return 'Time not specified';
+
+    const [startRaw] = extractTimeCandidates(showRecord).filter(Boolean);
+    const [endRaw]   = extractEndTimeCandidates(showRecord).filter(Boolean);
+
+    const start = formatTime(startRaw);
+    const end   = formatTime(endRaw);
+
+    // Case 1: both start and end, not identical
+    if (start && end && start !== end) {
+      return `${start} - ${end}`;
     }
+    // Case 2: only start (or identical times)
+    if (start) return start;
+    if (end)   return end;
+
+    // Case 3: fallback – attempt to parse from description
+    if (showRecord.description) {
+      const extracted = extractTimeFromDescription(showRecord.description);
+      if (extracted) return extracted;
+    }
+
     return 'Time not specified';
   };
 
@@ -61,8 +100,26 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
 
   return (
     <View style={styles.timeContainer}>
+      {/* Show Date Section */}
+      <SectionHeader>Show Date</SectionHeader>
+      <Text style={styles.timeText}>
+        {formattedDate || 'Date not specified'}
+      </Text>
+
+      {/* Show Hours Section */}
       <SectionHeader>Show Hours</SectionHeader>
       <Text style={styles.timeText}>{getFormattedShowHours(show)}</Text>
+
+      {/* Dev-only debug aid */}
+      {__DEV__ && (
+        <Text style={[styles.timeText, { fontSize: 12, color: '#999' }]}>
+          {`[debug] start candidates: ${extractTimeCandidates(show)
+            .filter(Boolean)
+            .join(', ') || 'none'}   end candidates: ${extractEndTimeCandidates(show)
+            .filter(Boolean)
+            .join(', ') || 'none'}`}
+        </Text>
+      )}
     </View>
   );
 };
