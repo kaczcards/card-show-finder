@@ -17,6 +17,7 @@ import { showSeriesService } from '../../services/showSeriesService';
 import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
 import { useAuth } from '../../contexts/AuthContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { supabase } from '../../supabase';
 
 type AddShowScreenRouteProp = RouteProp<OrganizerStackParamList, 'AddShow'>;
 
@@ -60,6 +61,15 @@ const AddShowScreen: React.FC = () => {
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Helper function to compare only the date part (not time)
+  const areSameDay = (date1: Date, date2: Date): boolean => {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  };
 
   // Format date & time for display (e.g. "Wed, Apr 24 2025  10:00 AM")
   const formatDateTime = (date: Date, hr: string, min: string, period: 'AM' | 'PM'): string => {
@@ -204,48 +214,39 @@ const AddShowScreen: React.FC = () => {
       console.log('  - Start Date:', fullStartDate);
       console.log('  - End Date:', fullEndDate);
       
-      /**
-       * IMPORTANT:
-       * showSeriesService.createStandaloneShow(...) expects camel-case keys that
-       * match the `Show` interface.  It then converts to the snake_case column
-       * names internally.  Passing snake_case keys from this screen caused
-       * `start_date` / `end_date` to be overwritten with **undefined**, which
-       * the DB rejected with the NOT-NULL constraint error you are seeing.
-       *
-       * Therefore we build the payload using *camelCase* keys only .
-       */
+      // Create payload with snake_case keys matching database schema exactly
       const showData = {
-        title,
-        description,
-        location,
+        title: title,
+        description: description,
+        location: location,
         address: `${street}, ${city}, ${stateProv} ${zipCode}`,
-        organizerId: userId,
+        organizer_id: userId,
         status: 'ACTIVE',
-        entryFee: entryFee ? Number(entryFee) : 0,
-        // camelCase date props – the service will map them to start_date/end_date
-        startDate: fullStartDate,
-        endDate: fullEndDate,
-        // Optional JSON/array columns
+        entry_fee: entryFee ? Number(entryFee) : 0,
+        start_date: fullStartDate,
+        end_date: fullEndDate,
         features: features.length > 0
           ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
           : null,
         categories: categories.length > 0 ? categories : null,
-        // For standalone shows pass null so the service adds series_id: null
-        seriesId: seriesId || null,
+        series_id: seriesId || null
       };
       
       console.log('[AddShowScreen] Sending payload to server:', JSON.stringify(showData, null, 2));
 
-      // Call the appropriate service method
-      const result = seriesId 
-        ? await showSeriesService.addShowToSeries(seriesId, showData)
-        : await showSeriesService.createStandaloneShow(showData);
+      // Bypass the service layer and use Supabase directly to avoid field name conversion issues
+      const { data, error } = await supabase
+        .from('shows')
+        .insert(showData)
+        .select('*')
+        .single();
 
-      if (result.error) {
-        throw new Error(result.error);
+      if (error) {
+        console.error('Error creating show:', error);
+        throw new Error(error.message);
       }
 
-      console.log('[AddShowScreen] Show created successfully:', result);
+      console.log('[AddShowScreen] Show created successfully:', data);
       
       Alert.alert(
         'Success',
@@ -281,6 +282,26 @@ const AddShowScreen: React.FC = () => {
     );
   };
 
+  /* ------------------------------------------------------------------
+   * DEBUG HELPERS
+   * ----------------------------------------------------------------*/
+  const handleDebugSchema = React.useCallback(async () => {
+    try {
+      await showSeriesService.debugShowsTableColumns();
+      Alert.alert('Debug', 'Schema columns logged to console.');
+    } catch (e) {
+      Alert.alert('Debug Error', 'Failed to run schema debug helper.');
+    }
+  }, []);
+
+  // Debug function to log date picker selection
+  const logDateSelection = (type: 'start' | 'end', date: Date | undefined) => {
+    console.log(`[DatePicker] ${type} date selected:`, date);
+    console.log(`[DatePicker] Current startDate:`, startDate);
+    console.log(`[DatePicker] Current endDate:`, endDate);
+    console.log(`[DatePicker] Are dates equal:`, date && startDate && areSameDay(date, startDate));
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -289,6 +310,12 @@ const AddShowScreen: React.FC = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.formContainer}>
+          {/* Debug helper button */}
+          <TouchableOpacity style={styles.debugButton} onPress={handleDebugSchema}>
+            <Ionicons name="bug-outline" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Text style={styles.debugText}>Debug Schema</Text>
+          </TouchableOpacity>
+
           {/* Title */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Show Title*</Text>
@@ -477,6 +504,7 @@ const AddShowScreen: React.FC = () => {
               onChange={(_, selected) => {
                 setShowStartPicker(false);
                 if (selected) {
+                  logDateSelection('start', selected);
                   setStartDate(selected);
                   setStartDateText(
                     formatDateTime(selected, startHour, startMinute, startPeriod),
@@ -494,8 +522,11 @@ const AddShowScreen: React.FC = () => {
               onChange={(_, selected) => {
                 setShowEndPicker(false);
                 if (selected) {
-                  setEndDate(selected);
-                  setEndDateText(formatDateTime(selected, endHour, endMinute, endPeriod));
+                  logDateSelection('end', selected);
+                  // Create a new date object to ensure we don't have reference issues
+                  const newEndDate = new Date(selected);
+                  setEndDate(newEndDate);
+                  setEndDateText(formatDateTime(newEndDate, endHour, endMinute, endPeriod));
                 }
               }}
             />
@@ -765,6 +796,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  /* ---------- Debug button styles ---------- */
+  debugButton: {
+    backgroundColor: '#333333',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginBottom: 16,
+  },
+  debugText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 

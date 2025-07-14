@@ -422,13 +422,17 @@ export const getPaginatedShows = async (
 
     const toIso = (d: Date | string): string =>
       d instanceof Date ? d.toISOString() : d;
+    
+    console.debug('[showService] getPaginatedShows called with params:', {
+      latitude, longitude, radius, startDate, endDate, maxEntryFee, 
+      categories, features, pageSize, page
+    });
 
     /* ---------------------- RPC invocation ----------------------- */
     const { data, error } = await supabase.rpc('get_paginated_shows', {
       lat: latitude,
       long: longitude,
-      radius_miles:
-        typeof radius === 'number' && !isNaN(radius) ? radius : 25,
+      radius_miles: typeof radius === 'number' && !isNaN(radius) ? radius : 25,
       start_date: toIso(startDate),
       end_date: toIso(endDate),
       max_entry_fee: typeof maxEntryFee === 'number' ? maxEntryFee : null,
@@ -436,9 +440,16 @@ export const getPaginatedShows = async (
       features,
       page_size: pageSize,
       page,
+      status: 'ACTIVE', // Explicitly request only ACTIVE shows
     });
 
-    if (error) throw error;
+    if (error) {
+      console.warn('[showService] get_paginated_shows RPC failed:', error.message);
+      console.warn('[showService] Falling back to direct query...');
+      
+      // Fallback to direct query if RPC fails
+      return await getFallbackPaginatedShows(params);
+    }
 
     if (!data || data.error) {
       // In case the function returns an error payload
@@ -446,6 +457,7 @@ export const getPaginatedShows = async (
         typeof data?.error === 'string'
           ? data.error
           : 'Failed to load shows';
+      console.warn('[showService] get_paginated_shows returned error payload:', msg);
       return {
         data: [],
         pagination: {
@@ -465,6 +477,8 @@ export const getPaginatedShows = async (
     const mappedShows: Show[] = Array.isArray(rows)
       ? rows.map(mapDbShowToAppShow)
       : [];
+      
+    console.info(`[showService] get_paginated_shows returned ${mappedShows.length} shows`);
 
     const pagination: PaginationMeta = {
       totalCount: Number(paginationRaw.total_count ?? 0),
@@ -476,6 +490,161 @@ export const getPaginatedShows = async (
     return { data: mappedShows, pagination, error: null };
   } catch (err: any) {
     console.error('[showService] Error in getPaginatedShows:', err);
+    
+    // Try fallback if the main method fails
+    try {
+      console.warn('[showService] Attempting fallback after error...');
+      return await getFallbackPaginatedShows(params);
+    } catch (fallbackErr: any) {
+      console.error('[showService] Fallback also failed:', fallbackErr);
+      return {
+        data: [],
+        pagination: {
+          totalCount: 0,
+          pageSize: params.pageSize ?? 20,
+          currentPage: params.page ?? 1,
+          totalPages: 0,
+        },
+        error: err.message ?? 'Failed to fetch paginated shows',
+      };
+    }
+  }
+};
+
+/**
+ * Fallback implementation for getPaginatedShows that uses direct Supabase queries
+ * instead of the RPC. This is used when the RPC fails for any reason.
+ */
+const getFallbackPaginatedShows = async (
+  params: PaginatedShowsParams
+): Promise<PaginatedShowsResult> => {
+  try {
+    const {
+      latitude,
+      longitude,
+      radius = 25,
+      startDate = new Date(),
+      endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      maxEntryFee = null,
+      categories = null,
+      features = null,
+      pageSize = 20,
+      page = 1,
+    } = params;
+
+    const toIso = (d: Date | string): string =>
+      d instanceof Date ? d.toISOString() : d;
+    
+    console.debug('[showService] getFallbackPaginatedShows executing with params:', {
+      latitude, longitude, radius, 
+      startDate: toIso(startDate),
+      endDate: toIso(endDate)
+    });
+    
+    // First get the total count with a separate query
+    let countQuery = supabase
+      .from('shows')
+      .select('id', { count: 'exact' })
+      .eq('status', 'ACTIVE');
+    
+    // Apply date filters
+    countQuery = countQuery.gte('start_date', toIso(startDate) as any);
+    countQuery = countQuery.lte('start_date', toIso(endDate) as any);
+    
+    // Ensure end_date is not in the past
+    const today = new Date();
+    countQuery = countQuery.gte('end_date', today.toISOString() as any);
+    
+    // Apply other filters
+    if (typeof maxEntryFee === 'number') {
+      countQuery = countQuery.lte('entry_fee', maxEntryFee);
+    }
+    
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      countQuery = countQuery.overlaps('categories', categories);
+    }
+    
+    // Execute count query
+    const { count, error: countError } = await countQuery;
+    
+    if (countError) {
+      console.error('[showService] Error getting count:', countError);
+      throw countError;
+    }
+    
+    // Now get the actual data for this page
+    let dataQuery = supabase
+      .from('shows')
+      .select('*')
+      .eq('status', 'ACTIVE');
+    
+    // Apply the same filters as the count query
+    dataQuery = dataQuery.gte('start_date', toIso(startDate) as any);
+    dataQuery = dataQuery.lte('start_date', toIso(endDate) as any);
+    dataQuery = dataQuery.gte('end_date', today.toISOString() as any);
+    
+    if (typeof maxEntryFee === 'number') {
+      dataQuery = dataQuery.lte('entry_fee', maxEntryFee);
+    }
+    
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      dataQuery = dataQuery.overlaps('categories', categories);
+    }
+    
+    // Apply pagination
+    dataQuery = dataQuery
+      .order('start_date', { ascending: true })
+      .range((page - 1) * pageSize, page * pageSize - 1);
+    
+    // Execute data query
+    const { data, error: dataError } = await dataQuery;
+    
+    if (dataError) {
+      console.error('[showService] Error getting data:', dataError);
+      throw dataError;
+    }
+    
+    // Filter results for shows within the radius
+    // (since we can't do this in the query without the RPC)
+    let filteredData = data || [];
+    
+    if (latitude && longitude && radius) {
+      filteredData = filteredData.filter(show => {
+        // Skip shows without coordinates
+        if (!show.coordinates || !show.coordinates.coordinates) return false;
+        
+        // Calculate distance using Haversine formula
+        const showLat = show.coordinates.coordinates[1];
+        const showLng = show.coordinates.coordinates[0];
+        const distance = calculateDistance(
+          latitude, longitude, showLat, showLng
+        );
+        
+        return distance <= radius;
+      });
+    }
+    
+    console.info(`[showService] getFallbackPaginatedShows found ${filteredData.length} shows (from ${count} total)`);
+    
+    // Map to app format
+    const mappedShows = filteredData.map(mapDbShowToAppShow);
+    
+    // Calculate pagination info
+    const totalCount = count || 0;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    
+    return {
+      data: mappedShows,
+      pagination: {
+        totalCount,
+        pageSize,
+        currentPage: page,
+        totalPages,
+      },
+      error: null,
+    };
+  } catch (err: any) {
+    console.error('[showService] Error in getFallbackPaginatedShows:', err);
     return {
       data: [],
       pagination: {
@@ -487,6 +656,22 @@ export const getPaginatedShows = async (
       error: err.message ?? 'Failed to fetch paginated shows',
     };
   }
+};
+
+/**
+ * Calculate distance between two points using the Haversine formula
+ * @returns Distance in miles
+ */
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 3958.8; // Earth's radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 };
 
 /**
