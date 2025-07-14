@@ -607,8 +607,16 @@ const getFallbackPaginatedShows = async (
     // Filter results for shows within the radius
     // (since we can't do this in the query without the RPC)
     let filteredData = data || [];
-    
-    if (latitude && longitude && radius) {
+
+    /* ------------------------------------------------------------------
+     * Only apply Haversine distance filtering if we have *real* coordinates.
+     * A default (0,0) coordinate means we don't yet know the user's location
+     * and applying the distance filter would incorrectly exclude every show.
+     * ------------------------------------------------------------------ */
+    if (
+      radius &&
+      (Math.abs(latitude) > 0.0001 || Math.abs(longitude) > 0.0001)
+    ) {
       filteredData = filteredData.filter(show => {
         // Skip shows without coordinates
         if (!show.coordinates || !show.coordinates.coordinates) return false;
@@ -619,7 +627,6 @@ const getFallbackPaginatedShows = async (
         const distance = calculateDistance(
           latitude, longitude, showLat, showLng
         );
-        
         return distance <= radius;
       });
     }
