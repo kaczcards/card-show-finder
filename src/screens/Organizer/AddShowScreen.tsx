@@ -204,21 +204,34 @@ const AddShowScreen: React.FC = () => {
       console.log('  - Start Date:', fullStartDate);
       console.log('  - End Date:', fullEndDate);
       
-      // Create payload with explicit snake_case keys matching database schema
+      /**
+       * IMPORTANT:
+       * showSeriesService.createStandaloneShow(...) expects camel-case keys that
+       * match the `Show` interface.  It then converts to the snake_case column
+       * names internally.  Passing snake_case keys from this screen caused
+       * `start_date` / `end_date` to be overwritten with **undefined**, which
+       * the DB rejected with the NOT-NULL constraint error you are seeing.
+       *
+       * Therefore we build the payload using *camelCase* keys only .
+       */
       const showData = {
-        title: title,
-        description: description,
-        location: location,
+        title,
+        description,
+        location,
         address: `${street}, ${city}, ${stateProv} ${zipCode}`,
-        organizer_id: userId,
+        organizerId: userId,
         status: 'ACTIVE',
-        entry_fee: entryFee ? Number(entryFee) : 0,
-        // Use PostgreSQL compatible date format
-        start_date: fullStartDate,
-        end_date: fullEndDate,
-        features: features.length > 0 ? features.reduce((obj, feat) => ({...obj, [feat]: true}), {}) : null,
+        entryFee: entryFee ? Number(entryFee) : 0,
+        // camelCase date props – the service will map them to start_date/end_date
+        startDate: fullStartDate,
+        endDate: fullEndDate,
+        // Optional JSON/array columns
+        features: features.length > 0
+          ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
+          : null,
         categories: categories.length > 0 ? categories : null,
-        series_id: seriesId || null
+        // For standalone shows pass null so the service adds series_id: null
+        seriesId: seriesId || null,
       };
       
       console.log('[AddShowScreen] Sending payload to server:', JSON.stringify(showData, null, 2));
