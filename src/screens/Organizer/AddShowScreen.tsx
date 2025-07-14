@@ -16,6 +16,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { showSeriesService } from '../../services/showSeriesService';
 import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
 import { useAuth } from '../../contexts/AuthContext';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type AddShowScreenRouteProp = RouteProp<OrganizerStackParamList, 'AddShow'>;
 
@@ -30,12 +31,27 @@ const AddShowScreen: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [address, setAddress] = useState('');
+  // ─────────────────────────  Structured address  ──────────────────────────
+  const [street,     setStreet]     = useState('');
+  const [city,       setCity]       = useState('');
+  const [stateProv,  setStateProv]  = useState('');   // 2–letter state / province
+  const [zipCode,    setZipCode]    = useState('');
   const [entryFee, setEntryFee] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [startDateText, setStartDateText] = useState('');
   const [endDateText, setEndDateText] = useState('');
+  // Time state – hours (1-12), minutes (0-59), period (AM/PM)
+  const [startHour, setStartHour]   = useState<string>('10');
+  const [startMinute, setStartMinute] = useState<string>('00');
+  const [startPeriod, setStartPeriod] = useState<'AM' | 'PM'>('AM');
+  const [endHour, setEndHour]     = useState<string>('4');
+  const [endMinute, setEndMinute]   = useState<string>('00');
+  const [endPeriod, setEndPeriod]   = useState<'AM' | 'PM'>('PM');
+
+  // Calendar-modal visibility (actual UI to be added in follow-up patch)
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker,   setShowEndPicker]   = useState(false);
   
   // Categories and features (optional)
   const [categories, setCategories] = useState<string[]>([]);
@@ -45,20 +61,22 @@ const AddShowScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Format date for display
-  const formatDate = (date: Date): string => {
-    return date.toLocaleDateString('en-US', {
+  // Format date & time for display (e.g. "Wed, Apr 24 2025  10:00 AM")
+  const formatDateTime = (date: Date, hr: string, min: string, period: 'AM' | 'PM'): string => {
+    const datePart = date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
+    const timePart = `${hr.padStart(2, '0')}:${min.padStart(2, '0')} ${period}`;
+    return `${datePart}  ${timePart}`;
   };
 
   // When component mounts, initialise text fields
   React.useEffect(() => {
-    setStartDateText(formatDate(startDate));
-    setEndDateText(formatDate(endDate));
+    setStartDateText(formatDateTime(startDate, startHour, startMinute, startPeriod));
+    setEndDateText(formatDateTime(endDate, endHour, endMinute, endPeriod));
   }, []);
 
   /**
@@ -82,12 +100,46 @@ const AddShowScreen: React.FC = () => {
       newErrors.location = 'Location is required';
     }
 
-    if (!address.trim()) {
-      newErrors.address = 'Address is required';
+    if (!street.trim()) {
+      newErrors.street = 'Street address is required';
+    }
+    if (!city.trim()) {
+      newErrors.city = 'City is required';
+    }
+    if (!stateProv.trim()) {
+      newErrors.stateProv = 'State is required';
+    }
+    if (!zipCode.trim()) {
+      newErrors.zipCode = 'ZIP code is required';
+    } else if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipCode)) {
+      newErrors.zipCode = 'ZIP code is invalid';
     }
 
-    if (startDate > endDate) {
-      newErrors.dates = 'End date cannot be before start date';
+    // Combine date+time for proper comparison
+    const getFullDate = (
+      base: Date,
+      hr: string,
+      min: string,
+      period: 'AM' | 'PM'
+    ): Date => {
+      const h = parseInt(hr, 10) % 12 + (period === 'PM' ? 12 : 0);
+      const m = parseInt(min, 10) || 0;
+      return new Date(
+        base.getFullYear(),
+        base.getMonth(),
+        base.getDate(),
+        h,
+        m,
+        0,
+        0
+      );
+    };
+
+    const fullStart = getFullDate(startDate, startHour, startMinute, startPeriod);
+    const fullEnd   = getFullDate(endDate,   endHour,   endMinute,   endPeriod);
+
+    if (fullStart >= fullEnd) {
+      newErrors.dates = 'End date & time must be after start date & time';
     }
 
     if (entryFee && isNaN(Number(entryFee))) {
@@ -121,8 +173,12 @@ const AddShowScreen: React.FC = () => {
         title,
         description,
         location,
-        address,
-        startDate: startDate.toISOString(),
+        address: `${street}, ${city}, ${stateProv} ${zipCode}`,
+        street,
+        city,
+        state: stateProv,
+        zipCode,
+        startDate: startDate.toISOString(), // persisted without time portion in this step
         endDate: endDate.toISOString(),
         entryFee: entryFee ? Number(entryFee) : 0,
         organizerId: userId,
@@ -212,23 +268,62 @@ const AddShowScreen: React.FC = () => {
 
           {/* Address */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Full Address*</Text>
+            <Text style={styles.label}>Street Address*</Text>
             <TextInput
-              style={[styles.input, errors.address && styles.inputError]}
-              value={address}
-              onChangeText={setAddress}
-              placeholder="Street address, city, state, zip"
+              style={[styles.input, errors.street && styles.inputError]}
+              value={street}
+              onChangeText={setStreet}
+              placeholder="123 Main St."
               placeholderTextColor="#999"
-              multiline
             />
-            {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
+            {errors.street && <Text style={styles.errorText}>{errors.street}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>City*</Text>
+            <TextInput
+              style={[styles.input, errors.city && styles.inputError]}
+              value={city}
+              onChangeText={setCity}
+              placeholder="Anytown"
+              placeholderTextColor="#999"
+            />
+            {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>State*</Text>
+            <TextInput
+              style={[styles.input, errors.stateProv && styles.inputError]}
+              value={stateProv}
+              onChangeText={txt => setStateProv(txt.toUpperCase())}
+              placeholder="CA"
+              placeholderTextColor="#999"
+              maxLength={2}
+              autoCapitalize="characters"
+            />
+            {errors.stateProv && <Text style={styles.errorText}>{errors.stateProv}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>ZIP Code*</Text>
+            <TextInput
+              style={[styles.input, errors.zipCode && styles.inputError]}
+              value={zipCode}
+              onChangeText={setZipCode}
+              placeholder="90210"
+              placeholderTextColor="#999"
+              keyboardType="number-pad"
+              maxLength={10}
+            />
+            {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
           </View>
 
           {/* Dates */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Event Dates*</Text>
             
-            {/* Start Date Input */}
+            {/* ------------ DATE + TIME (Start) ------------- */}
             <View style={styles.dateInputWrapper}>
               <Ionicons name="calendar-outline" size={20} color="#0057B8" style={styles.dateIcon} />
               <TextInput
@@ -241,9 +336,40 @@ const AddShowScreen: React.FC = () => {
                 placeholder="Start date (e.g., 2025-04-22)"
                 placeholderTextColor="#999"
               />
+              <TouchableOpacity onPress={() => setShowStartPicker(true)}>
+                <Ionicons name="chevron-down" size={20} color="#0057B8" />
+              </TouchableOpacity>
+            </View>
+            {/* TIME PICKERS – start */}
+            <View style={styles.timeRow}>
+              {['Hour', 'Min', 'AM/PM'].map((lbl) => (
+                <Text key={lbl} style={styles.timeLabel}>{lbl}</Text>
+              ))}
+            </View>
+            <View style={styles.timeRow}>
+              <TextInput
+                style={[styles.timeInput]}
+                keyboardType="number-pad"
+                maxLength={2}
+                value={startHour}
+                onChangeText={txt => setStartHour(txt.replace(/[^0-9]/g, ''))}
+              />
+              <TextInput
+                style={[styles.timeInput]}
+                keyboardType="number-pad"
+                maxLength={2}
+                value={startMinute}
+                onChangeText={txt => setStartMinute(txt.replace(/[^0-9]/g, ''))}
+              />
+              <TouchableOpacity
+                style={styles.amPmToggle}
+                onPress={() => setStartPeriod(prev => (prev === 'AM' ? 'PM' : 'AM'))}
+              >
+                <Text style={styles.amPmText}>{startPeriod}</Text>
+              </TouchableOpacity>
             </View>
             
-            {/* End Date Input */}
+            {/* ------------ DATE + TIME (End) ------------- */}
             <View style={styles.dateInputWrapper}>
               <Ionicons name="calendar-outline" size={20} color="#0057B8" style={styles.dateIcon} />
               <TextInput
@@ -256,10 +382,75 @@ const AddShowScreen: React.FC = () => {
                 placeholder="End date (e.g., 2025-04-24)"
                 placeholderTextColor="#999"
               />
+              <TouchableOpacity onPress={() => setShowEndPicker(true)}>
+                <Ionicons name="chevron-down" size={20} color="#0057B8" />
+              </TouchableOpacity>
+            </View>
+            {/* TIME PICKERS – end */}
+            <View style={styles.timeRow}>
+              {['Hour', 'Min', 'AM/PM'].map((lbl) => (
+                <Text key={lbl} style={styles.timeLabel}>{lbl}</Text>
+              ))}
+            </View>
+            <View style={styles.timeRow}>
+              <TextInput
+                style={[styles.timeInput]}
+                keyboardType="number-pad"
+                maxLength={2}
+                value={endHour}
+                onChangeText={txt => setEndHour(txt.replace(/[^0-9]/g, ''))}
+              />
+              <TextInput
+                style={[styles.timeInput]}
+                keyboardType="number-pad"
+                maxLength={2}
+                value={endMinute}
+                onChangeText={txt => setEndMinute(txt.replace(/[^0-9]/g, ''))}
+              />
+              <TouchableOpacity
+                style={styles.amPmToggle}
+                onPress={() => setEndPeriod(prev => (prev === 'AM' ? 'PM' : 'AM'))}
+              >
+                <Text style={styles.amPmText}>{endPeriod}</Text>
+              </TouchableOpacity>
             </View>
             
             {errors.dates && <Text style={styles.errorText}>{errors.dates}</Text>}
           </View>
+
+          {/* ----- DateTimePicker (cross-platform) ----- */}
+          {showStartPicker && (
+            <DateTimePicker
+              testID="startDatePicker"
+              value={startDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              onChange={(_, selected) => {
+                setShowStartPicker(false);
+                if (selected) {
+                  setStartDate(selected);
+                  setStartDateText(
+                    formatDateTime(selected, startHour, startMinute, startPeriod),
+                  );
+                }
+              }}
+            />
+          )}
+          {showEndPicker && (
+            <DateTimePicker
+              testID="endDatePicker"
+              value={endDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              onChange={(_, selected) => {
+                setShowEndPicker(false);
+                if (selected) {
+                  setEndDate(selected);
+                  setEndDateText(formatDateTime(selected, endHour, endMinute, endPeriod));
+                }
+              }}
+            />
+          )}
 
           {/* Entry Fee */}
           <View style={styles.formGroup}>
@@ -465,6 +656,49 @@ const styles = StyleSheet.create({
   },
   tagTextSelected: {
     color: '#FFFFFF',
+  },
+  /* ---------- Time row styles ---------- */
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  timeLabel: {
+    flex: 1,
+    fontSize: 12,
+    color: '#666666',
+  },
+  timeInput: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginRight: 6,
+    textAlign: 'center',
+    color: '#333333',
+  },
+  amPmToggle: {
+    flex: 1,
+    backgroundColor: '#0057B8',
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  amPmText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  /* ---------- Modal backdrop (calendar placeholder) ---------- */
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   submitButton: {
     backgroundColor: '#FF6A00',

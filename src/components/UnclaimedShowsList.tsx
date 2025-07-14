@@ -31,12 +31,9 @@ export interface UnclaimedShowsListRef {
   refetch: () => Promise<void>;
 }
 
-const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListProps>(({
-  organizerId,
-  onRefresh,
-  isRefreshing = false,
-  onClaimSuccess
-}, ref) => {
+const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListProps>((props, ref) => {
+  const { organizerId, onRefresh, isRefreshing = false, onClaimSuccess } = props;
+  
   // Use the custom hook to fetch and manage unclaimed shows data
   const { 
     unclaimedItems, 
@@ -347,7 +344,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
       }
     />
   );
-};
+});
 
 const styles = StyleSheet.create({
   listContainer: {
