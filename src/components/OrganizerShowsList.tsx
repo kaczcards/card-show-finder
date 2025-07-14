@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { ShowSeries, Show } from '../types';
 import { showSeriesService } from '../services/showSeriesService';
+import { supabase } from '../supabase';
 
 // Default placeholder shown when a show has no custom image
 const placeholderShowImage = require('../../assets/images/placeholder-show.png');
@@ -96,8 +97,46 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
       setSeriesList(seriesWithShows);
       
       // Get standalone shows (not part of any series)
-      // For now, we'll assume all shows are part of a series
-      setStandaloneShows([]);
+      // Query for shows where series_id is null and organizer_id matches
+      const { data: standaloneData, error: standaloneError } = await supabase
+        .from('shows')
+        .select('*')
+        .eq('organizer_id', organizerId)
+        .is('series_id', null)
+        .order('start_date', { ascending: true });
+      
+      if (standaloneError) {
+        console.error('Error fetching standalone shows:', standaloneError);
+        throw new Error(`Failed to fetch standalone shows: ${standaloneError.message}`);
+      }
+      
+      // Map the data to match the Show interface
+      const mappedStandaloneShows = standaloneData?.map(show => ({
+        id: show.id,
+        seriesId: show.series_id,
+        title: show.title,
+        description: show.description,
+        location: show.location,
+        address: show.address,
+        startDate: show.start_date,
+        endDate: show.end_date,
+        entryFee: show.entry_fee,
+        imageUrl: show.image_url,
+        rating: show.rating,
+        coordinates: show.coordinates ? {
+          latitude: show.coordinates.coordinates[1],
+          longitude: show.coordinates.coordinates[0]
+        } : undefined,
+        status: show.status,
+        organizerId: show.organizer_id,
+        features: show.features,
+        categories: show.categories,
+        createdAt: show.created_at,
+        updatedAt: show.updated_at
+      })) || [];
+      
+      console.log(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${organizerId}`);
+      setStandaloneShows(mappedStandaloneShows);
       
       // Initialize expanded state for all series
       const initialExpandedState: Record<string, boolean> = {};

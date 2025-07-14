@@ -62,6 +62,15 @@ const AddShowScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Helper function to compare only the date part (not time)
+  const areSameDay = (date1: Date, date2: Date): boolean => {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  };
+
   // Format date & time for display (e.g. "Wed, Apr 24 2025  10:00 AM")
   const formatDateTime = (date: Date, hr: string, min: string, period: 'AM' | 'PM'): string => {
     const datePart = date.toLocaleDateString('en-US', {
@@ -290,8 +299,7 @@ const AddShowScreen: React.FC = () => {
     console.log(`[DatePicker] ${type} date selected:`, date);
     console.log(`[DatePicker] Current startDate:`, startDate);
     console.log(`[DatePicker] Current endDate:`, endDate);
-    console.log(`[DatePicker] Are dates equal:`, 
-      date && startDate && date.toDateString() === startDate.toDateString());
+    console.log(`[DatePicker] Are dates equal:`, date && startDate && areSameDay(date, startDate));
   };
 
   return (
@@ -511,13 +519,14 @@ const AddShowScreen: React.FC = () => {
               value={endDate}
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              // Removed minimumDate constraint to allow same-day selection
               onChange={(_, selected) => {
                 setShowEndPicker(false);
                 if (selected) {
                   logDateSelection('end', selected);
-                  setEndDate(selected);
-                  setEndDateText(formatDateTime(selected, endHour, endMinute, endPeriod));
+                  // Create a new date object to ensure we don't have reference issues
+                  const newEndDate = new Date(selected);
+                  setEndDate(newEndDate);
+                  setEndDateText(formatDateTime(newEndDate, endHour, endMinute, endPeriod));
                 }
               }}
             />
