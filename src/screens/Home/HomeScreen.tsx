@@ -192,7 +192,7 @@ const HomeScreen = ({
   } = useInfiniteShows({
     coordinates: coordinates || { latitude: 0, longitude: 0 },
     ...filters,
-    enabled: !!coordinates
+    enabled: true // Always enable the query, even without coordinates
   });
 
   // Fetch user coordinates and enable the query when the screen comes into focus

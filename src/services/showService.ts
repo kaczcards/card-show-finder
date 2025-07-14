@@ -609,26 +609,36 @@ const getFallbackPaginatedShows = async (
     let filteredData = data || [];
 
     /* ------------------------------------------------------------------
-     * Only apply Haversine distance filtering if we have *real* coordinates.
-     * A default (0,0) coordinate means we don't yet know the user's location
-     * and applying the distance filter would incorrectly exclude every show.
+     * Skip distance filtering if we’re using the default (0,0) placeholder
+     * coordinates.  Applying the radius filter in that case removes every
+     * show because all real-world coordinates are far from (0,0).
      * ------------------------------------------------------------------ */
-    if (
-      radius &&
-      (Math.abs(latitude) > 0.0001 || Math.abs(longitude) > 0.0001)
-    ) {
+    const isDefaultCoordinates =
+      Math.abs(latitude) < 0.1 && Math.abs(longitude) < 0.1;
+
+    if (radius && !isDefaultCoordinates) {
+      console.debug(
+        `[showService] Applying distance filtering with coordinates (${latitude}, ${longitude})`
+      );
+
       filteredData = filteredData.filter(show => {
         // Skip shows without coordinates
         if (!show.coordinates || !show.coordinates.coordinates) return false;
-        
-        // Calculate distance using Haversine formula
+
         const showLat = show.coordinates.coordinates[1];
         const showLng = show.coordinates.coordinates[0];
         const distance = calculateDistance(
-          latitude, longitude, showLat, showLng
+          latitude,
+          longitude,
+          showLat,
+          showLng
         );
         return distance <= radius;
       });
+    } else if (isDefaultCoordinates) {
+      console.debug(
+        `[showService] Skipping distance filtering – default coordinates detected (${latitude}, ${longitude})`
+      );
     }
     
     console.info(`[showService] getFallbackPaginatedShows found ${filteredData.length} shows (from ${count} total)`);
