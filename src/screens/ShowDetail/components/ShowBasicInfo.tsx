@@ -19,14 +19,26 @@ type InfoRowProps = {
 };
 
 const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
+  // Enhanced renderContent to safely handle all text cases
   const renderContent = () => {
+    // If no children are provided, use the text prop
     if (children === undefined || children === null) {
-      return <Text style={styles.infoText}>{text}</Text>;
+      return <Text style={styles.infoText}>{text || ''}</Text>;
     }
+    
+    // If children is a string or number, wrap it in a Text component
     if (typeof children === 'string' || typeof children === 'number') {
       return <Text style={styles.infoText}>{children}</Text>;
     }
-    return children;
+    
+    // If children is already a React element, return it
+    if (React.isValidElement(children)) {
+      return children;
+    }
+    
+    // For any other case (like arrays of elements), wrap in a fragment
+    // This ensures we don't accidentally render raw strings
+    return <>{children}</>;
   };
 
   return (
@@ -43,9 +55,19 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
 };
 
 const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
+  // Safe entry fee formatting
+  const formatEntryFee = (fee?: number | string) => {
+    if (fee === undefined || fee === null) return '';
+    try {
+      return `Entry Fee: $${Number(fee).toFixed(2)}`;
+    } catch (e) {
+      return `Entry Fee: ${fee}`;
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{show.title}</Text>
+      <Text style={styles.title}>{show.title || 'Untitled Show'}</Text>
       
       <InfoRow 
         icon="location" 
@@ -55,7 +77,7 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
       {show.entry_fee && (
         <InfoRow
           icon="cash"
-          text={`Entry Fee: $${Number(show.entry_fee).toFixed(2)}`}
+          text={formatEntryFee(show.entry_fee)}
         />
       )}
     </View>
