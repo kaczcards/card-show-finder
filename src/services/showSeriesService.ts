@@ -483,6 +483,7 @@ export const showSeriesService = {
     }
 
     return true;
+  },
 
   /* ------------------------------------------------------------------
    * DEBUG HELPERS
@@ -528,7 +529,6 @@ export const showSeriesService = {
     } catch (err) {
       console.error('[debugShowsTableColumns] Unexpected error:', err);
     }
-  }
   },
 
   /* ------------------------------------------------------------------
