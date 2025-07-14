@@ -239,10 +239,19 @@ const HomeScreen = ({
               startTime: show.start_time,
               endTime: show.end_time,
               imageUrl: show.image_url,
-              coordinates: show.coordinates ? {
-                latitude: show.coordinates.coordinates[1],
-                longitude: show.coordinates.coordinates[0]
-              } : undefined
+              // Safely derive coordinates – guard against missing/null fields
+              coordinates: (() => {
+                const lat = show?.coordinates?.coordinates?.[1];
+                const lng = show?.coordinates?.coordinates?.[0];
+                return (
+                  typeof lat === 'number' &&
+                  typeof lng === 'number' &&
+                  Number.isFinite(lat) &&
+                  Number.isFinite(lng)
+                )
+                  ? { latitude: lat, longitude: lng }
+                  : undefined;
+              })()
             }));
 
             setEmergencyShowList(mappedShows);
