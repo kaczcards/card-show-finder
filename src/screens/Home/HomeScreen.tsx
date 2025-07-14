@@ -22,6 +22,7 @@ import FilterChips from '../../components/FilterChips';
 import FilterPresetModal from '../../components/FilterPresetModal';
 import { ShowFilters, Coordinates } from '../../types';
 import { useInfiniteShows } from '../../hooks';
+import { supabase } from '../../supabase';
 
 // Constants
 const PRIMARY_COLOR = '#FF6A00'; // Orange
@@ -64,6 +65,9 @@ const HomeScreen = ({
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const appState = useRef(AppState.currentState);
   const flatListRef = useRef(null);
+  // Emergency fallback state
+  const [emergencyShowList, setEmergencyShowList] = useState<any[]>([]);
+  const [useEmergencyList, setUseEmergencyList] = useState(false);
   
   // Default filter values
   const defaultFilters: ShowFilters = {
@@ -195,6 +199,67 @@ const HomeScreen = ({
     ...filters,
     enabled: true // Always enable the query, even without coordinates
   });
+
+  /* ------------------------------------------------------------------
+   * Emergency fetch – if main query says there are shows but we got none
+   * ----------------------------------------------------------------*/
+  useEffect(() => {
+    if (!isLoading && shows.length === 0 && totalCount > 0 && !useEmergencyList) {
+      console.warn('[HomeScreen] Main query returned 0 shows but totalCount > 0 - doing emergency fetch');
+      const fetchAllActiveShows = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('shows')
+            .select('*')
+            .eq('status', 'ACTIVE')
+            .gte('end_date', new Date().toISOString());
+
+          if (error) {
+            console.error('[HomeScreen] Emergency fetch error:', error);
+            return;
+          }
+
+          console.info(`[HomeScreen] Emergency fetch found ${data?.length || 0} shows`);
+
+          if (data && data.length > 0) {
+            const mappedShows = data.map(show => ({
+              id: show.id,
+              title: show.title,
+              location: show.location,
+              address: show.address,
+              startDate: show.start_date,
+              endDate: show.end_date,
+              entryFee: show.entry_fee || 0,
+              description: show.description,
+              status: show.status,
+              organizerId: show.organizer_id,
+              features: show.features || {},
+              categories: show.categories || [],
+              seriesId: show.series_id,
+              startTime: show.start_time,
+              endTime: show.end_time,
+              imageUrl: show.image_url,
+              coordinates: show.coordinates ? {
+                latitude: show.coordinates.coordinates[1],
+                longitude: show.coordinates.coordinates[0]
+              } : undefined
+            }));
+
+            setEmergencyShowList(mappedShows);
+            setUseEmergencyList(true);
+          }
+        } catch (e) {
+          console.error('[HomeScreen] Failed to fetch emergency shows:', e);
+        }
+      };
+
+      fetchAllActiveShows();
+    } else if (shows.length > 0 && useEmergencyList) {
+      // Reset if main query has data again
+      setUseEmergencyList(false);
+      setEmergencyShowList([]);
+    }
+  }, [isLoading, shows.length, totalCount, useEmergencyList]);
 
   // Fetch user coordinates and enable the query when the screen comes into focus
   useFocusEffect(
@@ -474,7 +539,7 @@ const HomeScreen = ({
           ) : (
             <FlatList
               ref={flatListRef}
-              data={shows}
+              data={useEmergencyList ? emergencyShowList : shows}
               renderItem={renderShowItem}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.showsList}
