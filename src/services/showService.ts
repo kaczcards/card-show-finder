@@ -494,7 +494,15 @@ export const getPaginatedShows = async (
     // Try fallback if the main method fails
     try {
       console.warn('[showService] Attempting fallback after error...');
-      return await getFallbackPaginatedShows(params);
+      const fallbackResult = await getFallbackPaginatedShows(params);
+      
+      // If the fallback found no shows, try the emergency fallback
+      if (fallbackResult.data.length === 0 && fallbackResult.pagination.totalCount > 0) {
+        console.warn('[showService] Fallback found 0 shows but totalCount > 0, trying emergency fallback');
+        return await getAllActiveShowsFallback(params);
+      }
+      
+      return fallbackResult;
     } catch (fallbackErr: any) {
       console.error('[showService] Fallback also failed:', fallbackErr);
       return {
@@ -609,7 +617,7 @@ const getFallbackPaginatedShows = async (
     let filteredData = data || [];
 
     /* ------------------------------------------------------------------
-     * Skip distance filtering if we’re using the default (0,0) placeholder
+     * Skip distance filtering if we're using the default (0,0) placeholder
      * coordinates.  Applying the radius filter in that case removes every
      * show because all real-world coordinates are far from (0,0).
      * ------------------------------------------------------------------ */
@@ -671,6 +679,94 @@ const getFallbackPaginatedShows = async (
         totalPages: 0,
       },
       error: err.message ?? 'Failed to fetch paginated shows',
+    };
+  }
+};
+
+/**
+ * Completely bypass all location filtering if we're still not getting results.
+ * This ensures users always see shows even if there are issues with coordinates.
+ */
+const getAllActiveShowsFallback = async (
+  params: PaginatedShowsParams
+): Promise<PaginatedShowsResult> => {
+  try {
+    const {
+      startDate = new Date(),
+      endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      pageSize = 20,
+      page = 1,
+    } = params;
+
+    console.warn('[showService] Using emergency getAllActiveShowsFallback without coordinate filtering');
+    
+    const toIso = (d: Date | string): string =>
+      d instanceof Date ? d.toISOString() : d;
+    
+    // Simple query - just get active shows
+    let dataQuery = supabase
+      .from('shows')
+      .select('*')
+      .eq('status', 'ACTIVE');
+    
+    // Apply minimal filtering to ensure we don't show past shows
+    const today = new Date();
+    dataQuery = dataQuery.gte('end_date', today.toISOString() as any);
+    
+    // Only apply date filtering to start date to match what we promise users
+    dataQuery = dataQuery.gte('start_date', toIso(startDate) as any);
+    dataQuery = dataQuery.lte('start_date', toIso(endDate) as any);
+    
+    // Get total count first
+    const { count, error: countError } = await dataQuery.count();
+    
+    if (countError) {
+      console.error('[showService] Error getting count in emergency fallback:', countError);
+      throw countError;
+    }
+    
+    // Now apply pagination to the same query
+    dataQuery = dataQuery
+      .order('start_date', { ascending: true })
+      .range((page - 1) * pageSize, page * pageSize - 1);
+    
+    const { data, error: dataError } = await dataQuery;
+    
+    if (dataError) {
+      console.error('[showService] Error getting data in emergency fallback:', dataError);
+      throw dataError;
+    }
+    
+    console.info(`[showService] Emergency getAllActiveShowsFallback found ${data.length} shows (from ${count} total)`);
+    
+    // Map to app format
+    const mappedShows = data.map(mapDbShowToAppShow);
+    
+    // Calculate pagination info
+    const totalCount = count || 0;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    
+    return {
+      data: mappedShows,
+      pagination: {
+        totalCount,
+        pageSize,
+        currentPage: page,
+        totalPages,
+      },
+      error: null,
+    };
+  } catch (err: any) {
+    console.error('[showService] Error in emergency fallback:', err);
+    return {
+      data: [],
+      pagination: {
+        totalCount: 0,
+        pageSize: params.pageSize ?? 20,
+        currentPage: params.page ?? 1,
+        totalPages: 0,
+      },
+      error: err.message ?? 'Failed to fetch shows',
     };
   }
 };

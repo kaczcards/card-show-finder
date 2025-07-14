@@ -67,7 +67,8 @@ const HomeScreen = ({
   
   // Default filter values
   const defaultFilters: ShowFilters = {
-    radius: 25,
+    // Increase default radius so users see more nearby shows
+    radius: 100,
     startDate: new Date(),
     endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     maxEntryFee: undefined,
