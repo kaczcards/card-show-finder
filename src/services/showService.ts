@@ -443,6 +443,9 @@ export const getPaginatedShows = async (
       status: 'ACTIVE', // Explicitly request only ACTIVE shows
     });
 
+    /* -------------------------------------------------------------
+     * 1. Handle RPC-level error (network / SQL exception, etc.)
+     * ----------------------------------------------------------- */
     if (error) {
       console.warn('[showService] get_paginated_shows RPC failed:', error.message);
       console.warn('[showService] Falling back to direct query...');
@@ -451,11 +454,17 @@ export const getPaginatedShows = async (
       return await getFallbackPaginatedShows(params);
     }
 
-    if (!data || data.error) {
-      // In case the function returns an error payload
+    /* -------------------------------------------------------------
+     * 2. Guard against malformed payloads or error wrapper returned
+     *    by the SQL function itself (it returns `{ error: .. }`).
+     * ----------------------------------------------------------- */
+    if (
+      !data ||
+      (typeof data === 'object' && 'error' in (data as any))
+    ) {
       const msg =
-        typeof data?.error === 'string'
-          ? data.error
+        typeof (data as any)?.error === 'string'
+          ? (data as any).error
           : 'Failed to load shows';
       console.warn('[showService] get_paginated_shows returned error payload:', msg);
       return {
@@ -470,9 +479,17 @@ export const getPaginatedShows = async (
       };
     }
 
-    // Extract rows & pagination metadata from JSONB payload
-    const rows = (data as any).data ?? [];
-    const paginationRaw = (data as any).pagination ?? {};
+    /* -------------------------------------------------------------
+     * 3. Normalise successful payload to avoid “undefined value
+     *    to object” errors when the function returns unexpected
+     *    shapes.  Always guarantee `rows` is an array and
+     *    `paginationRaw` is an object.
+     * ----------------------------------------------------------- */
+    const safePayload = typeof data === 'object' && data !== null ? data as any : {};
+    const rows: any[] = Array.isArray(safePayload.data) ? safePayload.data : [];
+    const paginationRaw: any = typeof safePayload.pagination === 'object' && safePayload.pagination !== null
+      ? safePayload.pagination
+      : {};
 
     const mappedShows: Show[] = Array.isArray(rows)
       ? rows.map(mapDbShowToAppShow)
