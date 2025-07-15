@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 // Domain / context / services
 import { useAuth } from '../../contexts/AuthContext';
@@ -29,6 +29,9 @@ import WantListEditor from '../../components/WantListEditor';
 const INVENTORY_PREFIX = "[INVENTORY]";
 
 const CollectionScreen: React.FC = () => {
+  // ===== Navigation =====
+  const navigation = useNavigation();
+
   // ===== Auth =====
   const {
     authState: { user },
@@ -49,6 +52,11 @@ const CollectionScreen: React.FC = () => {
   // ===== Upcoming Shows State =====
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
+
+  // ===== Navigation Handlers =====
+  const handleNavigateToSubscription = () => {
+    navigation.navigate('Subscription' as never);
+  };
 
   // ---------------- Dealer Inventory helpers ----------------
   const loadDealerInventory = async () => {
@@ -292,7 +300,13 @@ const CollectionScreen: React.FC = () => {
           <View style={styles.teaseContainer}>
             <Text style={styles.teaseText}>
               Upgrade to an MVP Dealer account to have what you're selling
-              available to all attendees.
+              available to all attendees.{' '}
+              <Text 
+                style={styles.teaseLink}
+                onPress={handleNavigateToSubscription}
+              >
+                Tap to upgrade now
+              </Text>
             </Text>
           </View>
         )}
@@ -386,6 +400,11 @@ const styles = StyleSheet.create({
     color: '#AA6500',
     fontSize: 14,
     lineHeight: 20,
+  },
+  teaseLink: {
+    color: '#FF6A00',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   /* ----- Loading and Error states ----- */
   loadingContainer: {
