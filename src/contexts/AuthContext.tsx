@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
-import { signInWithEmailPassword } from '../services/supabaseAuthService';
+import { signIn } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/sessionService';
 
 /* ------------------------------------------------------------------
@@ -14,9 +14,15 @@ import { refreshUserSession } from '../services/sessionService';
  *   Lets developers log in with Auth only, even if the
  *   `profiles` row hasn't been created yet.
  * ------------------------------------------------------------------ */
-const BYPASS_PROFILE_FETCH =
-  (__DEV__ && process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH !== 'false') ||
-  process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH === 'true';
+/**
+ * BYPASS_PROFILE_FETCH disabled.
+ * ---------------------------------------------------------------
+ * This flag was intended for development convenience.  Leaving it
+ * enabled in production caused ALL users to be treated as
+ * MVP_DEALER, granting unintended access.  We now hard-disable it
+ * to ensure each user’s role is always read from the database.
+ */
+const BYPASS_PROFILE_FETCH = false;
 
 // Define the shape of our auth context
 interface AuthContextType {
@@ -262,10 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
     // 2. Call the Supabase service to attempt the login.
-    const result = await supabaseAuthService.signInWithEmailPassword(
-      credentials.email,
-      credentials.password
-    );
+    const result = await supabaseAuthService.signIn(credentials);
 
     // 3. Handle the response directly.
     if (result.error) {
@@ -476,7 +479,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      await supabaseAuthService.signOutUser();
+      await supabaseAuthService.signOut();
       
       const newState = {
         user: null,
@@ -534,14 +537,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
       
-      await supabaseAuthService.updateUserProfile(authState.user.id, userData);
+      // Include the user ID in the userData object
+      const userDataWithId: Partial<User> = {
+        ...userData,
+        id: authState.user.id
+      };
       
-      // Get updated user data
-      const updatedUser = await supabaseAuthService.getCurrentUser(authState.user.id);
-      
-      if (!updatedUser) {
-        throw new Error('Failed to get updated user data');
-      }
+      // Call the updated service with the userData that now includes ID
+      const updatedUser = await supabaseAuthService.updateUserProfile(userDataWithId);
       
       setAuthState(prev => ({
         ...prev,

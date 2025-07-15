@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import * as userRoleService from '../../services/userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
+import { UserRole } from '../../types'; // Import UserRole enum
 
 // Import components from the components folder
 import {
@@ -87,6 +88,20 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const handleClaimShow = () => Alert.alert("Claim Show", "This feature is coming soon!");
   const navigateToEditShow = () => navigation.navigate('EditShow', { showId });
 
+  // MVP Dealer upgrade message component
+  const MVPDealerUpgradeMessage = () => {
+    if (user?.role !== UserRole.DEALER) return null;
+    
+    return (
+      <View style={styles.upgradeMessageContainer}>
+        <Ionicons name="star" size={24} color="#FF6A00" style={styles.upgradeIcon} />
+        <Text style={styles.upgradeMessageText}>
+          Upgrade to an MVP Dealer to be featured in shows you set up for and find out what people are looking for in advance of the show.
+        </Text>
+      </View>
+    );
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -125,6 +140,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       <View style={styles.detailsContainer}>
         {/* Basic Show Info */}
         <ShowBasicInfo show={show} />
+        
+        {/* MVP Dealer Upgrade Message - conditionally rendered */}
+        <MVPDealerUpgradeMessage />
         
         {/* Show Time Info */}
         <ShowTimeInfo show={show} />
@@ -217,6 +235,25 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: 'white',
     marginTop: 10,
+  },
+  upgradeMessageContainer: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: 8,
+    padding: 16,
+    marginVertical: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF6A00',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  upgradeIcon: {
+    marginRight: 12,
+  },
+  upgradeMessageText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333333',
+    lineHeight: 20,
   }
 });
 
