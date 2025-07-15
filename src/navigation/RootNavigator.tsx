@@ -50,7 +50,11 @@ const RootNavigator: React.FC = () => {
    *  as long as we declare the screen name in the config.
    */
   const linking = {
-    prefixes: ['cardshowfinder://'],
+    // Accept both the custom-scheme URL and the universal https link
+    prefixes: [
+      'cardshowfinder://',
+      'https://cardshowfinder.app',
+    ],
     config: {
       screens: {
         // Auth flow

@@ -59,6 +59,14 @@ module.exports = {
     infoPlist: {
       NSLocationWhenInUseUsageDescription: "Allow Card Show Finder to access your location so we can display nearby card shows."
     },
+    /* ------------------------------------------------------------------
+     * Universal Links (iOS) – ensure password-reset email links open
+     * the app rather than Safari.  Replace the domain below with the
+     * production domain used for your Supabase redirect / link-shortener.
+     * ------------------------------------------------------------------ */
+    associatedDomains: [
+      "applinks:cardshowfinder.app"
+    ],
     bundleIdentifier: "com.kaczcards.cardshowfinder"
   },
   android: {
@@ -74,6 +82,35 @@ module.exports = {
     ],
     jsEngine: "jsc",
     package: "com.kaczcards.cardshowfinder"
+    ,
+    /* ------------------------------------------------------------------
+     * Deep-link / Intent filters (Android)
+     *  – Handles both the custom scheme  cardshowfinder://reset-password
+     *    and the universal https link  https://cardshowfinder.app/reset-password
+     * ------------------------------------------------------------------ */
+    intentFilters: [
+      {
+        action: "VIEW",
+        data: [
+          {
+            scheme: "https",
+            host: "cardshowfinder.app",
+            pathPrefix: "/reset-password"
+          }
+        ],
+        category: ["BROWSABLE", "DEFAULT"]
+      },
+      {
+        action: "VIEW",
+        data: [
+          {
+            scheme: "cardshowfinder",
+            host: "reset-password"
+          }
+        ],
+        category: ["BROWSABLE", "DEFAULT"]
+      }
+    ]
   },
   web: {
     favicon: "./assets/favicon.png"

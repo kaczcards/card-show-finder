@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthCredentials, AuthState } from '../types';
 import NetInfo from '@react-native-community/netinfo';
 import { isSupabaseInitialized } from '../supabase';
+import { Platform } from 'react-native';
 
 // ---------------------------------------------------------------------------
 // Development mode – set to `false` in production builds. When `true`, the
@@ -361,8 +362,27 @@ export const signOutUser = async (): Promise<void> => {
  */
 export const resetPassword = async (email: string): Promise<void> => {
   try {
+    /**
+     * Supabase can only receive ONE `redirectTo` URL.  We need to ensure that
+     * whatever we pass here is understood by both iOS and Android:
+     *
+     * • iOS is happy with our custom scheme  cardshowfinder://reset-password
+     * • Android behaves more reliably with a standard https URL that is
+     *   mapped to the app via an intent-filter (<data android:scheme="https" …>)
+     *
+     * The universal link  https://cardshowfinder.app/reset-password  is
+     * therefore used on Android (and as a safe default for any other
+     * platforms), while iOS keeps using the custom scheme for a snappier UX.
+     */
+    const redirectTo = Platform.select({
+      ios: 'cardshowfinder://reset-password',
+      default: 'https://cardshowfinder.app/reset-password',
+    });
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'cardshowfinder://reset-password', // Ensure this matches your deep link
+      // @ts-expect-error – Supabase typings expect string | undefined
+      // but Platform.select may return `string | undefined`.
+      redirectTo,
     });
 
     if (error) throw error;
