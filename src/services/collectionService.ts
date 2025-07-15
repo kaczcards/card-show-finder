@@ -280,29 +280,17 @@ export const updateUserCard = async (
 /**
  * Get a user's want list
  * @param userId The ID of the user whose want list to fetch
- * @param type   The list type to fetch (`'want'` for regular want lists,
- *               `'inventory'` for dealer inventory). Defaults to `'want'`.
  * @returns The user's WantList object
  */
 export const getUserWantList = async (
-  userId: string,
-  type: string = 'want'
-): Promise<{ data: (WantList & { type?: string }) | null; error: any }> => {
+  userId: string
+): Promise<{ data: WantList | null; error: any }> => {
   try {
-    let query = supabase
+    const { data, error } = await supabase
       .from('want_lists')
       .select('*')
-      .eq('userid', userId);
-
-    // Filter by type while maintaining backward-compatibility for legacy rows
-    if (type === 'want') {
-      // For regular want lists include rows where type is 'want' OR null/undefined
-      query = query.or('type.eq.want,type.is.null');
-    } else {
-      query = query.eq('type', type);
-    }
-
-    const { data, error } = await query.maybeSingle();
+      .eq('userid', userId)
+      .maybeSingle();
     
     if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
       throw error;
@@ -313,7 +301,6 @@ export const getUserWantList = async (
       id: data.id,
       userId: data.userid,
       content: data.content,
-      type: data.type ?? 'want',
       createdAt: data.createdat,
       updatedAt: data.updatedat
     } : null;
