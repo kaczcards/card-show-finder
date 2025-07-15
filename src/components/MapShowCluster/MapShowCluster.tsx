@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import { Marker, Callout, Region } from 'react-native-maps';
 // Use our patched version that renames deprecated lifecycle methods
 import FixedClusteredMapView from '../FixedClusteredMapView';
 import { Show, Coordinates } from '../../types';
+import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../supabase';
 
 interface MapShowClusterProps {
   shows: Show[];
@@ -27,9 +29,75 @@ interface MapShowClusterProps {
   onRegionChangeComplete?: (region: Region) => void;
 }
 
+// Type for organizer profile with social media links
+interface OrganizerProfile {
+  id: string;
+  firstName: string;
+  lastName?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  twitterUrl?: string;
+  whatnotUrl?: string;
+  ebayStoreUrl?: string;
+}
+
 const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) => {
   // Navigation (used as a fallback when parent doesn't supply onShowPress)
   const navigation = useNavigation<any>();
+  
+  // State for storing organizer profiles
+  const [organizerProfiles, setOrganizerProfiles] = useState<Record<string, OrganizerProfile>>({});
+
+  /* ------------------------------------------------------------------
+   * Fetch organizer profiles with social media links
+   * ------------------------------------------------------------------ */
+  useEffect(() => {
+    const fetchOrganizerProfiles = async () => {
+      try {
+        // Extract unique organizer IDs from shows
+        const organizerIds = [...new Set(
+          props.shows
+            .filter(show => show.organizerId)
+            .map(show => show.organizerId)
+        )];
+        
+        if (organizerIds.length === 0) return;
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url')
+          .in('id', organizerIds);
+        
+        if (error) {
+          console.error('Error fetching organizer profiles:', error);
+          return;
+        }
+        
+        if (data) {
+          // Convert to a map for easier lookup
+          const profileMap: Record<string, OrganizerProfile> = {};
+          data.forEach(profile => {
+            profileMap[profile.id] = {
+              id: profile.id,
+              firstName: profile.first_name,
+              lastName: profile.last_name,
+              facebookUrl: profile.facebook_url,
+              instagramUrl: profile.instagram_url,
+              twitterUrl: profile.twitter_url,
+              whatnotUrl: profile.whatnot_url,
+              ebayStoreUrl: profile.ebay_store_url
+            };
+          });
+          
+          setOrganizerProfiles(profileMap);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching organizer profiles:', err);
+      }
+    };
+    
+    fetchOrganizerProfiles();
+  }, [props.shows]);
 
   /* ------------------------------------------------------------------
    * Utility – Validate / auto-correct possibly swapped coordinates
@@ -66,6 +134,28 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
     // Still invalid – give up
     return null;
+  };
+
+  // Helper function to open a URL
+  const openUrl = (url: string | undefined) => {
+    if (!url) return;
+    
+    // Ensure URL has a protocol
+    const finalUrl = url.startsWith('http') ? url : `https://${url}`;
+    
+    Linking.canOpenURL(finalUrl)
+      .then(supported => {
+        if (supported) {
+          Linking.openURL(finalUrl);
+        } else {
+          console.error(`Cannot open URL: ${finalUrl}`);
+          Alert.alert('Error', 'Cannot open this URL');
+        }
+      })
+      .catch(err => {
+        console.error('Error opening URL:', err);
+        Alert.alert('Error', 'Could not open the link');
+      });
   };
 
   // Helper function to open address in maps app
@@ -174,6 +264,9 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
       return null;
     }
 
+    // Get organizer profile if available
+    const organizer = show.organizerId ? organizerProfiles[show.organizerId] : null;
+
     return (
       <Marker
         key={show.id}
@@ -199,6 +292,57 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
             <Text style={styles.calloutDetail}>
               {formatEntryFee(show.entryFee)}
             </Text>
+            
+            {/* Social Media Links */}
+            {organizer && (
+              <View style={styles.socialLinksContainer}>
+                {organizer.facebookUrl && (
+                  <TouchableOpacity 
+                    style={styles.socialIconButton} 
+                    onPress={() => openUrl(organizer.facebookUrl)}
+                  >
+                    <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                  </TouchableOpacity>
+                )}
+                
+                {organizer.instagramUrl && (
+                  <TouchableOpacity 
+                    style={styles.socialIconButton} 
+                    onPress={() => openUrl(organizer.instagramUrl)}
+                  >
+                    <Ionicons name="logo-instagram" size={20} color="#C13584" />
+                  </TouchableOpacity>
+                )}
+                
+                {organizer.twitterUrl && (
+                  <TouchableOpacity 
+                    style={styles.socialIconButton} 
+                    onPress={() => openUrl(organizer.twitterUrl)}
+                  >
+                    <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
+                  </TouchableOpacity>
+                )}
+                
+                {organizer.whatnotUrl && (
+                  <TouchableOpacity 
+                    style={styles.socialIconButton} 
+                    onPress={() => openUrl(organizer.whatnotUrl)}
+                  >
+                    <Ionicons name="cart-outline" size={20} color="#FF001F" />
+                  </TouchableOpacity>
+                )}
+                
+                {organizer.ebayStoreUrl && (
+                  <TouchableOpacity 
+                    style={styles.socialIconButton} 
+                    onPress={() => openUrl(organizer.ebayStoreUrl)}
+                  >
+                    <Ionicons name="pricetag-outline" size={20} color="#E53238" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+            
             <TouchableOpacity
               style={styles.calloutButton}
               onPress={() => navigateToShow(show.id)}
@@ -330,7 +474,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   calloutContainer: {
-    width: 200,
+    width: 220,
     backgroundColor: 'white',
     borderRadius: 8,
     padding: 12,
@@ -359,6 +503,20 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     marginBottom: 4,
     textDecorationLine: 'underline',
+  },
+  socialLinksContainer: {
+    flexDirection: 'row',
+    marginVertical: 8,
+    justifyContent: 'center',
+  },
+  socialIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f8f8f8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 4,
   },
   calloutButton: {
     backgroundColor: '#007AFF',
