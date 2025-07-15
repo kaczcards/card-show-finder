@@ -14,6 +14,12 @@ interface Dealer {
   role: UserRole;
   accountType?: string;
   boothLocation?: string;
+  // --- Social Media & Marketplace links (added for Task 8) ------------------
+  facebookUrl?: string;
+  instagramUrl?: string;
+  twitterUrl?: string;
+  whatnotUrl?: string;
+  ebayStoreUrl?: string;
 }
 
 interface ShowDetails {
@@ -73,7 +79,63 @@ export const useShowDetailQuery = (showId: string) => {
       throw new Error(data?.error || 'Failed to load show details');
     }
     
-    return data as ShowDetailResponse;
+    // Enhanced version that adds social media links for MVP Dealers
+    const enhanceWithSocialMediaLinks = async (data: ShowDetailResponse) => {
+      // Find any MVP Dealers who need social media links
+      const mvpDealers = data.participatingDealers.filter(
+        dealer => dealer.role === 'MVP_DEALER'
+      );
+      
+      if (mvpDealers.length === 0) return data; // No MVP dealers to enhance
+      
+      try {
+        // Fetch profiles for all MVP dealers in a single batch
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('id, facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url')
+          .in('id', mvpDealers.map(dealer => dealer.id));
+        
+        if (error || !profiles) {
+          console.error('Error fetching dealer social media:', error);
+          return data; // Return original data if there's an error
+        }
+        
+        // Create a map for easy lookup
+        const profileMap = new Map();
+        profiles.forEach(profile => {
+          profileMap.set(profile.id, {
+            facebookUrl: profile.facebook_url,
+            instagramUrl: profile.instagram_url,
+            twitterUrl: profile.twitter_url,
+            whatnotUrl: profile.whatnot_url,
+            ebayStoreUrl: profile.ebay_store_url
+          });
+        });
+        
+        // Enhance the dealers with social media links
+        const enhancedDealers = data.participatingDealers.map(dealer => {
+          if (dealer.role === 'MVP_DEALER' && profileMap.has(dealer.id)) {
+            return {
+              ...dealer,
+              ...profileMap.get(dealer.id)
+            };
+          }
+          return dealer;
+        });
+        
+        return {
+          ...data,
+          participatingDealers: enhancedDealers
+        };
+      } catch (err) {
+        console.error('Unexpected error enhancing dealers with social media:', err);
+        return data; // Return original data if there's an error
+      }
+    };
+
+    // Apply the enhancement
+    const enhancedData = await enhanceWithSocialMediaLinks(data as ShowDetailResponse);
+    return enhancedData;
   };
   
   // Use React Query to fetch and cache the show details
