@@ -1,124 +1,104 @@
-# Supabase Migration – Fix PostGIS Coordinate Extraction  
-*(Update `nearby_shows` & `nearby_shows_earth_distance` functions to return plain latitude / longitude columns)*
+# Database Migration Instructions  
+_Adding social-media & marketplace URL columns to `profiles`_
+
+This migration introduces five **nullable** text columns so MVP Dealers and Show Organizers can save their public links:
+
+| Column name      | Purpose                                  |
+|------------------|------------------------------------------|
+| `facebook_url`   | Facebook profile/page                    |
+| `instagram_url`  | Instagram profile                        |
+| `twitter_url`    | Twitter / X profile                      |
+| `whatnot_url`    | Whatnot store URL (dealers)              |
+| `ebay_store_url` | eBay store URL (dealers)                 |
+
+The SQL file is already in the repo at  
+`supabase/migrations/20250715000000_add_social_media_columns.sql`.
 
 ---
 
-## 1. Context
+## 1. Apply via Supabase UI (Quick & graphical)
 
-The mobile app now expects each show row to include **numeric** `latitude` and `longitude` fields.  
-A new migration `supabase/migrations/20240710_update_nearby_shows_function.sql` has been added to:
-
-1. Drop the old functions.
-2. Re-create them with `ST_Y()` / `ST_X()` so each result row contains:
-   ```
-   latitude  -- Y (North/South)
-   longitude -- X (East/West)
-   ```
-3. Keep all original columns + ordering + security grants.
-
-Until this migration is applied **pins will not appear on the map**.
+1. Sign in to your Supabase project.  
+2. In the left sidebar choose **SQL editor → New query**.  
+3. Copy-paste the entire contents of  
+   `supabase/migrations/20250715000000_add_social_media_columns.sql`  
+   into the query window.  
+4. Press **Run**.  
+   • The UI will execute `ALTER TABLE profiles …` and add all five columns.  
+   • Because we used `ADD COLUMN IF NOT EXISTS`, running it again is safe.  
+5. Confirm success in **Table editor → profiles** – you should see the new
+   columns at the bottom (all nullable).
 
 ---
 
-## 2. Automated Approach (recommended)
+## 2. Apply via Supabase CLI (Automated / CI-friendly)
 
-### 2.1 Prerequisites
-| Requirement | Notes |
-|-------------|-------|
-| Supabase CLI ≥ 1.152 | `npm i -g supabase` |
-| Project service key | Visible in Supabase → Project Settings → API |
-| Local `.env` with `SUPABASE_DB_PASSWORD` | For CLI connection |
+### Prerequisites
+* Supabase CLI ≥ `1.0.0` installed and authenticated  
+  ```bash
+  supabase login        # first time only
+  supabase link --project-ref <your-project-ref>
+  ```
 
-### 2.2 Steps
+### Run the migration
+From the repo root:
 
 ```bash
-# 1. Navigate to repo root
-cd card-show-finder
-
-# 2. Ensure you are logged-in
-supabase login
-
-# 3. Point CLI at the correct project
-supabase link --project-ref <PROJECT_REF>
-
-# 4. Push only the new migration
-supabase db push          # applies all pending migrations
-#   └─ internally runs `migrations up`
+# Push only the new migration
+supabase db push \
+  --file supabase/migrations/20250715000000_add_social_media_columns.sql
 ```
 
-The CLI will print something like:
-
-```
-Migrating: 20240710_update_nearby_shows_function.sql … done
-```
-
-> **After success** restart any Supabase Edge Functions / reload the SQL editor page so cached definitions refresh.
-
----
-
-## 3. Manual Approach (SQL dashboard or psql)
-
-If you cannot use the CLI, run the SQL file manually.
-
-### 3.1 Via Supabase Dashboard
-
-1. Open **SQL Editor** → **New Query**.  
-2. Copy-paste the full contents of  
-   `supabase/migrations/20240710_update_nearby_shows_function.sql`.
-3. Click **Run**.  
-4. Confirm “Success” in the output pane.
-
-### 3.2 Via psql
+The CLI will connect and execute the SQL on your **remote** database.  
+If you prefer the full diff-based workflow:
 
 ```bash
-psql "postgres://postgres:<PASSWORD>@db.<PROJECT_REF>.supabase.co:5432/postgres"
-
-\i supabase/migrations/20240710_update_nearby_shows_function.sql
-\q
+supabase db diff --schema public --file tmp_diff.sql   # optional preview
+supabase db push                                       # pushes all pending migrations
 ```
 
 ---
 
-## 4. Validation
-
-### 4.1 Quick query
+## 3. Verify the columns
 
 ```sql
-select id, latitude, longitude
-from public.nearby_shows(lat => 39.95, long => -75.16, radius_miles => 5)
-limit 5;
+select
+  column_name, data_type, is_nullable
+from information_schema.columns
+where table_name = 'profiles'
+  and column_name in (
+    'facebook_url','instagram_url','twitter_url',
+    'whatnot_url','ebay_store_url');
 ```
 
-Expected:
-
-| id | latitude | longitude |
-|----|----------|-----------|
-| …  | 39.9526  | -75.1652  |
-
-### 4.2 Mobile app
-
-1. Re-build / relaunch the app.  
-2. Navigate to the map – pins should appear near your location.  
-3. If no pins appear, open console logs; you should **not** see EWKB strings (`01010000…`).  
+All five rows should appear with `data_type = text` and `is_nullable = YES`.
 
 ---
 
-## 5. Rollback
+## 4. Rollback (if ever needed)
 
-If something goes wrong:
+Because we added **nullable** columns with no dependent objects it is safe to
+drop them:
 
 ```sql
--- Remove new functions
-DROP FUNCTION IF EXISTS public.nearby_shows;
-DROP FUNCTION IF EXISTS public.nearby_shows_earth_distance;
-
--- Re-run previous migration file (20240709…sql) from Git history
+alter table profiles
+  drop column ebay_store_url,
+  drop column whatnot_url,
+  drop column twitter_url,
+  drop column instagram_url,
+  drop column facebook_url;
 ```
+
+(Remember to also back out UI/Code references.)
 
 ---
 
-## 6. Commit & Deploy
+## 5. Troubleshooting
 
-After confirming locally, merge the branch and let your CI/CD (or manual deploy) run the same CLI command against **production**.
+| Symptom                              | Fix |
+|--------------------------------------|-----|
+| “column does not exist” runtime error| Migration wasn’t applied; re-run steps above. |
+| Migration fails with permissions     | Ensure your service role / CLI token has `alter table` privileges. |
+| Columns not visible in Table Editor  | Refresh the page or clear browser cache. |
 
-*Happy mapping!*  
+You are now ready to let users add and display their social-media links in the app. 🎉
