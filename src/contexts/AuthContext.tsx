@@ -534,14 +534,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
       
-      await supabaseAuthService.updateUserProfile(authState.user.id, userData);
+      // Include the user ID in the userData object
+      const userDataWithId: Partial<User> = {
+        ...userData,
+        id: authState.user.id
+      };
       
-      // Get updated user data
-      const updatedUser = await supabaseAuthService.getCurrentUser(authState.user.id);
-      
-      if (!updatedUser) {
-        throw new Error('Failed to get updated user data');
-      }
+      // Call the updated service with the userData that now includes ID
+      const updatedUser = await supabaseAuthService.updateUserProfile(userDataWithId);
       
       setAuthState(prev => ({
         ...prev,
