@@ -8,6 +8,7 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -40,6 +41,7 @@ const CollectionScreen: React.FC = () => {
   const [inventoryContent, setInventoryContent] = useState<string>('');
   const [loadingInventory, setLoadingInventory] = useState<boolean>(true);
   const [savingInventory, setSavingInventory] = useState<boolean>(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
 
   // ===== Upcoming Shows State =====
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
@@ -49,21 +51,31 @@ const CollectionScreen: React.FC = () => {
   const loadDealerInventory = async () => {
     if (!userId) return;
     setLoadingInventory(true);
+    setInventoryError(null);
+    
     try {
+      // Instead of using dealer_inventories table, query want_lists with a type filter
       const { data, error } = await supabase
-        .from('dealer_inventories')
+        .from('want_lists')
         .select('content')
         .eq('user_id', userId)
-        .single();
+        .eq('type', 'inventory')
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors if no record exists
 
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 = no rows found
-        throw error;
+      if (error) {
+        console.error('Error loading dealer inventory:', error);
+        setInventoryError('Failed to load your inventory. Please try again.');
+        // Set empty content so UI doesn't break
+        setInventoryContent('');
+        return;
       }
 
+      // If data exists, set the content, otherwise use empty string
       setInventoryContent(data?.content ?? '');
     } catch (err) {
       console.error('Error loading dealer inventory:', err);
+      setInventoryError('An unexpected error occurred. Please try again.');
+      setInventoryContent('');
     } finally {
       setLoadingInventory(false);
     }
@@ -71,24 +83,31 @@ const CollectionScreen: React.FC = () => {
 
   const saveDealerInventory = async () => {
     if (!userId) return;
-    if (!inventoryContent.trim()) {
-      Alert.alert('Empty Inventory', 'Please enter what you sell before saving.');
-      return;
-    }
+    setInventoryError(null);
+    
     try {
       setSavingInventory(true);
-      const { error } = await supabase.from('dealer_inventories').upsert(
+      
+      // Use the want_lists table with a type field to distinguish inventory entries
+      const { error } = await supabase.from('want_lists').upsert(
         {
           user_id: userId,
           content: inventoryContent.trim(),
+          type: 'inventory', // Add type field to distinguish from regular want lists
           updated_at: new Date().toISOString(),
         },
-        { onConflict: 'user_id' }
+        { onConflict: 'user_id,type' } // Handle conflict based on both user_id and type
       );
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Error saving inventory:', error);
+        throw error;
+      }
+      
       Alert.alert('Success', 'Your inventory has been saved.');
     } catch (err) {
       console.error('Error saving inventory:', err);
+      setInventoryError('Failed to save your inventory. Please try again.');
       Alert.alert('Error', 'Failed to save inventory. Please try again.');
     } finally {
       setSavingInventory(false);
@@ -98,13 +117,19 @@ const CollectionScreen: React.FC = () => {
   const loadWantList = async () => {
     if (!userId) return;
     setLoadingWantList(true);
-    const { data, error } = await getUserWantList(userId);
-    if (error) {
-      console.error(error);
-    } else {
-      setWantList(data);
+    try {
+      // Make sure to get only regular want lists (not inventory)
+      const { data, error } = await getUserWantList(userId);
+      if (error) {
+        console.error('Error loading want list:', error);
+      } else {
+        setWantList(data);
+      }
+    } catch (err) {
+      console.error('Unexpected error loading want list:', err);
+    } finally {
+      setLoadingWantList(false);
     }
-    setLoadingWantList(false);
   };
 
   const loadUpcomingShows = async () => {
@@ -151,26 +176,48 @@ const CollectionScreen: React.FC = () => {
   const renderDealerInventorySection = () => (
     <View style={styles.editorContainer}>
       <Text style={styles.sectionTitle}>What I Sell</Text>
-      <TextInput
-        style={styles.textInput}
-        multiline
-        placeholder={'List the products you typically carry…'}
-        value={inventoryContent}
-        onChangeText={setInventoryContent}
-        editable={!savingInventory && !loadingInventory}
-        textAlignVertical="top"
-        placeholderTextColor="#999"
-      />
-      <View style={{ height: 8 }} />
-      <View style={styles.saveButtonWrapper}>
-        {savingInventory ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text style={styles.saveButtonText} onPress={saveDealerInventory}>
-            Save
-          </Text>
-        )}
-      </View>
+      
+      {loadingInventory ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading your inventory...</Text>
+        </View>
+      ) : inventoryError ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{inventoryError}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={loadDealerInventory}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <TextInput
+            style={styles.textInput}
+            multiline
+            placeholder={'List the products you typically carry…'}
+            value={inventoryContent}
+            onChangeText={setInventoryContent}
+            editable={!savingInventory}
+            textAlignVertical="top"
+            placeholderTextColor="#999"
+          />
+          <View style={{ height: 8 }} />
+          <TouchableOpacity
+            style={[styles.saveButtonWrapper, savingInventory && styles.saveButtonDisabled]}
+            onPress={saveDealerInventory}
+            disabled={savingInventory}
+          >
+            {savingInventory ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.saveButtonText}>Save</Text>
+            )}
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 
@@ -267,6 +314,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
   },
+  saveButtonDisabled: {
+    backgroundColor: '#99C9FF',
+  },
   saveButtonText: {
     color: 'white',
     fontSize: 16,
@@ -285,6 +335,41 @@ const styles = StyleSheet.create({
     color: '#AA6500',
     fontSize: 14,
     lineHeight: 20,
+  },
+  /* ----- Loading and Error states ----- */
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    minHeight: 150,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 16,
+  },
+  errorContainer: {
+    padding: 16,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 4,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: '500',
   },
 });
 
