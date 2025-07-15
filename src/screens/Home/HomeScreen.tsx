@@ -89,13 +89,26 @@ const HomeScreen = ({
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const [presetModalVisible, setPresetModalVisible] = useState(false);
 
+  /**
+   * ------------------------------------------------------------------
+   * Build a user-scoped storage key so each user gets their own
+   * set of temporary filters on the same device.
+   *   e.g.  homeFilters_123e4567-e89b-12d3-a456-426614174000
+   * If the user is not logged in yet we fall back to "guest".
+   * ------------------------------------------------------------------
+   */
+  const getTempFiltersKey = useCallback(
+    () => `homeFilters_${authState.user?.id ?? 'guest'}`,
+    [authState.user?.id]
+  );
+
   // Load persisted filters on mount - only if customFilters is not provided
   useEffect(() => {
     if (customFilters) return; // Skip if customFilters is provided
     
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem('homeFilters');
+        const stored = await AsyncStorage.getItem(getTempFiltersKey());
         if (stored) {
           const parsed: ShowFilters = JSON.parse(stored);
           setLocalFilters({ ...defaultFilters, ...parsed });
@@ -104,16 +117,16 @@ const HomeScreen = ({
         console.warn('Failed to load stored filters', e);
       }
     })();
-  }, [customFilters]);
+  }, [customFilters, getTempFiltersKey]);
 
   // Persist filters whenever they change - only if customFilters is not provided
   useEffect(() => {
     if (customFilters) return; // Skip if customFilters is provided
     
-    AsyncStorage.setItem('homeFilters', JSON.stringify(localFilters)).catch(() =>
+    AsyncStorage.setItem(getTempFiltersKey(), JSON.stringify(localFilters)).catch(() =>
       console.warn('Failed to persist filters')
     );
-  }, [localFilters, customFilters]);
+  }, [localFilters, customFilters, getTempFiltersKey]);
 
   // Get stock image based on show index or ID to ensure consistency
   const getStockImage = (index: number, id?: string) => {
