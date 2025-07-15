@@ -473,7 +473,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      await supabaseAuthService.signOutUser();
+      await supabaseAuthService.signOut();
       
       const newState = {
         user: null,
