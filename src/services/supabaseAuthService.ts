@@ -361,6 +361,69 @@ export const getSession = async (): Promise<User | null> => {
 };
 
 /**
+ * Get current user profile by user ID
+ * @param userId The user ID to fetch the profile for
+ * @returns Promise containing the User object if found
+ */
+export const getCurrentUser = async (userId: string): Promise<User | null> => {
+  try {
+    if (!userId) {
+      console.error('[supabaseAuthService] getCurrentUser called with empty userId');
+      return null;
+    }
+
+    console.log('[supabaseAuthService] Fetching user profile for ID:', userId);
+
+    /* -----------------------------------------------------------
+     * 1) Fetch the user's profile row from `profiles`
+     * --------------------------------------------------------- */
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      console.error('[supabaseAuthService] Error fetching profile:', profileError);
+      return null;
+    }
+
+    if (!profileData) {
+      console.warn('[supabaseAuthService] No profile found for user:', userId);
+      return null;
+    }
+
+    /* -----------------------------------------------------------
+     * 2) Retrieve auth data for the **current** user via session.
+     *    (Supabase client-side cannot fetch arbitrary users.)
+     * --------------------------------------------------------- */
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+
+    let authUser = authData?.user;
+
+    if (authError) {
+      console.error('[supabaseAuthService] Error fetching auth user:', authError);
+    }
+
+    // Fallback – construct minimal auth payload if IDs don’t match
+    if (!authUser || authUser.id !== userId) {
+      authUser = {
+        id: userId,
+        email: profileData.email || '',
+      } as any;
+    }
+
+    /* -----------------------------------------------------------
+     * 3) Map combined auth + profile data to our `User` type
+     * --------------------------------------------------------- */
+    return mapProfileToUser(authUser, profileData);
+  } catch (error: any) {
+    console.error('[supabaseAuthService] Unexpected error in getCurrentUser:', error);
+    return null;
+  }
+};
+
+/**
  * Refresh the current user role
  * Used when a user upgrades their account
  */
