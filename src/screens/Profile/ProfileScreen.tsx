@@ -341,6 +341,15 @@ const ProfileScreen: React.FC = () => {
     return dealerLike;
   };
   
+  // Check if user can edit social media links (only MVP Dealers and Show Organizers)
+  const canEditSocialMedia = () => {
+    if (!user) return false;
+    return (
+      user.role === UserRole.MVP_DEALER || 
+      user.role === UserRole.SHOW_ORGANIZER
+    );
+  };
+  
   // Get role display name
   const getRoleDisplayName = (role: UserRole) => {
     // Debug logging to track what role is being passed
@@ -557,147 +566,149 @@ const ProfileScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Social Media Links Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Social Media & Marketplace Links</Text>
-          
-          {isEditMode ? (
-            <View style={styles.editForm}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Facebook Profile URL</Text>
-                <TextInput
-                  style={styles.input}
-                  value={facebookUrl}
-                  onChangeText={setFacebookUrl}
-                  placeholder="https://facebook.com/username"
-                  keyboardType="url"
-                  autoCapitalize="none"
-                  editable={!isSubmitting}
-                />
-              </View>
-              
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Instagram Profile URL</Text>
-                <TextInput
-                  style={styles.input}
-                  value={instagramUrl}
-                  onChangeText={setInstagramUrl}
-                  placeholder="https://instagram.com/username"
-                  keyboardType="url"
-                  autoCapitalize="none"
-                  editable={!isSubmitting}
-                />
-              </View>
-              
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Twitter/X Profile URL</Text>
-                <TextInput
-                  style={styles.input}
-                  value={twitterUrl}
-                  onChangeText={setTwitterUrl}
-                  placeholder="https://twitter.com/username"
-                  keyboardType="url"
-                  autoCapitalize="none"
-                  editable={!isSubmitting}
-                />
-              </View>
-              
-              {isDealer() && (
-                <>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Whatnot Store URL</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={whatnotUrl}
-                      onChangeText={setWhatnotUrl}
-                      placeholder="https://whatnot.com/user/username"
-                      keyboardType="url"
-                      autoCapitalize="none"
-                      editable={!isSubmitting}
-                    />
-                  </View>
-                  
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>eBay Store URL</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={ebayStoreUrl}
-                      onChangeText={setEbayStoreUrl}
-                      placeholder="https://ebay.com/usr/storename"
-                      keyboardType="url"
-                      autoCapitalize="none"
-                      editable={!isSubmitting}
-                    />
-                  </View>
-                </>
-              )}
-            </View>
-          ) : (
-            <View style={styles.infoList}>
-              {!user.facebookUrl && !user.instagramUrl && !user.twitterUrl && 
-               !user.whatnotUrl && !user.ebayStoreUrl ? (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateText}>No social media links added yet</Text>
-                  <TouchableOpacity onPress={toggleEditMode}>
-                    <Text style={styles.emptyStateActionText}>Add links</Text>
-                  </TouchableOpacity>
+        {/* Social Media Links Section - Only shown for MVP Dealers and Show Organizers */}
+        {canEditSocialMedia() && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Social Media & Marketplace Links</Text>
+            
+            {isEditMode ? (
+              <View style={styles.editForm}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Facebook Profile URL</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={facebookUrl}
+                    onChangeText={setFacebookUrl}
+                    placeholder="https://facebook.com/username"
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    editable={!isSubmitting}
+                  />
                 </View>
-              ) : (
-                <>
-                  {user.facebookUrl && (
-                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.facebookUrl)}>
-                      <Ionicons name="logo-facebook" size={20} color="#1877F2" />
-                      <View style={styles.infoTextContainer}>
-                        <Text style={styles.infoLabel}>Facebook</Text>
-                        <Text style={styles.infoValueLink}>{user.facebookUrl}</Text>
-                      </View>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Instagram Profile URL</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={instagramUrl}
+                    onChangeText={setInstagramUrl}
+                    placeholder="https://instagram.com/username"
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    editable={!isSubmitting}
+                  />
+                </View>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Twitter/X Profile URL</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={twitterUrl}
+                    onChangeText={setTwitterUrl}
+                    placeholder="https://twitter.com/username"
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    editable={!isSubmitting}
+                  />
+                </View>
+                
+                {isDealer() && (
+                  <>
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>Whatnot Store URL</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={whatnotUrl}
+                        onChangeText={setWhatnotUrl}
+                        placeholder="https://whatnot.com/user/username"
+                        keyboardType="url"
+                        autoCapitalize="none"
+                        editable={!isSubmitting}
+                      />
+                    </View>
+                    
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>eBay Store URL</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={ebayStoreUrl}
+                        onChangeText={setEbayStoreUrl}
+                        placeholder="https://ebay.com/usr/storename"
+                        keyboardType="url"
+                        autoCapitalize="none"
+                        editable={!isSubmitting}
+                      />
+                    </View>
+                  </>
+                )}
+              </View>
+            ) : (
+              <View style={styles.infoList}>
+                {!user.facebookUrl && !user.instagramUrl && !user.twitterUrl && 
+                 !user.whatnotUrl && !user.ebayStoreUrl ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateText}>No social media links added yet</Text>
+                    <TouchableOpacity onPress={toggleEditMode}>
+                      <Text style={styles.emptyStateActionText}>Add links</Text>
                     </TouchableOpacity>
-                  )}
-                  
-                  {user.instagramUrl && (
-                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.instagramUrl)}>
-                      <Ionicons name="logo-instagram" size={20} color="#C13584" />
-                      <View style={styles.infoTextContainer}>
-                        <Text style={styles.infoLabel}>Instagram</Text>
-                        <Text style={styles.infoValueLink}>{user.instagramUrl}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                  
-                  {user.twitterUrl && (
-                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.twitterUrl)}>
-                      <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
-                      <View style={styles.infoTextContainer}>
-                        <Text style={styles.infoLabel}>Twitter/X</Text>
-                        <Text style={styles.infoValueLink}>{user.twitterUrl}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                  
-                  {user.whatnotUrl && (
-                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.whatnotUrl)}>
-                      <Ionicons name="cart-outline" size={20} color="#FF001F" />
-                      <View style={styles.infoTextContainer}>
-                        <Text style={styles.infoLabel}>Whatnot Store</Text>
-                        <Text style={styles.infoValueLink}>{user.whatnotUrl}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                  
-                  {user.ebayStoreUrl && (
-                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.ebayStoreUrl)}>
-                      <Ionicons name="pricetag-outline" size={20} color="#E53238" />
-                      <View style={styles.infoTextContainer}>
-                        <Text style={styles.infoLabel}>eBay Store</Text>
-                        <Text style={styles.infoValueLink}>{user.ebayStoreUrl}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                </>
-              )}
-            </View>
-          )}
-        </View>
+                  </View>
+                ) : (
+                  <>
+                    {user.facebookUrl && (
+                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.facebookUrl)}>
+                        <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                        <View style={styles.infoTextContainer}>
+                          <Text style={styles.infoLabel}>Facebook</Text>
+                          <Text style={styles.infoValueLink}>{user.facebookUrl}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    
+                    {user.instagramUrl && (
+                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.instagramUrl)}>
+                        <Ionicons name="logo-instagram" size={20} color="#C13584" />
+                        <View style={styles.infoTextContainer}>
+                          <Text style={styles.infoLabel}>Instagram</Text>
+                          <Text style={styles.infoValueLink}>{user.instagramUrl}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    
+                    {user.twitterUrl && (
+                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.twitterUrl)}>
+                        <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
+                        <View style={styles.infoTextContainer}>
+                          <Text style={styles.infoLabel}>Twitter/X</Text>
+                          <Text style={styles.infoValueLink}>{user.twitterUrl}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    
+                    {user.whatnotUrl && (
+                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.whatnotUrl)}>
+                        <Ionicons name="cart-outline" size={20} color="#FF001F" />
+                        <View style={styles.infoTextContainer}>
+                          <Text style={styles.infoLabel}>Whatnot Store</Text>
+                          <Text style={styles.infoValueLink}>{user.whatnotUrl}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    
+                    {user.ebayStoreUrl && (
+                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.ebayStoreUrl)}>
+                        <Ionicons name="pricetag-outline" size={20} color="#E53238" />
+                        <View style={styles.infoTextContainer}>
+                          <Text style={styles.infoLabel}>eBay Store</Text>
+                          <Text style={styles.infoValueLink}>{user.ebayStoreUrl}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                  </>
+                )}
+              </View>
+            )}
+          </View>
+        )}
 
         {/* DEBUG INFORMATION (visible in UI) */}
         <View style={styles.debugSection}>
