@@ -14,9 +14,15 @@ import { refreshUserSession } from '../services/sessionService';
  *   Lets developers log in with Auth only, even if the
  *   `profiles` row hasn't been created yet.
  * ------------------------------------------------------------------ */
-const BYPASS_PROFILE_FETCH =
-  (__DEV__ && process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH !== 'false') ||
-  process.env.EXPO_PUBLIC_BYPASS_PROFILE_FETCH === 'true';
+/**
+ * BYPASS_PROFILE_FETCH disabled.
+ * ---------------------------------------------------------------
+ * This flag was intended for development convenience.  Leaving it
+ * enabled in production caused ALL users to be treated as
+ * MVP_DEALER, granting unintended access.  We now hard-disable it
+ * to ensure each user’s role is always read from the database.
+ */
+const BYPASS_PROFILE_FETCH = false;
 
 // Define the shape of our auth context
 interface AuthContextType {
