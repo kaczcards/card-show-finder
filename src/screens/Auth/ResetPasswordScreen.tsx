@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -36,52 +36,154 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
+  // flag to show “no token” UI after grace period
+  const [tokenTimedOut, setTokenTimedOut] = useState(false);
+  
+  // Ref to track if component is mounted
+  const isMounted = useRef(true);
+
+  /**
+   * Enhanced token extraction function that supports multiple URL formats:
+   * - cardshowfinder://reset-password?token=XYZ
+   * - https://cardshowfinder.app/reset-password?token=XYZ
+   * - reset-password?token=XYZ
+   * - Any URL containing token=XYZ
+   */
+  const extractToken = (url: string): string | null => {
+    console.log('[ResetPasswordScreen] Attempting to extract token from URL:', url);
+    
+    // Try standard URLSearchParams approach first
+    try {
+      // Handle URLs with or without protocol
+      let parsableUrl = url;
+      
+      // If URL doesn't have a protocol, add a dummy one to make it parsable
+      if (!url.includes('://')) {
+        parsableUrl = `https://dummy.com/${url}`;
+      }
+      
+      const urlObj = new URL(parsableUrl);
+      const token = urlObj.searchParams.get('token');
+      
+      if (token) {
+        console.log('[ResetPasswordScreen] Token extracted using URL object:', token.substring(0, 5) + '...');
+        return token;
+      }
+    } catch (e) {
+      console.log('[ResetPasswordScreen] URL parsing failed, falling back to string search');
+    }
+    
+    // Fallback to manual string search
+    const tokenKey = 'token=';
+    const idx = url.indexOf(tokenKey);
+    if (idx === -1) {
+      console.log('[ResetPasswordScreen] No token parameter found in URL');
+      return null;
+    }
+    
+    // token is everything after `token=` until `&` or end-of-string
+    const tokenPart = url.slice(idx + tokenKey.length);
+    const ampIdx = tokenPart.indexOf('&');
+    const token = ampIdx === -1 ? tokenPart : tokenPart.slice(0, ampIdx);
+    
+    // Log a truncated version of the token for debugging (avoid logging full token for security)
+    if (token) {
+      console.log('[ResetPasswordScreen] Token extracted using string search:', token.substring(0, 5) + '...');
+    } else {
+      console.log('[ResetPasswordScreen] Failed to extract token using string search');
+    }
+    
+    return token;
+  };
+
+  // Process a URL to extract the token
+  const processUrl = async (url: string | null) => {
+    if (!url) {
+      console.log('[ResetPasswordScreen] No URL to process');
+      return;
+    }
+    
+    console.log('[ResetPasswordScreen] Processing URL:', url);
+    setDebugInfo(prev => `${prev}\nProcessing URL: ${url}`);
+    
+    if (url.includes('reset-password')) {
+      const urlToken = extractToken(url);
+      if (urlToken) {
+        console.log('[ResetPasswordScreen] Setting token from URL');
+        setToken(urlToken);
+        setTokenTimedOut(false);
+        setDebugInfo(prev => `${prev}\nToken found: ${urlToken.substring(0, 5)}...`);
+      } else {
+        console.error('[ResetPasswordScreen] Reset password URL found but no token parameter');
+        setError('No reset token found in the URL');
+        setDebugInfo(prev => `${prev}\nNo token found in URL`);
+      }
+    } else {
+      console.log('[ResetPasswordScreen] URL does not contain reset-password path');
+      setDebugInfo(prev => `${prev}\nURL does not contain reset-password path`);
+    }
+  };
 
   // Extract token from route params or URL
   useEffect(() => {
+    console.log('[ResetPasswordScreen] Component mounted');
+    setDebugInfo('Component mounted');
+    
     // Get token from route params if available
     const routeToken = route.params?.token;
     if (routeToken) {
+      console.log('[ResetPasswordScreen] Token found in route params');
       setToken(routeToken);
+      setDebugInfo(prev => `${prev}\nToken found in route params: ${routeToken.substring(0, 5)}...`);
       return;
     }
 
     // If no token in route params, check if we can extract it from the URL
-    // This is a fallback for deep links that might not properly parse the token
     const getTokenFromUrl = async () => {
       try {
+        console.log('[ResetPasswordScreen] Checking initial URL');
+        setDebugInfo(prev => `${prev}\nChecking initial URL...`);
+        
         // Get the initial URL that opened the app
         const initialUrl = await Linking.getInitialURL();
-        if (initialUrl && initialUrl.includes('reset-password')) {
-          /**
-           * Extract the token irrespective of the prefix style:
-           *   • cardshowfinder://reset-password?token=XYZ
-           *   • reset-password?token=XYZ
-           */
-          const extractToken = (url: string): string | null => {
-            const tokenKey = 'token=';
-            const idx = url.indexOf(tokenKey);
-            if (idx === -1) return null;
-            // token is everything after `token=` until `&` or end-of-string
-            const tokenPart = url.slice(idx + tokenKey.length);
-            const ampIdx = tokenPart.indexOf('&');
-            return ampIdx === -1 ? tokenPart : tokenPart.slice(0, ampIdx);
-          };
-
-          const urlToken = extractToken(initialUrl);
-          if (urlToken) {
-            setToken(urlToken);
-          } else {
-            setError('No reset token found in the URL');
-          }
-        }
+        console.log('[ResetPasswordScreen] Initial URL:', initialUrl);
+        setDebugInfo(prev => `${prev}\nInitial URL: ${initialUrl || 'none'}`);
+        
+        await processUrl(initialUrl);
       } catch (err) {
-        console.error('Error extracting token from URL:', err);
+        console.error('[ResetPasswordScreen] Error extracting token from URL:', err);
         setError('Failed to process the password reset link');
+        setDebugInfo(prev => `${prev}\nError: ${err instanceof Error ? err.message : String(err)}`);
       }
     };
 
     getTokenFromUrl();
+
+    // After 3 s, if we still have no token, reveal the “request new link” UI
+    const timeoutId = setTimeout(() => {
+      if (isMounted.current && !token) {
+        setTokenTimedOut(true);
+      }
+    }, 3000);
+
+    // Set up URL event listener for when app is already running
+    const urlListener = (event: { url: string }) => {
+      console.log('[ResetPasswordScreen] URL event received:', event.url);
+      setDebugInfo(prev => `${prev}\nURL event received: ${event.url}`);
+      processUrl(event.url);
+    };
+
+    // Add the event listener
+    const subscription = Linking.addEventListener('url', urlListener);
+
+    // Clean up function
+    return () => {
+      console.log('[ResetPasswordScreen] Component unmounting, cleaning up listeners');
+      isMounted.current = false;
+      subscription.remove();
+      clearTimeout(timeoutId);
+    };
   }, [route.params]);
 
   // Validate passwords
@@ -120,10 +222,13 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
 
     try {
       setIsLoading(true);
+      console.log('[ResetPasswordScreen] Attempting to update password with token');
 
       // Update the user's password using the helper in supabaseAuthService
       await updatePassword(password, token);
 
+      console.log('[ResetPasswordScreen] Password updated successfully');
+      
       // Password reset successful
       Alert.alert(
         'Password Updated',
@@ -131,16 +236,23 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );
     } catch (err: any) {
-      console.error('Error resetting password:', err);
+      console.error('[ResetPasswordScreen] Error resetting password:', err);
       setError(err.message || 'Failed to reset password. Please try again.');
     } finally {
-      setIsLoading(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   // Navigate back to login
   const handleNavigateToLogin = () => {
     navigation.navigate('Login');
+  };
+
+  // Request a new password reset link
+  const handleRequestNewLink = () => {
+    navigation.navigate('ForgotPassword');
   };
 
   return (
@@ -181,11 +293,17 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
               </View>
             ) : null}
 
-            {!token && !isLoading ? (
+            {tokenTimedOut && !token && !isLoading ? (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>
                   Invalid or expired reset link. Please request a new password reset.
                 </Text>
+                <TouchableOpacity 
+                  style={styles.requestNewLinkButton}
+                  onPress={handleRequestNewLink}
+                >
+                  <Text style={styles.requestNewLinkText}>Request New Reset Link</Text>
+                </TouchableOpacity>
               </View>
             ) : null}
 
@@ -243,6 +361,18 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Text style={styles.loginLink}>Sign In</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Debug information section - can be removed in production */}
+            {__DEV__ && (
+              <View style={styles.debugContainer}>
+                <Text style={styles.debugTitle}>Debug Information</Text>
+                <Text style={styles.debugText}>Token Status: {token ? 'Present' : 'Missing'}</Text>
+                <Text style={styles.debugText}>Debug Log:</Text>
+                <ScrollView style={styles.debugScroll}>
+                  <Text style={styles.debugLog}>{debugInfo}</Text>
+                </ScrollView>
+              </View>
+            )}
           </View>
 
           {/* Mini logo at bottom */}
@@ -322,6 +452,20 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#DC2626',
     fontSize: 14,
+    marginBottom: 8,
+  },
+  requestNewLinkButton: {
+    backgroundColor: '#DC2626',
+    borderRadius: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  requestNewLinkText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -371,6 +515,35 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  // Debug styles
+  debugContainer: {
+    marginTop: 30,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    backgroundColor: '#f8f8f8',
+  },
+  debugTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  debugScroll: {
+    maxHeight: 150,
+    marginTop: 8,
+  },
+  debugLog: {
+    fontSize: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: '#333',
   },
 });
 
