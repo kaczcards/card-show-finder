@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
 import { AuthState, AuthCredentials, User, UserRole } from '../types';
-import { getSupabaseUrl, getSupabaseAnonKey } from '../config';
+import { supabase } from '../supabase';
 import { Alert } from 'react-native';
 
-// Initialize the Supabase client
-export const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey());
+// Re-export the shared Supabase client so callers that previously imported it
+// from this service continue to work without changes.
+export { supabase };
 
 /**
  * Converting Supabase profile data to our User type
