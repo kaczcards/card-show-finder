@@ -1,99 +1,82 @@
-# Pull Request Instructions – Production Messaging System
+# How to Create the Pull Request (PR)
 
-These steps walk you through **manually** opening a pull-request in the GitHub web interface for the branch `feature/production-messaging-system` that was just pushed.
-
----
-
-## 1. Prerequisites
-
-1. You have push access to the repository `kaczcards/card-show-finder`.
-2. The branch `feature/production-messaging-system` is already on GitHub.
-3. You are logged in to GitHub in your browser.
+Follow these steps to open a PR for the **Show Organizer Series** feature branch.
 
 ---
 
-## 2. Create the Pull Request
+## 1  Prerequisites
 
-1. Navigate to the repository homepage:  
-   `https://github.com/kaczcards/card-show-finder`
-
-2. GitHub should show a yellow banner with  
-   **“Compare & pull request”** for `feature/production-messaging-system`.  
-   • If you see it – click the **Compare & pull request** button and jump to Step 3.  
-   • If you **don’t** see the banner:  
-     1. Click **Pull requests** in the repo menu.  
-     2. Click the green **New pull request** button.  
-     3. In the PR compare selector, set:  
-        * **base:** `main`  
-        * **compare:** `feature/production-messaging-system`  
-
-3. Verify the diff looks correct (2 000+ additions, new Edge Functions, SQL migration, etc.).
+- Local branch pushed: `feature/show-organizer-roles`
+- All CI checks passing locally (`npm run lint`, tests, etc.).
+- You have permission to open PRs in `kaczcards/card-show-finder`.
 
 ---
 
-## 3. Fill Out the PR Form
+## 2  Open the PR on GitHub
 
-Use the template below ‑ copy & paste, then tweak as needed.
+1. **Navigate to the repository**
 
-### Title
+   ```
+   https://github.com/kaczcards/card-show-finder
+   ```
+
+2. If GitHub has detected the new branch you will see a **“Compare & pull request”** banner.  
+   • Click **“Compare & pull request”** – *or* –  
+   • Manually select **“Pull requests” → “New pull request”**, then choose:
+
+   | Base | Compare |
+   |------|---------|
+   | `main` | `feature/show-organizer-roles` |
+
+3. Verify the diff looks correct (mostly files under `db_migrations/` and `supabase/functions/`).
+
+---
+
+## 3  Fill in PR Details
+
+| Field | What to enter |
+|-------|---------------|
+| **Title** | `Show Organizer Series: Recurring Show Support` |
+| **Description** | Copy-paste the block below (edit if needed). |
+
 ```
-feat: production messaging system with role-based permissions
-```
+### Overview
+Implements the *Show Organizer Series* feature set, replacing legacy `parent_show_id` logic with a dedicated `show_series` table. Adds per-show broadcast quotas, updated Edge Functions, and one-off data migration scripts.
 
-### Description
-```
-## ✨ What’s New
-* Full role-based messaging system (DM, broadcast, moderation)
-* SQL migration: broadcast_quotas, reported_messages, new RLS
-* Supabase Edge Functions: send-broadcast, reset-broadcast-quotas
-* Updated RN services + UI (ChatWindow)
-* Deployment & rollback docs
+### What’s Included
+- `show_organizer_series_implementation.sql` – core schema & helper functions
+- Updated Edge Functions (`send-broadcast`, `reset-broadcast-quotas`)
+- Scripts: `execute_show_organizer_series_migration.js`, `migrate_shows_to_series.js`
+- README with migration/testing steps
 
-## ✅ Acceptance Criteria
-- [ ] Migration applies cleanly on staging
-- [ ] Edge functions deploy & return 200
-- [ ] QA test plan passes (see production-messaging-implementation-plan.md)
-- [ ] Feature flag `messaging_v2_enabled` toggled OFF by default
-
-## 📸 Screenshots / Loom
-_Add any UI demos here_
-
-## ⛔️ Breaking Changes
-None for existing users while flag OFF
+### Checklist
+- [ ] SQL migration tested in local Supabase project
+- [ ] Data migration script completed without errors
+- [ ] Edge Functions deployed & tested (`supabase functions deploy ...`)
+- [ ] Mobile app works against new schema
 ```
 
-### Linked Issues
-Add “Closes #42” (or the correct issue numbers).
-
-### Labels
-Apply:
-* `feature`
-* `backend`
-* `frontend`
-* `needs-review`
-
-### Reviewers
-Add:
-* `@kaczcards/backend-lead`
-* `@kaczcards/mobile-lead`
-* `@kaczcards/qa`
+| Field | Recommended value |
+|-------|-------------------|
+| **Reviewers** | `@kaczcards/maintainers` |
+| **Labels** | `feature`, `backend`, `database` |
+| **Project / Milestone** | *Choose current sprint or release* |
 
 ---
 
-## 4. Create & Await CI
+## 4  Create the PR
 
-1. Click **Create pull request**.
-2. Ensure GitHub Actions / Supabase tests start.
-3. If checks fail, push fixes to the same branch – the PR updates automatically.
+- Click **“Create pull request”**.
+- Wait for GitHub Actions to run. Confirm all checks pass.
 
 ---
 
-## 5. Post-Merge Checklist (for the merger)
+## 5  Post-Creation Checklist
 
-- [ ] Run the SQL migration on **production** during a maintenance window.
-- [ ] Deploy both Edge Functions.
-- [ ] Schedule the nightly quota reset cron.
-- [ ] Release mobile build or OTA update.
-- [ ] Gradual flag rollout.
+- [ ] Respond to review comments promptly.
+- [ ] Once **approved** and **CI green**, merge with **“Squash & merge”**.
+- [ ] After merge, run the migration in production and deploy Edge Functions.
 
-*Happy merging!*  
+---
+
+Happy shipping! 🎉
