@@ -175,55 +175,93 @@ const ProfileScreen: React.FC = () => {
   
   // Validate form
   const validateForm = () => {
-    if (!firstName) {
+    // ---- Basic required fields ---------------------------------------------
+    if (!firstName.trim()) {
       Alert.alert('Error', 'First name is required');
       return false;
     }
-    
+
     // ZIP code validation (US format - 5 digits)
     const zipRegex = /^\d{5}$/;
-    if (!zipRegex.test(homeZipCode)) {
+    if (!zipRegex.test(homeZipCode.trim())) {
       Alert.alert('Error', 'Please enter a valid 5-digit ZIP code');
       return false;
     }
-    
-    // Phone validation (optional)
+
+    // Phone validation (optional – allow punctuation then strip)
     if (phoneNumber) {
-      const phoneRegex = /^\d{10}$/;
-      if (!phoneRegex.test(phoneNumber.replace(/\D/g, ''))) {
+      const cleaned = phoneNumber.replace(/\D/g, '');
+      if (cleaned && cleaned.length !== 10) {
         Alert.alert('Error', 'Please enter a valid 10-digit phone number');
         return false;
       }
     }
 
-    // Social media URL validation (optional)
-    const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]*)?$/;
-    
-    if (facebookUrl && !urlRegex.test(facebookUrl)) {
-      Alert.alert('Error', 'Please enter a valid Facebook URL');
-      return false;
-    }
-    
-    if (instagramUrl && !urlRegex.test(instagramUrl)) {
-      Alert.alert('Error', 'Please enter a valid Instagram URL');
-      return false;
-    }
-    
-    if (twitterUrl && !urlRegex.test(twitterUrl)) {
-      Alert.alert('Error', 'Please enter a valid Twitter/X URL');
-      return false;
-    }
-    
-    if (whatnotUrl && !urlRegex.test(whatnotUrl)) {
-      Alert.alert('Error', 'Please enter a valid Whatnot URL');
-      return false;
-    }
-    
-    if (ebayStoreUrl && !urlRegex.test(ebayStoreUrl)) {
-      Alert.alert('Error', 'Please enter a valid eBay store URL');
-      return false;
-    }
-    
+    /* ----------------------------------------------------------------------
+     * Social links — lenient validation + normalisation
+     * -------------------------------------------------------------------- */
+    const simpleDomainRegex =
+      /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+    const validateAndNormalizeUrl = (
+      url: string,
+      platformLabel: string,
+    ): string | undefined | false => {
+      if (!url.trim()) return undefined; // treat empty as undefined
+
+      // Already has protocol -> accept
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url.trim();
+      }
+
+      // Remove leading www. for validation
+      const domainPart = url.trim().replace(/^www\./i, '');
+      if (!simpleDomainRegex.test(domainPart)) {
+        Alert.alert('Error', `Please enter a valid ${platformLabel} URL`);
+        return false;
+      }
+
+      // Auto-prefix https:// for storage
+      return `https://${url.trim()}`;
+    };
+
+    const normalizedFacebook = validateAndNormalizeUrl(
+      facebookUrl,
+      'Facebook',
+    );
+    if (normalizedFacebook === false) return false;
+
+    const normalizedInstagram = validateAndNormalizeUrl(
+      instagramUrl,
+      'Instagram',
+    );
+    if (normalizedInstagram === false) return false;
+
+    const normalizedTwitter = validateAndNormalizeUrl(
+      twitterUrl,
+      'Twitter/X',
+    );
+    if (normalizedTwitter === false) return false;
+
+    const normalizedWhatnot = validateAndNormalizeUrl(
+      whatnotUrl,
+      'Whatnot',
+    );
+    if (normalizedWhatnot === false) return false;
+
+    const normalizedEbay = validateAndNormalizeUrl(
+      ebayStoreUrl,
+      'eBay store',
+    );
+    if (normalizedEbay === false) return false;
+
+    // Persist normalized values into state so `saveChanges` uses them
+    if (normalizedFacebook !== undefined) setFacebookUrl(normalizedFacebook);
+    if (normalizedInstagram !== undefined) setInstagramUrl(normalizedInstagram);
+    if (normalizedTwitter !== undefined) setTwitterUrl(normalizedTwitter);
+    if (normalizedWhatnot !== undefined) setWhatnotUrl(normalizedWhatnot);
+    if (normalizedEbay !== undefined) setEbayStoreUrl(normalizedEbay);
+
     return true;
   };
   
@@ -378,20 +416,25 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  // Helper function to open a URL
+  // Helper function to open a URL with robust protocol handling
   const openUrl = (url: string | undefined) => {
     if (!url) return;
-    
-    // Ensure URL has a protocol
-    const finalUrl = url.startsWith('http') ? url : `https://${url}`;
-    
-    Linking.canOpenURL(finalUrl).then(supported => {
-      if (supported) {
-        Linking.openURL(finalUrl);
-      } else {
-        console.error(`Cannot open URL: ${finalUrl}`);
-        Alert.alert('Error', 'Cannot open this URL');
-      }
+
+    // Auto-prefix protocol if the user omitted it
+    let formattedUrl = url.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    console.log('[ProfileScreen] Opening URL:', formattedUrl);
+
+    Linking.openURL(formattedUrl).catch(err => {
+      console.error('Error opening URL:', err);
+      Alert.alert(
+        'Cannot Open Link',
+        'The link could not be opened. Please check that it is a valid URL.',
+        [{ text: 'OK' }],
+      );
     });
   };
 
