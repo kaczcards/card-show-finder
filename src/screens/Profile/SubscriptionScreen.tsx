@@ -263,7 +263,10 @@ const SubscriptionScreen: React.FC = () => {
         <View style={styles.subscriptionInfoRow}>
           <Text style={styles.subscriptionLabel}>Account Type:</Text>
           <Text style={styles.subscriptionValue}>
-            {user.accountType === 'dealer' ? 'MVP Dealer' : 'Show Organizer'}
+            {user.accountType === 'dealer'
+              ? // Distinguish regular Dealers from MVP Dealers
+                (user.role?.toLowerCase?.() === 'mvp_dealer' ? 'MVP Dealer' : 'Dealer')
+              : 'Show Organizer'}
           </Text>
         </View>
         
