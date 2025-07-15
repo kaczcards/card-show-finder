@@ -40,8 +40,29 @@ const RootNavigator: React.FC = () => {
     );
   }
 
+  /**
+   * Deep-link configuration
+   *  – Recognises our custom URL scheme `cardshowfinder://`
+   *  – Handles the password-reset flow (`cardshowfinder://reset-password?token=XYZ`)
+   *
+   *  The `ResetPassword` route lives inside the AuthNavigator stack.
+   *  React Navigation will automatically drill into nested navigators
+   *  as long as we declare the screen name in the config.
+   */
+  const linking = {
+    prefixes: ['cardshowfinder://'],
+    config: {
+      screens: {
+        // Auth flow
+        ResetPassword: {
+          path: 'reset-password',
+        },
+      },
+    },
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       {isAuthenticated ? (
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {/* Main user‐facing app */}

@@ -373,6 +373,35 @@ export const resetPassword = async (email: string): Promise<void> => {
 };
 
 /**
+ * Update a user's password using the one-time access token supplied in the
+ * password-reset email link.
+ *
+ * This is called from the ResetPasswordScreen once the user has entered their
+ * new password.  We rely on Supabase Auth's `updateUser` method, passing the
+ * `accessToken` so Supabase knows we are authorised to update this account.
+ *
+ * @param newPassword  The new password the user wants to set
+ * @param accessToken  The one-time JWT token from the reset-password URL
+ * @returns Promise<void>
+ */
+export const updatePassword = async (
+  newPassword: string,
+  accessToken: string
+): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.updateUser(
+      { password: newPassword },
+      { accessToken }
+    );
+
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('[AUTH SERVICE] Error updating password:', error);
+    throw new Error(error.message || 'Failed to update password');
+  }
+};
+
+/**
  * Get the current user data from the database
  * @param uid User ID
  * @returns Promise with the user data
