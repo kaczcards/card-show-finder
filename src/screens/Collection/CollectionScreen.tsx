@@ -26,6 +26,8 @@ import { supabase } from '../../supabase';
 // UI
 import WantListEditor from '../../components/WantListEditor';
 
+const INVENTORY_PREFIX = "[INVENTORY]";
+
 const CollectionScreen: React.FC = () => {
   // ===== Auth =====
   const {
@@ -42,6 +44,7 @@ const CollectionScreen: React.FC = () => {
   const [loadingInventory, setLoadingInventory] = useState<boolean>(true);
   const [savingInventory, setSavingInventory] = useState<boolean>(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [inventoryId, setInventoryId] = useState<string | null>(null);
 
   // ===== Upcoming Shows State =====
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
@@ -54,13 +57,11 @@ const CollectionScreen: React.FC = () => {
     setInventoryError(null);
     
     try {
-      // Instead of using dealer_inventories table, query want_lists with a type filter
+      // Query all want_lists for this user
       const { data, error } = await supabase
         .from('want_lists')
-        .select('content')
-        .eq('user_id', userId)
-        .eq('type', 'inventory')
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors if no record exists
+        .select('id, content')
+        .eq('userid', userId);
 
       if (error) {
         console.error('Error loading dealer inventory:', error);
@@ -70,8 +71,19 @@ const CollectionScreen: React.FC = () => {
         return;
       }
 
-      // If data exists, set the content, otherwise use empty string
-      setInventoryContent(data?.content ?? '');
+      // Find the one with the inventory prefix
+      const inventoryItem = data?.find(item => 
+        item.content && item.content.startsWith(INVENTORY_PREFIX)
+      );
+      
+      if (inventoryItem) {
+        // Remove the prefix for display
+        setInventoryContent(inventoryItem.content.substring(INVENTORY_PREFIX.length));
+        setInventoryId(inventoryItem.id);
+      } else {
+        setInventoryContent('');
+        setInventoryId(null);
+      }
     } catch (err) {
       console.error('Error loading dealer inventory:', err);
       setInventoryError('An unexpected error occurred. Please try again.');
@@ -88,20 +100,37 @@ const CollectionScreen: React.FC = () => {
     try {
       setSavingInventory(true);
       
-      // Use the want_lists table with a type field to distinguish inventory entries
-      const { error } = await supabase.from('want_lists').upsert(
-        {
-          user_id: userId,
-          content: inventoryContent.trim(),
-          type: 'inventory', // Add type field to distinguish from regular want lists
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id,type' } // Handle conflict based on both user_id and type
-      );
+      // Add the inventory prefix to the content
+      const contentWithPrefix = `${INVENTORY_PREFIX}${inventoryContent.trim()}`;
       
-      if (error) {
-        console.error('Error saving inventory:', error);
-        throw error;
+      let result;
+      if (inventoryId) {
+        // Update existing inventory
+        result = await supabase.from('want_lists').update({
+          content: contentWithPrefix,
+          updatedat: new Date().toISOString(),
+        })
+        .eq('id', inventoryId)
+        .eq('userid', userId);
+      } else {
+        // Create new inventory entry
+        result = await supabase.from('want_lists').insert({
+          userid: userId,
+          content: contentWithPrefix,
+          createdat: new Date().toISOString(),
+          updatedat: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+        
+        if (result.data) {
+          setInventoryId(result.data.id);
+        }
+      }
+      
+      if (result.error) {
+        console.error('Error saving inventory:', result.error);
+        throw result.error;
       }
       
       Alert.alert('Success', 'Your inventory has been saved.');
@@ -118,12 +147,34 @@ const CollectionScreen: React.FC = () => {
     if (!userId) return;
     setLoadingWantList(true);
     try {
-      // Make sure to get only regular want lists (not inventory)
-      const { data, error } = await getUserWantList(userId);
+      // Get want lists but filter out inventory items
+      const { data, error } = await supabase
+        .from('want_lists')
+        .select('*')
+        .eq('userid', userId);
+        
       if (error) {
         console.error('Error loading want list:', error);
+        setLoadingWantList(false);
+        return;
+      }
+      
+      // Find the first want list that doesn't have the inventory prefix
+      const regularWantList = data?.find(item => 
+        !item.content || !item.content.startsWith(INVENTORY_PREFIX)
+      );
+      
+      if (regularWantList) {
+        // Transform to match the expected format from getUserWantList
+        setWantList({
+          id: regularWantList.id,
+          userId: regularWantList.userid,
+          content: regularWantList.content || '',
+          createdAt: regularWantList.createdat,
+          updatedAt: regularWantList.updatedat
+        });
       } else {
-        setWantList(data);
+        setWantList(null);
       }
     } catch (err) {
       console.error('Unexpected error loading want list:', err);
