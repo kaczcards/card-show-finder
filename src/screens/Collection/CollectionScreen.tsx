@@ -13,6 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 // Domain / context / services
 import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
 import {
   getUserWantList,
   createWantList,
@@ -20,6 +21,7 @@ import {
   shareWantList,
 } from '../../services/collectionService';
 import { getUpcomingShows } from '../../services/showService';
+import { supabase } from '../../supabase';
 // UI
 import WantListEditor from '../../components/WantListEditor';
 
@@ -34,9 +36,64 @@ const CollectionScreen: React.FC = () => {
   const [wantList, setWantList] = useState<any | null>(null); // Using 'any' for now
   const [loadingWantList, setLoadingWantList] = useState<boolean>(true);
 
+  // ===== Dealer Inventory State =====
+  const [inventoryContent, setInventoryContent] = useState<string>('');
+  const [loadingInventory, setLoadingInventory] = useState<boolean>(true);
+  const [savingInventory, setSavingInventory] = useState<boolean>(false);
+
   // ===== Upcoming Shows State =====
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
+
+  // ---------------- Dealer Inventory helpers ----------------
+  const loadDealerInventory = async () => {
+    if (!userId) return;
+    setLoadingInventory(true);
+    try {
+      const { data, error } = await supabase
+        .from('dealer_inventories')
+        .select('content')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows found
+        throw error;
+      }
+
+      setInventoryContent(data?.content ?? '');
+    } catch (err) {
+      console.error('Error loading dealer inventory:', err);
+    } finally {
+      setLoadingInventory(false);
+    }
+  };
+
+  const saveDealerInventory = async () => {
+    if (!userId) return;
+    if (!inventoryContent.trim()) {
+      Alert.alert('Empty Inventory', 'Please enter what you sell before saving.');
+      return;
+    }
+    try {
+      setSavingInventory(true);
+      const { error } = await supabase.from('dealer_inventories').upsert(
+        {
+          user_id: userId,
+          content: inventoryContent.trim(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
+      if (error) throw error;
+      Alert.alert('Success', 'Your inventory has been saved.');
+    } catch (err) {
+      console.error('Error saving inventory:', err);
+      Alert.alert('Error', 'Failed to save inventory. Please try again.');
+    } finally {
+      setSavingInventory(false);
+    }
+  };
 
   const loadWantList = async () => {
     if (!userId) return;
@@ -79,21 +136,70 @@ const CollectionScreen: React.FC = () => {
     React.useCallback(() => {
       // Refresh each time screen comes into focus
       if (userId) {
+        if (user?.role === UserRole.DEALER ||
+            user?.role === UserRole.MVP_DEALER ||
+            user?.role === UserRole.SHOW_ORGANIZER) {
+          loadDealerInventory();
+        }
         loadWantList();
         loadUpcomingShows();
       }
     }, [userId])
   );
 
+  // ---------------- Render helpers ----------------
+  const renderDealerInventorySection = () => (
+    <View style={styles.editorContainer}>
+      <Text style={styles.sectionTitle}>What I Sell</Text>
+      <TextInput
+        style={styles.textInput}
+        multiline
+        placeholder={'List the products you typically carry…'}
+        value={inventoryContent}
+        onChangeText={setInventoryContent}
+        editable={!savingInventory && !loadingInventory}
+        textAlignVertical="top"
+        placeholderTextColor="#999"
+      />
+      <View style={{ height: 8 }} />
+      <View style={styles.saveButtonWrapper}>
+        {savingInventory ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text style={styles.saveButtonText} onPress={saveDealerInventory}>
+            Save
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Want List</Text>
+        <Text style={styles.headerTitle}>My Collection</Text>
       </View>
 
       {/* Content */}
-      <View style={styles.content}>
+      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+        {/* Dealer / Organizer specific UI */}
+        {(user?.role === UserRole.DEALER ||
+          user?.role === UserRole.MVP_DEALER ||
+          user?.role === UserRole.SHOW_ORGANIZER) &&
+          renderDealerInventorySection()}
+
+        {/* Upgrade Tease for regular dealers */}
+        {user?.role === UserRole.DEALER && (
+          <View style={styles.teaseContainer}>
+            <Text style={styles.teaseText}>
+              Upgrade to an MVP Dealer account to have what you're selling
+              available to all attendees.
+            </Text>
+          </View>
+        )}
+
+        {/* Want List – visible to everyone */}
         <WantListEditor
           wantList={wantList}
           userId={userId}
@@ -101,7 +207,7 @@ const CollectionScreen: React.FC = () => {
           onSave={(list) => setWantList(list)}
           isLoading={loadingWantList || loadingShows}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -125,6 +231,60 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 16,
+  },
+  /* ----- Shared / editor styles (mirrors WantListEditor) ----- */
+  editorContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  textInput: {
+    backgroundColor: '#f9f9f9',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 150,
+    fontSize: 16,
+    color: '#333',
+  },
+  saveButtonWrapper: {
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  /* ----- MVP Tease ----- */
+  teaseContainer: {
+    backgroundColor: '#FFF7E6',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFA500',
+    padding: 12,
+    marginBottom: 16,
+    borderRadius: 8,
+  },
+  teaseText: {
+    color: '#AA6500',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 
