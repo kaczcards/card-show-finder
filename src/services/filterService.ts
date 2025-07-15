@@ -9,11 +9,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
 import { ShowFilters, CardCategory, ShowFeature } from '../types';
 
-// Storage keys
-const ASYNC_STORAGE_KEYS = {
-  TEMP_FILTERS: 'homeFilters',
-  FILTER_PRESETS: 'filterPresets',
-};
+/**
+ * -------------------------------------------------------------
+ * User-scoped AsyncStorage keys
+ * -------------------------------------------------------------
+ * We namespace each key with the Supabase `userId` so that
+ * filters/presets saved by one user are never shown to another
+ * user on the same device.
+ * ------------------------------------------------------------*/
+const getTempFiltersKey = (userId: string) => `homeFilters_${userId}`;
+const getFilterPresetsKey = (userId: string) => `filterPresets_${userId}`;
 
 // Default filters
 export const DEFAULT_FILTERS: ShowFilters = {
@@ -38,7 +43,10 @@ export interface FilterPreset {
 /**
  * Save temporary filters to AsyncStorage
  */
-export const saveTemporaryFilters = async (filters: ShowFilters): Promise<void> => {
+export const saveTemporaryFilters = async (
+  userId: string,
+  filters: ShowFilters
+): Promise<void> => {
   try {
     // Convert dates to ISO strings for storage
     const filtersToStore = {
@@ -48,7 +56,7 @@ export const saveTemporaryFilters = async (filters: ShowFilters): Promise<void> 
     };
     
     await AsyncStorage.setItem(
-      ASYNC_STORAGE_KEYS.TEMP_FILTERS, 
+      getTempFiltersKey(userId), 
       JSON.stringify(filtersToStore)
     );
     console.log('Temporary filters saved to AsyncStorage');
@@ -61,9 +69,9 @@ export const saveTemporaryFilters = async (filters: ShowFilters): Promise<void> 
 /**
  * Load temporary filters from AsyncStorage
  */
-export const loadTemporaryFilters = async (): Promise<ShowFilters | null> => {
+export const loadTemporaryFilters = async (userId: string): Promise<ShowFilters | null> => {
   try {
-    const storedFilters = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.TEMP_FILTERS);
+    const storedFilters = await AsyncStorage.getItem(getTempFiltersKey(userId));
     
     if (!storedFilters) {
       return null;
@@ -86,7 +94,10 @@ export const loadTemporaryFilters = async (): Promise<ShowFilters | null> => {
 /**
  * Save filter presets to AsyncStorage (for offline access)
  */
-export const saveFilterPresetsToAsyncStorage = async (presets: FilterPreset[]): Promise<void> => {
+export const saveFilterPresetsToAsyncStorage = async (
+  userId: string,
+  presets: FilterPreset[]
+): Promise<void> => {
   try {
     const presetsToStore = presets.map(preset => ({
       ...preset,
@@ -98,7 +109,7 @@ export const saveFilterPresetsToAsyncStorage = async (presets: FilterPreset[]): 
     }));
     
     await AsyncStorage.setItem(
-      ASYNC_STORAGE_KEYS.FILTER_PRESETS, 
+      getFilterPresetsKey(userId), 
       JSON.stringify(presetsToStore)
     );
   } catch (error) {
@@ -110,9 +121,11 @@ export const saveFilterPresetsToAsyncStorage = async (presets: FilterPreset[]): 
 /**
  * Load filter presets from AsyncStorage
  */
-export const loadFilterPresetsFromAsyncStorage = async (): Promise<FilterPreset[]> => {
+export const loadFilterPresetsFromAsyncStorage = async (
+  userId: string
+): Promise<FilterPreset[]> => {
   try {
-    const storedPresets = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.FILTER_PRESETS);
+    const storedPresets = await AsyncStorage.getItem(getFilterPresetsKey(userId));
     
     if (!storedPresets) {
       return [];
@@ -192,8 +205,8 @@ export const createFilterPreset = async (
     };
     
     // Update local cache
-    const localPresets = await loadFilterPresetsFromAsyncStorage();
-    await saveFilterPresetsToAsyncStorage([...localPresets, createdPreset]);
+    const localPresets = await loadFilterPresetsFromAsyncStorage(preset.userId);
+    await saveFilterPresetsToAsyncStorage(preset.userId, [...localPresets, createdPreset]);
     
     return createdPreset;
   } catch (error) {
@@ -238,7 +251,7 @@ export const loadFilterPresetsFromSupabase = async (userId: string): Promise<Fil
     }));
     
     // Update local cache
-    await saveFilterPresetsToAsyncStorage(presets);
+    await saveFilterPresetsToAsyncStorage(userId, presets);
     
     return presets;
   } catch (error) {
@@ -310,11 +323,11 @@ export const updateFilterPreset = async (
     };
     
     // Update local cache
-    const localPresets = await loadFilterPresetsFromAsyncStorage();
+    const localPresets = await loadFilterPresetsFromAsyncStorage(updatedPreset.userId);
     const updatedLocalPresets = localPresets.map(preset => 
       preset.id === presetId ? updatedPreset : preset
     );
-    await saveFilterPresetsToAsyncStorage(updatedLocalPresets);
+    await saveFilterPresetsToAsyncStorage(updatedPreset.userId, updatedLocalPresets);
     
     return updatedPreset;
   } catch (error) {
@@ -338,10 +351,23 @@ export const deleteFilterPreset = async (presetId: string): Promise<boolean> => 
       throw error;
     }
     
-    // Update local cache
-    const localPresets = await loadFilterPresetsFromAsyncStorage();
-    const updatedLocalPresets = localPresets.filter(preset => preset.id !== presetId);
-    await saveFilterPresetsToAsyncStorage(updatedLocalPresets);
+    /**
+     * We don’t know the userId from the caller, so we do a best-effort:
+     * 1. Try to find the preset in *any* cached preset list
+     * 2. Use that userId for cache update
+     */
+    const allKeys = await AsyncStorage.getAllKeys();
+    const presetKeys = allKeys.filter(k => k.startsWith('filterPresets_'));
+    for (const key of presetKeys) {
+      const presetsStr = await AsyncStorage.getItem(key);
+      if (!presetsStr) continue;
+      const presets: FilterPreset[] = JSON.parse(presetsStr);
+      if (presets.some(p => p.id === presetId)) {
+        const remaining = presets.filter(p => p.id !== presetId);
+        await AsyncStorage.setItem(key, JSON.stringify(remaining));
+        break;
+      }
+    }
     
     return true;
   } catch (error) {
@@ -452,7 +478,7 @@ export const syncFilters = async (userId: string): Promise<void> => {
     }));
     
     // Update local cache with server data
-    await saveFilterPresetsToAsyncStorage(mappedServerPresets);
+    await saveFilterPresetsToAsyncStorage(userId, mappedServerPresets);
   } catch (error) {
     console.error('Error syncing filters:', error);
     throw new Error('Failed to sync filters');
