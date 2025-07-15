@@ -12,6 +12,7 @@ import {
   Switch,
   Platform,
   FlatList,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,6 +45,13 @@ const ProfileScreen: React.FC = () => {
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [homeZipCode, setHomeZipCode] = useState(user?.homeZipCode || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
+  
+  // State for social media fields
+  const [facebookUrl, setFacebookUrl] = useState(user?.facebookUrl || '');
+  const [instagramUrl, setInstagramUrl] = useState(user?.instagramUrl || '');
+  const [twitterUrl, setTwitterUrl] = useState(user?.twitterUrl || '');
+  const [whatnotUrl, setWhatnotUrl] = useState(user?.whatnotUrl || '');
+  const [ebayStoreUrl, setEbayStoreUrl] = useState(user?.ebayStoreUrl || '');
 
   // ---------------------------------------------------------------------------
   // Favorite shows – local count & helper
@@ -155,6 +163,11 @@ const ProfileScreen: React.FC = () => {
       setLastName(user?.lastName || '');
       setHomeZipCode(user?.homeZipCode || '');
       setPhoneNumber(user?.phoneNumber || '');
+      setFacebookUrl(user?.facebookUrl || '');
+      setInstagramUrl(user?.instagramUrl || '');
+      setTwitterUrl(user?.twitterUrl || '');
+      setWhatnotUrl(user?.whatnotUrl || '');
+      setEbayStoreUrl(user?.ebayStoreUrl || '');
       clearError(); // Clear any previous errors
     }
     setIsEditMode(!isEditMode);
@@ -182,6 +195,34 @@ const ProfileScreen: React.FC = () => {
         return false;
       }
     }
+
+    // Social media URL validation (optional)
+    const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]*)?$/;
+    
+    if (facebookUrl && !urlRegex.test(facebookUrl)) {
+      Alert.alert('Error', 'Please enter a valid Facebook URL');
+      return false;
+    }
+    
+    if (instagramUrl && !urlRegex.test(instagramUrl)) {
+      Alert.alert('Error', 'Please enter a valid Instagram URL');
+      return false;
+    }
+    
+    if (twitterUrl && !urlRegex.test(twitterUrl)) {
+      Alert.alert('Error', 'Please enter a valid Twitter/X URL');
+      return false;
+    }
+    
+    if (whatnotUrl && !urlRegex.test(whatnotUrl)) {
+      Alert.alert('Error', 'Please enter a valid Whatnot URL');
+      return false;
+    }
+    
+    if (ebayStoreUrl && !urlRegex.test(ebayStoreUrl)) {
+      Alert.alert('Error', 'Please enter a valid eBay store URL');
+      return false;
+    }
     
     return true;
   };
@@ -199,6 +240,11 @@ const ProfileScreen: React.FC = () => {
         lastName: lastName || undefined,
         homeZipCode,
         phoneNumber: phoneNumber || undefined,
+        facebookUrl: facebookUrl || undefined,
+        instagramUrl: instagramUrl || undefined,
+        twitterUrl: twitterUrl || undefined,
+        whatnotUrl: whatnotUrl || undefined,
+        ebayStoreUrl: ebayStoreUrl || undefined,
       });
       
       await updateProfile({
@@ -206,6 +252,11 @@ const ProfileScreen: React.FC = () => {
         lastName: lastName || undefined,
         homeZipCode,
         phoneNumber: phoneNumber || undefined,
+        facebookUrl: facebookUrl || undefined,
+        instagramUrl: instagramUrl || undefined,
+        twitterUrl: twitterUrl || undefined,
+        whatnotUrl: whatnotUrl || undefined,
+        ebayStoreUrl: ebayStoreUrl || undefined,
       });
       
       setIsEditMode(false);
@@ -316,6 +367,23 @@ const ProfileScreen: React.FC = () => {
         console.warn('Unknown UserRole encountered:', role);
         return 'Unknown';
     }
+  };
+
+  // Helper function to open a URL
+  const openUrl = (url: string | undefined) => {
+    if (!url) return;
+    
+    // Ensure URL has a protocol
+    const finalUrl = url.startsWith('http') ? url : `https://${url}`;
+    
+    Linking.canOpenURL(finalUrl).then(supported => {
+      if (supported) {
+        Linking.openURL(finalUrl);
+      } else {
+        console.error(`Cannot open URL: ${finalUrl}`);
+        Alert.alert('Error', 'Cannot open this URL');
+      }
+    });
   };
 
   // Navigate to Admin Map screen
@@ -475,6 +543,148 @@ const ProfileScreen: React.FC = () => {
                     <Text style={styles.infoValue}>{formatPhoneNumber(user.phoneNumber)}</Text>
                   </View>
                 </View>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* Social Media Links Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Social Media & Marketplace Links</Text>
+          
+          {isEditMode ? (
+            <View style={styles.editForm}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Facebook Profile URL</Text>
+                <TextInput
+                  style={styles.input}
+                  value={facebookUrl}
+                  onChangeText={setFacebookUrl}
+                  placeholder="https://facebook.com/username"
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  editable={!isSubmitting}
+                />
+              </View>
+              
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Instagram Profile URL</Text>
+                <TextInput
+                  style={styles.input}
+                  value={instagramUrl}
+                  onChangeText={setInstagramUrl}
+                  placeholder="https://instagram.com/username"
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  editable={!isSubmitting}
+                />
+              </View>
+              
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Twitter/X Profile URL</Text>
+                <TextInput
+                  style={styles.input}
+                  value={twitterUrl}
+                  onChangeText={setTwitterUrl}
+                  placeholder="https://twitter.com/username"
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  editable={!isSubmitting}
+                />
+              </View>
+              
+              {isDealer() && (
+                <>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Whatnot Store URL</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={whatnotUrl}
+                      onChangeText={setWhatnotUrl}
+                      placeholder="https://whatnot.com/user/username"
+                      keyboardType="url"
+                      autoCapitalize="none"
+                      editable={!isSubmitting}
+                    />
+                  </View>
+                  
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>eBay Store URL</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={ebayStoreUrl}
+                      onChangeText={setEbayStoreUrl}
+                      placeholder="https://ebay.com/usr/storename"
+                      keyboardType="url"
+                      autoCapitalize="none"
+                      editable={!isSubmitting}
+                    />
+                  </View>
+                </>
+              )}
+            </View>
+          ) : (
+            <View style={styles.infoList}>
+              {!user.facebookUrl && !user.instagramUrl && !user.twitterUrl && 
+               !user.whatnotUrl && !user.ebayStoreUrl ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No social media links added yet</Text>
+                  <TouchableOpacity onPress={toggleEditMode}>
+                    <Text style={styles.emptyStateActionText}>Add links</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  {user.facebookUrl && (
+                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.facebookUrl)}>
+                      <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                      <View style={styles.infoTextContainer}>
+                        <Text style={styles.infoLabel}>Facebook</Text>
+                        <Text style={styles.infoValueLink}>{user.facebookUrl}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  
+                  {user.instagramUrl && (
+                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.instagramUrl)}>
+                      <Ionicons name="logo-instagram" size={20} color="#C13584" />
+                      <View style={styles.infoTextContainer}>
+                        <Text style={styles.infoLabel}>Instagram</Text>
+                        <Text style={styles.infoValueLink}>{user.instagramUrl}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  
+                  {user.twitterUrl && (
+                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.twitterUrl)}>
+                      <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
+                      <View style={styles.infoTextContainer}>
+                        <Text style={styles.infoLabel}>Twitter/X</Text>
+                        <Text style={styles.infoValueLink}>{user.twitterUrl}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  
+                  {user.whatnotUrl && (
+                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.whatnotUrl)}>
+                      <Ionicons name="cart-outline" size={20} color="#FF001F" />
+                      <View style={styles.infoTextContainer}>
+                        <Text style={styles.infoLabel}>Whatnot Store</Text>
+                        <Text style={styles.infoValueLink}>{user.whatnotUrl}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  
+                  {user.ebayStoreUrl && (
+                    <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.ebayStoreUrl)}>
+                      <Ionicons name="pricetag-outline" size={20} color="#E53238" />
+                      <View style={styles.infoTextContainer}>
+                        <Text style={styles.infoLabel}>eBay Store</Text>
+                        <Text style={styles.infoValueLink}>{user.ebayStoreUrl}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
             </View>
           )}
@@ -794,6 +1004,26 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: '#333',
+  },
+  infoValueLink: {
+    fontSize: 16,
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
+  emptyStateActionText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '500',
   },
   verificationStatus: {
     flexDirection: 'row',
