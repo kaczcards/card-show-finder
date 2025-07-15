@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
-import { signInWithEmailPassword } from '../services/supabaseAuthService';
+import { signIn } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/sessionService';
 
 /* ------------------------------------------------------------------
@@ -262,10 +262,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
     // 2. Call the Supabase service to attempt the login.
-    const result = await supabaseAuthService.signInWithEmailPassword(
-      credentials.email,
-      credentials.password
-    );
+    const result = await supabaseAuthService.signIn(credentials);
 
     // 3. Handle the response directly.
     if (result.error) {
