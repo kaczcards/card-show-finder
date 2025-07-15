@@ -11,6 +11,7 @@ import {
   SectionListData
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
@@ -468,7 +469,7 @@ const OrganizerDashboardScreen: React.FC = () => {
   // If user is not a show organizer, show upgrade prompt
   if (!isShowOrganizer && !isLoading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.upgradeContainer}>
           <Ionicons name="alert-circle-outline" size={60} color="#FF6A00" />
           <Text style={styles.upgradeTitle}>Show Organizer Access Required</Text>
@@ -483,12 +484,12 @@ const OrganizerDashboardScreen: React.FC = () => {
             <Text style={styles.upgradeButtonText}>Upgrade Account</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
   
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SectionList
         sections={sections}
         renderItem={renderSectionItem}
@@ -500,7 +501,7 @@ const OrganizerDashboardScreen: React.FC = () => {
         }
         contentContainerStyle={styles.sectionListContent}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
