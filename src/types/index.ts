@@ -64,7 +64,15 @@ export interface User {
    * Only relevant when role === UserRole.SHOW_ORGANIZER.
    */
   postShowBroadcastsRemaining?: number;
-
+  /**
+   * Social media and marketplace profile URLs.
+   * Added in Task 8 for Profile and Show Pop-up enhancements.
+   */
+  facebookUrl?: string;
+  instagramUrl?: string;
+  twitterUrl?: string;
+  whatnotUrl?: string;
+  ebayStoreUrl?: string;
 }
 
 /* ------------------------------------------------------------------
