@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
 import { AuthState, AuthCredentials, User, UserRole } from '../types';
-import { getSupabaseUrl, getSupabaseAnonKey } from '../config';
+import { supabase } from '../supabase';
 import { Alert } from 'react-native';
 
-// Initialize the Supabase client
-export const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey());
+// Re-export the shared Supabase client so callers that previously imported it
+// from this service continue to work without changes.
+export { supabase };
 
 /**
  * Converting Supabase profile data to our User type
@@ -165,11 +165,105 @@ export const signUp = async (
 };
 
 /**
+ * Register a new user with email, password, and profile information.
+ * This mirrors the `signUp` flow but lets callers explicitly choose the
+ * initial role (Dealer, MVP Dealer, Organizer, etc.).
+ *
+ * NOTE: `AuthContext` relies on this helper, so the return shape must be a
+ * complete `User` object – NOT the `{ user, error }` shape used by `signIn`.
+ */
+export const registerUser = async (
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string,
+  homeZipCode: string,
+  role: UserRole,
+): Promise<User> => {
+  try {
+    // ---- Argument validation ----------------------------------------------------
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
+    if (!homeZipCode) {
+      throw new Error('ZIP code is required');
+    }
+    if (!firstName) {
+      throw new Error('First name is required');
+    }
+
+    // ---- Create Auth user -------------------------------------------------------
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      throw error;
+    }
+    if (!data?.user) {
+      throw new Error('Failed to create user');
+    }
+
+    const userId = data.user.id;
+
+    // Determine account_type based on role
+    const accountType =
+      role === UserRole.SHOW_ORGANIZER
+        ? 'organizer'
+        : role === UserRole.DEALER || role === UserRole.MVP_DEALER
+        ? 'dealer'
+        : 'collector';
+
+    // ---- Insert / update profile row -------------------------------------------
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: userId,
+        first_name: firstName,
+        last_name: lastName || null,
+        home_zip_code: homeZipCode,
+        role,
+        account_type: accountType,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+    if (profileError) {
+      // RLS triggers should still create a minimal row, but log just in case.
+      console.warn('Error creating profile:', profileError);
+    }
+
+    // ---- Build & return User object --------------------------------------------
+    const nowIso = new Date().toISOString();
+    const user: User = {
+      id: userId,
+      email,
+      firstName,
+      lastName: lastName || undefined,
+      homeZipCode,
+      role,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      isEmailVerified: false,
+      accountType: accountType as any,
+      subscriptionStatus: 'none',
+      subscriptionExpiry: null,
+      favoriteShows: [],
+      attendedShows: [],
+    };
+
+    return user;
+  } catch (error: any) {
+    console.error('Error in registerUser:', error.message);
+    throw error;
+  }
+};
+
+/**
  * Sign in with email and password
  * @param credentials 
  * @returns Promise containing the User object
  */
-export const signIn = async (credentials: AuthCredentials): Promise<User> => {
+export const signIn = async (
+  credentials: AuthCredentials,
+): Promise<{ user?: User; error?: Error }> => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
@@ -177,11 +271,11 @@ export const signIn = async (credentials: AuthCredentials): Promise<User> => {
     });
 
     if (error) {
-      throw error;
+      return { error };
     }
 
     if (!data?.user) {
-      throw new Error('No user returned from sign in');
+      return { error: new Error('No user returned from sign in') };
     }
 
     // Fetch the user's profile
@@ -192,19 +286,21 @@ export const signIn = async (credentials: AuthCredentials): Promise<User> => {
       .single();
 
     if (profileError) {
-      throw new Error(`Error fetching user profile: ${profileError.message}`);
+      return {
+        error: new Error(`Error fetching user profile: ${profileError.message}`),
+      };
     }
 
     if (!profileData) {
-      throw new Error('No profile data found for user');
+      return { error: new Error('No profile data found for user') };
     }
 
     // Map to our User type
     const user = mapProfileToUser(data.user, profileData);
-    return user;
+    return { user };
   } catch (error: any) {
     console.error('Error in signin:', error.message);
-    throw error;
+    return { error };
   }
 };
 
