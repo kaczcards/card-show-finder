@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Linking, Alert } from 'react-native';
 import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 
 type UserRole = 'SHOW_ORGANIZER' | 'MVP_DEALER' | 'DEALER' | 'USER';
@@ -34,9 +34,30 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
   if (dealer.role !== 'MVP_DEALER') return null;
   
+  /**
+   * Safely open a URL.  If a user entered their link without a protocol
+   * (e.g. “www.example.com”) we prepend `https://` so React-Native treats it
+   * as a web URL instead of a local file path.
+   */
   const handleOpenLink = (url?: string) => {
     if (!url) return;
-    Linking.openURL(url).catch(err => console.error('Error opening URL:', err));
+
+    // Ensure protocol prefix exists
+    let formattedUrl = url.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    console.log('[DealersList] Opening URL:', formattedUrl);
+
+    Linking.openURL(formattedUrl).catch(err => {
+      console.error('Error opening URL:', err);
+      Alert.alert(
+        'Cannot Open Link',
+        'The link could not be opened. Please check that it is a valid URL.',
+        [{ text: 'OK' }],
+      );
+    });
   };
   
   return (
