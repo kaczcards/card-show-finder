@@ -21,7 +21,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../supabase';
 
 const ProfileScreen: React.FC = () => {
-  const { authState, logout, updateProfile, clearError, refreshUserRole } = useAuth();
+  const { authState, logout, updateProfile, clearError, refreshUserRole, resetPassword } = useAuth();
   // Pull favoriteCount from authState so it can be displayed below.
   // We intentionally omit `authState.error` from UI display here; each action
   // (e.g., saveChanges) surfaces its own errors inline.
@@ -33,6 +33,8 @@ const ProfileScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   // session refresh loading
   const [isRefreshingRole, setIsRefreshingRole] = useState(false);
+  // Password reset loading
+  const [isPasswordResetLoading, setIsPasswordResetLoading] = useState(false);
   // Admin status
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(false);
@@ -231,6 +233,30 @@ const ProfileScreen: React.FC = () => {
       Alert.alert('Error', e?.message || 'Unexpected error refreshing session');
     } finally {
       setIsRefreshingRole(false);
+    }
+  };
+
+  // Handle password change
+  const handlePasswordChange = async () => {
+    if (!user?.email) {
+      Alert.alert('Error', 'No email address found for your account.');
+      return;
+    }
+
+    try {
+      setIsPasswordResetLoading(true);
+      await resetPassword(user.email);
+      
+      Alert.alert(
+        'Password Reset Email Sent',
+        'Check your email for a link to reset your password. The link will expire after 24 hours.'
+      );
+      
+    } catch (error: any) {
+      console.error('[ProfileScreen] Error sending password reset:', error);
+      Alert.alert('Password Reset Failed', error.message || 'Please try again later.');
+    } finally {
+      setIsPasswordResetLoading(false);
     }
   };
   
@@ -568,8 +594,16 @@ const ProfileScreen: React.FC = () => {
             />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="lock-closed-outline" size={20} color="#007AFF" />
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={handlePasswordChange}
+            disabled={isPasswordResetLoading}
+          >
+            {isPasswordResetLoading ? (
+              <ActivityIndicator size="small" color="#007AFF" style={{ marginHorizontal: 2 }} />
+            ) : (
+              <Ionicons name="lock-closed-outline" size={20} color="#007AFF" />
+            )}
             <Text style={styles.actionButtonText}>Change Password</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" style={styles.actionButtonIcon} />
           </TouchableOpacity>
