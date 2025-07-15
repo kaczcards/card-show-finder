@@ -9,10 +9,8 @@ import {
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
-  Switch,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 
 // Domain / context / services
 import { useAuth } from '../../contexts/AuthContext';
@@ -55,13 +53,11 @@ const CollectionScreen: React.FC = () => {
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
 
-  // ===== Debug State (DEV only) =====
-  const [showDebugOptions, setShowDebugOptions] = useState(false);
-  const [forceRegularDealerView, setForceRegularDealerView] = useState(false);
-
   // ===== Navigation Handlers =====
   const handleNavigateToSubscription = () => {
-    navigation.navigate('Subscription' as never);
+    navigation.navigate('My Profile', { 
+      screen: 'SubscriptionScreen' 
+    } as never);
   };
 
   // ---------------- Dealer Inventory helpers ----------------
@@ -291,34 +287,7 @@ const CollectionScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Collection</Text>
-        {__DEV__ && (
-          <TouchableOpacity 
-            style={styles.debugButton} 
-            onPress={() => setShowDebugOptions(!showDebugOptions)}
-          >
-            <Ionicons name="settings-outline" size={24} color="#666" />
-          </TouchableOpacity>
-        )}
       </View>
-
-      {/* Debug Panel - only visible in DEV mode */}
-      {__DEV__ && showDebugOptions && (
-        <View style={styles.debugPanel}>
-          <Text style={styles.debugTitle}>Debug Options</Text>
-          <View style={styles.debugRow}>
-            <Text style={styles.debugText}>Current User Role: {user?.role || 'None'}</Text>
-          </View>
-          <View style={styles.debugRow}>
-            <Text style={styles.debugText}>Force Regular Dealer View:</Text>
-            <Switch
-              value={forceRegularDealerView}
-              onValueChange={setForceRegularDealerView}
-              trackColor={{ false: '#d3d3d3', true: '#81b0ff' }}
-              thumbColor={forceRegularDealerView ? '#007AFF' : '#f4f3f4'}
-            />
-          </View>
-        </View>
-      )}
 
       {/* Content */}
       <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
@@ -328,8 +297,8 @@ const CollectionScreen: React.FC = () => {
           user?.role === UserRole.SHOW_ORGANIZER) &&
           renderDealerInventorySection()}
 
-        {/* Upgrade Tease for regular dealers or when forced in debug mode */}
-        {(user?.role === UserRole.DEALER || (__DEV__ && forceRegularDealerView)) && (
+        {/* Upgrade Tease for regular dealers */}
+        {user?.role === UserRole.DEALER && (
           <View style={styles.teaseContainer}>
             <Text style={styles.teaseText}>
               Upgrade to an MVP Dealer account to have what you're selling
@@ -367,9 +336,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 20,
@@ -476,32 +442,6 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontWeight: '500',
-  },
-  /* ----- Debug UI (DEV only) ----- */
-  debugButton: {
-    padding: 8,
-  },
-  debugPanel: {
-    backgroundColor: '#f0f8ff',
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#cce0ff',
-  },
-  debugTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  debugRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  debugText: {
-    fontSize: 14,
-    color: '#555',
   },
 });
 
