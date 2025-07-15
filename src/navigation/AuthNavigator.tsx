@@ -6,6 +6,7 @@ import {
   LoginScreen,
   RegisterScreen,
   ForgotPasswordScreen,
+  ResetPasswordScreen,
 } from '../screens/Auth';
 
 // Define navigation types for auth flow
@@ -13,6 +14,7 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  ResetPassword: { token?: string } | undefined;
 };
 
 // Create navigation stack
@@ -35,6 +37,10 @@ const AuthNavigator: React.FC = () => {
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <AuthStack.Screen
+        name="ResetPassword"
+        component={ResetPasswordScreen}
+      />
     </AuthStack.Navigator>
   );
 };
