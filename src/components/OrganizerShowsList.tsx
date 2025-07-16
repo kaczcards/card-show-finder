@@ -71,32 +71,43 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
       // 2️⃣  Process each series to get its shows – wrapped in try/catch
       const seriesWithShowsPromises = mySeries.map(async (series) => {
         try {
+          if (!series?.id) {
+            console.warn('[OrganizerShowsList] Series without ID detected:', series);
+            return undefined;
+          }
+          
           const showsInSeries = await showSeriesService.getShowsInSeries(
             series.id,
           );
+          
+          if (!Array.isArray(showsInSeries)) {
+            console.warn('[OrganizerShowsList] Invalid shows array for series:', series.id);
+            return {
+              series,
+              shows: [],
+              upcomingCount: 0,
+              nextShow: null
+            };
+          }
         
-        // Count upcoming shows and find the next show
-        const now = new Date();
-        const upcomingShows = showsInSeries.filter(show => 
-          new Date(show.startDate) > now
-        );
-        
-        // Sort upcoming shows by date
-        upcomingShows.sort((a, b) => 
-          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-        );
-        
-        return {
-          series,
-          shows: showsInSeries,
-          upcomingCount: upcomingShows.length,
-          nextShow: upcomingShows.length > 0 ? upcomingShows[0] : null
-        };
+          // Count upcoming shows and find the next show
+          const now = new Date();
+          const upcomingShows = showsInSeries.filter(show => 
+            show?.startDate && new Date(show.startDate) > now
+          );
+          
+          // Sort upcoming shows by date
+          upcomingShows.sort((a, b) => {
+            if (!a?.startDate) return 1;
+            if (!b?.startDate) return -1;
+            return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+          });
+          
           return {
             series,
             shows: showsInSeries,
             upcomingCount: upcomingShows.length,
-            nextShow: upcomingShows.length > 0 ? upcomingShows[0] : null,
+            nextShow: upcomingShows.length > 0 ? upcomingShows[0] : null
           };
         } catch (seriesErr) {
           console.error(
@@ -125,13 +136,28 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
         }
       });
       
-      // Sort series by next upcoming show date
-      seriesWithShows.sort((a, b) => {
-        if (!a.nextShow && !b.nextShow) return 0;
-        if (!a.nextShow) return 1;
-        if (!b.nextShow) return -1;
-        return new Date(a.nextShow.startDate).getTime() - new Date(b.nextShow.startDate).getTime();
-      });
+      // Sort series by next upcoming show date with defensive checks
+      try {
+        seriesWithShows.sort((a, b) => {
+          // Guard against undefined items
+          if (!a || !b) return 0;
+          
+          // Guard against missing nextShow properties
+          if (!a.nextShow && !b.nextShow) return 0;
+          if (!a.nextShow) return 1;
+          if (!b.nextShow) return -1;
+          
+          // Guard against missing startDate properties
+          if (!a.nextShow.startDate) return 1;
+          if (!b.nextShow.startDate) return -1;
+          
+          // Safe comparison
+          return new Date(a.nextShow.startDate).getTime() - new Date(b.nextShow.startDate).getTime();
+        });
+      } catch (sortErr) {
+        console.error('[OrganizerShowsList] Error sorting series:', sortErr);
+        // Continue with unsorted list rather than crashing
+      }
       
       setSeriesList(seriesWithShows);
       
@@ -149,30 +175,52 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
         throw new Error(`Failed to fetch standalone shows: ${standaloneError.message}`);
       }
       
-      // Map the data to match the Show interface
-      const mappedStandaloneShows = standaloneData?.map(show => ({
-        id: show.id,
-        seriesId: show.series_id,
-        title: show.title,
-        description: show.description,
-        location: show.location,
-        address: show.address,
-        startDate: show.start_date,
-        endDate: show.end_date,
-        entryFee: show.entry_fee,
-        imageUrl: show.image_url,
-        rating: show.rating,
-        coordinates: show.coordinates ? {
-          latitude: show.coordinates.coordinates[1],
-          longitude: show.coordinates.coordinates[0]
-        } : undefined,
-        status: show.status,
-        organizerId: show.organizer_id,
-        features: show.features,
-        categories: show.categories,
-        createdAt: show.created_at,
-        updatedAt: show.updated_at
-      })) || [];
+      // Map the data to match the Show interface with robust null checks
+      const mappedStandaloneShows = standaloneData?.map(show => {
+        // Extract coordinates safely
+        let coordinates;
+        try {
+          if (show.coordinates && 
+              typeof show.coordinates === 'object' && 
+              Array.isArray(show.coordinates.coordinates) && 
+              show.coordinates.coordinates.length >= 2) {
+            coordinates = {
+              latitude: Number(show.coordinates.coordinates[1]),
+              longitude: Number(show.coordinates.coordinates[0])
+            };
+            
+            // Validate coordinates are actual numbers
+            if (isNaN(coordinates.latitude) || isNaN(coordinates.longitude)) {
+              console.warn('[OrganizerShowsList] Invalid coordinate values:', show.coordinates);
+              coordinates = undefined;
+            }
+          }
+        } catch (coordErr) {
+          console.error('[OrganizerShowsList] Error parsing coordinates:', coordErr);
+          coordinates = undefined;
+        }
+        
+        return {
+          id: show.id,
+          seriesId: show.series_id,
+          title: show.title || 'Untitled Show',
+          description: show.description || '',
+          location: show.location || 'No location specified',
+          address: show.address || '',
+          startDate: show.start_date,
+          endDate: show.end_date,
+          entryFee: show.entry_fee,
+          imageUrl: show.image_url,
+          rating: show.rating,
+          coordinates,
+          status: show.status,
+          organizerId: show.organizer_id,
+          features: show.features || [],
+          categories: show.categories || [],
+          createdAt: show.created_at,
+          updatedAt: show.updated_at
+        };
+      }) || [];
       
       console.log(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${organizerId}`);
       setStandaloneShows(mappedStandaloneShows);
@@ -182,7 +230,7 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
       seriesWithShows.forEach(item => {
         /* ------------------------------------------------------------------
          * Defensive guard – in rare cases `item.series` (or its `id`) may be
-         * undefined which caused “cannot convert undefined value to object”.
+         * undefined which caused "cannot convert undefined value to object".
          * We skip those and log a warning so we can investigate upstream data.
          * ----------------------------------------------------------------*/
         if (item?.series?.id) {
@@ -216,6 +264,11 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
   
   // Toggle series expansion
   const toggleSeriesExpansion = (seriesId: string) => {
+    if (!seriesId) {
+      console.warn('[OrganizerShowsList] Attempted to toggle undefined seriesId');
+      return;
+    }
+    
     setExpandedSeries(prev => ({
       ...prev,
       [seriesId]: !prev[seriesId]
@@ -224,21 +277,36 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
   
   // Format date for display
   const formatShowDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
+    if (!dateString) return 'Date not set';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (err) {
+      console.warn('[OrganizerShowsList] Error formatting date:', dateString, err);
+      return 'Invalid date';
+    }
   };
   
   // Navigate to edit show
   const handleEditShow = (show: Show) => {
+    if (!show?.id) {
+      console.warn('[OrganizerShowsList] Attempted to edit show without ID');
+      return;
+    }
     navigation.navigate('EditShow', { showId: show.id });
   };
   
   // Navigate to send message
   const handleSendMessage = (show: Show) => {
+    if (!show?.id) {
+      console.warn('[OrganizerShowsList] Attempted to send message for show without ID');
+      return;
+    }
     navigation.navigate('SendBroadcast', { 
       showId: show.id,
       seriesId: show.seriesId
@@ -247,18 +315,31 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
   
   // Handle canceling a show
   const handleCancelShow = (show: Show) => {
+    if (!show?.id) {
+      console.warn('[OrganizerShowsList] Attempted to cancel show without ID');
+      return;
+    }
     // To be implemented - show confirmation dialog and call API
     console.log('Cancel show:', show.id);
   };
   
   // Navigate to series details
   const handleViewSeries = (series: ShowSeries) => {
+    if (!series?.id) {
+      console.warn('[OrganizerShowsList] Attempted to view series without ID');
+      return;
+    }
     navigation.navigate('SeriesDetail', { seriesId: series.id });
   };
   
   // Render a show item
   const renderShowItem = (show: Show) => {
-    const isPastShow = new Date(show.endDate) < new Date();
+    if (!show) {
+      console.warn('[OrganizerShowsList] Attempted to render undefined show');
+      return null;
+    }
+    
+    const isPastShow = show.endDate && new Date(show.endDate) < new Date();
     
     return (
       <View style={[
@@ -274,8 +355,8 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
           )}
         </View>
         
-        <Text style={styles.showTitle}>{show.title}</Text>
-        <Text style={styles.showLocation}>{show.location}</Text>
+        <Text style={styles.showTitle}>{show.title || 'Untitled Show'}</Text>
+        <Text style={styles.showLocation}>{show.location || 'No location'}</Text>
         
         <View style={styles.showActions}>
           <TouchableOpacity 
@@ -310,18 +391,31 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
   
   // Render a series item with its shows
   const renderSeriesItem = ({ item }: { item: SeriesWithShows }) => {
-    const { series, shows, upcomingCount, nextShow } = item;
-    const isExpanded = expandedSeries[series.id] || false;
+    // Guard against undefined item or series
+    if (!item || !item.series) {
+      console.warn('[OrganizerShowsList] Attempted to render undefined series item');
+      return null;
+    }
+    
+    // Safely extract properties with defaults
+    const series = item.series;
+    const shows = Array.isArray(item.shows) ? item.shows : [];
+    const upcomingCount = item.upcomingCount || 0;
+    const nextShow = item.nextShow;
+    
+    // Safely access expanded state
+    const isExpanded = series.id ? (expandedSeries[series.id] || false) : false;
     
     return (
       <View style={styles.seriesContainer}>
         {/* Series Header */}
         <TouchableOpacity 
           style={styles.seriesHeader}
-          onPress={() => toggleSeriesExpansion(series.id)}
+          onPress={() => series.id && toggleSeriesExpansion(series.id)}
+          disabled={!series.id}
         >
           <View style={styles.seriesInfo}>
-            <Text style={styles.seriesName}>{series.name}</Text>
+            <Text style={styles.seriesName}>{series.name || 'Unnamed Series'}</Text>
             <View style={styles.seriesStats}>
               <View style={styles.statItem}>
                 <Ionicons name="calendar" size={14} color="#666666" style={styles.statIcon} />
@@ -352,6 +446,7 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
             <TouchableOpacity 
               style={styles.viewSeriesButton}
               onPress={() => handleViewSeries(series)}
+              disabled={!series.id}
             >
               <Text style={styles.viewSeriesText}>View Series</Text>
             </TouchableOpacity>
@@ -373,8 +468,8 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
               <Text style={styles.nextShowDate}>{formatShowDate(nextShow.startDate)}</Text>
             </View>
             
-            <Text style={styles.nextShowTitle}>{nextShow.title}</Text>
-            <Text style={styles.nextShowLocation}>{nextShow.location}</Text>
+            <Text style={styles.nextShowTitle}>{nextShow.title || 'Untitled Show'}</Text>
+            <Text style={styles.nextShowLocation}>{nextShow.location || 'No location'}</Text>
             
             <View style={styles.showActions}>
               <TouchableOpacity 
@@ -400,22 +495,24 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
         {isExpanded && (
           <View style={styles.expandedShowsList}>
             {shows.length > 0 ? (
-              shows.map(show => (
+              shows.map(show => show?.id ? (
                 <View key={show.id}>
                   {renderShowItem(show)}
                 </View>
-              ))
+              ) : null)
             ) : (
               <Text style={styles.noShowsText}>No shows in this series yet.</Text>
             )}
             
-            <TouchableOpacity 
-              style={styles.addShowButton}
-              onPress={() => navigation.navigate('AddShow', { seriesId: series.id })}
-            >
-              <Ionicons name="add-circle" size={16} color="#FFFFFF" style={styles.addShowIcon} />
-              <Text style={styles.addShowText}>Add Show to Series</Text>
-            </TouchableOpacity>
+            {series.id && (
+              <TouchableOpacity 
+                style={styles.addShowButton}
+                onPress={() => navigation.navigate('AddShow', { seriesId: series.id })}
+              >
+                <Ionicons name="add-circle" size={16} color="#FFFFFF" style={styles.addShowIcon} />
+                <Text style={styles.addShowText}>Add Show to Series</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>
@@ -493,11 +590,11 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
       ListFooterComponent={
         standaloneShows.length > 0 ? (
           <View style={styles.standaloneShows}>
-            {standaloneShows.map(show => (
+            {standaloneShows.map(show => show?.id ? (
               <View key={show.id}>
                 {renderShowItem(show)}
               </View>
-            ))}
+            ) : null)}
           </View>
         ) : null
       }
