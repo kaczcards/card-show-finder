@@ -1,32 +1,51 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useState, forwardRef, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Dimensions,
+  Text,
   TouchableOpacity,
+  Platform,
   Alert,
   Linking,
-  Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Marker, Callout, Region } from 'react-native-maps';
-// Use our patched version that renames deprecated lifecycle methods
-import FixedClusteredMapView from '../FixedClusteredMapView';
-import { Show, Coordinates } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
+import { Marker, Callout } from 'react-native-maps';
+import FixedClusteredMapView from 'react-native-maps-super-cluster';
+import { Show } from '../../types';
+import { formatDate, formatEntryFee } from '../../utils/formatters';
+import { sanitizeCoordinates } from '../../utils/coordinateUtils'; 
+import { debounce } from '../../utils/helpers';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../supabase';
 
+/**
+ * MapShowCluster Component
+ * 
+ * An enhanced map view that displays shows as markers with clustering support.
+ * Includes improvements for performance and UX, such as:
+ * - Optimized marker rendering with tracksViewChanges=false
+ * - LiteMode for Android for better performance
+ * - Coordinate sanitization to handle invalid/swapped coordinates
+ * - Debounced navigation to prevent multiple taps
+ * - Platform-specific address handling
+ * - Added visual feedback for button presses
+ */
 interface MapShowClusterProps {
   shows: Show[];
-  onShowPress: (showId: string) => void;
-  region: Region;
-  showsUserLocation?: boolean;
+  region: {
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  };
+  onRegionChangeComplete?: (region: any) => void;
+  onCalloutPress?: (show: Show) => void;
   loadingEnabled?: boolean;
+  showsUserLocation?: boolean;
   showsCompass?: boolean;
   showsScale?: boolean;
   provider?: 'google' | undefined;
-  onRegionChangeComplete?: (region: Region) => void;
+  organizerProfiles?: Record<string, any>;
 }
 
 // Type for organizer profile with social media links
@@ -41,190 +60,92 @@ interface OrganizerProfile {
   ebayStoreUrl?: string;
 }
 
-  /* ------------------------------------------------------------------
-   * Utility – Validate / auto-correct possibly swapped coordinates
-   * ------------------------------------------------------------------
-   * Returns:
-   *   • corrected { latitude, longitude } if valid
-   *   • null if coordinates are unusable
-   * ------------------------------------------------------------------ */
-  const sanitizeCoordinates = (coords?: Coordinates | null): Coordinates | null => {
-    if (
-      !coords ||
-      typeof coords.latitude !== 'number' ||
-      typeof coords.longitude !== 'number'
-    ) {
-      return null;
-    }
+const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
+  shows,
+  region,
+  onRegionChangeComplete,
+  onCalloutPress,
+  loadingEnabled = true,
+  showsUserLocation = true,
+  showsCompass = true,
+  showsScale = true,
+  provider = undefined,
+  organizerProfiles = {},
+}, ref) => {
+  const [pressedShowId, setPressedShowId] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const navigation = useNavigation<any>();
+  
+  // Function to open maps with native app
+  const openMaps = (address: string) => {
+    if (!address) return;
 
-    const { latitude, longitude } = coords;
-    const latValid = latitude >= -90 && latitude <= 90;
-    const lngValid = longitude >= -180 && longitude <= 180;
+    // Use platform-specific URL scheme
+    const scheme = Platform.select({ 
+      ios: 'maps:?q=', 
+      android: 'geo:0,0?q=' 
+    });
+    const encodedAddress = encodeURIComponent(address);
+    const url = `${scheme}${encodedAddress}`;
 
-    // Already valid
-    if (latValid && lngValid) return coords;
-
-    // Attempt swap
-    const swappedLat = longitude;
-    const swappedLng = latitude;
-    const swappedLatValid = swappedLat >= -90 && swappedLat <= 90;
-    const swappedLngValid = swappedLng >= -180 && swappedLng <= 180;
-
-    if (swappedLatValid && swappedLngValid) {
-      console.warn(`Fixed swapped coordinates for a show: lat=${latitude}, lng=${longitude} → lat=${swappedLat}, lng=${swappedLng}`);
-      return { latitude: swappedLat, longitude: swappedLng };
-    }
-
-    // Still invalid – give up
-    console.error(`Invalid coordinates: lat=${latitude}, lng=${longitude}. Cannot display this show on the map.`);
-    return null;
-  };
-
-  // Helper function to open a URL
-  const openUrl = (url: string | undefined) => {
-    if (!url) return;
-    
-    // Ensure URL has a protocol
-    const finalUrl = url.startsWith('http') ? url : `https://${url}`;
-    
-    Linking.canOpenURL(finalUrl)
+    Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
-          Linking.openURL(finalUrl);
+          return Linking.openURL(url);
         } else {
-          console.error(`Cannot open URL: ${finalUrl}`);
-          Alert.alert('Error', 'Cannot open this URL');
+          // Fallback to Google Maps in browser
+          const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+          return Linking.openURL(webUrl);
+        }
+      })
+      .catch(() => {
+        Alert.alert('Error', 'Could not open maps application.');
+      });
+  };
+
+  // Function to open any URL
+  const openUrl = (url: string) => {
+    if (!url) return;
+
+    // Add https:// if missing
+    const httpsUrl = url.startsWith('http') ? url : `https://${url}`;
+
+    Linking.canOpenURL(httpsUrl)
+      .then(supported => {
+        if (supported) {
+          return Linking.openURL(httpsUrl);
+        } else {
+          console.warn(`Cannot open URL: ${httpsUrl}`);
         }
       })
       .catch(err => {
         console.error('Error opening URL:', err);
-        Alert.alert('Error', 'Could not open the link');
       });
   };
 
-  // Helper function to open address in maps app
-  const openMaps = (address: string) => {
-    if (!address) {
-      console.log('No address provided to openMaps');
-      return;
-    }
-
-    console.log('Opening map location for address:', address);
-
-    try {
-      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:0,0?q=' });
-      const encodedAddress = encodeURIComponent(address);
-      const url = `${scheme}${encodedAddress}`;
-
-      console.log('Attempting to open URL:', url);
-
-      Linking.openURL(url).catch(err => {
-        console.error('Error opening native maps app:', err);
-
-        // Fallback: open Google Maps in the browser
-        const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          address,
-        )}`;
-        console.log('Falling back to web URL:', webUrl);
-
-        Linking.openURL(webUrl).catch(e => {
-          console.error('Error opening maps in browser:', e);
-          Alert.alert('Error', 'Could not open maps application.');
-        });
-      });
-    } catch (error) {
-      console.error('Error processing maps URL:', error);
-      Alert.alert('Error', 'Could not open maps application.');
-    }
-  };
-
-  const {
-    shows,
-    onShowPress,
-    region,
-    showsUserLocation = true,
-    loadingEnabled = true,
-    showsCompass = true,
-    showsScale = true,
-    provider = 'google',
-    onRegionChangeComplete
-  } = props;
-
-  // Format date for callout with timezone correction
-  const formatDate = (dateValue: Date | string) => {
-    try {
-      const date = new Date(dateValue);
-      if (isNaN(date.getTime())) {
-        return 'Unknown date';
-      }
-
-      // Adjust for timezone offset to ensure correct date display
-      const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-      return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch (err) {
-      return 'Unknown date';
-    }
-  };
-
-  // Helper function to format entry fee
-  const formatEntryFee = (fee: number | string | null | undefined) => {
-    // Treat any "zero-ish" / missing value as free admission
-    if (
-      fee === 0 ||
-      fee === '0' ||
-      fee === null ||
-      fee === undefined ||
-      fee === '' ||
-      isNaN(Number(fee))
-    ) {
-      return 'Free Entry';
-    }
-    return `Entry: $${fee}`;
-  };
-
-  /**
-   * Debounced navigation handler to prevent double-clicks
-   * Uses a combination of state tracking and timeout to ensure
-   * the navigation action only happens once per user intent
-   */
-  const navigateToShow = useCallback((showId: string) => {
-    // If already navigating, ignore subsequent clicks
-    if (isNavigating) {
-      console.log('Navigation already in progress, ignoring click');
-      return;
-    }
+  // Debounced navigation function
+  const navigateToShow = debounce((showId: string) => {
+    if (isNavigating) return;
     
-    console.log('View Details button pressed for show ID:', showId);
-    
-    // Set visual feedback and prevent double-clicks
     setIsNavigating(true);
     setPressedShowId(showId);
     
-    // Add a small delay for visual feedback before navigation
-    setTimeout(() => {
-      try {
-        if (props.onShowPress) {
-          console.log('Using parent onShowPress handler');
-          props.onShowPress(showId);
-        } else if (navigation) {
-          // Fallback: navigate directly using React Navigation
-          console.log('Using navigation fallback to ShowDetail screen');
-          navigation.navigate('ShowDetail', { showId });
-        } else {
-          console.error('No navigation method available');
-          Alert.alert('Error', 'Cannot navigate to show details at this time.');
-        }
-      } catch (err) {
-        console.error('Error during navigation:', err);
-      } finally {
-        // Reset state after navigation (with slight delay to prevent rapid re-clicks)
-        setTimeout(() => {
-          setIsNavigating(false);
-          setPressedShowId(null);
-        }, 300);
+    try {
+      const selectedShow = shows.find(show => show.id === showId);
+      if (selectedShow && onCalloutPress) {
+        onCalloutPress(selectedShow);
       }
-    }, 50); // Small delay for visual feedback
-  }, [props.onShowPress, navigation, isNavigating]);
+    } catch (error) {
+      console.error('Error navigating to show:', error);
+      Alert.alert('Error', 'Could not navigate to show details.');
+    } finally {
+      // Reset state after navigation (with slight delay for visual feedback)
+      setTimeout(() => {
+        setIsNavigating(false);
+        setPressedShowId(null);
+      }, 300);
+    }
+  }, 500);
 
   // Render an individual marker
   const renderMarker = (show: Show) => {
