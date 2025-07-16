@@ -141,7 +141,19 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
       // Initialize expanded state for all series
       const initialExpandedState: Record<string, boolean> = {};
       seriesWithShows.forEach(item => {
-        initialExpandedState[item.series.id] = false;
+        /* ------------------------------------------------------------------
+         * Defensive guard – in rare cases `item.series` (or its `id`) may be
+         * undefined which caused “cannot convert undefined value to object”.
+         * We skip those and log a warning so we can investigate upstream data.
+         * ----------------------------------------------------------------*/
+        if (item?.series?.id) {
+          initialExpandedState[item.series.id] = false;
+        } else {
+          console.warn(
+            '[OrganizerShowsList] Skipping series without valid id:',
+            item?.series
+          );
+        }
       });
       setExpandedSeries(initialExpandedState);
       
