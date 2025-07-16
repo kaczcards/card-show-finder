@@ -146,36 +146,68 @@ export const getWantListsForMvpDealer = async (
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', ''); // Filter out empty want lists
     
-    // Create a data query to get the want lists with user info
-    let dataQuery = supabase
-      .from('want_lists')
-      .select(`
-        id,
-        userid,
-        content,
-        createdat,
-        updatedat,
-        profiles:userid(id, firstName, lastName, role)
-      `)
-      .in('userid', attendeeIds)
-      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
-      .not('content', 'eq', '') // Filter out empty want lists
-      .order('updatedat', { ascending: false })
-      .range(from, to);
-    
-    // Add search term if provided to both queries
+    // Add search term if provided to count query
     if (searchTerm) {
       countQuery = countQuery.ilike('content', `%${searchTerm}%`);
-      dataQuery = dataQuery.ilike('content', `%${searchTerm}%`);
     }
     
     // Execute count query
     const { count, error: countError } = await countQuery;
     if (countError) throw countError;
     
+    // Create a data query to get the want lists WITHOUT the profiles join
+    let dataQuery = supabase
+      .from('want_lists')
+      .select('id, userid, content, createdat, updatedat')
+      .in('userid', attendeeIds)
+      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
+      .not('content', 'eq', '') // Filter out empty want lists
+      .order('updatedat', { ascending: false })
+      .range(from, to);
+    
+    // Add search term if provided to data query
+    if (searchTerm) {
+      dataQuery = dataQuery.ilike('content', `%${searchTerm}%`);
+    }
+    
     // Execute data query
     const { data: wantLists, error: wantListsError } = await dataQuery;
     if (wantListsError) throw wantListsError;
+    
+    // If no want lists found, return empty result
+    if (!wantLists || wantLists.length === 0) {
+      return {
+        data: {
+          data: [],
+          totalCount: count || 0,
+          page,
+          pageSize,
+          hasMore: false
+        },
+        error: null
+      };
+    }
+    
+    // Get unique user IDs from want lists
+    const wantListUserIds = [...new Set(wantLists.map(wl => wl.userid))];
+    
+    // Fetch user profiles separately
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, role')
+      .in('id', wantListUserIds);
+    
+    if (profilesError) throw profilesError;
+    
+    // Create a map of user profiles by ID for quick lookup
+    const profileMap: Record<string, { firstName: string; lastName: string; role: string }> = {};
+    profiles?.forEach(profile => {
+      profileMap[profile.id] = {
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        role: profile.role
+      };
+    });
     
     // Get show details for context
     const { data: shows, error: showDetailsError } = await supabase
@@ -195,19 +227,22 @@ export const getWantListsForMvpDealer = async (
       };
     });
     
-    // Transform the data to include show information
-    const transformedData = wantLists?.map(item => {
+    // Transform the data to include show and user information
+    const transformedData = wantLists.map(item => {
       // Find which shows this user is attending
       const userShows = userShowMap[item.userid] || [];
       // Use the first show for context (we could enhance this to show all relevant shows)
       const showId = userShows[0];
       const showDetails = showDetailsMap[showId] || { title: 'Unknown Show', startDate: '', location: '' };
       
+      // Get user profile from map
+      const profile = profileMap[item.userid] || { firstName: 'Unknown', lastName: '', role: UserRole.ATTENDEE };
+      
       return {
         id: item.id,
         userId: item.userid,
-        userName: `${item.profiles.firstName} ${item.profiles.lastName || ''}`.trim(),
-        userRole: item.profiles.role,
+        userName: `${profile.firstName} ${profile.lastName || ''}`.trim(),
+        userRole: profile.role as UserRole,
         content: item.content,
         createdAt: item.createdat,
         updatedAt: item.updatedat,
@@ -216,7 +251,7 @@ export const getWantListsForMvpDealer = async (
         showStartDate: showDetails.startDate,
         showLocation: showDetails.location
       };
-    }) || [];
+    });
     
     return {
       data: {
@@ -347,50 +382,85 @@ export const getWantListsForShowOrganizer = async (
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', ''); // Filter out empty want lists
     
-    // Create a data query to get the want lists with user info
-    let dataQuery = supabase
-      .from('want_lists')
-      .select(`
-        id,
-        userid,
-        content,
-        createdat,
-        updatedat,
-        profiles:userid(id, firstName, lastName, role)
-      `)
-      .in('userid', attendeeIds)
-      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
-      .not('content', 'eq', '') // Filter out empty want lists
-      .order('updatedat', { ascending: false })
-      .range(from, to);
-    
-    // Add search term if provided to both queries
+    // Add search term if provided to count query
     if (searchTerm) {
       countQuery = countQuery.ilike('content', `%${searchTerm}%`);
-      dataQuery = dataQuery.ilike('content', `%${searchTerm}%`);
     }
     
     // Execute count query
     const { count, error: countError } = await countQuery;
     if (countError) throw countError;
     
+    // Create a data query to get the want lists WITHOUT the profiles join
+    let dataQuery = supabase
+      .from('want_lists')
+      .select('id, userid, content, createdat, updatedat')
+      .in('userid', attendeeIds)
+      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
+      .not('content', 'eq', '') // Filter out empty want lists
+      .order('updatedat', { ascending: false })
+      .range(from, to);
+    
+    // Add search term if provided to data query
+    if (searchTerm) {
+      dataQuery = dataQuery.ilike('content', `%${searchTerm}%`);
+    }
+    
     // Execute data query
     const { data: wantLists, error: wantListsError } = await dataQuery;
     if (wantListsError) throw wantListsError;
     
-    // Transform the data to include show information
-    const transformedData = wantLists?.map(item => {
+    // If no want lists found, return empty result
+    if (!wantLists || wantLists.length === 0) {
+      return {
+        data: {
+          data: [],
+          totalCount: count || 0,
+          page,
+          pageSize,
+          hasMore: false
+        },
+        error: null
+      };
+    }
+    
+    // Get unique user IDs from want lists
+    const wantListUserIds = [...new Set(wantLists.map(wl => wl.userid))];
+    
+    // Fetch user profiles separately
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, firstName, lastName, role')
+      .in('id', wantListUserIds);
+    
+    if (profilesError) throw profilesError;
+    
+    // Create a map of user profiles by ID for quick lookup
+    const profileMap: Record<string, { firstName: string; lastName: string; role: string }> = {};
+    profiles?.forEach(profile => {
+      profileMap[profile.id] = {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        role: profile.role
+      };
+    });
+    
+    // Transform the data to include show and user information
+    const transformedData = wantLists.map(item => {
       // Find which shows this user is attending
       const userShows = userShowMap[item.userid] || [];
       // Use the first show for context (we could enhance this to show all relevant shows)
       const showId = userShows[0];
       const showDetails = showDetailsMap[showId] || { title: 'Unknown Show', startDate: '', location: '' };
       
+      // Get user profile from map
+      const profile = profileMap[item.userid] || { firstName: 'Unknown', lastName: '', role: UserRole.ATTENDEE };
+      
       return {
         id: item.id,
         userId: item.userid,
-        userName: `${item.profiles.firstName} ${item.profiles.lastName || ''}`.trim(),
-        userRole: item.profiles.role,
+        userName: `${profile.firstName} ${profile.lastName || ''}`.trim(),
+        userRole: profile.role as UserRole,
         content: item.content,
         createdAt: item.createdat,
         updatedAt: item.updatedat,
@@ -399,7 +469,7 @@ export const getWantListsForShowOrganizer = async (
         showStartDate: showDetails.startDate,
         showLocation: showDetails.location
       };
-    }) || [];
+    });
     
     return {
       data: {
