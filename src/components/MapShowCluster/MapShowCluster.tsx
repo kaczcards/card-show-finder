@@ -18,6 +18,11 @@ import { debounce } from '../../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../supabase';
 
+/* ------------------------------------------------------------------
+ * Debugging aid – track a single show end-to-end
+ * ------------------------------------------------------------------ */
+const DEBUG_SHOW_ID = 'cd175b33-3144-4ccb-9d85-94490446bf26';
+
 /**
  * MapShowCluster Component
  * 
@@ -75,6 +80,21 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
   const [pressedShowId, setPressedShowId] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const navigation = useNavigation<any>();
+  
+  // Check if target show is in the shows array
+  useEffect(() => {
+    const targetShow = shows.find(show => show.id === DEBUG_SHOW_ID);
+    if (targetShow) {
+      console.log('[MapShowCluster] [DEBUG_SHOW] Target show is included in props:', {
+        id: targetShow.id,
+        title: targetShow.title,
+        coordinates: targetShow.coordinates,
+        status: targetShow.status,
+      });
+    } else {
+      console.warn('[MapShowCluster] [DEBUG_SHOW] Target show NOT found in props');
+    }
+  }, [shows]);
   
   // Function to open maps with native app
   const openMaps = (address: string) => {
@@ -186,7 +206,23 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
 
   // Render an individual marker
   const renderMarker = (show: Show) => {
+    // Debug target show
+    if (show.id === DEBUG_SHOW_ID) {
+      console.log('[MapShowCluster] [DEBUG_SHOW] Attempting to render target show marker');
+    }
+    
     const safeCoords = sanitizeCoordinates(show.coordinates);
+    
+    // Debug target show coordinate sanitization
+    if (show.id === DEBUG_SHOW_ID) {
+      if (safeCoords) {
+        console.log('[MapShowCluster] [DEBUG_SHOW] Coordinates passed sanitization:', safeCoords);
+      } else {
+        console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates FAILED sanitization, marker will not render');
+        console.warn('[MapShowCluster] [DEBUG_SHOW] Original coordinates:', show.coordinates);
+      }
+    }
+    
     if (!safeCoords) {
       return null;
     }
@@ -196,6 +232,11 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
     
     // Check if this show's button is currently pressed
     const isPressed = pressedShowId === show.id;
+
+    // Debug target show successful render
+    if (show.id === DEBUG_SHOW_ID) {
+      console.log('[MapShowCluster] [DEBUG_SHOW] Successfully rendering marker for target show');
+    }
 
     return (
       <Marker
@@ -325,7 +366,23 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
 
   // Convert Show objects to points for the clusterer
   const showToPoint = (show: Show) => {
+    // Debug target show
+    if (show.id === DEBUG_SHOW_ID) {
+      console.log('[MapShowCluster] [DEBUG_SHOW] Processing target show in showToPoint');
+    }
+    
     const safeCoords = sanitizeCoordinates(show.coordinates);
+    
+    // Debug target show coordinate sanitization in showToPoint
+    if (show.id === DEBUG_SHOW_ID) {
+      if (safeCoords) {
+        console.log('[MapShowCluster] [DEBUG_SHOW] Coordinates passed sanitization in showToPoint:', safeCoords);
+      } else {
+        console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates FAILED sanitization in showToPoint, will be excluded from clustering');
+        console.warn('[MapShowCluster] [DEBUG_SHOW] Original coordinates in showToPoint:', show.coordinates);
+      }
+    }
+    
     if (!safeCoords) {
       return null;
     }
@@ -347,6 +404,19 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
    * ------------------------------------------------------------------ */
   const totalShows = Array.isArray(shows) ? shows.length : 0;
 
+  // Check for target show in incoming data
+  const targetShow = shows.find(show => show.id === DEBUG_SHOW_ID);
+  if (targetShow) {
+    console.log('[MapShowCluster] [DEBUG_SHOW] Target show found in shows array:', {
+      id: targetShow.id,
+      title: targetShow.title,
+      coordinates: targetShow.coordinates,
+      hasCoordinates: !!(targetShow.coordinates && 
+                        typeof targetShow.coordinates.latitude === 'number' && 
+                        typeof targetShow.coordinates.longitude === 'number')
+    });
+  }
+
   const validShows = shows.filter(
     (show) =>
       show &&
@@ -354,6 +424,16 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
       typeof show.coordinates.latitude === 'number' &&
       typeof show.coordinates.longitude === 'number'
   );
+
+  // Check if target show is in valid shows
+  const targetInValidShows = validShows.some(show => show.id === DEBUG_SHOW_ID);
+  if (targetShow) {
+    if (targetInValidShows) {
+      console.log('[MapShowCluster] [DEBUG_SHOW] Target show PASSED coordinate validation');
+    } else {
+      console.warn('[MapShowCluster] [DEBUG_SHOW] Target show FAILED coordinate validation and will be filtered out');
+    }
+  }
 
   const invalidShows = shows.filter(
     (show) =>
