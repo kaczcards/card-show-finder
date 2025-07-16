@@ -191,6 +191,21 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
               found ? 'FOUND' : 'NOT found'
             } in raw nearby_shows payload`
           );
+
+          // If found, get the show details for further debugging
+          if (found) {
+            const targetShow = nearbyData.find((s: any) => s.id === DEBUG_SHOW_ID);
+            console.debug(
+              `[showService][DEBUG_SHOW] Target show details:`,
+              {
+                id: targetShow.id,
+                title: targetShow.title,
+                start_date: targetShow.start_date,
+                end_date: targetShow.end_date,
+                status: targetShow.status
+              }
+            );
+          }
         }
         
         // Apply additional filters that weren't handled by the RPC
@@ -199,10 +214,33 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         // Ensure we're not showing past shows
         if (Array.isArray(filteredData)) {
           const today = new Date();
+          console.debug(`[showService][DEBUG_SHOW] Today's date for filtering: ${today.toISOString()}`);
+          
+          // Check if target show exists before filtering
+          const targetShowBeforeFilter = filteredData.find((s: any) => s.id === DEBUG_SHOW_ID);
+          
+          if (targetShowBeforeFilter) {
+            const targetEndDate = new Date(targetShowBeforeFilter.end_date);
+            const isPastShow = targetEndDate < today;
+            
+            console.debug(
+              `[showService][DEBUG_SHOW] Target show end_date: ${targetEndDate.toISOString()} | Today: ${today.toISOString()} | Is past show? ${isPastShow ? 'YES' : 'NO'}`
+            );
+          }
+          
           filteredData = filteredData.filter(show => {
             // Parse the end date, ensuring timezone issues don't cause off-by-one errors
             const showEndDate = new Date(show.end_date);
-            return showEndDate >= today;
+            const isValid = showEndDate >= today;
+            
+            // Debug logging specifically for our target show
+            if (show.id === DEBUG_SHOW_ID) {
+              console.debug(
+                `[showService][DEBUG_SHOW] Filtering decision: show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
+              );
+            }
+            
+            return isValid;
           });
           
           console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
@@ -293,16 +331,54 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
               foundRaw ? 'FOUND' : 'NOT found'
             } in raw find_filtered_shows payload`
           );
+          
+          // If found, get the show details for further debugging
+          if (foundRaw) {
+            const targetShow = rpcData.find((s: any) => s.id === DEBUG_SHOW_ID);
+            console.debug(
+              `[showService][DEBUG_SHOW] Target show details from find_filtered_shows:`,
+              {
+                id: targetShow.id,
+                title: targetShow.title,
+                start_date: targetShow.start_date,
+                end_date: targetShow.end_date,
+                status: targetShow.status
+              }
+            );
+          }
         }
 
         // Ensure we're not showing past shows
         let filteredData = rpcData;
         if (Array.isArray(filteredData)) {
           const today = new Date();
+          console.debug(`[showService][DEBUG_SHOW] Today's date for filtering (find_filtered): ${today.toISOString()}`);
+          
+          // Check if target show exists before filtering
+          const targetShowBeforeFilter = filteredData.find((s: any) => s.id === DEBUG_SHOW_ID);
+          
+          if (targetShowBeforeFilter) {
+            const targetEndDate = new Date(targetShowBeforeFilter.end_date);
+            const isPastShow = targetEndDate < today;
+            
+            console.debug(
+              `[showService][DEBUG_SHOW] Target show end_date (find_filtered): ${targetEndDate.toISOString()} | Today: ${today.toISOString()} | Is past show? ${isPastShow ? 'YES' : 'NO'}`
+            );
+          }
+          
           filteredData = filteredData.filter(show => {
             // Parse the end date, ensuring timezone issues don't cause off-by-one errors
             const showEndDate = new Date(show.end_date);
-            return showEndDate >= today;
+            const isValid = showEndDate >= today;
+            
+            // Debug logging specifically for our target show
+            if (show.id === DEBUG_SHOW_ID) {
+              console.debug(
+                `[showService][DEBUG_SHOW] Filtering decision (find_filtered): show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
+              );
+            }
+            
+            return isValid;
           });
           
           console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
@@ -421,10 +497,32 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     let filteredData = data;
     if (Array.isArray(filteredData)) {
       const today = new Date();
+      
+      // Check if target show exists before filtering
+      const targetShowBeforeFilter = filteredData.find((s: any) => s.id === DEBUG_SHOW_ID);
+      
+      if (targetShowBeforeFilter) {
+        const targetEndDate = new Date(targetShowBeforeFilter.end_date);
+        const isPastShow = targetEndDate < today;
+        
+        console.debug(
+          `[showService][DEBUG_SHOW] Target show end_date (basic query): ${targetEndDate.toISOString()} | Today: ${today.toISOString()} | Is past show? ${isPastShow ? 'YES' : 'NO'}`
+        );
+      }
+      
       filteredData = filteredData.filter(show => {
         // Parse the end date, ensuring timezone issues don't cause off-by-one errors
         const showEndDate = new Date(show.end_date);
-        return showEndDate >= today;
+        const isValid = showEndDate >= today;
+        
+        // Debug logging specifically for our target show
+        if (show.id === DEBUG_SHOW_ID) {
+          console.debug(
+            `[showService][DEBUG_SHOW] Filtering decision (basic query): show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
+          );
+        }
+        
+        return isValid;
       });
       
       console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
@@ -526,8 +624,8 @@ export const getPaginatedShows = async (
     }
 
     /* -------------------------------------------------------------
-     * 3. Normalise successful payload to avoid “undefined value
-     *    to object” errors when the function returns unexpected
+     * 3. Normalise successful payload to avoid "undefined value
+     *    to object" errors when the function returns unexpected
      *    shapes.  Always guarantee `rows` is an array and
      *    `paginationRaw` is an object.
      * ----------------------------------------------------------- */
