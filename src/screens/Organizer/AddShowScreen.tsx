@@ -128,6 +128,43 @@ const AddShowScreen: React.FC = () => {
     return `${year}-${month}-${day} ${hour}:${minute}:00+00`;
   };
 
+  // Validate address format more thoroughly
+  const validateAddress = (): { isValid: boolean; message?: string } => {
+    // Check if all required fields are filled
+    if (!street.trim() || !city.trim() || !stateProv.trim() || !zipCode.trim()) {
+      return { 
+        isValid: false, 
+        message: 'All address fields are required (street, city, state, ZIP)' 
+      };
+    }
+
+    // Validate state code format (2 letters)
+    if (!/^[A-Z]{2}$/.test(stateProv)) {
+      return { 
+        isValid: false, 
+        message: 'State must be a valid 2-letter state code (e.g., CA, NY, TX)' 
+      };
+    }
+
+    // Validate ZIP code format (5 digits or 5+4)
+    if (!/^\d{5}(-\d{4})?$/.test(zipCode)) {
+      return { 
+        isValid: false, 
+        message: 'ZIP code must be 5 digits or 5+4 format (e.g., 90210 or 90210-1234)' 
+      };
+    }
+
+    // Check for PO Boxes (not ideal for physical locations)
+    if (/p\.?o\.?\s*box|post\s*office\s*box/i.test(street)) {
+      return { 
+        isValid: false, 
+        message: 'PO Boxes cannot be used for show locations. Please provide a physical address.' 
+      };
+    }
+
+    return { isValid: true };
+  };
+
   // Validate form
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -148,11 +185,14 @@ const AddShowScreen: React.FC = () => {
     }
     if (!stateProv.trim()) {
       newErrors.stateProv = 'State is required';
+    } else if (!/^[A-Z]{2}$/.test(stateProv)) {
+      newErrors.stateProv = 'State must be a valid 2-letter code (e.g., CA)';
     }
+    
     if (!zipCode.trim()) {
       newErrors.zipCode = 'ZIP code is required';
-    } else if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipCode)) {
-      newErrors.zipCode = 'ZIP code is invalid';
+    } else if (!/^\d{5}(-\d{4})?$/.test(zipCode)) {
+      newErrors.zipCode = 'ZIP code is invalid (must be 5 digits or 5+4 format)';
     }
 
     // Combine date+time for proper comparison
@@ -191,6 +231,30 @@ const AddShowScreen: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Check if geocoding result is accurate enough
+  const isGeocodingAccurate = (coords: { latitude: number; longitude: number; confidence?: number }) => {
+    // If the geocoding service provides a confidence score, use it
+    if (coords.confidence !== undefined) {
+      return coords.confidence >= 0.7; // 70% confidence minimum
+    }
+
+    // Basic validation - check if coordinates are not at (0,0) or other obvious invalid values
+    if (Math.abs(coords.latitude) < 0.01 && Math.abs(coords.longitude) < 0.01) {
+      return false; // Coordinates near (0,0) are likely invalid
+    }
+
+    // Check if coordinates are within reasonable bounds for US
+    if (coords.latitude < 24 || coords.latitude > 50 || 
+        coords.longitude < -125 || coords.longitude > -66) {
+      // Outside continental US bounds (rough check)
+      console.warn('[AddShowScreen] Coordinates outside continental US bounds:', coords);
+      // Still return true as the show might be outside the US
+      return true;
+    }
+
+    return true;
+  };
+
   // Handle form submission
   const handleSubmit = async () => {
     console.log('[AddShowScreen] Submit button pressed');
@@ -217,7 +281,18 @@ const AddShowScreen: React.FC = () => {
       console.log('  - End Date:', fullEndDate);
 
       /* -----------------------------------------------------------
-       * 1. Geocode the full street address → coordinates
+       * 1. Validate address format before geocoding
+       * --------------------------------------------------------- */
+      const addressValidation = validateAddress();
+      if (!addressValidation.isValid) {
+        console.warn('[AddShowScreen] Address validation failed:', addressValidation.message);
+        Alert.alert('Invalid Address', addressValidation.message || 'Please check your address format and try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      /* -----------------------------------------------------------
+       * 2. Geocode the full street address → coordinates
        * --------------------------------------------------------- */
       const fullAddress = `${street}, ${city}, ${stateProv} ${zipCode}`;
       console.log('[AddShowScreen] Attempting to geocode address:', fullAddress);
@@ -233,11 +308,36 @@ const AddShowScreen: React.FC = () => {
         console.error('[AddShowScreen] Geocoding failed or returned null');
         Alert.alert(
           'Address Not Found',
-          'We could not determine map coordinates for this address. ' +
-          'Please check the address and try again.'
+          'We could not find this address on the map. Please check that:\n\n' +
+          '• The street number and name are correct\n' +
+          '• The city name is spelled correctly\n' +
+          '• The state code is valid (e.g., CA, NY, TX)\n' +
+          '• The ZIP code matches the city and state'
         );
         setIsSubmitting(false);
         return;
+      }
+
+      /* -----------------------------------------------------------
+       * 3. Verify geocoding accuracy
+       * --------------------------------------------------------- */
+      if (!isGeocodingAccurate(coords)) {
+        console.warn('[AddShowScreen] Geocoding result may be inaccurate:', coords);
+        const continueWithInaccurate = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Address May Be Inaccurate',
+            'We found the address, but the location may not be precise. This could affect how your show appears on the map.\n\nDo you want to continue anyway?',
+            [
+              { text: 'No, Let Me Fix It', onPress: () => resolve(false), style: 'cancel' },
+              { text: 'Yes, Continue', onPress: () => resolve(true) }
+            ]
+          );
+        });
+        
+        if (!continueWithInaccurate) {
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       console.log('[AddShowScreen] Geocoding success:', coords);
@@ -253,9 +353,9 @@ const AddShowScreen: React.FC = () => {
         entry_fee: entryFee ? Number(entryFee) : 0,
         start_date: fullStartDate,
         end_date: fullEndDate,
-        // Inject coordinates for map placement
-        latitude: coords.latitude,
-        longitude: coords.longitude,
+        // Use PostgreSQL ST_Point function for proper PostGIS format
+        // ST_SetSRID(ST_Point(longitude, latitude), 4326)::geography
+        coordinates: supabase.sql`ST_SetSRID(ST_Point(${coords.longitude}, ${coords.latitude}), 4326)::geography`,
         features: features.length > 0
           ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
           : null,
@@ -274,7 +374,17 @@ const AddShowScreen: React.FC = () => {
 
       if (error) {
         console.error('Error creating show:', error);
-        throw new Error(error.message);
+        
+        // Provide more helpful error messages based on error code
+        if (error.code === '42883') { // PostgreSQL operator does not exist
+          throw new Error('There was an issue with the address coordinates. Please try a different address format.');
+        } else if (error.code === '23502') { // Not null violation
+          throw new Error('Some required fields are missing. Please fill out all required fields.');
+        } else if (error.code === '23505') { // Unique violation
+          throw new Error('This show may already exist. Please check your existing shows.');
+        } else {
+          throw new Error(error.message);
+        }
       }
 
       console.log('[AddShowScreen] Show created successfully:', data);
@@ -287,8 +397,10 @@ const AddShowScreen: React.FC = () => {
     } catch (error) {
       console.error('[AddShowScreen] Error creating show:', error);
       Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to create show. Please try again.'
+        'Error Creating Show',
+        error instanceof Error 
+          ? error.message 
+          : 'There was a problem creating your show. Please check your address and try again.'
       );
     } finally {
       setIsSubmitting(false);
