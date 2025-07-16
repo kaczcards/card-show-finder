@@ -367,35 +367,39 @@ const AddShowScreen: React.FC = () => {
 
       console.log('[AddShowScreen] Geocoding success:', coords);
       
-      // Create payload with snake_case keys matching database schema exactly
-      const showData = {
-        title: title,
-        description: description,
-        location: location,
-        address: `${street}, ${city}, ${stateProv} ${zipCode}`,
-        organizer_id: userId,
-        status: 'ACTIVE',
-        entry_fee: entryFee ? Number(entryFee) : 0,
-        start_date: fullStartDate,
-        end_date: fullEndDate,
-        // Store coordinates in WKT (Well-Known Text) so PostGIS geography column
-        // autocasts the string to a POINT type server-side.
-        // Example: 'POINT(-85.9913742 40.0351354)'
-        coordinates: `POINT(${coords.longitude} ${coords.latitude})`,
-        features: features.length > 0
-          ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
-          : null,
-        categories: categories.length > 0 ? categories : null,
-        series_id: seriesId || null
+      // ------------------------------------------------------------------
+      //  Build parameters for RPC (create_show_with_coordinates)
+      // ------------------------------------------------------------------
+      const rpcParams = {
+        p_title: title,
+        p_description: description || null,
+        p_location: location,
+        p_address: `${street}, ${city}, ${stateProv} ${zipCode}`,
+        p_start_date: fullStartDate,
+        p_end_date: fullEndDate,
+        p_entry_fee: entryFee ? Number(entryFee) : 0,
+        p_latitude: coords.latitude,
+        p_longitude: coords.longitude,
+        p_features:
+          features.length > 0
+            ? features.reduce<Record<string, boolean>>(
+                (obj, feat) => ({ ...obj, [feat]: true }),
+                {},
+              )
+            : null,
+        p_categories: categories.length > 0 ? categories : null,
+        p_series_id: seriesId || null,
+        p_image_url: null,
       };
-      
-      console.log('[AddShowScreen] Sending payload to server:', JSON.stringify(showData, null, 2));
 
-      // Bypass the service layer and use Supabase directly to avoid field name conversion issues
+      console.log(
+        '[AddShowScreen] Sending RPC payload:',
+        JSON.stringify(rpcParams, null, 2),
+      );
+
+      // Call RPC to create show (bypasses problematic trigger)
       const { data, error } = await supabase
-        .from('shows')
-        .insert(showData)
-        .select('*')
+        .rpc('create_show_with_coordinates', rpcParams)
         .single();
 
       if (error) {

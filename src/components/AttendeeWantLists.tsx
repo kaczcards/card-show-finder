@@ -1,461 +1,491 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  TextInput,
   FlatList,
+  TextInput,
+  TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  ScrollView,
+  Dimensions,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import { Show, UserRole } from '../types';
-import { useAuth } from '../contexts/AuthContext';
-import { getUpcomingShows } from '../services/showService';
-import { getSharedWantListsForDealer } from '../services/collectionService';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  getWantListsForMvpDealer,
+  getWantListsForShowOrganizer,
+  getWantListsForShow,
+  WantListWithUser,
+  PaginatedWantLists,
+} from '../services/showWantListService';
+import { UserRole, Show } from '../types';
+import { formatDate } from '../utils/dateUtils';
+import { debounce } from 'lodash';
 
-interface AttendeeWantList {
-  id: string;
-  sharedAt: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName?: string;
-  };
-  wantList: {
-    id: string;
-    content: string;
-    updatedAt: string;
-  } | null;
+interface AttendeeWantListsProps {
+  userId: string;
+  userRole: UserRole;
+  shows?: Show[]; // Optional list of shows for filtering
+  initialShowId?: string; // Optional initial show to filter by
 }
 
-const AttendeeWantLists: React.FC = () => {
-  const { authState } = useAuth();
-  const user = authState?.user;
+const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
+  userId,
+  userRole,
+  shows = [],
+  initialShowId,
+}) => {
+  // State for want lists data
+  const [wantLists, setWantLists] = useState<WantListWithUser[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize] = useState<number>(10);
+  const [hasMore, setHasMore] = useState<boolean>(false);
   
-  // State variables
-  const [shows, setShows] = useState<Show[]>([]);
-  const [selectedShowId, setSelectedShowId] = useState<string>('');
-  const [wantLists, setWantLists] = useState<AttendeeWantList[]>([]);
-  const [filteredWantLists, setFilteredWantLists] = useState<AttendeeWantList[]>([]);
-  const [searchText, setSearchText] = useState<string>('');
-  
-  // Loading states
-  const [loadingShows, setLoadingShows] = useState<boolean>(true);
-  const [loadingWantLists, setLoadingWantLists] = useState<boolean>(false);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  
-  // Error state
+  // State for UI
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Check if user is authorized (MVP Dealer or Show Organizer)
-  const isAuthorized = user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER;
-  
-  // Fetch shows the dealer/organizer is registered for
-  const fetchShows = async () => {
-    if (!user?.id) return;
-    
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedShowId, setSelectedShowId] = useState<string | undefined>(initialShowId);
+
+  // Function to load want lists
+  const loadWantLists = useCallback(async (
+    pageNum: number = 1,
+    refresh: boolean = false,
+    search: string = searchTerm,
+    showId: string | undefined = selectedShowId
+  ) => {
     try {
-      setLoadingShows(true);
-      setError(null);
-      
-      const { data, error } = await getUpcomingShows({
-        userId: user.id,
-        // Include current and upcoming shows
-        startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Include shows from yesterday
-      });
-      
-      if (error) {
-        throw new Error(error);
+      if (refresh) {
+        setIsRefreshing(true);
+      } else if (!refresh && pageNum === 1) {
+        setIsLoading(true);
       }
       
-      if (data) {
-        setShows(data);
-        // Select the first show by default if available
-        if (data.length > 0 && !selectedShowId) {
-          setSelectedShowId(data[0].id);
+      setError(null);
+      
+      let result;
+      
+      // If a specific show is selected, use the show-specific function
+      if (showId) {
+        result = await getWantListsForShow(
+          userId,
+          showId,
+          pageNum,
+          pageSize,
+          search
+        );
+      } else if (userRole === UserRole.MVP_DEALER) {
+        // Get want lists for MVP Dealer
+        result = await getWantListsForMvpDealer({
+          userId,
+          page: pageNum,
+          pageSize,
+          searchTerm: search
+        });
+      } else if (userRole === UserRole.SHOW_ORGANIZER) {
+        // Get want lists for Show Organizer
+        result = await getWantListsForShowOrganizer({
+          userId,
+          page: pageNum,
+          pageSize,
+          searchTerm: search
+        });
+      } else {
+        throw new Error('Unauthorized: Only MVP Dealers and Show Organizers can view want lists');
+      }
+      
+      if (result.error) {
+        throw result.error;
+      }
+      
+      if (result.data) {
+        if (pageNum === 1 || refresh) {
+          // Replace data for first page or refresh
+          setWantLists(result.data.data);
+        } else {
+          // Append data for pagination
+          setWantLists(prev => [...prev, ...result.data!.data]);
         }
+        
+        setTotalCount(result.data.totalCount);
+        setPage(result.data.page);
+        setHasMore(result.data.hasMore);
       }
     } catch (err) {
-      console.error('Error fetching shows:', err);
-      setError('Failed to load shows. Please try again.');
+      console.error('Error loading want lists:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load want lists');
     } finally {
-      setLoadingShows(false);
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
+  }, [userId, userRole, pageSize, searchTerm, selectedShowId]);
+
+  // Load data when component mounts or filters change
+  useEffect(() => {
+    loadWantLists(1, false);
+  }, [loadWantLists]);
+
+  // Handle search with debounce
+  const handleSearch = debounce((text: string) => {
+    setSearchTerm(text);
+    loadWantLists(1, false, text);
+  }, 500);
+
+  // Handle show selection
+  const handleShowChange = (showId: string) => {
+    setSelectedShowId(showId === 'all' ? undefined : showId);
+    loadWantLists(1, false, searchTerm, showId === 'all' ? undefined : showId);
   };
-  
-  // Fetch attendee want lists for the selected show
-  const fetchWantLists = async () => {
-    if (!user?.id || !selectedShowId) return;
-    
-    try {
-      setLoadingWantLists(true);
-      setError(null);
-      
-      const { data, error } = await getSharedWantListsForDealer(user.id, selectedShowId);
-      
-      if (error) {
-        throw new Error(error);
-      }
-      
-      if (data) {
-        setWantLists(data);
-        setFilteredWantLists(data);
-      }
-    } catch (err) {
-      console.error('Error fetching want lists:', err);
-      setError('Failed to load attendee want lists. Please try again.');
-    } finally {
-      setLoadingWantLists(false);
-      setRefreshing(false);
-    }
-  };
-  
-  // Initial data fetch
-  useEffect(() => {
-    if (isAuthorized) {
-      fetchShows();
-    }
-  }, [user?.id, isAuthorized]);
-  
-  // Fetch want lists when selected show changes
-  useEffect(() => {
-    if (selectedShowId) {
-      fetchWantLists();
-    }
-  }, [selectedShowId]);
-  
-  // Filter want lists based on search text
-  useEffect(() => {
-    if (!searchText.trim()) {
-      setFilteredWantLists(wantLists);
-      return;
-    }
-    
-    const searchTermLower = searchText.toLowerCase();
-    const filtered = wantLists.filter(item => {
-      // Search in user name
-      const userName = `${item.user.firstName} ${item.user.lastName || ''}`.toLowerCase();
-      if (userName.includes(searchTermLower)) return true;
-      
-      // Search in want list content
-      if (item.wantList?.content.toLowerCase().includes(searchTermLower)) return true;
-      
-      return false;
-    });
-    
-    setFilteredWantLists(filtered);
-  }, [searchText, wantLists]);
-  
+
   // Handle refresh
   const handleRefresh = () => {
-    setRefreshing(true);
-    fetchShows().then(() => fetchWantLists());
+    loadWantLists(1, true);
   };
-  
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+
+  // Handle pagination
+  const handleLoadMore = () => {
+    if (hasMore && !isLoading) {
+      loadWantLists(page + 1);
+    }
   };
-  
+
   // Render a want list item
-  const renderWantListItem = ({ item }: { item: AttendeeWantList }) => {
-    const userName = `${item.user.firstName} ${item.user.lastName || ''}`;
-    const hasWantList = !!item.wantList;
-    
+  const renderWantListItem = ({ item }: { item: WantListWithUser }) => {
     return (
-      <View style={styles.wantListItem}>
-        <View style={styles.wantListHeader}>
-          <Text style={styles.userName}>{userName}</Text>
-          <Text style={styles.sharedDate}>Shared: {formatDate(item.sharedAt)}</Text>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{item.userName}</Text>
+            <Text style={styles.userRole}>
+              {item.userRole === UserRole.DEALER ? 'Dealer' : 
+               item.userRole === UserRole.MVP_DEALER ? 'MVP Dealer' : 'Attendee'}
+            </Text>
+          </View>
+          <View style={styles.showInfo}>
+            <Text style={styles.showTitle}>{item.showTitle}</Text>
+            <Text style={styles.showDate}>{formatDate(item.showStartDate)}</Text>
+            <Text style={styles.showLocation}>{item.showLocation}</Text>
+          </View>
         </View>
         
-        {hasWantList ? (
-          <>
-            <Text style={styles.wantListContent} numberOfLines={3}>
-              {item.wantList.content}
-            </Text>
-            
-            <TouchableOpacity 
-              style={styles.viewDetailsButton}
-              onPress={() => {
-                // Show full want list in an alert for now
-                // In a real app, you might want to navigate to a detail screen
-                Alert.alert(
-                  `${userName}'s Want List`,
-                  item.wantList.content,
-                  [{ text: 'Close' }]
-                );
-              }}
-            >
-              <Text style={styles.viewDetailsText}>View Full List</Text>
-              <Ionicons name="chevron-forward" size={16} color="#0057B8" />
-            </TouchableOpacity>
-          </>
-        ) : (
-          <Text style={styles.noWantListText}>
-            This attendee has shared their profile but hasn't created a want list yet.
+        <View style={styles.cardContent}>
+          <Text style={styles.contentTitle}>Want List:</Text>
+          <Text style={styles.content}>{item.content}</Text>
+        </View>
+        
+        <View style={styles.cardFooter}>
+          <Text style={styles.updatedText}>
+            Updated: {formatDate(item.updatedAt, true)}
           </Text>
-        )}
+        </View>
       </View>
     );
   };
-  
-  // If user is not authorized, show access denied message
-  if (!isAuthorized) {
-    return (
-      <View style={styles.unauthorizedContainer}>
-        <Ionicons name="lock-closed" size={48} color="#FF6A00" />
-        <Text style={styles.unauthorizedTitle}>Access Restricted</Text>
-        <Text style={styles.unauthorizedText}>
-          Attendee want lists are only available to MVP Dealers and Show Organizers.
-          Upgrade your account to access this feature.
-        </Text>
-      </View>
-    );
-  }
-  
-  // Loading state for initial shows fetch
-  if (loadingShows && !refreshing) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6A00" />
-        <Text style={styles.loadingText}>Loading your shows...</Text>
-      </View>
-    );
-  }
-  
-  // Error state
-  if (error && !refreshing) {
-    return (
-      <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
-          style={styles.retryButton}
-          onPress={handleRefresh}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-  
-  // No shows available
-  if (shows.length === 0) {
+
+  // Render empty state
+  const renderEmptyState = () => {
+    if (isLoading) return null;
+    
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="calendar-outline" size={48} color="#CCCCCC" />
-        <Text style={styles.emptyTitle}>No Shows Found</Text>
-        <Text style={styles.emptyText}>
-          You need to be registered for upcoming shows to access attendee want lists.
-          Register for shows to connect with attendees and grow your business.
+        <Ionicons name="list-outline" size={48} color="#ccc" />
+        <Text style={styles.emptyText}>No want lists found</Text>
+        <Text style={styles.emptySubtext}>
+          {searchTerm 
+            ? 'Try a different search term'
+            : selectedShowId
+              ? 'No want lists for this show yet'
+              : 'No want lists available for your shows'}
         </Text>
       </View>
     );
-  }
-  
+  };
+
+  // Render footer (loading indicator for pagination)
+  const renderFooter = () => {
+    if (!hasMore) return null;
+    
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#0057B8" />
+        <Text style={styles.footerText}>Loading more...</Text>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
-      {/* Show Selection Dropdown */}
-      <View style={styles.dropdownContainer}>
-        <Text style={styles.dropdownLabel}>Select a Show:</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={selectedShowId}
-            onValueChange={(itemValue) => setSelectedShowId(itemValue)}
-            style={styles.picker}
-          >
-            {shows.map(show => (
-              <Picker.Item 
-                key={show.id} 
-                label={`${show.title} (${formatDate(show.startDate)})`} 
-                value={show.id} 
-              />
-            ))}
-          </Picker>
-        </View>
+      {/* Header with title */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>
+          {userRole === UserRole.MVP_DEALER 
+            ? 'Attendee Want Lists' 
+            : 'Show Attendee Want Lists'}
+        </Text>
+        <Text style={styles.headerSubtitle}>
+          {userRole === UserRole.MVP_DEALER 
+            ? 'See what attendees are looking for at your shows' 
+            : 'See what attendees are looking for at your events'}
+        </Text>
       </View>
       
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666666" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name or card..."
-          value={searchText}
-          onChangeText={setSearchText}
-          clearButtonMode="while-editing"
-        />
-        {searchText.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchText('')}>
-            <Ionicons name="close-circle" size={20} color="#666666" />
-          </TouchableOpacity>
+      {/* Search and filter section */}
+      <View style={styles.filterContainer}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search want lists..."
+            placeholderTextColor="#999"
+            onChangeText={handleSearch}
+            defaultValue={searchTerm}
+          />
+          {searchTerm ? (
+            <TouchableOpacity 
+              onPress={() => {
+                setSearchTerm('');
+                loadWantLists(1, false, '');
+              }}
+              style={styles.clearButton}
+            >
+              <Ionicons name="close-circle" size={18} color="#999" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        
+        {/* Show filter dropdown (only if multiple shows available) */}
+        {shows.length > 1 && (
+          <View style={styles.pickerContainer}>
+            <Text style={styles.pickerLabel}>Filter by Show:</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={selectedShowId || 'all'}
+                style={styles.picker}
+                onValueChange={(itemValue) => handleShowChange(itemValue.toString())}
+              >
+                <Picker.Item label="All Shows" value="all" />
+                {shows.map((show) => (
+                  <Picker.Item 
+                    key={show.id} 
+                    label={show.title} 
+                    value={show.id} 
+                  />
+                ))}
+              </Picker>
+            </View>
+          </View>
         )}
       </View>
       
-      {/* Want Lists */}
-      {loadingWantLists && !refreshing ? (
-        <View style={styles.loadingListContainer}>
-          <ActivityIndicator size="large" color="#FF6A00" />
-          <Text style={styles.loadingText}>Loading attendee want lists...</Text>
+      {/* Error message */}
+      {error ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={24} color="#FF3B30" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => loadWantLists(1, true)}
+          >
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
         </View>
-      ) : filteredWantLists.length > 0 ? (
-        <FlatList
-          data={filteredWantLists}
-          renderItem={renderWantListItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={handleRefresh} 
-              colors={["#FF6A00"]}
-            />
-          }
-          ListHeaderComponent={
-            <Text style={styles.resultsCount}>
-              {filteredWantLists.length} {filteredWantLists.length === 1 ? 'attendee' : 'attendees'} found
-            </Text>
-          }
-        />
+      ) : null}
+      
+      {/* Want Lists */}
+      {isLoading && page === 1 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0057B8" />
+          <Text style={styles.loadingText}>Loading want lists...</Text>
+        </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.emptyListContainer}
-          refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={handleRefresh} 
-              colors={["#FF6A00"]}
-            />
-          }
-        >
-          <Ionicons name="list-outline" size={48} color="#CCCCCC" />
-          <Text style={styles.emptyTitle}>No Want Lists Found</Text>
-          <Text style={styles.emptyText}>
-            {searchText.length > 0 
-              ? "No want lists match your search criteria. Try different keywords."
-              : "No attendees have shared their want lists for this show yet."}
-          </Text>
-        </ScrollView>
+        <>
+          <FlatList
+            data={wantLists}
+            renderItem={renderWantListItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={renderEmptyState}
+            ListFooterComponent={renderFooter}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.2}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={['#0057B8']}
+                tintColor="#0057B8"
+              />
+            }
+          />
+          
+          {/* Pagination info */}
+          {wantLists.length > 0 && (
+            <View style={styles.paginationInfo}>
+              <Text style={styles.paginationText}>
+                Showing {wantLists.length} of {totalCount} want lists
+              </Text>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
 };
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#f8f8f8',
   },
-  dropdownContainer: {
-    backgroundColor: '#FFFFFF',
+  header: {
+    backgroundColor: 'white',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#f0f0f0',
   },
-  dropdownLabel: {
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#333333',
-    marginBottom: 8,
+    color: '#666',
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
-    backgroundColor: '#F9F9F9',
+  filterContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12,
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
+    height: 40,
     fontSize: 16,
-    color: '#333333',
+    color: '#333',
   },
-  resultsCount: {
+  clearButton: {
+    padding: 4,
+  },
+  pickerContainer: {
+    marginTop: 8,
+  },
+  pickerLabel: {
     fontSize: 14,
-    color: '#666666',
-    padding: 16,
-    paddingBottom: 8,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+  },
+  picker: {
+    height: 40,
   },
   listContainer: {
-    paddingBottom: 20,
-  },
-  wantListItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    margin: 16,
-    marginTop: 0,
-    marginBottom: 16,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    paddingBottom: 24,
   },
-  wantListHeader: {
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#f9f9f9',
+  },
+  userInfo: {
+    flex: 1,
   },
   userName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#333',
+    marginBottom: 4,
   },
-  sharedDate: {
+  userRole: {
     fontSize: 12,
-    color: '#999999',
-  },
-  wantListContent: {
-    fontSize: 14,
-    color: '#333333',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  viewDetailsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    color: '#666',
+    backgroundColor: '#eee',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
     alignSelf: 'flex-start',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#F0F7FF',
-    borderRadius: 16,
   },
-  viewDetailsText: {
+  showInfo: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  showTitle: {
     fontSize: 14,
+    fontWeight: '500',
     color: '#0057B8',
-    marginRight: 4,
+    marginBottom: 2,
   },
-  noWantListText: {
+  showDate: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  showLocation: {
+    fontSize: 12,
+    color: '#888',
+  },
+  cardContent: {
+    padding: 16,
+  },
+  contentTitle: {
     fontSize: 14,
-    color: '#999999',
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 8,
+  },
+  content: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+  },
+  cardFooter: {
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#f9f9f9',
+  },
+  updatedText: {
+    fontSize: 12,
+    color: '#888',
     fontStyle: 'italic',
   },
   loadingContainer: {
@@ -464,85 +494,73 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  loadingListContainer: {
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   loadingText: {
     marginTop: 12,
-    color: '#666666',
-    fontSize: 14,
+    fontSize: 16,
+    color: '#666',
   },
-  errorContainer: {
-    flex: 1,
+  footerLoader: {
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 16,
+  },
+  footerText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#666',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#666',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+  },
+  errorContainer: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: '#FFEEEE',
+    borderRadius: 8,
+    alignItems: 'center',
   },
   errorText: {
-    marginTop: 12,
-    marginBottom: 16,
-    color: '#FF6A00',
     fontSize: 14,
+    color: '#FF3B30',
+    marginVertical: 8,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#0057B8',
-    paddingVertical: 8,
+    backgroundColor: '#FF3B30',
     paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingVertical: 8,
+    borderRadius: 4,
+    marginTop: 8,
   },
-  retryButtonText: {
-    color: '#FFFFFF',
+  retryText: {
+    color: 'white',
     fontWeight: '500',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  paginationInfo: {
+    padding: 12,
     alignItems: 'center',
-    padding: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: 'white',
   },
-  emptyListContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    minHeight: 300,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  unauthorizedContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-  },
-  unauthorizedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  unauthorizedText: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 300,
+  paginationText: {
+    fontSize: 12,
+    color: '#666',
   },
 });
 
