@@ -51,14 +51,23 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
 
   // Load presets when modal becomes visible
   useEffect(() => {
-    if (visible && userId) {
-      loadPresets();
+    if (!visible) return;
+
+    // Guard: If userId is missing we can't fetch presets
+    if (!userId) {
+      setError('You must be logged in to use filter presets.');
+      setPresets([]);
+      return;
     }
+
+    // Fetch user presets
+      loadPresets();
   }, [visible, userId]);
 
   // Load presets from Supabase
   const loadPresets = async () => {
     try {
+      if (!userId) return;
       setLoading(true);
       setError(null);
       const userPresets = await loadFilterPresetsFromSupabase(userId);
@@ -73,6 +82,11 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
 
   // Save a new preset
   const handleSavePreset = async () => {
+    if (!userId) {
+      Alert.alert('Login Required', 'Please sign in to save filter presets.');
+      return;
+    }
+
     if (!newPresetName.trim()) {
       Alert.alert('Error', 'Please enter a name for your preset');
       return;
@@ -142,6 +156,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
 
   // Delete a preset
   const handleDeletePreset = (preset: FilterPreset) => {
+    if (!userId) return;
     Alert.alert(
       'Delete Preset',
       `Are you sure you want to delete "${preset.name}"?`,
@@ -172,6 +187,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
 
   // Set a preset as default
   const handleSetDefaultPreset = async (preset: FilterPreset) => {
+    if (!userId) return;
     try {
       setLoading(true);
       await setDefaultFilterPreset(userId, preset.id!);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Linking, Alert } from 'react-native';
 import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -36,7 +36,7 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
   
   /**
    * Safely open a URL.  If a user entered their link without a protocol
-   * (e.g. “www.example.com”) we prepend `https://` so React-Native treats it
+   * (e.g. "www.example.com") we prepend `https://` so React-Native treats it
    * as a web URL instead of a local file path.
    */
   const handleOpenLink = (url?: string) => {
@@ -66,6 +66,7 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
         <TouchableOpacity 
           style={styles.socialIcon} 
           onPress={() => handleOpenLink(dealer.facebookUrl)}
+          activeOpacity={0.7}
         >
           <FontAwesome name="facebook-square" size={22} color="#4267B2" />
         </TouchableOpacity>
@@ -75,6 +76,7 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
         <TouchableOpacity 
           style={styles.socialIcon} 
           onPress={() => handleOpenLink(dealer.instagramUrl)}
+          activeOpacity={0.7}
         >
           <FontAwesome name="instagram" size={22} color="#E1306C" />
         </TouchableOpacity>
@@ -84,6 +86,7 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
         <TouchableOpacity 
           style={styles.socialIcon} 
           onPress={() => handleOpenLink(dealer.twitterUrl)}
+          activeOpacity={0.7}
         >
           <FontAwesome name="twitter-square" size={22} color="#1DA1F2" />
         </TouchableOpacity>
@@ -93,6 +96,7 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
         <TouchableOpacity 
           style={styles.socialIcon} 
           onPress={() => handleOpenLink(dealer.whatnotUrl)}
+          activeOpacity={0.7}
         >
           <MaterialCommunityIcons name="shopping" size={22} color="#FF5A5F" />
         </TouchableOpacity>
@@ -102,6 +106,7 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
         <TouchableOpacity 
           style={styles.socialIcon} 
           onPress={() => handleOpenLink(dealer.ebayStoreUrl)}
+          activeOpacity={0.7}
         >
           <FontAwesome name="shopping-cart" size={22} color="#e53238" />
         </TouchableOpacity>
@@ -115,6 +120,40 @@ const DealersList: React.FC<DealersListProps> = ({
   isLoading,
   onViewDealerDetails
 }) => {
+  // State to track which dealer is currently being pressed and navigation status
+  const [pressedDealerId, setPressedDealerId] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Debounced handler for dealer detail navigation
+  const handleViewDealerDetails = useCallback((dealerId: string, dealerName: string) => {
+    // Prevent multiple rapid clicks
+    if (isNavigating) {
+      console.log('[DealersList] Navigation already in progress, ignoring click');
+      return;
+    }
+
+    console.log('[DealersList] Dealer pressed:', dealerId, dealerName);
+    
+    // Set visual feedback and prevent double-clicks
+    setIsNavigating(true);
+    setPressedDealerId(dealerId);
+    
+    // Add a small delay for visual feedback before navigation
+    setTimeout(() => {
+      try {
+        onViewDealerDetails(dealerId, dealerName);
+      } catch (err) {
+        console.error('[DealersList] Error during navigation:', err);
+      } finally {
+        // Reset state after navigation (with slight delay to prevent rapid re-clicks)
+        setTimeout(() => {
+          setIsNavigating(false);
+          setPressedDealerId(null);
+        }, 300);
+      }
+    }, 50); // Small delay for visual feedback
+  }, [onViewDealerDetails, isNavigating]);
+
   return (
     <View style={styles.mvpDealersContainer}>
       <SectionHeader>Participating Dealers</SectionHeader>
@@ -123,37 +162,54 @@ const DealersList: React.FC<DealersListProps> = ({
         <ActivityIndicator size="small" color="#FF6A00" />
       ) : dealers.length > 0 ? (
         <View style={styles.dealersList}>
-          {dealers.map(dealer => (
-            <View key={dealer.id} style={styles.dealerItem}>
-              <View style={styles.dealerInfoContainer}>
+          {dealers.map(dealer => {
+            // Check if this dealer's button is currently pressed
+            const isPressed = pressedDealerId === dealer.id;
+            
+            return (
+              <View key={dealer.id} style={styles.dealerItem}>
                 {dealer.role === 'MVP_DEALER' ? (
+                  // Make the entire row clickable for MVP dealers
                   <TouchableOpacity 
-                    style={styles.dealerNameButton} 
-                    onPress={() => onViewDealerDetails(dealer.id, dealer.name)}
+                    style={[
+                      styles.mvpDealerRow,
+                      isPressed && styles.mvpDealerRowPressed
+                    ]} 
+                    onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
+                    activeOpacity={0.7}
+                    disabled={isNavigating}
                   >
-                    <Text style={styles.dealerName}>{dealer.name} (MVP)</Text>
-                    {dealer.boothLocation && (
-                      <Text style={styles.boothLocation}>Booth: {dealer.boothLocation}</Text>
-                    )}
+                    <View style={styles.dealerInfoContainer}>
+                      <Text style={[
+                        styles.dealerName,
+                        isPressed && styles.dealerNamePressed
+                      ]}>
+                        {dealer.name} (MVP)
+                      </Text>
+                      {dealer.boothLocation && (
+                        <Text style={styles.boothLocation}>Booth: {dealer.boothLocation}</Text>
+                      )}
+                    </View>
+                    
+                    {/* Display social media icons only for MVP Dealers */}
+                    <SocialMediaIcons dealer={dealer} />
                   </TouchableOpacity>
                 ) : (
-                  <View>
-                    <Text style={[styles.dealerName, styles.nonClickableDealerName]}>
-                      {dealer.name}
-                    </Text>
-                    {dealer.boothLocation && (
-                      <Text style={styles.boothLocation}>Booth: {dealer.boothLocation}</Text>
-                    )}
+                  // Non-MVP dealers aren't clickable
+                  <View style={styles.regularDealerRow}>
+                    <View style={styles.dealerInfoContainer}>
+                      <Text style={[styles.dealerName, styles.nonClickableDealerName]}>
+                        {dealer.name}
+                      </Text>
+                      {dealer.boothLocation && (
+                        <Text style={styles.boothLocation}>Booth: {dealer.boothLocation}</Text>
+                      )}
+                    </View>
                   </View>
                 )}
               </View>
-              
-              {/* Display social media icons only for MVP Dealers */}
-              {dealer.role === 'MVP_DEALER' && (
-                <SocialMediaIcons dealer={dealer} />
-              )}
-            </View>
-          ))}
+            );
+          })}
         </View>
       ) : (
         <Text style={styles.noDataText}>
@@ -180,16 +236,30 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   dealerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
+  mvpDealerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16, // Increased from 12 for better touch target
+    paddingHorizontal: 12, // Increased from 8 for better touch target
+    borderRadius: 6, // Add slight rounding for visual feedback
+  },
+  mvpDealerRowPressed: {
+    backgroundColor: '#E6F0FF', // Light blue background when pressed
+  },
+  regularDealerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
   dealerInfoContainer: {
     flex: 1,
+    paddingRight: 8, // Add padding for spacing from social icons
   },
   dealerNameButton: {
     flex: 1,
@@ -198,6 +268,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#0057B8',
+  },
+  dealerNamePressed: {
+    color: '#003C80', // Darker blue when pressed
   },
   nonClickableDealerName: {
     color: '#333333',
@@ -214,7 +287,8 @@ const styles = StyleSheet.create({
   },
   socialIcon: {
     marginHorizontal: 4,
-    padding: 4,
+    padding: 6, // Increased from 4 for better touch target
+    borderRadius: 20, // Add border radius for better visual
   },
   messageDealerButton: {
     backgroundColor: '#4CAF50',

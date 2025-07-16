@@ -4,6 +4,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// Global toast notifications
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 // Import context providers
 import { AuthProvider } from './src/contexts/AuthContext';
@@ -33,6 +35,50 @@ const queryClient = new QueryClient({
  * Main App component
  * Sets up providers and initializes the app
  */
+
+/**
+ * Toast configuration – enables `success`, `info`, `warning`, and `error`
+ * types with simple coloured accents on the left border.
+ */
+const toastConfig = {
+  success: (props: any) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: '#4CAF50' }}               /* green */
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 16, fontWeight: '600' }}
+      text2Style={{ fontSize: 14 }}
+    />
+  ),
+  info: (props: any) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: '#2196F3' }}               /* blue */
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 16, fontWeight: '600' }}
+      text2Style={{ fontSize: 14 }}
+    />
+  ),
+  warning: (props: any) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: '#FF9800' }}               /* orange */
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 16, fontWeight: '600' }}
+      text2Style={{ fontSize: 14 }}
+    />
+  ),
+  error: (props: any) => (
+    <ErrorToast
+      {...props}
+      style={{ borderLeftColor: '#F44336' }}               /* red */
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 16, fontWeight: '600' }}
+      text2Style={{ fontSize: 14 }}
+    />
+  ),
+};
+
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [netStatus, setNetStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -152,6 +198,8 @@ export default function App() {
           <AuthProvider>
             <RootNavigator />
             <StatusBar style="auto" />
+            {/* Global toast portal */}
+            <Toast config={toastConfig} />
           </AuthProvider>
         </ThemeProvider>
       </SafeAreaProvider>

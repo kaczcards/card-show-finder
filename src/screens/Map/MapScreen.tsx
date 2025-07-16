@@ -23,6 +23,8 @@ import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster from '../../components/MapShowCluster/index';
 import * as locationService from '../../services/locationService';
 import { getShows } from '../../services/showService';
+// Import toast utilities for location notifications
+import { showErrorToast, showGpsLocationToast, showLocationFailedToast } from '../../utils/toastUtils';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -93,6 +95,15 @@ const MapScreen: React.FC<MapScreenProps> = ({
         const granted = await locationService.requestLocationPermissions();
         if (!granted) {
           console.log('Location permission denied');
+          // Show toast notification if falling back to ZIP code
+          if (user?.homeZipCode) {
+            showLocationFailedToast(user.homeZipCode);
+          } else {
+            showErrorToast(
+              'Location Permission Denied',
+              'Please set your home ZIP code in your profile'
+            );
+          }
           return null;
         }
       }
@@ -101,21 +112,31 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
       if (location) {
         console.log('Got user location:', location);
-        setUserLocation(location);
         return location;
       } else if (user && user.homeZipCode) {
         console.log('Falling back to user ZIP code:', user.homeZipCode);
+        showLocationFailedToast(user.homeZipCode);
+        
         const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
-
         if (zipData && zipData.coordinates) {
-          setUserLocation(zipData.coordinates);
           return zipData.coordinates;
         }
       }
 
+      if (!user?.homeZipCode) {
+        showErrorToast(
+          'Location Unavailable',
+          'Please set your home ZIP code in your profile'
+        );
+      }
+      
       return null;
     } catch (error) {
       console.error('Error getting user location:', error);
+      showErrorToast(
+        'Location Error',
+        'Failed to get your location. Please try again.'
+      );
       return null;
     }
   }, [user]);
@@ -138,6 +159,15 @@ const MapScreen: React.FC<MapScreenProps> = ({
           const location = await getUserLocation();
           if (location) {
             determinedLocation = location;
+            
+            // Show toast for GPS location if it was successful
+            try {
+              const address = await locationService.reverseGeocodeCoordinates(location);
+              const locationName = address ? (address.city || address.subregion || address.region) : undefined;
+              showGpsLocationToast(locationName);
+            } catch (e) {
+              showGpsLocationToast();
+            }
           }
         }
 
@@ -145,6 +175,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
           const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
           if (zipData) {
             determinedLocation = zipData.coordinates;
+            showLocationFailedToast(user.homeZipCode);
           }
         }
 
@@ -152,6 +183,13 @@ const MapScreen: React.FC<MapScreenProps> = ({
             console.warn('No coordinates available, falling back to US center.');
             determinedLocation = { latitude: 39.8283, longitude: -98.5795 };
             regionToSet = { ...determinedLocation, latitudeDelta: 40, longitudeDelta: 40 };
+            
+            if (!user?.homeZipCode) {
+              showErrorToast(
+                'Location Unavailable',
+                'Please set your home ZIP code in your profile'
+              );
+            }
         } else {
             regionToSet = { ...determinedLocation, latitudeDelta: 0.5, longitudeDelta: 0.5 };
         }
@@ -174,6 +212,10 @@ const MapScreen: React.FC<MapScreenProps> = ({
         setInitialRegion(defaultRegion);
         setCurrentRegion(defaultRegion);
         setError('Error determining your location. Please try again later.');
+        showErrorToast(
+          'Location Error',
+          'Failed to determine your location. Please try again later.'
+        );
       } finally {
         setLoading(false);
       }
@@ -319,16 +361,45 @@ const MapScreen: React.FC<MapScreenProps> = ({
         };
         setCurrentRegion(newRegion);
         mapRef.current.animateToRegion(newRegion, 1000);
-        console.log('Centered map on user location:', location);
+        
+        // Get location name for better context in toast
+        try {
+          const address = await locationService.reverseGeocodeCoordinates(location);
+          const locationName = address ? (address.city || address.subregion || address.region) : undefined;
+          showGpsLocationToast(locationName);
+        } catch (e) {
+          // If reverse geocoding fails, still show toast but without location name
+          showGpsLocationToast();
+        }
+      } else if (user?.homeZipCode) {
+        // Fall back to ZIP code
+        showLocationFailedToast(user.homeZipCode);
+        
+        // Try to center on ZIP code
+        const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+        if (zipData && mapRef.current) {
+          const newRegion = {
+            latitude: zipData.coordinates.latitude,
+            longitude: zipData.coordinates.longitude,
+            latitudeDelta: 0.1,
+            longitudeDelta: 0.1,
+          };
+          setCurrentRegion(newRegion);
+          mapRef.current.animateToRegion(newRegion, 1000);
+        }
       } else {
-        Alert.alert(
+        // No location available at all
+        showErrorToast(
           'Location Unavailable',
-          'Could not determine your current location. Please check your device settings and ensure location services are enabled.'
+          'Could not determine your location. Please set your home ZIP code in your profile.'
         );
       }
     } catch (error) {
       console.error('Error centering on user location:', error);
-      Alert.alert('Error', 'Failed to center on your location. Please try again.');
+      showErrorToast(
+        'Location Error',
+        'Failed to center on your location. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
