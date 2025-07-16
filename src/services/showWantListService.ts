@@ -138,8 +138,16 @@ export const getWantListsForMvpDealer = async (
       userShowMap[a.userid].push(a.showid);
     });
     
-    // Get want lists for these attendees
-    let wantListQuery = supabase
+    // Create a count query to get total number of want lists
+    let countQuery = supabase
+      .from('want_lists')
+      .select('id', { count: 'exact', head: true })
+      .in('userid', attendeeIds)
+      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
+      .not('content', 'eq', ''); // Filter out empty want lists
+    
+    // Create a data query to get the want lists with user info
+    let dataQuery = supabase
       .from('want_lists')
       .select(`
         id,
@@ -152,23 +160,21 @@ export const getWantListsForMvpDealer = async (
       .in('userid', attendeeIds)
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', '') // Filter out empty want lists
-      .order('updatedat', { ascending: false });
+      .order('updatedat', { ascending: false })
+      .range(from, to);
     
-    // Add search term if provided
+    // Add search term if provided to both queries
     if (searchTerm) {
-      wantListQuery = wantListQuery.ilike('content', `%${searchTerm}%`);
+      countQuery = countQuery.ilike('content', `%${searchTerm}%`);
+      dataQuery = dataQuery.ilike('content', `%${searchTerm}%`);
     }
     
-    // Get count for pagination
-    const { count, error: countError } = await wantListQuery.count();
-    
+    // Execute count query
+    const { count, error: countError } = await countQuery;
     if (countError) throw countError;
     
-    // Apply pagination
-    wantListQuery = wantListQuery.range(from, to);
-    
-    const { data: wantLists, error: wantListsError } = await wantListQuery;
-    
+    // Execute data query
+    const { data: wantLists, error: wantListsError } = await dataQuery;
     if (wantListsError) throw wantListsError;
     
     // Get show details for context
@@ -333,8 +339,16 @@ export const getWantListsForShowOrganizer = async (
       userShowMap[a.userid].push(a.showid);
     });
     
-    // Get want lists for these attendees
-    let wantListQuery = supabase
+    // Create a count query to get total number of want lists
+    let countQuery = supabase
+      .from('want_lists')
+      .select('id', { count: 'exact', head: true })
+      .in('userid', attendeeIds)
+      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
+      .not('content', 'eq', ''); // Filter out empty want lists
+    
+    // Create a data query to get the want lists with user info
+    let dataQuery = supabase
       .from('want_lists')
       .select(`
         id,
@@ -347,23 +361,21 @@ export const getWantListsForShowOrganizer = async (
       .in('userid', attendeeIds)
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', '') // Filter out empty want lists
-      .order('updatedat', { ascending: false });
+      .order('updatedat', { ascending: false })
+      .range(from, to);
     
-    // Add search term if provided
+    // Add search term if provided to both queries
     if (searchTerm) {
-      wantListQuery = wantListQuery.ilike('content', `%${searchTerm}%`);
+      countQuery = countQuery.ilike('content', `%${searchTerm}%`);
+      dataQuery = dataQuery.ilike('content', `%${searchTerm}%`);
     }
     
-    // Get count for pagination
-    const { count, error: countError } = await wantListQuery.count();
-    
+    // Execute count query
+    const { count, error: countError } = await countQuery;
     if (countError) throw countError;
     
-    // Apply pagination
-    wantListQuery = wantListQuery.range(from, to);
-    
-    const { data: wantLists, error: wantListsError } = await wantListQuery;
-    
+    // Execute data query
+    const { data: wantLists, error: wantListsError } = await dataQuery;
     if (wantListsError) throw wantListsError;
     
     // Transform the data to include show information
