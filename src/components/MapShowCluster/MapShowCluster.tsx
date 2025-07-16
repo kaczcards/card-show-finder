@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -47,6 +47,10 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
   
   // State for storing organizer profiles
   const [organizerProfiles, setOrganizerProfiles] = useState<Record<string, OrganizerProfile>>({});
+  
+  // State to track button press and prevent double-clicks
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [pressedShowId, setPressedShowId] = useState<string | null>(null);
 
   /* ------------------------------------------------------------------
    * Fetch organizer profiles with social media links
@@ -238,24 +242,48 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
   };
 
   /**
-   * Wrapper handler so the marker can still navigate even if the parent
-   * component forgot to pass `onShowPress`.  We fallback to React Navigation.
+   * Debounced navigation handler to prevent double-clicks
+   * Uses a combination of state tracking and timeout to ensure
+   * the navigation action only happens once per user intent
    */
-  const navigateToShow = (showId: string) => {
+  const navigateToShow = useCallback((showId: string) => {
+    // If already navigating, ignore subsequent clicks
+    if (isNavigating) {
+      console.log('Navigation already in progress, ignoring click');
+      return;
+    }
+    
     console.log('View Details button pressed for show ID:', showId);
     
-    if (props.onShowPress) {
-      console.log('Using parent onShowPress handler');
-      props.onShowPress(showId);
-    } else if (navigation) {
-      // Fallback: navigate directly using React Navigation with the correct screen name
-      console.log('Using navigation fallback to ShowDetail screen');
-      navigation.navigate('ShowDetail', { showId });
-    } else {
-      console.error('No navigation method available');
-      Alert.alert('Error', 'Cannot navigate to show details at this time.');
-    }
-  };
+    // Set visual feedback and prevent double-clicks
+    setIsNavigating(true);
+    setPressedShowId(showId);
+    
+    // Add a small delay for visual feedback before navigation
+    setTimeout(() => {
+      try {
+        if (props.onShowPress) {
+          console.log('Using parent onShowPress handler');
+          props.onShowPress(showId);
+        } else if (navigation) {
+          // Fallback: navigate directly using React Navigation
+          console.log('Using navigation fallback to ShowDetail screen');
+          navigation.navigate('ShowDetail', { showId });
+        } else {
+          console.error('No navigation method available');
+          Alert.alert('Error', 'Cannot navigate to show details at this time.');
+        }
+      } catch (err) {
+        console.error('Error during navigation:', err);
+      } finally {
+        // Reset state after navigation (with slight delay to prevent rapid re-clicks)
+        setTimeout(() => {
+          setIsNavigating(false);
+          setPressedShowId(null);
+        }, 300);
+      }
+    }, 50); // Small delay for visual feedback
+  }, [props.onShowPress, navigation, isNavigating]);
 
   // Render an individual marker
   const renderMarker = (show: Show) => {
@@ -266,6 +294,9 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
 
     // Get organizer profile if available
     const organizer = show.organizerId ? organizerProfiles[show.organizerId] : null;
+    
+    // Check if this show's button is currently pressed
+    const isPressed = pressedShowId === show.id;
 
     return (
       <Marker
@@ -286,7 +317,11 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
               {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
                 ` - ${formatDate(show.endDate)}`}
             </Text>
-            <TouchableOpacity onPress={() => openMaps(show.address)}>
+            <TouchableOpacity 
+              onPress={() => openMaps(show.address)}
+              activeOpacity={0.7}
+              style={styles.addressContainer}
+            >
               <Text style={styles.addressLink}>{show.address}</Text>
             </TouchableOpacity>
             <Text style={styles.calloutDetail}>
@@ -300,6 +335,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
                   <TouchableOpacity 
                     style={styles.socialIconButton} 
                     onPress={() => openUrl(organizer.facebookUrl)}
+                    activeOpacity={0.7}
                   >
                     <Ionicons name="logo-facebook" size={20} color="#1877F2" />
                   </TouchableOpacity>
@@ -309,6 +345,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
                   <TouchableOpacity 
                     style={styles.socialIconButton} 
                     onPress={() => openUrl(organizer.instagramUrl)}
+                    activeOpacity={0.7}
                   >
                     <Ionicons name="logo-instagram" size={20} color="#C13584" />
                   </TouchableOpacity>
@@ -318,6 +355,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
                   <TouchableOpacity 
                     style={styles.socialIconButton} 
                     onPress={() => openUrl(organizer.twitterUrl)}
+                    activeOpacity={0.7}
                   >
                     <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
                   </TouchableOpacity>
@@ -327,6 +365,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
                   <TouchableOpacity 
                     style={styles.socialIconButton} 
                     onPress={() => openUrl(organizer.whatnotUrl)}
+                    activeOpacity={0.7}
                   >
                     <Ionicons name="cart-outline" size={20} color="#FF001F" />
                   </TouchableOpacity>
@@ -336,6 +375,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
                   <TouchableOpacity 
                     style={styles.socialIconButton} 
                     onPress={() => openUrl(organizer.ebayStoreUrl)}
+                    activeOpacity={0.7}
                   >
                     <Ionicons name="pricetag-outline" size={20} color="#E53238" />
                   </TouchableOpacity>
@@ -344,10 +384,17 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
             )}
             
             <TouchableOpacity
-              style={styles.calloutButton}
+              style={[
+                styles.calloutButton,
+                isPressed && styles.calloutButtonPressed
+              ]}
               onPress={() => navigateToShow(show.id)}
+              activeOpacity={0.6}
+              disabled={isNavigating}
             >
-              <Text style={styles.calloutButtonText}>View Details</Text>
+              <Text style={styles.calloutButtonText}>
+                {isPressed ? 'Opening...' : 'View Details'}
+              </Text>
             </TouchableOpacity>
           </View>
         </Callout>
@@ -455,10 +502,18 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
         nodeExtractor={showToPoint}
       />
       <View style={styles.zoomControls}>
-        <TouchableOpacity style={styles.zoomButton} onPress={() => handleZoom(true)}>
+        <TouchableOpacity 
+          style={styles.zoomButton} 
+          onPress={() => handleZoom(true)}
+          activeOpacity={0.7}
+        >
           <Text style={styles.zoomButtonText}>+</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.zoomButton} onPress={() => handleZoom(false)}>
+        <TouchableOpacity 
+          style={styles.zoomButton} 
+          onPress={() => handleZoom(false)}
+          activeOpacity={0.7}
+        >
           <Text style={styles.zoomButtonText}>-</Text>
         </TouchableOpacity>
       </View>
@@ -474,10 +529,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   calloutContainer: {
-    width: 220,
+    width: 240, // Increased from 220 for better readability
     backgroundColor: 'white',
     borderRadius: 8,
-    padding: 12,
+    padding: 16, // Increased from 12 for better touch targets
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -497,6 +552,7 @@ const styles = StyleSheet.create({
   },
   addressContainer: {
     marginBottom: 4,
+    paddingVertical: 4, // Added padding for better touch target
   },
   addressLink: {
     fontSize: 14,
@@ -510,9 +566,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   socialIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40, // Increased from 36 for better touch target
+    height: 40, // Increased from 36 for better touch target
+    borderRadius: 20,
     backgroundColor: '#f8f8f8',
     justifyContent: 'center',
     alignItems: 'center',
@@ -520,15 +576,22 @@ const styles = StyleSheet.create({
   },
   calloutButton: {
     backgroundColor: '#007AFF',
-    borderRadius: 4,
-    paddingVertical: 6,
+    borderRadius: 6, // Slightly increased for better visual
+    paddingVertical: 10, // Increased from 6 for better touch target
+    paddingHorizontal: 12, // Added horizontal padding
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10, // Increased from 8
+    minHeight: 44, // Minimum height for better touchability (Apple's recommendation)
+    justifyContent: 'center',
+  },
+  calloutButtonPressed: {
+    backgroundColor: '#0056b3', // Darker blue when pressed
+    transform: [{ scale: 0.98 }], // Slight scale down for press feedback
   },
   calloutButtonText: {
     color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15, // Slightly increased from 14
+    fontWeight: '600', // Increased from 500
   },
   clusterContainer: {
     width: 40,
@@ -555,10 +618,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   zoomButton: {
-    width: 40,
-    height: 40,
+    width: 44, // Increased from 40 for better touch target
+    height: 44, // Increased from 40 for better touch target
     backgroundColor: 'white',
-    borderRadius: 20,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
