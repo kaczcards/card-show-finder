@@ -55,15 +55,25 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
     try {
       setLoading(true);
       setError(null);
-      
-      // Get all series owned by this organizer
-      const mySeries = await showSeriesService.getAllShowSeries({ 
-        organizerId 
+      console.log('[OrganizerShowsList] ➡️  Fetching organizer shows...');
+
+      // 1️⃣  Get all series owned by this organizer
+      const mySeries = await showSeriesService.getAllShowSeries({
+        organizerId,
       });
-      
-      // Process each series to get its shows
+
+      if (!Array.isArray(mySeries) || mySeries.length === 0) {
+        console.log(
+          `[OrganizerShowsList] Organizer ${organizerId} has no series.`,
+        );
+      }
+
+      // 2️⃣  Process each series to get its shows – wrapped in try/catch
       const seriesWithShowsPromises = mySeries.map(async (series) => {
-        const showsInSeries = await showSeriesService.getShowsInSeries(series.id);
+        try {
+          const showsInSeries = await showSeriesService.getShowsInSeries(
+            series.id,
+          );
         
         // Count upcoming shows and find the next show
         const now = new Date();
@@ -82,9 +92,38 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
           upcomingCount: upcomingShows.length,
           nextShow: upcomingShows.length > 0 ? upcomingShows[0] : null
         };
+          return {
+            series,
+            shows: showsInSeries,
+            upcomingCount: upcomingShows.length,
+            nextShow: upcomingShows.length > 0 ? upcomingShows[0] : null,
+          };
+        } catch (seriesErr) {
+          console.error(
+            '[OrganizerShowsList] Error while processing series:',
+            series?.id,
+            seriesErr,
+          );
+          // Return undefined so we can filter it out later
+          return undefined;
+        }
       });
-      
-      const seriesWithShows = await Promise.all(seriesWithShowsPromises);
+
+      // 3️⃣  Await all series promises – keep successes, log failures
+      const settled = await Promise.allSettled(seriesWithShowsPromises);
+      const seriesWithShows: SeriesWithShows[] = [];
+
+      settled.forEach((result, idx) => {
+        if (result.status === 'fulfilled' && result.value) {
+          seriesWithShows.push(result.value);
+        } else if (result.status === 'rejected') {
+          console.error(
+            '[OrganizerShowsList] Promise rejected for series index',
+            idx,
+            result.reason,
+          );
+        }
+      });
       
       // Sort series by next upcoming show date
       seriesWithShows.sort((a, b) => {
