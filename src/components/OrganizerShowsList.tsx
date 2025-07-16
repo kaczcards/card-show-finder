@@ -435,9 +435,14 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
   // Render the list of series and standalone shows
   return (
     <FlatList
-      data={seriesList}
+      /* ------------------------------------------------------------------
+       * Use only series items that have a valid ID to avoid runtime errors
+       * ----------------------------------------------------------------*/
+      data={seriesList.filter(item => item?.series?.id)}
       renderItem={renderSeriesItem}
-      keyExtractor={item => item.series.id}
+      keyExtractor={(item, index) =>
+        item?.series?.id ?? `invalid-series-${index}`
+      }
       contentContainerStyle={styles.listContainer}
       ListHeaderComponent={
         standaloneShows.length > 0 ? (
