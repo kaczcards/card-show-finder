@@ -536,7 +536,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
                 ref={mapRef}
                 region={currentRegion}
                 shows={shows}
-                onShowPress={handleShowPress}
+                onCalloutPress={handleShowPress}
                 onRegionChangeComplete={handleRegionChangeComplete}
             />
         )}
