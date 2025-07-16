@@ -231,7 +231,16 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   // Fetch shows based on location or ZIP code
   const fetchShows = useCallback(async (isRefreshing = false) => {
-    if (!userLocation) return;
+    // ------------------------------------------------------------
+    // Debug – confirm this function is running and coordinates used
+    // ------------------------------------------------------------
+    console.log('[MapScreen] [DEBUG] fetchShows called. isRefreshing =', isRefreshing);
+    console.log('[MapScreen] [DEBUG] Current userLocation =', userLocation);
+
+    if (!userLocation) {
+      console.warn('[MapScreen] [DEBUG] Aborting fetchShows – userLocation is null');
+      return;
+    }
     try {
       if (!isRefreshing) {
         setLoading(true);
@@ -255,6 +264,12 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
       // Log detailed information about the API response
       console.log(`[MapScreen] [DEBUG] API returned ${showsData.length} total shows`);
+
+      // ------------------------------------------------------------
+      // Debug – does the payload include the target show before state?
+      // ------------------------------------------------------------
+      const hasTarget = showsData.some(s => s.id === DEBUG_SHOW_ID);
+      console.log(`[MapScreen] [DEBUG_SHOW] Target show present in showsData BEFORE setState?`, hasTarget);
 
       /* ----------------------------------------------------------------
        * 🔍  TARGET-SHOW DEBUGGING

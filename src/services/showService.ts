@@ -10,6 +10,11 @@ import { Show, ShowStatus } from '../types';
 /**
  * Convert a raw Supabase row into an app `Show` object.
  */
+/* ------------------------------------------------------------------ */
+/* Debug helper – track a single show end-to-end                        */
+/* ------------------------------------------------------------------ */
+const DEBUG_SHOW_ID = 'cd175b33-3144-4ccb-9d85-94490446bf26';
+
 const mapDbShowToAppShow = (row: any): Show => ({
   id: row.id,
   title: row.title,
@@ -153,6 +158,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         radius_miles: radius,
         start_date: startDate,
         end_date: endDate,
+        debugShowId: DEBUG_SHOW_ID, // helpful when grepping logs
       });
 
       // Call the new nearby_shows function as primary method
@@ -176,6 +182,16 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         console.info(
           `[showService] nearby_shows returned ${((nearbyData && Array.isArray(nearbyData)) ? nearbyData.length : 0)} show(s)`
         );
+
+        /* ----- DEBUG: Is target show present in raw nearby_shows data? ---- */
+        if (Array.isArray(nearbyData)) {
+          const found = nearbyData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          console.debug(
+            `[showService][DEBUG_SHOW] Target show ${
+              found ? 'FOUND' : 'NOT found'
+            } in raw nearby_shows payload`
+          );
+        }
         
         // Apply additional filters that weren't handled by the RPC
         let filteredData = nearbyData;
@@ -217,6 +233,16 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           );
         }
         
+        /* ----- DEBUG: Is target show present after client-side filters? ---- */
+        if (Array.isArray(filteredData)) {
+          const foundAfter = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          console.debug(
+            `[showService][DEBUG_SHOW] Target show ${
+              foundAfter ? 'REMAINS' : 'WAS FILTERED OUT'
+            } after nearby_shows client-side filters`
+          );
+        }
+
         return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
       }
 
@@ -259,6 +285,16 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           `[showService] find_filtered_shows returned ${((rpcData && Array.isArray(rpcData)) ? rpcData.length : 0)} show(s)`
         );
         
+        /* ----- DEBUG: Target show in raw find_filtered_shows payload? ----- */
+        if (Array.isArray(rpcData)) {
+          const foundRaw = rpcData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          console.debug(
+            `[showService][DEBUG_SHOW] Target show ${
+              foundRaw ? 'FOUND' : 'NOT found'
+            } in raw find_filtered_shows payload`
+          );
+        }
+
         // Ensure we're not showing past shows
         let filteredData = rpcData;
         if (Array.isArray(filteredData)) {
@@ -272,6 +308,16 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
         }
         
+        /* ----- DEBUG: Target show after filters (find_filtered_shows) ----- */
+        if (Array.isArray(filteredData)) {
+          const foundFiltered = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          console.debug(
+            `[showService][DEBUG_SHOW] Target show ${
+              foundFiltered ? 'REMAINS' : 'WAS FILTERED OUT'
+            } after find_filtered_shows client-side filters`
+          );
+        }
+
         return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
       }
 
