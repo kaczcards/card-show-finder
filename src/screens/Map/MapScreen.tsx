@@ -26,6 +26,11 @@ import { getShows } from '../../services/showService';
 // Import toast utilities for location notifications
 import { showErrorToast, showGpsLocationToast, showLocationFailedToast } from '../../utils/toastUtils';
 
+/* ------------------------------------------------------------------
+ * Debugging aid – track a single show end-to-end
+ * ------------------------------------------------------------------ */
+const DEBUG_SHOW_ID = 'cd175b33-3144-4ccb-9d85-94490446bf26';
+
 // Define the main stack param list type
 type MainStackParamList = {
   MainTabs: undefined;
@@ -250,6 +255,24 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
       // Log detailed information about the API response
       console.log(`[MapScreen] [DEBUG] API returned ${showsData.length} total shows`);
+
+      /* ----------------------------------------------------------------
+       * 🔍  TARGET-SHOW DEBUGGING
+       * ---------------------------------------------------------------- */
+      const debugShow = showsData.find(s => s.id === DEBUG_SHOW_ID);
+      if (debugShow) {
+        console.log('[MapScreen] [DEBUG_SHOW] Found target show in API payload:', {
+          id: debugShow.id,
+          title: debugShow.title,
+          coordinates: debugShow.coordinates,
+          status: debugShow.status,
+          startDate: debugShow.startDate,
+          endDate: debugShow.endDate,
+          entryFee: debugShow.entryFee,
+        });
+      } else {
+        console.warn('[MapScreen] [DEBUG_SHOW] Target show NOT returned by API');
+      }
       
       // Check for shows with missing or invalid coordinates
       const showsWithCoordinates = showsData.filter(show => 
@@ -274,7 +297,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
       // Check for shows with potentially invalid coordinate ranges
       const showsWithSuspiciousCoords = showsWithCoordinates.filter(show => {
         const { latitude, longitude } = show.coordinates;
-        return Math.abs(latitude) > 90 || Math.abs(longitude) > 180 || 
+        return Math.abs(latitude) > 90 || Math.abs(longitude) > 180 ||
                (Math.abs(latitude) > 180 && Math.abs(longitude) < 90); // Potentially swapped
       });
       
@@ -285,6 +308,27 @@ const MapScreen: React.FC<MapScreenProps> = ({
         });
       }
       
+      /* ----------------------------------------------------------------
+       * 🔍  TARGET-SHOW post-coord-analysis
+       * ---------------------------------------------------------------- */
+      if (debugShow) {
+        const hasCoords =
+          debugShow.coordinates &&
+          typeof debugShow.coordinates.latitude === 'number' &&
+          typeof debugShow.coordinates.longitude === 'number';
+
+        if (!hasCoords) {
+          console.warn('[MapScreen] [DEBUG_SHOW] Will be filtered out – missing coordinates');
+        } else if (
+          Math.abs(debugShow.coordinates.latitude) > 90 ||
+          Math.abs(debugShow.coordinates.longitude) > 180
+        ) {
+          console.warn('[MapScreen] [DEBUG_SHOW] Coordinates out of range – likely filtered in cluster component');
+        } else {
+          console.log('[MapScreen] [DEBUG_SHOW] Coordinates look valid – should appear on map');
+        }
+      }
+
       // Log detailed information about each show
       console.log('[MapScreen] [DEBUG] Detailed show information:');
       showsData.forEach((show, index) => {
