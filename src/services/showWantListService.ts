@@ -130,9 +130,9 @@ export const getWantListsForMvpDealer = async (
     // Get only the IDs of upcoming shows
     const showIds = showDetails.map(show => show.id);
     
-    // Step 1: Get all attendees for these shows from planned_attendance table
+    // Step 1: Get all attendees for these shows from user_favorite_shows table
     const { data: allAttendees, error: attendeesError } = await supabase
-      .from('planned_attendance')
+      .from('user_favorite_shows')
       .select('user_id, show_id')
       .in('show_id', showIds)
       .neq('user_id', userId); // Exclude the dealer themselves
@@ -388,9 +388,9 @@ export const getWantListsForShowOrganizer = async (
       };
     });
     
-    // Step 1: Get all attendees for these shows from planned_attendance table
+    // Step 1: Get all attendees for these shows from user_favorite_shows table
     const { data: allAttendees, error: attendeesError } = await supabase
-      .from('planned_attendance')
+      .from('user_favorite_shows')
       .select('user_id, show_id')
       .in('show_id', showIds)
       .neq('user_id', userId); // Exclude the organizer themselves
