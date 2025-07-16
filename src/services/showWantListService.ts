@@ -106,12 +106,12 @@ export const getWantListsForMvpDealer = async (
     // Get the show IDs the dealer is participating in
     const showIds = participatingShows.map(show => show.showid);
     
-    // Step 1: Get all attendees for these shows WITHOUT joining with profiles
+    // Step 1: Get all attendees for these shows from planned_attendance table
     const { data: allAttendees, error: attendeesError } = await supabase
-      .from('show_participants')
-      .select('userid, showid')
-      .in('showid', showIds)
-      .neq('userid', userId); // Exclude the dealer themselves
+      .from('planned_attendance')
+      .select('user_id, show_id')
+      .in('show_id', showIds)
+      .neq('user_id', userId); // Exclude the dealer themselves
     
     if (attendeesError) throw attendeesError;
     
@@ -129,9 +129,11 @@ export const getWantListsForMvpDealer = async (
     }
     
     // Get unique attendee IDs from all attendees
-    const allAttendeeIds = [...new Set(allAttendees.map(a => a.userid))];
+    const allAttendeeIds = [...new Set(allAttendees.map(a => a.user_id))];
     
+    // TEMPORARILY COMMENTED OUT: Role-based filtering
     // Step 2: Fetch profiles for these attendees to filter by role
+    /* 
     const { data: attendeeProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, role')
@@ -155,23 +157,23 @@ export const getWantListsForMvpDealer = async (
     
     // Step 3: Filter to get only the attendee IDs with the correct roles
     const validAttendeeIds = attendeeProfiles.map(profile => profile.id);
+    */
     
-    // Step 4: Create a mapping of user to shows they're attending (only for valid attendees)
+    // Step 4: Create a mapping of user to shows they're attending (using all attendees)
     const userShowMap: Record<string, string[]> = {};
     allAttendees.forEach(a => {
-      if (validAttendeeIds.includes(a.userid)) {
-        if (!userShowMap[a.userid]) {
-          userShowMap[a.userid] = [];
-        }
-        userShowMap[a.userid].push(a.showid);
+      // Use all attendees instead of filtering by validAttendeeIds
+      if (!userShowMap[a.user_id]) {
+        userShowMap[a.user_id] = [];
       }
+      userShowMap[a.user_id].push(a.show_id);
     });
     
     // Create a count query to get total number of want lists
     let countQuery = supabase
       .from('want_lists')
       .select('id', { count: 'exact', head: true })
-      .in('userid', validAttendeeIds)
+      .in('userid', allAttendeeIds) // Use allAttendeeIds instead of validAttendeeIds
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', ''); // Filter out empty want lists
     
@@ -188,7 +190,7 @@ export const getWantListsForMvpDealer = async (
     let dataQuery = supabase
       .from('want_lists')
       .select('id, userid, content, createdat, updatedat')
-      .in('userid', validAttendeeIds)
+      .in('userid', allAttendeeIds) // Use allAttendeeIds instead of validAttendeeIds
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', '') // Filter out empty want lists
       .order('updatedat', { ascending: false })
@@ -372,12 +374,12 @@ export const getWantListsForShowOrganizer = async (
       };
     });
     
-    // Step 1: Get all attendees for these shows WITHOUT joining with profiles
+    // Step 1: Get all attendees for these shows from planned_attendance table
     const { data: allAttendees, error: attendeesError } = await supabase
-      .from('show_participants')
-      .select('userid, showid')
-      .in('showid', showIds)
-      .neq('userid', userId); // Exclude the organizer themselves
+      .from('planned_attendance')
+      .select('user_id, show_id')
+      .in('show_id', showIds)
+      .neq('user_id', userId); // Exclude the organizer themselves
     
     if (attendeesError) throw attendeesError;
     
@@ -395,9 +397,11 @@ export const getWantListsForShowOrganizer = async (
     }
     
     // Get unique attendee IDs from all attendees
-    const allAttendeeIds = [...new Set(allAttendees.map(a => a.userid))];
+    const allAttendeeIds = [...new Set(allAttendees.map(a => a.user_id))];
     
+    // TEMPORARILY COMMENTED OUT: Role-based filtering
     // Step 2: Fetch profiles for these attendees to filter by role
+    /*
     const { data: attendeeProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, role')
@@ -421,23 +425,23 @@ export const getWantListsForShowOrganizer = async (
     
     // Step 3: Filter to get only the attendee IDs with the correct roles
     const validAttendeeIds = attendeeProfiles.map(profile => profile.id);
+    */
     
-    // Step 4: Create a mapping of user to shows they're attending (only for valid attendees)
+    // Step 4: Create a mapping of user to shows they're attending (using all attendees)
     const userShowMap: Record<string, string[]> = {};
     allAttendees.forEach(a => {
-      if (validAttendeeIds.includes(a.userid)) {
-        if (!userShowMap[a.userid]) {
-          userShowMap[a.userid] = [];
-        }
-        userShowMap[a.userid].push(a.showid);
+      // Use all attendees instead of filtering by validAttendeeIds
+      if (!userShowMap[a.user_id]) {
+        userShowMap[a.user_id] = [];
       }
+      userShowMap[a.user_id].push(a.show_id);
     });
     
     // Create a count query to get total number of want lists
     let countQuery = supabase
       .from('want_lists')
       .select('id', { count: 'exact', head: true })
-      .in('userid', validAttendeeIds)
+      .in('userid', allAttendeeIds) // Use allAttendeeIds instead of validAttendeeIds
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', ''); // Filter out empty want lists
     
@@ -454,7 +458,7 @@ export const getWantListsForShowOrganizer = async (
     let dataQuery = supabase
       .from('want_lists')
       .select('id, userid, content, createdat, updatedat')
-      .in('userid', validAttendeeIds)
+      .in('userid', allAttendeeIds) // Use allAttendeeIds instead of validAttendeeIds
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', '') // Filter out empty want lists
       .order('updatedat', { ascending: false })
