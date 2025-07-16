@@ -376,7 +376,8 @@ export const getWantListsForShowOrganizer = async (
     const { data: allAttendees, error: attendeesError } = await supabase
       .from('show_participants')
       .select('userid, showid')
-      .in('showid', showIds);
+      .in('showid', showIds)
+      .neq('userid', userId); // Exclude the organizer themselves
     
     if (attendeesError) throw attendeesError;
     
