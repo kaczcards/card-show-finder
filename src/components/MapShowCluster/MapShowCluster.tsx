@@ -209,7 +209,14 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
         pinColor="#007AFF"
         tracksViewChanges={false} // Performance optimization: prevents unnecessary re-renders
       >
-        <Callout tooltip>
+        {/* Entire callout is now clickable — navigates to ShowDetail */}
+        <Callout
+          onPress={() => {
+            console.log('[DEBUG] Callout pressed for show:', show.title);
+            navigateToShow(show.id);
+          }}
+          tooltip
+        >
           <View style={styles.calloutContainer}>
             <Text style={styles.calloutTitle}>{show.title}</Text>
             <Text style={styles.calloutDetail}>
@@ -217,13 +224,11 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
               {new Date(show.startDate).toDateString() !== new Date(show.endDate).toDateString() && 
                 ` - ${formatDate(show.endDate)}`}
             </Text>
-            <TouchableOpacity 
-              onPress={() => openMaps(show.address)}
-              activeOpacity={0.7}
-              style={styles.addressContainer}
-            >
+            {/* Address rendered as text only. Nested pressables inside Callout
+               are unreliable across platforms. */}
+            <View style={styles.addressContainer}>
               <Text style={styles.addressLink}>{show.address}</Text>
-            </TouchableOpacity>
+            </View>
             <Text style={styles.calloutDetail}>
               {formatEntryFee(show.entryFee)}
             </Text>
@@ -283,17 +288,13 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
               </View>
             )}
             
+            {/* Button kept for visual cue – Callout handles the actual press */}
             <TouchableOpacity
               style={[
                 styles.calloutButton,
                 isPressed && styles.calloutButtonPressed
               ]}
-              onPress={() => {
-                console.log('[DEBUG] Button pressed for show:', show.title);
-                navigateToShow(show.id);
-              }}
-              activeOpacity={0.6}
-              disabled={isNavigating}
+              /* No onPress here; handled by parent Callout */
             >
               <Text style={styles.calloutButtonText}>
                 {isPressed ? 'Opening...' : 'View Details'}
