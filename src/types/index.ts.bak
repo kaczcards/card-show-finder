@@ -116,7 +116,6 @@ export interface Show {
   categories?: string[]; // Array in Supabase
   createdAt: Date | string;
   updatedAt: Date | string;
-  websiteUrl?: string;
 }
 
 export enum ShowStatus {
@@ -210,10 +209,6 @@ export interface ShowFilters {
   latitude?: number; // For geospatial filtering
   longitude?: number; // For geospatial filtering
   status?: ShowStatus; // For filtering by show status
-  /**
-   * If true, the cache will be bypassed and a fresh API request will be made
-   */
-  bypassCache?: boolean;
 }
 
 // Collection-related types
