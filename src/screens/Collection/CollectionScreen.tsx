@@ -42,6 +42,7 @@ const CollectionScreen: React.FC = () => {
   // ===== Want List State =====
   const [wantList, setWantList] = useState<any | null>(null); // Using 'any' for now
   const [loadingWantList, setLoadingWantList] = useState<boolean>(true);
+  const [wantListError, setWantListError] = useState<string | null>(null);
 
   // ===== Dealer Inventory State =====
   const [inventoryContent, setInventoryContent] = useState<string>('');
@@ -53,12 +54,19 @@ const CollectionScreen: React.FC = () => {
   // ===== Upcoming Shows State =====
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
+  const [showsError, setShowsError] = useState<string | null>(null);
 
   // ===== Navigation Handlers =====
   const handleNavigateToSubscription = () => {
     navigation.navigate('My Profile', { 
       screen: 'SubscriptionScreen' 
     } as never);
+  };
+
+  // Helper to check if there are database issues
+  const hasDatabaseIssues = () => {
+    // Check if any of the database-related functions encountered errors
+    return !!(wantListError || showsError || inventoryError);
   };
 
   // ---------------- Dealer Inventory helpers ----------------
@@ -157,6 +165,8 @@ const CollectionScreen: React.FC = () => {
   const loadWantList = async () => {
     if (!userId) return;
     setLoadingWantList(true);
+    setWantListError(null);
+    
     try {
       // Get want lists but filter out inventory items
       const { data, error } = await supabase
@@ -166,7 +176,7 @@ const CollectionScreen: React.FC = () => {
         
       if (error) {
         console.error('Error loading want list:', error);
-        setLoadingWantList(false);
+        setWantListError(error.message || 'Failed to load your want list');
         return;
       }
       
@@ -189,6 +199,7 @@ const CollectionScreen: React.FC = () => {
       }
     } catch (err) {
       console.error('Unexpected error loading want list:', err);
+      setWantListError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoadingWantList(false);
     }
@@ -197,6 +208,8 @@ const CollectionScreen: React.FC = () => {
   const loadUpcomingShows = async () => {
     if (!userId) return;
     setLoadingShows(true);
+    setShowsError(null);
+    
     try {
       // Get shows the user is planning to attend
       const { data, error } = await getUpcomingShows({
@@ -209,11 +222,17 @@ const CollectionScreen: React.FC = () => {
 
       if (error) {
         console.error('Error fetching upcoming shows:', error);
+        setShowsError(typeof error === 'string' ? error : 'Failed to load upcoming shows');
+        setUpcomingShows([]);
       } else if (data) {
         setUpcomingShows(data as any[]); // Cast to any[]
+      } else {
+        setUpcomingShows([]);
       }
     } catch (error) {
       console.error('Error in loadUpcomingShows:', error);
+      setShowsError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      setUpcomingShows([]);
     } finally {
       setLoadingShows(false);
     }
@@ -283,6 +302,32 @@ const CollectionScreen: React.FC = () => {
     </View>
   );
 
+  // Render error message for want list
+  const renderWantListError = () => (
+    <View style={styles.errorContainer}>
+      <Text style={styles.errorText}>{wantListError}</Text>
+      <TouchableOpacity 
+        style={styles.retryButton}
+        onPress={loadWantList}
+      >
+        <Text style={styles.retryButtonText}>Retry</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Render error message for shows
+  const renderShowsError = () => (
+    <View style={styles.errorContainer}>
+      <Text style={styles.errorText}>{showsError}</Text>
+      <TouchableOpacity 
+        style={styles.retryButton}
+        onPress={loadUpcomingShows}
+      >
+        <Text style={styles.retryButtonText}>Retry</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -322,6 +367,12 @@ const CollectionScreen: React.FC = () => {
 
           return (
             <>
+              {/* Want List Error */}
+              {wantListError && renderWantListError()}
+
+              {/* Shows Error */}
+              {showsError && !isPrivileged && renderShowsError()}
+
               {/* Want List Editor (sharing disabled for privileged roles) */}
               <WantListEditor
                 wantList={wantList}
@@ -331,13 +382,26 @@ const CollectionScreen: React.FC = () => {
                 isLoading={loadingWantList || loadingShows}
               />
 
-              {/* Privileged users see all attendee want lists */}
-              {isPrivileged && (
+              {/* Privileged users see all attendee want lists if no database issues */}
+              {isPrivileged && !hasDatabaseIssues() && (
                 <AttendeeWantLists
                   userId={userId}
                   userRole={user?.role}
                   shows={upcomingShows}
                 />
+              )}
+
+              {/* Show feature setup message if database issues exist for privileged users */}
+              {isPrivileged && hasDatabaseIssues() && (
+                <View style={styles.setupContainer}>
+                  <Text style={styles.setupTitle}>Attendee Want Lists</Text>
+                  <Text style={styles.setupText}>
+                    This feature is currently being set up. Please check back later.
+                  </Text>
+                  <Text style={styles.setupSubtext}>
+                    Our team is working to resolve database issues.
+                  </Text>
+                </View>
               )}
             </>
           );
@@ -463,6 +527,36 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontWeight: '500',
+  },
+  /* ----- Setup Message ----- */
+  setupContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    alignItems: 'center',
+  },
+  setupTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  setupText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  setupSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
   },
 });
 

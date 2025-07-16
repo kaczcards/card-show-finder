@@ -205,133 +205,142 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
     );
   };
 
-  // Render footer (loading indicator for pagination)
-  const renderFooter = () => {
-    if (!hasMore) return null;
-    
+  // Render header components (title, search, filter, error)
+  const renderHeader = () => {
     return (
-      <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="#0057B8" />
-        <Text style={styles.footerText}>Loading more...</Text>
-      </View>
+      <>
+        {/* Header with title */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            {userRole === UserRole.MVP_DEALER 
+              ? 'Attendee Want Lists' 
+              : 'Show Attendee Want Lists'}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {userRole === UserRole.MVP_DEALER 
+              ? 'See what attendees are looking for at your shows' 
+              : 'See what attendees are looking for at your events'}
+          </Text>
+        </View>
+        
+        {/* Search and filter section */}
+        <View style={styles.filterContainer}>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search want lists..."
+              placeholderTextColor="#999"
+              onChangeText={handleSearch}
+              defaultValue={searchTerm}
+            />
+            {searchTerm ? (
+              <TouchableOpacity 
+                onPress={() => {
+                  setSearchTerm('');
+                  loadWantLists(1, false, '');
+                }}
+                style={styles.clearButton}
+              >
+                <Ionicons name="close-circle" size={18} color="#999" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          
+          {/* Show filter dropdown (only if multiple shows available) */}
+          {shows.length > 1 && (
+            <View style={styles.pickerContainer}>
+              <Text style={styles.pickerLabel}>Filter by Show:</Text>
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={selectedShowId || 'all'}
+                  style={styles.picker}
+                  onValueChange={(itemValue) => handleShowChange(itemValue.toString())}
+                >
+                  <Picker.Item label="All Shows" value="all" />
+                  {shows.map((show) => (
+                    <Picker.Item 
+                      key={show.id} 
+                      label={show.title} 
+                      value={show.id} 
+                    />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+          )}
+        </View>
+        
+        {/* Error message */}
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={24} color="#FF3B30" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => loadWantLists(1, true)}
+            >
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        
+        {/* Loading indicator for initial load */}
+        {isLoading && page === 1 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0057B8" />
+            <Text style={styles.loadingText}>Loading want lists...</Text>
+          </View>
+        ) : null}
+      </>
+    );
+  };
+
+  // Render footer (loading indicator for pagination and pagination info)
+  const renderFooter = () => {
+    return (
+      <>
+        {/* Loading indicator for pagination */}
+        {hasMore && (
+          <View style={styles.footerLoader}>
+            <ActivityIndicator size="small" color="#0057B8" />
+            <Text style={styles.footerText}>Loading more...</Text>
+          </View>
+        )}
+        
+        {/* Pagination info */}
+        {wantLists.length > 0 && (
+          <View style={styles.paginationInfo}>
+            <Text style={styles.paginationText}>
+              Showing {wantLists.length} of {totalCount} want lists
+            </Text>
+          </View>
+        )}
+      </>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* Header with title */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>
-          {userRole === UserRole.MVP_DEALER 
-            ? 'Attendee Want Lists' 
-            : 'Show Attendee Want Lists'}
-        </Text>
-        <Text style={styles.headerSubtitle}>
-          {userRole === UserRole.MVP_DEALER 
-            ? 'See what attendees are looking for at your shows' 
-            : 'See what attendees are looking for at your events'}
-        </Text>
-      </View>
-      
-      {/* Search and filter section */}
-      <View style={styles.filterContainer}>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search want lists..."
-            placeholderTextColor="#999"
-            onChangeText={handleSearch}
-            defaultValue={searchTerm}
+      <FlatList
+        data={wantLists}
+        renderItem={renderWantListItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmptyState}
+        ListFooterComponent={renderFooter}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.2}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={['#0057B8']}
+            tintColor="#0057B8"
           />
-          {searchTerm ? (
-            <TouchableOpacity 
-              onPress={() => {
-                setSearchTerm('');
-                loadWantLists(1, false, '');
-              }}
-              style={styles.clearButton}
-            >
-              <Ionicons name="close-circle" size={18} color="#999" />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-        
-        {/* Show filter dropdown (only if multiple shows available) */}
-        {shows.length > 1 && (
-          <View style={styles.pickerContainer}>
-            <Text style={styles.pickerLabel}>Filter by Show:</Text>
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={selectedShowId || 'all'}
-                style={styles.picker}
-                onValueChange={(itemValue) => handleShowChange(itemValue.toString())}
-              >
-                <Picker.Item label="All Shows" value="all" />
-                {shows.map((show) => (
-                  <Picker.Item 
-                    key={show.id} 
-                    label={show.title} 
-                    value={show.id} 
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
-        )}
-      </View>
-      
-      {/* Error message */}
-      {error ? (
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={24} color="#FF3B30" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={() => loadWantLists(1, true)}
-          >
-            <Text style={styles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-      
-      {/* Want Lists */}
-      {isLoading && page === 1 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0057B8" />
-          <Text style={styles.loadingText}>Loading want lists...</Text>
-        </View>
-      ) : (
-        <>
-          <FlatList
-            data={wantLists}
-            renderItem={renderWantListItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContainer}
-            ListEmptyComponent={renderEmptyState}
-            ListFooterComponent={renderFooter}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.2}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={handleRefresh}
-                colors={['#0057B8']}
-                tintColor="#0057B8"
-              />
-            }
-          />
-          
-          {/* Pagination info */}
-          {wantLists.length > 0 && (
-            <View style={styles.paginationInfo}>
-              <Text style={styles.paginationText}>
-                Showing {wantLists.length} of {totalCount} want lists
-              </Text>
-            </View>
-          )}
-        </>
-      )}
+        }
+      />
     </View>
   );
 };
@@ -489,10 +498,10 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   loadingContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    minHeight: 200,
   },
   loadingText: {
     marginTop: 12,
@@ -514,6 +523,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
+    minHeight: 200,
   },
   emptyText: {
     fontSize: 18,
