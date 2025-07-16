@@ -238,7 +238,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
       thirtyDaysOut.setDate(today.getDate() + 30);
 
       const currentFilters: ShowFilters = {
-          ...filters,
           radius: 25,
           startDate: today.toISOString(),
           endDate: thirtyDaysOut.toISOString(),
