@@ -1,6 +1,8 @@
 import { AuthState, AuthCredentials, User, UserRole } from '../types';
 import { supabase } from '../supabase';
 import { Alert } from 'react-native';
+// Toast utility for user-visible notifications
+import { showLocationChangedToast } from '../utils/toastUtils';
 
 // Re-export the shared Supabase client so callers that previously imported it
 // from this service continue to work without changes.
@@ -523,6 +525,13 @@ export const updateUserProfile = async (userData: Partial<User>): Promise<User> 
     }
     
     const userId = userData.id;
+
+    /* ---------------------------------------------------------------
+     * Capture the user’s existing home ZIP *before* the update so we
+     * can detect changes afterwards and surface a toast.
+     * ------------------------------------------------------------- */
+    const sessionUser = await getSession();
+    const previousZip = sessionUser?.homeZipCode ?? null;
     
     // Convert our User fields to DB fields
     const profileData = mapUserToProfile(userData);
@@ -548,6 +557,17 @@ export const updateUserProfile = async (userData: Partial<User>): Promise<User> 
     const updatedUser = await getSession();
     if (!updatedUser) {
       throw new Error('Failed to retrieve updated user data');
+    }
+
+    /* ---------------------------------------------------------------
+     * If the home ZIP has changed, notify the user so they understand
+     * why the map recentred.
+     * ------------------------------------------------------------- */
+    if (
+      updatedUser.homeZipCode &&
+      updatedUser.homeZipCode !== previousZip
+    ) {
+      showLocationChangedToast(updatedUser.homeZipCode);
     }
     
     return updatedUser;
