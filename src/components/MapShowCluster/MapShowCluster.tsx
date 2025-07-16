@@ -39,7 +39,7 @@ interface MapShowClusterProps {
     longitudeDelta: number;
   };
   onRegionChangeComplete?: (region: any) => void;
-  onCalloutPress?: (show: Show) => void;
+  onCalloutPress?: (showId: string) => void;
   loadingEnabled?: boolean;
   showsUserLocation?: boolean;
   showsCompass?: boolean;
@@ -123,24 +123,61 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
       });
   };
 
-  // Debounced navigation function
+  // Debounced navigation function with enhanced debugging
   const navigateToShow = debounce((showId: string) => {
-    if (isNavigating) return;
+    console.log('[DEBUG] View Details button pressed for show ID:', showId);
+    console.log('[DEBUG] Current navigation state:', { isNavigating, pressedShowId });
     
+    // If already navigating, ignore subsequent clicks
+    if (isNavigating) {
+      console.log('[DEBUG] Navigation already in progress, ignoring click');
+      return;
+    }
+    
+    console.log('[DEBUG] Setting navigation state to active');
     setIsNavigating(true);
     setPressedShowId(showId);
     
     try {
+      console.log('[DEBUG] Looking for show with ID:', showId);
       const selectedShow = shows.find(show => show.id === showId);
-      if (selectedShow && onCalloutPress) {
-        onCalloutPress(selectedShow);
+      
+      if (!selectedShow) {
+        console.error('[DEBUG] Show not found with ID:', showId);
+        Alert.alert('Error', 'Could not find show details.');
+        return;
+      }
+      
+      console.log('[DEBUG] Found show:', selectedShow.title);
+      
+      if (onCalloutPress) {
+        console.log('[DEBUG] Using provided onCalloutPress handler');
+        onCalloutPress(selectedShow.id);
+      } else if (navigation) {
+        // Fallback to direct navigation if onCalloutPress is not provided
+        console.log('[DEBUG] onCalloutPress not provided, using direct navigation');
+        console.log('[DEBUG] Navigation object available:', !!navigation);
+        console.log('[DEBUG] Navigation state:', Object.keys(navigation));
+        
+        try {
+          console.log('[DEBUG] Attempting to navigate to ShowDetail screen');
+          navigation.navigate('ShowDetail', { showId });
+        } catch (navError) {
+          console.error('[DEBUG] Navigation error:', navError);
+          Alert.alert('Error', 'Failed to navigate to show details screen.');
+        }
+      } else {
+        console.error('[DEBUG] No navigation method available');
+        Alert.alert('Error', 'Cannot navigate to show details at this time.');
       }
     } catch (error) {
-      console.error('Error navigating to show:', error);
+      console.error('[DEBUG] Error in navigateToShow:', error);
       Alert.alert('Error', 'Could not navigate to show details.');
     } finally {
       // Reset state after navigation (with slight delay for visual feedback)
+      console.log('[DEBUG] Setting timeout to reset navigation state');
       setTimeout(() => {
+        console.log('[DEBUG] Resetting navigation state');
         setIsNavigating(false);
         setPressedShowId(null);
       }, 300);
@@ -251,7 +288,10 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
                 styles.calloutButton,
                 isPressed && styles.calloutButtonPressed
               ]}
-              onPress={() => navigateToShow(show.id)}
+              onPress={() => {
+                console.log('[DEBUG] Button pressed for show:', show.title);
+                navigateToShow(show.id);
+              }}
               activeOpacity={0.6}
               disabled={isNavigating}
             >
