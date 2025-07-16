@@ -26,6 +26,11 @@ import { getShows } from '../../services/showService';
 // Import toast utilities for location notifications
 import { showErrorToast, showGpsLocationToast, showLocationFailedToast } from '../../utils/toastUtils';
 
+/* ------------------------------------------------------------------
+ * Debugging aid – track a single show end-to-end
+ * ------------------------------------------------------------------ */
+const DEBUG_SHOW_ID = 'cd175b33-3144-4ccb-9d85-94490446bf26';
+
 // Define the main stack param list type
 type MainStackParamList = {
   MainTabs: undefined;
@@ -226,7 +231,16 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   // Fetch shows based on location or ZIP code
   const fetchShows = useCallback(async (isRefreshing = false) => {
-    if (!userLocation) return;
+    // ------------------------------------------------------------
+    // Debug – confirm this function is running and coordinates used
+    // ------------------------------------------------------------
+    console.log('[MapScreen] [DEBUG] fetchShows called. isRefreshing =', isRefreshing);
+    console.log('[MapScreen] [DEBUG] Current userLocation =', userLocation);
+
+    if (!userLocation) {
+      console.warn('[MapScreen] [DEBUG] Aborting fetchShows – userLocation is null');
+      return;
+    }
     try {
       if (!isRefreshing) {
         setLoading(true);
@@ -238,7 +252,6 @@ const MapScreen: React.FC<MapScreenProps> = ({
       thirtyDaysOut.setDate(today.getDate() + 30);
 
       const currentFilters: ShowFilters = {
-          ...filters,
           radius: 25,
           startDate: today.toISOString(),
           endDate: thirtyDaysOut.toISOString(),
@@ -248,6 +261,99 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
       console.log('[MapScreen] Filters being used:', currentFilters);
       const showsData = await getShows(currentFilters);
+
+      // Log detailed information about the API response
+      console.log(`[MapScreen] [DEBUG] API returned ${showsData.length} total shows`);
+
+      // ------------------------------------------------------------
+      // Debug – does the payload include the target show before state?
+      // ------------------------------------------------------------
+      const hasTarget = showsData.some(s => s.id === DEBUG_SHOW_ID);
+      console.log(`[MapScreen] [DEBUG_SHOW] Target show present in showsData BEFORE setState?`, hasTarget);
+
+      /* ----------------------------------------------------------------
+       * 🔍  TARGET-SHOW DEBUGGING
+       * ---------------------------------------------------------------- */
+      const debugShow = showsData.find(s => s.id === DEBUG_SHOW_ID);
+      if (debugShow) {
+        console.log('[MapScreen] [DEBUG_SHOW] Found target show in API payload:', {
+          id: debugShow.id,
+          title: debugShow.title,
+          coordinates: debugShow.coordinates,
+          status: debugShow.status,
+          startDate: debugShow.startDate,
+          endDate: debugShow.endDate,
+          entryFee: debugShow.entryFee,
+        });
+      } else {
+        console.warn('[MapScreen] [DEBUG_SHOW] Target show NOT returned by API');
+      }
+      
+      // Check for shows with missing or invalid coordinates
+      const showsWithCoordinates = showsData.filter(show => 
+        show.coordinates && 
+        typeof show.coordinates.latitude === 'number' && 
+        typeof show.coordinates.longitude === 'number'
+      );
+      
+      const showsWithoutCoordinates = showsData.filter(show => 
+        !show.coordinates || 
+        typeof show.coordinates.latitude !== 'number' || 
+        typeof show.coordinates.longitude !== 'number'
+      );
+      
+      if (showsWithoutCoordinates.length > 0) {
+        console.warn(`[MapScreen] [DEBUG] Found ${showsWithoutCoordinates.length} shows with missing or invalid coordinates`);
+        showsWithoutCoordinates.forEach(show => {
+          console.warn(`[MapScreen] [DEBUG] Show missing coordinates: "${show.title}" (ID: ${show.id}), coordinates:`, show.coordinates);
+        });
+      }
+      
+      // Check for shows with potentially invalid coordinate ranges
+      const showsWithSuspiciousCoords = showsWithCoordinates.filter(show => {
+        const { latitude, longitude } = show.coordinates;
+        return Math.abs(latitude) > 90 || Math.abs(longitude) > 180 ||
+               (Math.abs(latitude) > 180 && Math.abs(longitude) < 90); // Potentially swapped
+      });
+      
+      if (showsWithSuspiciousCoords.length > 0) {
+        console.warn(`[MapScreen] [DEBUG] Found ${showsWithSuspiciousCoords.length} shows with suspicious coordinates (out of range or swapped)`);
+        showsWithSuspiciousCoords.forEach(show => {
+          console.warn(`[MapScreen] [DEBUG] Show with suspicious coordinates: "${show.title}" (ID: ${show.id}), coordinates:`, show.coordinates);
+        });
+      }
+      
+      /* ----------------------------------------------------------------
+       * 🔍  TARGET-SHOW post-coord-analysis
+       * ---------------------------------------------------------------- */
+      if (debugShow) {
+        const hasCoords =
+          debugShow.coordinates &&
+          typeof debugShow.coordinates.latitude === 'number' &&
+          typeof debugShow.coordinates.longitude === 'number';
+
+        if (!hasCoords) {
+          console.warn('[MapScreen] [DEBUG_SHOW] Will be filtered out – missing coordinates');
+        } else if (
+          Math.abs(debugShow.coordinates.latitude) > 90 ||
+          Math.abs(debugShow.coordinates.longitude) > 180
+        ) {
+          console.warn('[MapScreen] [DEBUG_SHOW] Coordinates out of range – likely filtered in cluster component');
+        } else {
+          console.log('[MapScreen] [DEBUG_SHOW] Coordinates look valid – should appear on map');
+        }
+      }
+
+      // Log detailed information about each show
+      console.log('[MapScreen] [DEBUG] Detailed show information:');
+      showsData.forEach((show, index) => {
+        console.log(`[MapScreen] [DEBUG] Show #${index + 1}: "${show.title}" (ID: ${show.id})`);
+        console.log(`  • Status: ${show.status}`);
+        console.log(`  • Dates: ${new Date(show.startDate).toLocaleDateString()} to ${new Date(show.endDate).toLocaleDateString()}`);
+        console.log(`  • Coordinates:`, show.coordinates);
+        console.log(`  • Address: ${show.address}`);
+        console.log(`  • Entry Fee: ${show.entryFee}`);
+      });
 
       setShows(Array.isArray(showsData) ? showsData : []);
       console.log(`[MapScreen] Successfully fetched ${showsData.length} shows`);
@@ -327,14 +433,19 @@ const MapScreen: React.FC<MapScreenProps> = ({
     if (!address) return;
 
     try {
-      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
+      // Use proper platform-specific scheme
+      //  • iOS  : maps:?q=<encoded address>
+      //  • Android : geo:0,0?q=<encoded address>
+      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:0,0?q=' });
       const encodedAddress = encodeURIComponent(address);
       const url = `${scheme}${encodedAddress}`;
 
+      console.log('[MapScreen] Opening maps with URL:', url);
       Linking.openURL(url).catch((err) => {
         console.error('Error opening native maps app:', err);
         // Fallback to Google Maps in browser
-        const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+        const webUrl = `https://maps.google.com/?q=${encodedAddress}`;
+        console.log('[MapScreen] Fallback to web maps URL:', webUrl);
         Linking.openURL(webUrl).catch((e) => {
           console.error('Error opening web maps:', e);
           Alert.alert('Error', 'Could not open maps application.');
@@ -448,6 +559,20 @@ const MapScreen: React.FC<MapScreenProps> = ({
   // Render map markers - with defensive coding
   const renderMarkers = () => {
     if (!shows || !Array.isArray(shows) || shows.length === 0) return null;
+    
+    // Log how many shows are being filtered out due to missing coordinates
+    const validShows = shows.filter(show => show?.coordinates?.latitude && show.coordinates.longitude);
+    const filteredOutCount = shows.length - validShows.length;
+    
+    if (filteredOutCount > 0) {
+      console.warn(`[MapScreen] [DEBUG] Filtering out ${filteredOutCount} shows due to missing coordinates in renderMarkers`);
+      shows.forEach(show => {
+        if (!show?.coordinates?.latitude || !show.coordinates.longitude) {
+          console.warn(`[MapScreen] [DEBUG] Show filtered out: "${show.title}" (ID: ${show.id}), coordinates:`, show.coordinates);
+        }
+      });
+    }
+    
     return shows
       .filter(show => show?.coordinates?.latitude && show.coordinates.longitude)
       .map((show) => (
@@ -536,7 +661,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
                 ref={mapRef}
                 region={currentRegion}
                 shows={shows}
-                onShowPress={handleShowPress}
+                onCalloutPress={handleShowPress}
                 onRegionChangeComplete={handleRegionChangeComplete}
             />
         )}

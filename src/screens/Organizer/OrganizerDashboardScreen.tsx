@@ -501,6 +501,17 @@ const OrganizerDashboardScreen: React.FC = () => {
         }
         contentContainerStyle={styles.sectionListContent}
       />
+
+      {/* Floating “Add Show” button – visible only on the My Shows tab */}
+      {activeTab === 'shows' && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('AddShow')}
+        >
+          <Ionicons name="add" size={20} color="#FFFFFF" style={styles.fabIcon} />
+          <Text style={styles.fabText}>Add Show</Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
@@ -733,6 +744,31 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   upgradeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  /* --- Floating Action Button (Add Show) ------------------------ */
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF6A00',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  fabIcon: {
+    marginRight: 6,
+  },
+  fabText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
