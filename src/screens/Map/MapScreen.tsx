@@ -327,14 +327,19 @@ const MapScreen: React.FC<MapScreenProps> = ({
     if (!address) return;
 
     try {
-      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
+      // Use proper platform-specific scheme
+      //  • iOS  : maps:?q=<encoded address>
+      //  • Android : geo:0,0?q=<encoded address>
+      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:0,0?q=' });
       const encodedAddress = encodeURIComponent(address);
       const url = `${scheme}${encodedAddress}`;
 
+      console.log('[MapScreen] Opening maps with URL:', url);
       Linking.openURL(url).catch((err) => {
         console.error('Error opening native maps app:', err);
         // Fallback to Google Maps in browser
-        const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+        const webUrl = `https://maps.google.com/?q=${encodedAddress}`;
+        console.log('[MapScreen] Fallback to web maps URL:', webUrl);
         Linking.openURL(webUrl).catch((e) => {
           console.error('Error opening web maps:', e);
           Alert.alert('Error', 'Could not open maps application.');
