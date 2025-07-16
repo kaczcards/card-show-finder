@@ -25,6 +25,7 @@ import { getUpcomingShows } from '../../services/showService';
 import { supabase } from '../../supabase';
 // UI
 import WantListEditor from '../../components/WantListEditor';
+import AttendeeWantLists from '../../components/AttendeeWantLists';
 
 const INVENTORY_PREFIX = "[INVENTORY]";
 
@@ -313,14 +314,34 @@ const CollectionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Want List – visible to everyone */}
-        <WantListEditor
-          wantList={wantList}
-          userId={userId}
-          upcomingShows={upcomingShows}
-          onSave={(list) => setWantList(list)}
-          isLoading={loadingWantList || loadingShows}
-        />
+        {/* Want List + Attendee Want Lists */}
+        {(() => {
+          const isPrivileged =
+            user?.role === UserRole.MVP_DEALER ||
+            user?.role === UserRole.SHOW_ORGANIZER;
+
+          return (
+            <>
+              {/* Want List Editor (sharing disabled for privileged roles) */}
+              <WantListEditor
+                wantList={wantList}
+                userId={userId}
+                upcomingShows={isPrivileged ? [] : upcomingShows}
+                onSave={(list) => setWantList(list)}
+                isLoading={loadingWantList || loadingShows}
+              />
+
+              {/* Privileged users see all attendee want lists */}
+              {isPrivileged && (
+                <AttendeeWantLists
+                  userId={userId}
+                  userRole={user?.role}
+                  shows={upcomingShows}
+                />
+              )}
+            </>
+          );
+        })()}
       </ScrollView>
     </SafeAreaView>
   );
