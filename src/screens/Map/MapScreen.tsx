@@ -248,6 +248,54 @@ const MapScreen: React.FC<MapScreenProps> = ({
       console.log('[MapScreen] Filters being used:', currentFilters);
       const showsData = await getShows(currentFilters);
 
+      // Log detailed information about the API response
+      console.log(`[MapScreen] [DEBUG] API returned ${showsData.length} total shows`);
+      
+      // Check for shows with missing or invalid coordinates
+      const showsWithCoordinates = showsData.filter(show => 
+        show.coordinates && 
+        typeof show.coordinates.latitude === 'number' && 
+        typeof show.coordinates.longitude === 'number'
+      );
+      
+      const showsWithoutCoordinates = showsData.filter(show => 
+        !show.coordinates || 
+        typeof show.coordinates.latitude !== 'number' || 
+        typeof show.coordinates.longitude !== 'number'
+      );
+      
+      if (showsWithoutCoordinates.length > 0) {
+        console.warn(`[MapScreen] [DEBUG] Found ${showsWithoutCoordinates.length} shows with missing or invalid coordinates`);
+        showsWithoutCoordinates.forEach(show => {
+          console.warn(`[MapScreen] [DEBUG] Show missing coordinates: "${show.title}" (ID: ${show.id}), coordinates:`, show.coordinates);
+        });
+      }
+      
+      // Check for shows with potentially invalid coordinate ranges
+      const showsWithSuspiciousCoords = showsWithCoordinates.filter(show => {
+        const { latitude, longitude } = show.coordinates;
+        return Math.abs(latitude) > 90 || Math.abs(longitude) > 180 || 
+               (Math.abs(latitude) > 180 && Math.abs(longitude) < 90); // Potentially swapped
+      });
+      
+      if (showsWithSuspiciousCoords.length > 0) {
+        console.warn(`[MapScreen] [DEBUG] Found ${showsWithSuspiciousCoords.length} shows with suspicious coordinates (out of range or swapped)`);
+        showsWithSuspiciousCoords.forEach(show => {
+          console.warn(`[MapScreen] [DEBUG] Show with suspicious coordinates: "${show.title}" (ID: ${show.id}), coordinates:`, show.coordinates);
+        });
+      }
+      
+      // Log detailed information about each show
+      console.log('[MapScreen] [DEBUG] Detailed show information:');
+      showsData.forEach((show, index) => {
+        console.log(`[MapScreen] [DEBUG] Show #${index + 1}: "${show.title}" (ID: ${show.id})`);
+        console.log(`  • Status: ${show.status}`);
+        console.log(`  • Dates: ${new Date(show.startDate).toLocaleDateString()} to ${new Date(show.endDate).toLocaleDateString()}`);
+        console.log(`  • Coordinates:`, show.coordinates);
+        console.log(`  • Address: ${show.address}`);
+        console.log(`  • Entry Fee: ${show.entryFee}`);
+      });
+
       setShows(Array.isArray(showsData) ? showsData : []);
       console.log(`[MapScreen] Successfully fetched ${showsData.length} shows`);
 
@@ -452,6 +500,20 @@ const MapScreen: React.FC<MapScreenProps> = ({
   // Render map markers - with defensive coding
   const renderMarkers = () => {
     if (!shows || !Array.isArray(shows) || shows.length === 0) return null;
+    
+    // Log how many shows are being filtered out due to missing coordinates
+    const validShows = shows.filter(show => show?.coordinates?.latitude && show.coordinates.longitude);
+    const filteredOutCount = shows.length - validShows.length;
+    
+    if (filteredOutCount > 0) {
+      console.warn(`[MapScreen] [DEBUG] Filtering out ${filteredOutCount} shows due to missing coordinates in renderMarkers`);
+      shows.forEach(show => {
+        if (!show?.coordinates?.latitude || !show.coordinates.longitude) {
+          console.warn(`[MapScreen] [DEBUG] Show filtered out: "${show.title}" (ID: ${show.id}), coordinates:`, show.coordinates);
+        }
+      });
+    }
+    
     return shows
       .filter(show => show?.coordinates?.latitude && show.coordinates.longitude)
       .map((show) => (

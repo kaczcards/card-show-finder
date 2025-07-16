@@ -342,13 +342,45 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
     };
   };
 
-  // Filter valid shows with coordinates
-  const validShows = shows.filter(show => 
-    show && 
-    show.coordinates && 
-    typeof show.coordinates.latitude === 'number' && 
-    typeof show.coordinates.longitude === 'number'
+  /* ------------------------------------------------------------------
+   * Coordinate-based filtering (with DEBUG logging)
+   * ------------------------------------------------------------------ */
+  const totalShows = Array.isArray(shows) ? shows.length : 0;
+
+  const validShows = shows.filter(
+    (show) =>
+      show &&
+      show.coordinates &&
+      typeof show.coordinates.latitude === 'number' &&
+      typeof show.coordinates.longitude === 'number'
   );
+
+  const invalidShows = shows.filter(
+    (show) =>
+      !show ||
+      !show.coordinates ||
+      typeof show.coordinates.latitude !== 'number' ||
+      typeof show.coordinates.longitude !== 'number'
+  );
+
+  // Debug output (only in development to avoid noisy production logs)
+  if (__DEV__) {
+    console.log(
+      `[MapShowCluster] Total shows received: ${totalShows}. ` +
+        `Valid coordinates: ${validShows.length}. ` +
+        `Invalid / missing coordinates: ${invalidShows.length}.`
+    );
+
+    if (invalidShows.length > 0) {
+      console.warn('[MapShowCluster] Shows filtered out due to invalid coordinates:');
+      invalidShows.forEach((s) =>
+        console.warn(
+          `  • "${s?.title ?? 'Unknown'}" (ID: ${s?.id ?? 'n/a'}) — coordinates:`,
+          s?.coordinates
+        )
+      );
+    }
+  }
 
   // Add zoom controls
   const handleZoom = (zoomIn = true) => {
