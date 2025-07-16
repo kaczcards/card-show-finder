@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
   Alert,
-  ScrollView,
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
+  FlatList,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
@@ -55,6 +55,12 @@ const CollectionScreen: React.FC = () => {
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
   const [showsError, setShowsError] = useState<string | null>(null);
+  
+  // ===== FlatList Data =====
+  // Single item array for the FlatList - we only need one AttendeeWantLists component
+  const flatListData = user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER 
+    ? [{ id: 'attendee-want-lists' }] 
+    : [];
 
   // ===== Navigation Handlers =====
   const handleNavigateToSubscription = () => {
@@ -327,16 +333,15 @@ const CollectionScreen: React.FC = () => {
       </TouchableOpacity>
     </View>
   );
-
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Collection</Text>
-      </View>
-
-      {/* Content */}
-      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+  
+  // Render header for FlatList (all content before AttendeeWantLists)
+  const renderHeader = useCallback(() => {
+    const isPrivileged =
+      user?.role === UserRole.MVP_DEALER ||
+      user?.role === UserRole.SHOW_ORGANIZER;
+      
+    return (
+      <View style={styles.headerContent}>
         {/* Dealer / Organizer specific UI */}
         {(user?.role === UserRole.DEALER ||
           user?.role === UserRole.MVP_DEALER ||
@@ -359,54 +364,89 @@ const CollectionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Want List + Attendee Want Lists */}
-        {(() => {
-          const isPrivileged =
-            user?.role === UserRole.MVP_DEALER ||
-            user?.role === UserRole.SHOW_ORGANIZER;
+        {/* Want List Error */}
+        {wantListError && renderWantListError()}
 
-          return (
-            <>
-              {/* Want List Error */}
-              {wantListError && renderWantListError()}
+        {/* Shows Error */}
+        {showsError && !isPrivileged && renderShowsError()}
 
-              {/* Shows Error */}
-              {showsError && !isPrivileged && renderShowsError()}
+        {/* Want List Editor (sharing disabled for privileged roles) */}
+        <WantListEditor
+          wantList={wantList}
+          userId={userId}
+          upcomingShows={isPrivileged ? [] : upcomingShows}
+          onSave={(list) => setWantList(list)}
+          isLoading={loadingWantList || loadingShows}
+        />
+        
+        {/* Show feature setup message if database issues exist for privileged users */}
+        {isPrivileged && hasDatabaseIssues() && (
+          <View style={styles.setupContainer}>
+            <Text style={styles.setupTitle}>Attendee Want Lists</Text>
+            <Text style={styles.setupText}>
+              This feature is currently being set up. Please check back later.
+            </Text>
+            <Text style={styles.setupSubtext}>
+              Our team is working to resolve database issues.
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  }, [
+    user?.role, 
+    wantList, 
+    userId, 
+    upcomingShows, 
+    loadingWantList, 
+    loadingShows, 
+    wantListError, 
+    showsError,
+    inventoryContent,
+    inventoryError,
+    loadingInventory,
+    savingInventory
+  ]);
+  
+  // Render item for FlatList (AttendeeWantLists)
+  const renderItem = useCallback(({ item }) => {
+    const isPrivileged =
+      user?.role === UserRole.MVP_DEALER ||
+      user?.role === UserRole.SHOW_ORGANIZER;
+      
+    // Only render AttendeeWantLists if user is privileged and there are no database issues
+    if (isPrivileged && !hasDatabaseIssues()) {
+      return (
+        <AttendeeWantLists
+          userId={userId}
+          userRole={user?.role}
+          shows={upcomingShows}
+        />
+      );
+    }
+    
+    // Return empty view if not privileged or there are database issues
+    return null;
+  }, [user?.role, userId, upcomingShows, hasDatabaseIssues]);
 
-              {/* Want List Editor (sharing disabled for privileged roles) */}
-              <WantListEditor
-                wantList={wantList}
-                userId={userId}
-                upcomingShows={isPrivileged ? [] : upcomingShows}
-                onSave={(list) => setWantList(list)}
-                isLoading={loadingWantList || loadingShows}
-              />
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Collection</Text>
+      </View>
 
-              {/* Privileged users see all attendee want lists if no database issues */}
-              {isPrivileged && !hasDatabaseIssues() && (
-                <AttendeeWantLists
-                  userId={userId}
-                  userRole={user?.role}
-                  shows={upcomingShows}
-                />
-              )}
-
-              {/* Show feature setup message if database issues exist for privileged users */}
-              {isPrivileged && hasDatabaseIssues() && (
-                <View style={styles.setupContainer}>
-                  <Text style={styles.setupTitle}>Attendee Want Lists</Text>
-                  <Text style={styles.setupText}>
-                    This feature is currently being set up. Please check back later.
-                  </Text>
-                  <Text style={styles.setupSubtext}>
-                    Our team is working to resolve database issues.
-                  </Text>
-                </View>
-              )}
-            </>
-          );
-        })()}
-      </ScrollView>
+      {/* Content */}
+      <View style={styles.content}>
+        <FlatList
+          data={flatListData}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={styles.flatListContent}
+          keyboardShouldPersistTaps="handled"
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -429,7 +469,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  headerContent: {
     padding: 16,
+  },
+  flatListContent: {
+    flexGrow: 1,
   },
   /* ----- Shared / editor styles (mirrors WantListEditor) ----- */
   editorContainer: {
