@@ -253,9 +253,8 @@ const AddShowScreen: React.FC = () => {
         entry_fee: entryFee ? Number(entryFee) : 0,
         start_date: fullStartDate,
         end_date: fullEndDate,
-        // Inject coordinates for map placement
-        latitude: coords.latitude,
-        longitude: coords.longitude,
+        // Inject coordinates for map placement (PostGIS POINT; lng first)
+        coordinates: `POINT(${coords.longitude} ${coords.latitude})`,
         features: features.length > 0
           ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
           : null,
