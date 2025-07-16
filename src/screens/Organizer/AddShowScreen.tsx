@@ -18,8 +18,33 @@ import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
 import { useAuth } from '../../contexts/AuthContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { supabase } from '../../supabase';
-// Geocoding helper
-import { geocodeAddress } from '../../services/locationService';
+/**
+ * Lightweight geocoding helper (OpenStreetMap Nominatim).
+ * NOTE: Replace with a robust geocoder or your own backend in production.
+ */
+const geocodeAddress = async (
+  address: string,
+): Promise<{ latitude: number; longitude: number }> => {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+      address,
+    )}`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'CardShowFinder/1.0 (contact@cardshowfinder.app)',
+      },
+    });
+    const json = await res.json();
+    if (Array.isArray(json) && json.length > 0) {
+      const { lat, lon } = json[0];
+      return { latitude: parseFloat(lat), longitude: parseFloat(lon) };
+    }
+    throw new Error('No geocoding results');
+  } catch (err) {
+    console.error('[geocodeAddress] Failed to geocode:', err);
+    throw err;
+  }
+};
 
 type AddShowScreenRouteProp = RouteProp<OrganizerStackParamList, 'AddShow'>;
 
@@ -353,9 +378,10 @@ const AddShowScreen: React.FC = () => {
         entry_fee: entryFee ? Number(entryFee) : 0,
         start_date: fullStartDate,
         end_date: fullEndDate,
-        // Use PostgreSQL ST_Point function for proper PostGIS format
-        // ST_SetSRID(ST_Point(longitude, latitude), 4326)::geography
-        coordinates: supabase.sql`ST_SetSRID(ST_Point(${coords.longitude}, ${coords.latitude}), 4326)::geography`,
+        // Store coordinates in WKT (Well-Known Text) so PostGIS geography column
+        // autocasts the string to a POINT type server-side.
+        // Example: 'POINT(-85.9913742 40.0351354)'
+        coordinates: `POINT(${coords.longitude} ${coords.latitude})`,
         features: features.length > 0
           ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
           : null,
