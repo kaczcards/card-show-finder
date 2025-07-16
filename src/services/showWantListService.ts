@@ -106,17 +106,16 @@ export const getWantListsForMvpDealer = async (
     // Get the show IDs the dealer is participating in
     const showIds = participatingShows.map(show => show.showid);
     
-    // Get attendees for these shows, joining with profiles to filter by role
-    const { data: attendees, error: attendeesError } = await supabase
+    // Step 1: Get all attendees for these shows WITHOUT joining with profiles
+    const { data: allAttendees, error: attendeesError } = await supabase
       .from('show_participants')
-      .select('userid, showid, profiles!inner(role)')
+      .select('userid, showid')
       .in('showid', showIds)
-      .neq('userid', userId) // Exclude the dealer themselves
-      .in('profiles.role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
+      .neq('userid', userId); // Exclude the dealer themselves
     
     if (attendeesError) throw attendeesError;
     
-    if (!attendees || attendees.length === 0) {
+    if (!allAttendees || allAttendees.length === 0) {
       return {
         data: {
           data: [],
@@ -129,23 +128,50 @@ export const getWantListsForMvpDealer = async (
       };
     }
     
-    // Get unique attendee IDs
-    const attendeeIds = [...new Set(attendees.map(a => a.userid))];
+    // Get unique attendee IDs from all attendees
+    const allAttendeeIds = [...new Set(allAttendees.map(a => a.userid))];
     
-    // Create a mapping of user to shows they're attending
+    // Step 2: Fetch profiles for these attendees to filter by role
+    const { data: attendeeProfiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .in('id', allAttendeeIds)
+      .in('role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
+    
+    if (profilesError) throw profilesError;
+    
+    if (!attendeeProfiles || attendeeProfiles.length === 0) {
+      return {
+        data: {
+          data: [],
+          totalCount: 0,
+          page,
+          pageSize,
+          hasMore: false
+        },
+        error: null
+      };
+    }
+    
+    // Step 3: Filter to get only the attendee IDs with the correct roles
+    const validAttendeeIds = attendeeProfiles.map(profile => profile.id);
+    
+    // Step 4: Create a mapping of user to shows they're attending (only for valid attendees)
     const userShowMap: Record<string, string[]> = {};
-    attendees.forEach(a => {
-      if (!userShowMap[a.userid]) {
-        userShowMap[a.userid] = [];
+    allAttendees.forEach(a => {
+      if (validAttendeeIds.includes(a.userid)) {
+        if (!userShowMap[a.userid]) {
+          userShowMap[a.userid] = [];
+        }
+        userShowMap[a.userid].push(a.showid);
       }
-      userShowMap[a.userid].push(a.showid);
     });
     
     // Create a count query to get total number of want lists
     let countQuery = supabase
       .from('want_lists')
       .select('id', { count: 'exact', head: true })
-      .in('userid', attendeeIds)
+      .in('userid', validAttendeeIds)
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', ''); // Filter out empty want lists
     
@@ -162,7 +188,7 @@ export const getWantListsForMvpDealer = async (
     let dataQuery = supabase
       .from('want_lists')
       .select('id, userid, content, createdat, updatedat')
-      .in('userid', attendeeIds)
+      .in('userid', validAttendeeIds)
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', '') // Filter out empty want lists
       .order('updatedat', { ascending: false })
@@ -195,12 +221,12 @@ export const getWantListsForMvpDealer = async (
     const wantListUserIds = [...new Set(wantLists.map(wl => wl.userid))];
     
     // Fetch user profiles separately
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles, error: wantListProfilesError } = await supabase
       .from('profiles')
       .select('id, first_name, last_name, role')
       .in('id', wantListUserIds);
     
-    if (profilesError) throw profilesError;
+    if (wantListProfilesError) throw wantListProfilesError;
     
     // Create a map of user profiles by ID for quick lookup
     const profileMap: Record<string, { firstName: string; lastName: string; role: string }> = {};
@@ -346,16 +372,15 @@ export const getWantListsForShowOrganizer = async (
       };
     });
     
-    // Get attendees for these shows, joining with profiles to filter by role
-    const { data: attendees, error: attendeesError } = await supabase
+    // Step 1: Get all attendees for these shows WITHOUT joining with profiles
+    const { data: allAttendees, error: attendeesError } = await supabase
       .from('show_participants')
-      .select('userid, showid, profiles!inner(role)')
-      .in('showid', showIds)
-      .in('profiles.role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
+      .select('userid, showid')
+      .in('showid', showIds);
     
     if (attendeesError) throw attendeesError;
     
-    if (!attendees || attendees.length === 0) {
+    if (!allAttendees || allAttendees.length === 0) {
       return {
         data: {
           data: [],
@@ -368,23 +393,50 @@ export const getWantListsForShowOrganizer = async (
       };
     }
     
-    // Get unique attendee IDs
-    const attendeeIds = [...new Set(attendees.map(a => a.userid))];
+    // Get unique attendee IDs from all attendees
+    const allAttendeeIds = [...new Set(allAttendees.map(a => a.userid))];
     
-    // Create a mapping of user to shows they're attending
+    // Step 2: Fetch profiles for these attendees to filter by role
+    const { data: attendeeProfiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .in('id', allAttendeeIds)
+      .in('role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
+    
+    if (profilesError) throw profilesError;
+    
+    if (!attendeeProfiles || attendeeProfiles.length === 0) {
+      return {
+        data: {
+          data: [],
+          totalCount: 0,
+          page,
+          pageSize,
+          hasMore: false
+        },
+        error: null
+      };
+    }
+    
+    // Step 3: Filter to get only the attendee IDs with the correct roles
+    const validAttendeeIds = attendeeProfiles.map(profile => profile.id);
+    
+    // Step 4: Create a mapping of user to shows they're attending (only for valid attendees)
     const userShowMap: Record<string, string[]> = {};
-    attendees.forEach(a => {
-      if (!userShowMap[a.userid]) {
-        userShowMap[a.userid] = [];
+    allAttendees.forEach(a => {
+      if (validAttendeeIds.includes(a.userid)) {
+        if (!userShowMap[a.userid]) {
+          userShowMap[a.userid] = [];
+        }
+        userShowMap[a.userid].push(a.showid);
       }
-      userShowMap[a.userid].push(a.showid);
     });
     
     // Create a count query to get total number of want lists
     let countQuery = supabase
       .from('want_lists')
       .select('id', { count: 'exact', head: true })
-      .in('userid', attendeeIds)
+      .in('userid', validAttendeeIds)
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', ''); // Filter out empty want lists
     
@@ -401,7 +453,7 @@ export const getWantListsForShowOrganizer = async (
     let dataQuery = supabase
       .from('want_lists')
       .select('id, userid, content, createdat, updatedat')
-      .in('userid', attendeeIds)
+      .in('userid', validAttendeeIds)
       .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', '') // Filter out empty want lists
       .order('updatedat', { ascending: false })
@@ -434,12 +486,12 @@ export const getWantListsForShowOrganizer = async (
     const wantListUserIds = [...new Set(wantLists.map(wl => wl.userid))];
     
     // Fetch user profiles separately
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles, error: wantListProfilesError } = await supabase
       .from('profiles')
       .select('id, first_name, last_name, role')
       .in('id', wantListUserIds);
     
-    if (profilesError) throw profilesError;
+    if (wantListProfilesError) throw wantListProfilesError;
     
     // Create a map of user profiles by ID for quick lookup
     const profileMap: Record<string, { firstName: string; lastName: string; role: string }> = {};
