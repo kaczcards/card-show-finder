@@ -74,11 +74,13 @@ export const getWantListsForMvpDealer = async (
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     
-    // Base query to get shows the dealer is participating in
+    // Get shows the dealer is participating in, joining with shows to filter for upcoming shows only
+    const currentDate = new Date().toISOString();
     let query = supabase
       .from('show_participants')
-      .select('showid')
-      .eq('userid', userId);
+      .select('showid, shows!inner(start_date)')
+      .eq('userid', userId)
+      .gte('shows.start_date', currentDate); // Only include upcoming shows
     
     if (showId) {
       query = query.eq('showid', showId);
@@ -104,12 +106,13 @@ export const getWantListsForMvpDealer = async (
     // Get the show IDs the dealer is participating in
     const showIds = participatingShows.map(show => show.showid);
     
-    // Get all attendees for these shows
+    // Get attendees for these shows, joining with profiles to filter by role
     const { data: attendees, error: attendeesError } = await supabase
       .from('show_participants')
-      .select('userid, showid')
+      .select('userid, showid, profiles!inner(role)')
       .in('showid', showIds)
-      .neq('userid', userId); // Exclude the dealer themselves
+      .neq('userid', userId) // Exclude the dealer themselves
+      .in('profiles.role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
     
     if (attendeesError) throw attendeesError;
     
@@ -301,11 +304,13 @@ export const getWantListsForShowOrganizer = async (
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     
-    // Get shows organized by this user
+    // Get shows organized by this user, filtering for upcoming shows only
+    const currentDate = new Date().toISOString();
     let showsQuery = supabase
       .from('shows')
       .select('id, title, start_date, location')
-      .eq('organizer_id', userId);
+      .eq('organizer_id', userId)
+      .gte('start_date', currentDate); // Only include upcoming shows
     
     if (showId) {
       showsQuery = showsQuery.eq('id', showId);
@@ -341,11 +346,12 @@ export const getWantListsForShowOrganizer = async (
       };
     });
     
-    // Get all attendees for these shows
+    // Get attendees for these shows, joining with profiles to filter by role
     const { data: attendees, error: attendeesError } = await supabase
       .from('show_participants')
-      .select('userid, showid')
-      .in('showid', showIds);
+      .select('userid, showid, profiles!inner(role)')
+      .in('showid', showIds)
+      .in('profiles.role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
     
     if (attendeesError) throw attendeesError;
     
@@ -430,7 +436,7 @@ export const getWantListsForShowOrganizer = async (
     // Fetch user profiles separately
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, firstName, lastName, role')
+      .select('id, first_name, last_name, role')
       .in('id', wantListUserIds);
     
     if (profilesError) throw profilesError;
@@ -439,8 +445,8 @@ export const getWantListsForShowOrganizer = async (
     const profileMap: Record<string, { firstName: string; lastName: string; role: string }> = {};
     profiles?.forEach(profile => {
       profileMap[profile.id] = {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
         role: profile.role
       };
     });
