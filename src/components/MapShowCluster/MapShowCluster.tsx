@@ -41,68 +41,6 @@ interface OrganizerProfile {
   ebayStoreUrl?: string;
 }
 
-const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) => {
-  // Navigation (used as a fallback when parent doesn't supply onShowPress)
-  const navigation = useNavigation<any>();
-  
-  // State for storing organizer profiles
-  const [organizerProfiles, setOrganizerProfiles] = useState<Record<string, OrganizerProfile>>({});
-  
-  // State to track button press and prevent double-clicks
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [pressedShowId, setPressedShowId] = useState<string | null>(null);
-
-  /* ------------------------------------------------------------------
-   * Fetch organizer profiles with social media links
-   * ------------------------------------------------------------------ */
-  useEffect(() => {
-    const fetchOrganizerProfiles = async () => {
-      try {
-        // Extract unique organizer IDs from shows
-        const organizerIds = [...new Set(
-          props.shows
-            .filter(show => show.organizerId)
-            .map(show => show.organizerId)
-        )];
-        
-        if (organizerIds.length === 0) return;
-        
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url')
-          .in('id', organizerIds);
-        
-        if (error) {
-          console.error('Error fetching organizer profiles:', error);
-          return;
-        }
-        
-        if (data) {
-          // Convert to a map for easier lookup
-          const profileMap: Record<string, OrganizerProfile> = {};
-          data.forEach(profile => {
-            profileMap[profile.id] = {
-              id: profile.id,
-              firstName: profile.first_name,
-              lastName: profile.last_name,
-              facebookUrl: profile.facebook_url,
-              instagramUrl: profile.instagram_url,
-              twitterUrl: profile.twitter_url,
-              whatnotUrl: profile.whatnot_url,
-              ebayStoreUrl: profile.ebay_store_url
-            };
-          });
-          
-          setOrganizerProfiles(profileMap);
-        }
-      } catch (err) {
-        console.error('Unexpected error fetching organizer profiles:', err);
-      }
-    };
-    
-    fetchOrganizerProfiles();
-  }, [props.shows]);
-
   /* ------------------------------------------------------------------
    * Utility – Validate / auto-correct possibly swapped coordinates
    * ------------------------------------------------------------------
@@ -133,10 +71,12 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
     const swappedLngValid = swappedLng >= -180 && swappedLng <= 180;
 
     if (swappedLatValid && swappedLngValid) {
+      console.warn(`Fixed swapped coordinates for a show: lat=${latitude}, lng=${longitude} → lat=${swappedLat}, lng=${swappedLng}`);
       return { latitude: swappedLat, longitude: swappedLng };
     }
 
     // Still invalid – give up
+    console.error(`Invalid coordinates: lat=${latitude}, lng=${longitude}. Cannot display this show on the map.`);
     return null;
   };
 
@@ -172,8 +112,9 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
     console.log('Opening map location for address:', address);
 
     try {
-      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
-      const url = `${scheme}${encodeURIComponent(address)}`;
+      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:0,0?q=' });
+      const encodedAddress = encodeURIComponent(address);
+      const url = `${scheme}${encodedAddress}`;
 
       console.log('Attempting to open URL:', url);
 
@@ -308,6 +249,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
         title={show.title}
         description={`${formatDate(show.startDate)} • ${formatEntryFee(show.entryFee).replace('Entry: ', '')}`}
         pinColor="#007AFF"
+        tracksViewChanges={false} // Performance optimization: prevents unnecessary re-renders
       >
         <Callout tooltip>
           <View style={styles.calloutContainer}>
@@ -410,6 +352,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
       <Marker 
         coordinate={coordinate} 
         onPress={onPress}
+        tracksViewChanges={false} // Performance optimization
       >
         <View style={styles.clusterContainer}>
           <Text style={styles.clusterText}>{pointCount}</Text>
@@ -500,6 +443,7 @@ const MapShowCluster = React.forwardRef<any, MapShowClusterProps>((props, ref) =
         accessor="coordinates"
         clusterPressMaxChildren={50}
         nodeExtractor={showToPoint}
+        liteMode={Platform.OS === 'android'} // Use LiteMode on Android for better performance
       />
       <View style={styles.zoomControls}>
         <TouchableOpacity 

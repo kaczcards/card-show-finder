@@ -18,6 +18,8 @@ import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
 import { useAuth } from '../../contexts/AuthContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { supabase } from '../../supabase';
+// Geocoding helper
+import { geocodeAddress } from '../../services/locationService';
 
 type AddShowScreenRouteProp = RouteProp<OrganizerStackParamList, 'AddShow'>;
 
@@ -213,6 +215,32 @@ const AddShowScreen: React.FC = () => {
       console.log('[AddShowScreen] Date values being sent:');
       console.log('  - Start Date:', fullStartDate);
       console.log('  - End Date:', fullEndDate);
+
+      /* -----------------------------------------------------------
+       * 1. Geocode the full street address → coordinates
+       * --------------------------------------------------------- */
+      const fullAddress = `${street}, ${city}, ${stateProv} ${zipCode}`;
+      console.log('[AddShowScreen] Attempting to geocode address:', fullAddress);
+
+      let coords = null;
+      try {
+        coords = await geocodeAddress(fullAddress);
+      } catch (geoErr) {
+        console.warn('[AddShowScreen] Geocoding threw:', geoErr);
+      }
+
+      if (!coords) {
+        console.error('[AddShowScreen] Geocoding failed or returned null');
+        Alert.alert(
+          'Address Not Found',
+          'We could not determine map coordinates for this address. ' +
+          'Please check the address and try again.'
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('[AddShowScreen] Geocoding success:', coords);
       
       // Create payload with snake_case keys matching database schema exactly
       const showData = {
@@ -225,6 +253,9 @@ const AddShowScreen: React.FC = () => {
         entry_fee: entryFee ? Number(entryFee) : 0,
         start_date: fullStartDate,
         end_date: fullEndDate,
+        // Inject coordinates for map placement
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         features: features.length > 0
           ? features.reduce<Record<string, boolean>>((obj, feat) => ({ ...obj, [feat]: true }), {})
           : null,
