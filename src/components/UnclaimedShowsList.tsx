@@ -46,6 +46,59 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   const [claimingInProgress, setClaimingInProgress] = useState<Record<string, boolean>>({});
 
   /**
+   * Sort unclaimed items by date with most recent upcoming show first
+   * - Upcoming shows first, sorted by closest to today
+   * - Past shows after, sorted by most recently completed
+   * - Handles both 'series' and 'show' types
+   */
+  const sortUnclaimedItems = useCallback((items: UnclaimedItem[]): UnclaimedItem[] => {
+    const now = Date.now();
+    
+    // Helper to get the relevant date from an item
+    const getItemDate = (item: UnclaimedItem): Date => {
+      if (item.type === 'series') {
+        // For series, use nextShowDate (earliest upcoming show date)
+        const series = item.data as ShowSeries;
+        return series.nextShowDate ? new Date(series.nextShowDate) : new Date(0);
+      } else {
+        // For standalone shows, use startDate
+        const show = item.data as Show;
+        return show.startDate ? new Date(show.startDate) : new Date(0);
+      }
+    };
+    
+    // Separate upcoming and past items
+    const upcoming: UnclaimedItem[] = [];
+    const past: UnclaimedItem[] = [];
+    
+    items.forEach(item => {
+      const itemDate = getItemDate(item);
+      if (itemDate.getTime() >= now) {
+        upcoming.push(item);
+      } else {
+        past.push(item);
+      }
+    });
+    
+    // Sort upcoming shows by closest to today first
+    upcoming.sort((a, b) => {
+      const dateA = getItemDate(a).getTime();
+      const dateB = getItemDate(b).getTime();
+      return dateA - dateB; // Ascending (closest date first)
+    });
+    
+    // Sort past shows by most recent first
+    past.sort((a, b) => {
+      const dateA = getItemDate(a).getTime();
+      const dateB = getItemDate(b).getTime();
+      return dateB - dateA; // Descending (most recent first)
+    });
+    
+    // Return upcoming shows first, then past shows
+    return [...upcoming, ...past];
+  }, []);
+
+  /**
    * Expose an imperative refetch method so parent components can force a data
    * refresh immediately after external actions (e.g. claiming a show).
    * We memoise it with useCallback to avoid re-creating the function on every
@@ -323,7 +376,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   // Main content - list of unclaimed items
   return (
     <FlatList
-      data={unclaimedItems}
+      data={sortUnclaimedItems(unclaimedItems)}
       renderItem={renderItem}
       keyExtractor={(item, index) =>
         item.type === 'series'
