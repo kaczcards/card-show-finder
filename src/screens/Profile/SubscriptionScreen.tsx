@@ -254,7 +254,7 @@ const SubscriptionScreen: React.FC = () => {
     
     if (!subscriptionDetails) return null;
     
-    const { status, expiry, isActive } = subscriptionDetails;
+    const { status, expiry, isActive, isTrialPeriod } = subscriptionDetails;
     
     return (
       <View style={styles.currentSubscriptionContainer}>
@@ -289,15 +289,17 @@ const SubscriptionScreen: React.FC = () => {
         
         {isActive && timeRemaining && (
           <View style={styles.timeRemainingContainer}>
-            <Text style={styles.timeRemainingLabel}>Time Remaining:</Text>
+            <Text style={styles.timeRemainingLabel}>
+              {isTrialPeriod ? 'Trial Ends In:' : 'Subscription Ends In:'}
+            </Text>
             <Text style={styles.timeRemainingValue}>
               {timeRemaining.days} days, {timeRemaining.hours} hours
             </Text>
           </View>
         )}
         
-        {/* Trial period countdown */}
-        {isActive && timeRemaining && timeRemaining.days < 7 && status === 'active' && (
+        {/* Trial period countdown badge */}
+        {isActive && isTrialPeriod && timeRemaining && status === 'active' && (
           <View style={styles.trialBadgeContainer}>
             <Text style={styles.trialBadgeText}>
               {timeRemaining.days === 0 
