@@ -11,7 +11,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { CommonActions, useNavigation } from '@react-navigation/native';
 
 interface DealerDetailModalProps {
   isVisible: boolean;
@@ -31,7 +30,6 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
   const [boothInfo, setBoothInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigation = useNavigation();
 
   useEffect(() => {
     if (!isVisible || !dealerId || !showId) {
@@ -70,28 +68,6 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
 
     fetchBoothInfo();
   }, [isVisible, dealerId, showId]);
-
-  const handleMessageDealer = () => {
-    onClose(); // Close the modal before navigating
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [
-          {
-            name: 'MainTabs', // Assuming 'MainTabs' is the name of your tab navigator
-            params: {
-              screen: 'Messages', // Name of the tab screen for messages
-              params: {
-                recipientId: dealerId,
-                recipientName: dealerName,
-                isNewConversation: true,
-              },
-            },
-          },
-        ],
-      })
-    );
-  };
 
   return (
     <Modal
@@ -198,10 +174,6 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
             <Text style={styles.noInfoText}>No booth information available for this show.</Text>
           )}
 
-          <TouchableOpacity style={styles.messageButton} onPress={handleMessageDealer}>
-            <Ionicons name="chatbubbles" size={20} color="white" style={styles.messageButtonIcon} />
-            <Text style={styles.messageButtonText}>{`Message ${dealerName}`}</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -283,28 +255,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginVertical: 20,
-  },
-  messageButton: {
-    backgroundColor: '#4CAF50',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  messageButtonIcon: {
-    marginRight: 10,
-  },
-  messageButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   infoRowSmaller: {
     flexDirection: 'row',
