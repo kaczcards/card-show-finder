@@ -154,6 +154,44 @@ const ShowParticipationScreen: React.FC = () => {
     }
   }, [user]);
   
+  /* ------------------------------------------------------------------
+   * Sorting Helpers
+   * ------------------------------------------------------------------
+   * 1. Upcoming shows   – closest to TODAY first  (ascending startDate)
+   * 2. Past shows       – most recently finished (descending endDate /
+   *                       startDate fallback)
+   * The combined array always renders upcoming first, then past shows.
+   * ------------------------------------------------------------------ */
+  const sortShowsByDate = useCallback(
+    <T extends Show>(shows: Array<T>): Array<T> => {
+      const now = Date.now();
+
+      // Partition upcoming vs past
+      const upcoming = shows.filter(
+        (s) => new Date(s.startDate).getTime() >= now
+      );
+      const past = shows.filter(
+        (s) => new Date(s.startDate).getTime() < now
+      );
+
+      // Ascending for upcoming (soonest first)
+      upcoming.sort(
+        (a, b) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      );
+
+      // Descending for past (most recent first)
+      past.sort(
+        (a, b) =>
+          new Date(b.endDate || b.startDate).getTime() -
+          new Date(a.endDate || a.startDate).getTime()
+      );
+
+      return [...upcoming, ...past];
+    },
+    []
+  );
+
   // Load data when screen is focused
   useFocusEffect(
     useCallback(() => {
@@ -539,7 +577,7 @@ const ShowParticipationScreen: React.FC = () => {
         <>
           {activeTab === 'myShows' && (
             <FlatList
-              data={dealerShows}
+              data={sortShowsByDate(dealerShows)}
               renderItem={renderShowItem}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContainer}
@@ -565,7 +603,7 @@ const ShowParticipationScreen: React.FC = () => {
           
           {activeTab === 'availableShows' && (
             <FlatList
-              data={availableShows}
+              data={sortShowsByDate(availableShows)}
               renderItem={renderShowItem}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContainer}
