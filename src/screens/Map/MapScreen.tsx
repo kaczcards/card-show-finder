@@ -725,9 +725,6 @@ const styles = StyleSheet.create({
     height,
   },
   filterButton: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
@@ -739,6 +736,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+    marginLeft: 10,        // <-- keep a gap from the info text
   },
   filterInfoContainer: {
     position: 'absolute',
