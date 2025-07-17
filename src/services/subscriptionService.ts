@@ -45,6 +45,30 @@ export const hasActiveSubscription = (user: User): boolean => {
 };
 
 /**
+ * Check if a user is in their trial period
+ * @param user The user to check
+ * @returns Boolean indicating if the user is in trial period
+ */
+export const isInTrialPeriod = (user: User): boolean => {
+  if (!user || !hasActiveSubscription(user)) return false;
+  
+  // Check if payment_status is explicitly set to 'trial'
+  if (user.paymentStatus === 'trial') return true;
+  
+  // Legacy check for users without payment_status field
+  // If they have less than 7 days remaining and no payment_status,
+  // they're likely in a trial period
+  if (!user.paymentStatus || user.paymentStatus === 'none') {
+    const timeRemaining = getSubscriptionTimeRemaining(user);
+    if (timeRemaining && timeRemaining.days < 7) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
+/**
  * Get the time remaining in a user's subscription
  * @param user The user to check
  * @returns Object with days, hours remaining or null if no active subscription
@@ -97,6 +121,8 @@ export const getSubscriptionDetails = (user: User): {
   isActive: boolean;
   timeRemaining: { days: number, hours: number } | null;
   plan: SubscriptionPlan | null;
+  isPaid: boolean;
+  isTrialPeriod: boolean;
 } | null => {
   if (!user || user.accountType === 'collector') {
     return null;
@@ -112,13 +138,22 @@ export const getSubscriptionDetails = (user: User): {
     p.type === planType && p.duration === SubscriptionDuration.ANNUAL
   ) || null;
   
+  // Check if user is in trial period
+  const isTrialPeriod = isInTrialPeriod(user);
+  
+  // Check if user has paid (either explicitly marked as paid or has active subscription but not in trial)
+  const isPaid = user.paymentStatus === 'paid' || 
+                (hasActiveSubscription(user) && !isTrialPeriod);
+  
   return {
     accountType: user.accountType,
     status: user.subscriptionStatus,
     expiry: user.subscriptionExpiry ? new Date(user.subscriptionExpiry) : null,
     isActive: hasActiveSubscription(user),
     timeRemaining: getSubscriptionTimeRemaining(user),
-    plan
+    plan,
+    isPaid,
+    isTrialPeriod
   };
 };
 
@@ -170,13 +205,18 @@ export const initiateSubscriptionPurchase = async (
 
       /* After a successful payment, the stripePaymentService already
        * updates the user profile with the correct expiry date and role.
-       * Retrieve the latest expiry so the caller can display it.
+       * We need to also update the payment_status to 'paid'
        */
-      const { data: profile } = await supabase
+      const { data: profile, error: updateError } = await supabase
         .from('profiles')
-        .select('subscription_expiry')
+        .update({ payment_status: 'paid' })
         .eq('id', userId)
+        .select('subscription_expiry')
         .single();
+
+      if (updateError) {
+        console.error('Error updating payment status:', updateError);
+      }
 
       return {
         success: true,
@@ -202,6 +242,7 @@ export const initiateSubscriptionPurchase = async (
       .update({
         account_type: plan.type,
         subscription_status: 'active',
+        payment_status: 'paid', // Mark as paid immediately for prepaid subscriptions
         subscription_expiry: expiryDate.toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -255,7 +296,7 @@ export const cancelSubscription = async (
     // Get the user's current subscription details
     const { data: userData, error: fetchError } = await supabase
       .from('profiles')
-      .select('subscription_expiry, account_type')
+      .select('subscription_expiry, account_type, payment_status')
       .eq('id', userId)
       .single();
     
@@ -269,6 +310,9 @@ export const cancelSubscription = async (
       .from('profiles')
       .update({
         subscription_status: 'expired',
+        // If they're in trial and cancel, reset payment_status to 'none'
+        // If they've paid, keep their payment_status as 'paid' until expiry
+        payment_status: userData.payment_status === 'trial' ? 'none' : userData.payment_status,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId);
@@ -301,7 +345,7 @@ export const checkAndUpdateSubscriptionStatus = async (
     // Get the user's current subscription details
     const { data: userData, error: fetchError } = await supabase
       .from('profiles')
-      .select('subscription_expiry, subscription_status, account_type')
+      .select('subscription_expiry, subscription_status, account_type, payment_status')
       .eq('id', userId)
       .single();
     
@@ -329,6 +373,7 @@ export const checkAndUpdateSubscriptionStatus = async (
           .from('profiles')
           .update({
             subscription_status: 'expired',
+            payment_status: 'none', // Reset payment status when subscription expires
             updated_at: now.toISOString()
           })
           .eq('id', userId);

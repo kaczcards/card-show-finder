@@ -236,6 +236,8 @@ const updateUserProfileWithSubscription = async (
     .update({
       role: newRole,
       subscription_status: 'active',
+      // Mark the user as having completed payment so UI does not show “Trial” banners
+      payment_status: 'paid',
       subscription_expiry: expiryDateISO,
       updated_at: new Date().toISOString(),
     })

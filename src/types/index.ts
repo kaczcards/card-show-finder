@@ -38,6 +38,14 @@ export interface User {
    */
   subscriptionStatus: 'active' | 'expired' | 'none';
   /**
+   * Current payment status.  Distinguishes users still
+   * in their free-trial window from those who have paid.
+   * - 'trial' : user is within the free-trial period
+   * - 'paid'  : user has an active paid subscription
+   * - 'none'  : user has no trial or paid subscription (collectors or expired)
+   */
+  paymentStatus: 'trial' | 'paid' | 'none';
+  /**
    * Timestamp indicating when the paid subscription expires.
    * Null for free collector accounts or when there is no active subscription.
    */
