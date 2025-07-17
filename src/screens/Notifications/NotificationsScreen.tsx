@@ -21,30 +21,111 @@ const MyShowsScreen: React.FC = () => {
   /* ------------------------------------------------------------------
    * Placeholder data – replace with real data via context / API later
    * ------------------------------------------------------------------ */
+  /* ---------------- Upcoming Shows (unsorted on purpose) ------------ */
   const dummyUpcoming: Show[] = [
     {
-      id: '1',
+      id: 'u4',
+      title: 'Pacific Rim Collectors Fest',
+      location: 'Seattle Center',
+      address: '305 Harrison St, Seattle, WA',
+      startDate: new Date(Date.now() + 864e5 * 30).toISOString(), // ~1 month out
+      endDate: new Date(Date.now() + 864e5 * 31).toISOString(),
+      entryFee: 10,
+      status: 0 as any,
+      organizerId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'u1',
       title: 'Indy Card Expo',
       location: 'Fairgrounds Hall',
       address: '123 Main St, Indianapolis, IN',
-      startDate: new Date().toISOString(),
-      endDate: new Date().toISOString(),
+      startDate: new Date(Date.now() + 864e5 * 1).toISOString(), // tomorrow
+      endDate: new Date(Date.now() + 864e5 * 2).toISOString(),
       entryFee: 5,
       status: 0 as any,
       organizerId: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
+    {
+      id: 'u3',
+      title: 'Great Lakes Sports Show',
+      location: 'Huntington Center',
+      address: '500 Jefferson Ave, Toledo, OH',
+      startDate: new Date(Date.now() + 864e5 * 14).toISOString(), // ~2 weeks
+      endDate: new Date(Date.now() + 864e5 * 15).toISOString(),
+      entryFee: 8,
+      status: 0 as any,
+      organizerId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'u2',
+      title: 'Midwest Trade Night',
+      location: 'Union Station',
+      address: '1820 Market St, St. Louis, MO',
+      startDate: new Date(Date.now() + 864e5 * 7).toISOString(), // next week
+      endDate: new Date(Date.now() + 864e5 * 8).toISOString(),
+      entryFee: 0,
+      status: 0 as any,
+      organizerId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
   ];
+
+  /* ------------------ Past Shows (unsorted on purpose) -------------- */
   const dummyPast: Show[] = [
     {
-      id: '2',
+      id: 'p3',
+      title: 'Rocky Mountain Card Convention',
+      location: 'Colorado Convention Center',
+      address: '700 14th St, Denver, CO',
+      startDate: new Date(Date.now() - 864e5 * 30).toISOString(), // ~1 month ago
+      endDate: new Date(Date.now() - 864e5 * 29).toISOString(),
+      entryFee: 15,
+      status: 0 as any,
+      organizerId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'p1',
       title: 'East Coast Card Show',
       location: 'Boston Convention Ctr.',
       address: '1 Seaport Ln, Boston, MA',
-      startDate: new Date(Date.now() - 864e5 * 5).toISOString(),
-      endDate: new Date(Date.now() - 864e5 * 4).toISOString(),
+      startDate: new Date(Date.now() - 864e5 * 1).toISOString(), // yesterday
+      endDate: new Date(Date.now() - 0).toISOString(),
       entryFee: 0,
+      status: 0 as any,
+      organizerId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'p4',
+      title: 'Sunbelt Sports Collectibles',
+      location: 'Music City Center',
+      address: '201 Rep. John Lewis Way S, Nashville, TN',
+      startDate: new Date(Date.now() - 864e5 * 7).toISOString(), // last week
+      endDate: new Date(Date.now() - 864e5 * 6).toISOString(),
+      entryFee: 12,
+      status: 0 as any,
+      organizerId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'p2',
+      title: 'Lone Star Card Bash',
+      location: 'Dallas Market Hall',
+      address: '2200 Stemmons Fwy, Dallas, TX',
+      startDate: new Date(Date.now() - 864e5 * 5).toISOString(), // 5 days ago
+      endDate: new Date(Date.now() - 864e5 * 4).toISOString(),
+      entryFee: 10,
       status: 0 as any,
       organizerId: '',
       createdAt: new Date().toISOString(),
@@ -61,6 +142,27 @@ const MyShowsScreen: React.FC = () => {
   const [reviewFormVisible, setReviewFormVisible] = useState(false);
 
   /* -------------------------  Helpers  ----------------------------- */
+  /**
+   * Sort upcoming shows by the soonest startDate first
+   * (i.e., closest to today at the top of the list).
+   */
+  const sortUpcomingShows = (shows: Show[]) =>
+    [...shows].sort(
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
+
+  /**
+   * Sort past shows with the most recently completed show first
+   * (i.e., latest endDate at the top).  If endDate is missing,
+   * startDate is used as a fallback so the list still orders correctly.
+   */
+  const sortPastShows = (shows: Show[]) =>
+    [...shows].sort(
+      (a, b) =>
+        new Date(b.endDate || b.startDate).getTime() -
+        new Date(a.endDate || a.startDate).getTime()
+    );
+
   const renderEmptyState = (message: string, icon: keyof typeof Ionicons.glyphMap) => (
     <View style={styles.emptyContainer}>
       <Ionicons name={icon} size={64} color="#ccc" />
@@ -188,7 +290,13 @@ const MyShowsScreen: React.FC = () => {
       <FlatList
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        data={currentTab === 'upcoming' ? upcomingShows : pastShows}
+        /* Always feed a freshly-sorted array so ordering updates
+           automatically after any CRUD operations (e.g. removal). */
+        data={
+          currentTab === 'upcoming'
+            ? sortUpcomingShows(upcomingShows)
+            : sortPastShows(pastShows)
+        }
         keyExtractor={(item) => item.id}
         renderItem={currentTab === 'upcoming' ? renderUpcomingItem : renderPastItem}
         ListEmptyComponent={
