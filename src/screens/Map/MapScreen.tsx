@@ -636,7 +636,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <View style={styles.filterInfoContainer}>
             <Text style={styles.filterInfoText}>
-                Showing shows within 25 miles
+                Default: shows 25 miles
             </Text>
             <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(true)}>
                 <Ionicons name="filter" size={18} color="#007AFF" />
