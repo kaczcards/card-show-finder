@@ -8,9 +8,11 @@
 import Button from './Button';
 import Loading from './Loading';
 import ErrorDisplay from './ErrorDisplay';
+import SocialIcon from './SocialIcon';
 
 export {
   Button,
   Loading,
   ErrorDisplay,
+  SocialIcon,
 };

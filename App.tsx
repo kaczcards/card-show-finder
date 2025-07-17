@@ -7,6 +7,27 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Global toast notifications
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
+/**
+ * ---------------------------------------------------------------------------
+ * Polyfill: `structuredClone`
+ * ---------------------------------------------------------------------------
+ * React-Native does not yet include the Web-standard `structuredClone`
+ * function.  Newer versions of `@supabase/supabase-js` rely on it for deep
+ * cloning session / payload objects.  We add a lightweight polyfill that
+ * covers the common case (plain JSON-serialisable data).
+ *
+ * NOTE:  This lives here (top-level of the app) so it is executed **before**
+ * any library code runs, ensuring the global is available everywhere.
+ */
+// eslint-disable-next-line no-underscore-dangle
+if (typeof globalThis.structuredClone !== 'function') {
+  // Simple, fast clone via JSON for serialisable objects.
+  // For non-serialisable data (Dates, Maps, etc.) Supabase does not rely
+  // on those types, so this is sufficient.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.structuredClone = (val: any): any => JSON.parse(JSON.stringify(val));
+}
+
 // Import context providers
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';

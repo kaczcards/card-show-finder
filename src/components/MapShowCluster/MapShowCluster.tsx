@@ -9,6 +9,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import SocialIcon from '../ui/SocialIcon';
 import { Marker, Callout } from 'react-native-maps';
 import FixedClusteredMapView from 'react-native-maps-super-cluster';
 import { Show } from '../../types';
@@ -308,23 +309,19 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
                 )}
                 
                 {organizer.whatnotUrl && (
-                  <TouchableOpacity 
-                    style={styles.socialIconButton} 
+                  <SocialIcon
+                    platform="whatnot"
                     onPress={() => openUrl(organizer.whatnotUrl)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="cart-outline" size={20} color="#FF001F" />
-                  </TouchableOpacity>
+                    style={styles.socialIconButton}
+                  />
                 )}
                 
                 {organizer.ebayStoreUrl && (
-                  <TouchableOpacity 
-                    style={styles.socialIconButton} 
+                  <SocialIcon
+                    platform="ebay"
                     onPress={() => openUrl(organizer.ebayStoreUrl)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="pricetag-outline" size={20} color="#E53238" />
-                  </TouchableOpacity>
+                    style={styles.socialIconButton}
+                  />
                 )}
               </View>
             )}

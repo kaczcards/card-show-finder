@@ -130,14 +130,21 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
  */
 export const calculateExpiryDate = (plan: SubscriptionPlan): Date => {
   const now = new Date();
-  const expiryDate = new Date(now);
-  
-  // If plan includes a free trial, apply trial days first (initial period)
-  if (plan.trialDays && plan.trialDays > 0) {
-    expiryDate.setDate(expiryDate.getDate() + plan.trialDays);
-  } else {
-    expiryDate.setMonth(now.getMonth() + plan.duration);
+
+  // We purposely ignore `trialDays` here; trials are applied in higher-level
+  // payment logic.  This helper strictly converts *paid* duration → expiry.
+  const MS_IN_DAY = 24 * 60 * 60 * 1000;
+
+  let daysToAdd: number;
+  switch (plan.duration) {
+    case SubscriptionDuration.ANNUAL:
+      daysToAdd = 365;           // Fixed-length year to keep math explicit
+      break;
+    case SubscriptionDuration.MONTHLY:
+    default:
+      daysToAdd = 30;            // Fixed-length “billing month”
+      break;
   }
-  
-  return expiryDate;
+
+  return new Date(now.getTime() + daysToAdd * MS_IN_DAY);
 };

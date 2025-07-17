@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import SocialIcon from '../../components/ui/SocialIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -729,7 +730,12 @@ const ProfileScreen: React.FC = () => {
                     
                     {user.whatnotUrl && (
                       <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.whatnotUrl)}>
-                        <Ionicons name="cart-outline" size={20} color="#FF001F" />
+                        <SocialIcon 
+                          platform="whatnot" 
+                          size={20} 
+                          onPress={() => openUrl(user.whatnotUrl)} 
+                          style={{backgroundColor: 'transparent'}}
+                        />
                         <View style={styles.infoTextContainer}>
                           <Text style={styles.infoLabel}>Whatnot Store</Text>
                           <Text style={styles.infoValueLink}>{user.whatnotUrl}</Text>
@@ -739,7 +745,12 @@ const ProfileScreen: React.FC = () => {
                     
                     {user.ebayStoreUrl && (
                       <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.ebayStoreUrl)}>
-                        <Ionicons name="pricetag-outline" size={20} color="#E53238" />
+                        <SocialIcon 
+                          platform="ebay" 
+                          size={20} 
+                          onPress={() => openUrl(user.ebayStoreUrl)} 
+                          style={{backgroundColor: 'transparent'}}
+                        />
                         <View style={styles.infoTextContainer}>
                           <Text style={styles.infoLabel}>eBay Store</Text>
                           <Text style={styles.infoValueLink}>{user.ebayStoreUrl}</Text>

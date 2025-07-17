@@ -1,6 +1,6 @@
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import { supabase } from '../supabase';
-import { SubscriptionPlan, SUBSCRIPTION_PLANS } from './subscriptionTypes';
+import { SubscriptionPlan, SUBSCRIPTION_PLANS, calculateExpiryDate } from './subscriptionTypes';
 import { UserRole } from './userRoleService';
 
 // --- Type Definitions ---
@@ -176,14 +176,15 @@ export const processSubscriptionUpdate = async (
   transactionId: string
 ): Promise<void> => {
   try {
-    // Calculate subscription expiry date, including trial period
-    const now = new Date();
-    const expiryDate = new Date(now);
-    if (plan.trialDays && plan.trialDays > 0) {
-      expiryDate.setDate(now.getDate() + plan.trialDays);
-    } else {
-      expiryDate.setMonth(now.getMonth() + plan.duration);
-    }
+    /**
+     * Calculate the expiry date for the **paid** subscription.
+     * We intentionally ignore any free-trial data here because an upgrade
+     * should terminate the trial and start the paid period immediately.
+     * The helper in `subscriptionTypes` already encodes:
+     *   • Annual  → +365 days
+     *   • Monthly → +30  days
+     */
+    const expiryDate = calculateExpiryDate(plan);
 
     // Determine the new role based on the subscription type
     const newRole = plan.type === 'dealer' ? UserRole.MVP_DEALER : UserRole.SHOW_ORGANIZER;
