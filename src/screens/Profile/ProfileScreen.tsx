@@ -764,28 +764,6 @@ const ProfileScreen: React.FC = () => {
           </View>
         )}
 
-        {/* DEBUG INFORMATION (visible in UI) */}
-        <View style={styles.debugSection}>
-          <Text style={styles.debugText}>
-            Debug → role: {user.role} | accountType: {user.accountType} | isDealer():{' '}
-            {isDealer() ? 'true' : 'false'}
-          </Text>
-          <Text style={styles.debugText}>
-            Social Media Fields:{'\n'}
-            • facebookUrl: {user.facebookUrl || 'undefined'}{'\n'}
-            • instagramUrl: {user.instagramUrl || 'undefined'}{'\n'}
-            • twitterUrl: {user.twitterUrl || 'undefined'}{'\n'}
-            • whatnotUrl: {user.whatnotUrl || 'undefined'}{'\n'}
-            • ebayStoreUrl: {user.ebayStoreUrl || 'undefined'}
-          </Text>
-          <TouchableOpacity
-            onPress={() => console.log('DEBUG - Raw User Object:', JSON.stringify(user, null, 2))}
-            style={styles.debugButton}
-          >
-            <Text style={styles.debugButtonText}>Log User Object to Console</Text>
-          </TouchableOpacity>
-        </View>
-        
         {/* Account Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Information</Text>
@@ -1209,33 +1187,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  /* ------------------------------------------------------------------
-   * Debug section styles (visible only while debugging)
-   * ------------------------------------------------------------------ */
-  debugSection: {
-    backgroundColor: '#ffeecc',
-    marginTop: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#ffcc00',
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#333',
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
-  debugButton: {
-    backgroundColor: '#ff9900',
-    borderRadius: 4,
-    padding: 6,
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  debugButtonText: {
-    color: 'white',
-    fontSize: 12,
     fontWeight: 'bold',
   },
 });
