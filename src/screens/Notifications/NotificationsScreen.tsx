@@ -147,6 +147,8 @@ const MyShowsScreen: React.FC = () => {
    * (i.e., closest to today at the top of the list).
    */
   const sortUpcomingShows = (shows: Show[]) =>
+    /* Ascending order: earliest (soonest) startDate first so that the
+       show closest to today's date appears at the top of the list. */
     [...shows].sort(
       (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     );
