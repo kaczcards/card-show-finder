@@ -11,7 +11,7 @@ import {
   Share
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CommonActions } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import * as userRoleService from '../../services/userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
@@ -46,6 +46,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
   const authContext = useAuth();
   const user = authContext.authState?.user || null;
+  // Hook-based navigation (needed for hyperlink handler)
+  const nav = useNavigation<any>();
 
   // State for modals and UI elements
   const [showSeries, setShowSeries] = useState<ShowSeries | null>(null);
@@ -88,6 +90,21 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const handleClaimShow = () => Alert.alert("Claim Show", "This feature is coming soon!");
   const navigateToEditShow = () => navigation.navigate('EditShow', { showId });
 
+  // Navigate dealer to the Subscription upgrade screen inside Profile tab
+  const navigateToSubscription = () => {
+    nav.dispatch(
+      CommonActions.navigate({
+        name: 'MainTabs', // parent tab navigator
+        params: {
+          screen: 'My Profile', // profile tab
+          params: {
+            screen: 'SubscriptionScreen', // nested stack screen
+          },
+        },
+      })
+    );
+  };
+
   // MVP Dealer upgrade message component
   const MVPDealerUpgradeMessage = () => {
     if (user?.role !== UserRole.DEALER) return null;
@@ -96,7 +113,10 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       <View style={styles.upgradeMessageContainer}>
         <Ionicons name="star" size={24} color="#FF6A00" style={styles.upgradeIcon} />
         <Text style={styles.upgradeMessageText}>
-          Upgrade to an MVP Dealer to be featured in shows you set up for and find out what people are looking for in advance of the show.
+          <Text style={styles.upgradeLink} onPress={navigateToSubscription}>
+            Upgrade to MVP Dealer
+          </Text>{' '}
+          to be featured in shows you set up for and find out what people are looking for in advance of the show.
         </Text>
       </View>
     );
@@ -254,6 +274,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333333',
     lineHeight: 20,
+  },
+  /* Highlighted hyperlink style for “Upgrade to MVP Dealer” */
+  upgradeLink: {
+    color: '#FF6A00',           /* Brand orange */
+    fontWeight: 'bold',         /* Make it stand out */
+    textDecorationLine: 'underline', /* Clearly indicate it's clickable */
   }
 });
 
