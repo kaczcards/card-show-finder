@@ -350,10 +350,10 @@ BEGIN
   LOOP
     -- Check permissions for authenticated role
     SELECT 
-      MAX(CASE WHEN privilege_type = 'SELECT' THEN true ELSE false END) as has_select,
-      MAX(CASE WHEN privilege_type = 'INSERT' THEN true ELSE false END) as has_insert,
-      MAX(CASE WHEN privilege_type = 'UPDATE' THEN true ELSE false END) as has_update,
-      MAX(CASE WHEN privilege_type = 'DELETE' THEN true ELSE false END) as has_delete
+      BOOL_OR(privilege_type = 'SELECT') as has_select,
+      BOOL_OR(privilege_type = 'INSERT') as has_insert,
+      BOOL_OR(privilege_type = 'UPDATE') as has_update,
+      BOOL_OR(privilege_type = 'DELETE') as has_delete
     INTO has_select, has_insert, has_update, has_delete
     FROM information_schema.role_table_grants
     WHERE table_schema = 'public'
