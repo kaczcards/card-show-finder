@@ -996,7 +996,7 @@ CREATE POLICY "Users can view their own planned attendance"
   ON planned_attendance
   FOR SELECT
   TO authenticated
-  USING (userid = auth.uid());
+  USING (user_id = auth.uid());
 
 -- 2. MVP dealers can view planned attendance for shows they participate in
 CREATE POLICY "MVP dealers can view planned attendance for their shows"
@@ -1007,7 +1007,7 @@ CREATE POLICY "MVP dealers can view planned attendance for their shows"
     -- User is an MVP dealer
     is_mvp_dealer() AND
     -- For shows they participate in
-    participates_in_show(showid)
+    participates_in_show(show_id)
   );
 
 -- 3. Show organizers can view planned attendance for shows they organize
@@ -1019,7 +1019,7 @@ CREATE POLICY "Show organizers can view planned attendance for their shows"
     -- User is a show organizer
     is_show_organizer() AND
     -- For shows they organize
-    organizes_show(showid)
+    organizes_show(show_id)
   );
 
 -- 4. Users can create their own planned attendance
@@ -1027,14 +1027,14 @@ CREATE POLICY "Users can create their own planned attendance"
   ON planned_attendance
   FOR INSERT
   TO authenticated
-  WITH CHECK (userid = auth.uid());
+  WITH CHECK (user_id = auth.uid());
 
 -- 5. Users can delete their own planned attendance
 CREATE POLICY "Users can delete their own planned attendance"
   ON planned_attendance
   FOR DELETE
   TO authenticated
-  USING (userid = auth.uid());
+  USING (user_id = auth.uid());
 
 -- ================================================================
 -- SECTION 17: VERIFY ALL TABLES HAVE RLS ENABLED
