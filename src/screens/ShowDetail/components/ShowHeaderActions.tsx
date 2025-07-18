@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+// Show model – needed to inspect start / end dates
+import { Show } from '../../../types';
 
 interface ShowHeaderActionsProps {
   isFavorite: boolean;
@@ -9,6 +11,8 @@ interface ShowHeaderActionsProps {
   onOpenMap: () => void;
   onShare: () => void;
   onReview: () => void;
+  /** Full show object so we can determine if the show is in the past */
+  show: Show;
 }
 
 const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
@@ -18,7 +22,21 @@ const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
   onOpenMap,
   onShare,
   onReview,
+  show,
 }) => {
+  /**
+   * Determines whether the show has already finished.
+   * If `endDate` exists use that, otherwise fall back to `startDate`.
+   * Reviews are only permitted for shows that have *ended*.
+   */
+  const hasShowEnded = (s: Show): boolean => {
+    const dateStr = (s.endDate ?? s.startDate) as string | Date;
+    if (!dateStr) return false;
+    return new Date(dateStr).getTime() < Date.now();
+  };
+
+  const canLeaveReview = hasShowEnded(show);
+
   return (
     <View style={styles.actionsContainer}>
       <TouchableOpacity style={styles.actionButton} onPress={onToggleFavorite}>
@@ -39,11 +57,14 @@ const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
         <Ionicons name="share-outline" size={24} color="#333333" />
         <Text style={styles.actionText}>Share</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.actionButton} onPress={onReview}>
-        <Ionicons name="star-outline" size={24} color="#333333" />
-        <Text style={styles.actionText}>Review</Text>
-      </TouchableOpacity>
+
+      {/* Review button – visible only AFTER the show has completed */}
+      {canLeaveReview && (
+        <TouchableOpacity style={styles.actionButton} onPress={onReview}>
+          <Ionicons name="star-outline" size={24} color="#333333" />
+          <Text style={styles.actionText}>Review</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
