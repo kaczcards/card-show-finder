@@ -795,131 +795,186 @@ CREATE POLICY "Organizers can create show series"
 -- SECTION 13: BADGES TABLE
 -- ================================================================
 
--- Enable RLS on badges table
-ALTER TABLE IF EXISTS public.badges ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  -- Only apply RLS if the *badges* table is present in this installation
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name   = 'badges'
+  ) THEN
+    -- Enable RLS on badges table
+    ALTER TABLE public.badges ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
-SELECT safe_drop_policy('Anyone can view badges', 'badges');
-SELECT safe_drop_policy('Only admins can manage badges', 'badges');
+    -- Drop existing policies
+    PERFORM safe_drop_policy('Anyone can view badges', 'badges');
+    PERFORM safe_drop_policy('Only admins can manage badges', 'badges');
 
--- Create new policies
--- 1. Anyone can view badges
-CREATE POLICY "Anyone can view badges"
-  ON badges
-  FOR SELECT
-  TO public
-  USING (true);
+    -- Create new policies
+    -- 1. Anyone can view badges
+    CREATE POLICY "Anyone can view badges"
+      ON badges
+      FOR SELECT
+      TO public
+      USING (true);
 
--- 2. Only admins can manage badges
-CREATE POLICY "Only admins can manage badges"
-  ON badges
-  FOR ALL
-  TO authenticated
-  USING (is_admin());
+    -- 2. Only admins can manage badges
+    CREATE POLICY "Only admins can manage badges"
+      ON badges
+      FOR ALL
+      TO authenticated
+      USING (is_admin());
+  ELSE
+    RAISE NOTICE 'Skipping badges-table policies – table does not exist in this environment.';
+  END IF;
+END $$;
 
 -- ================================================================
 -- SECTION 14: USER_BADGES TABLE
 -- ================================================================
 
--- Enable RLS on user_badges table if it exists
-ALTER TABLE IF EXISTS public.user_badges ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  -- Only apply RLS if the *user_badges* table is present
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name   = 'user_badges'
+  ) THEN
+    -- Enable RLS on user_badges table
+    ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
-SELECT safe_drop_policy('Users can view their own badges', 'user_badges');
-SELECT safe_drop_policy('Users can view other users badges', 'user_badges');
-SELECT safe_drop_policy('Only admins can manage user badges', 'user_badges');
+    -- Drop existing policies
+    PERFORM safe_drop_policy('Users can view their own badges', 'user_badges');
+    PERFORM safe_drop_policy('Users can view other users badges', 'user_badges');
+    PERFORM safe_drop_policy('Only admins can manage user badges', 'user_badges');
 
--- Create new policies
--- 1. Users can view their own badges
-CREATE POLICY "Users can view their own badges"
-  ON user_badges
-  FOR SELECT
-  TO authenticated
-  USING (user_id = auth.uid());
+    -- Create new policies
+    -- 1. Users can view their own badges
+    CREATE POLICY "Users can view their own badges"
+      ON user_badges
+      FOR SELECT
+      TO authenticated
+      USING (user_id = auth.uid());
 
--- 2. Users can view other users' badges
-CREATE POLICY "Users can view other users badges"
-  ON user_badges
-  FOR SELECT
-  TO authenticated
-  USING (true);
+    -- 2. Users can view other users' badges
+    CREATE POLICY "Users can view other users badges"
+      ON user_badges
+      FOR SELECT
+      TO authenticated
+      USING (true);
 
--- 3. Only admins can manage user badges
-CREATE POLICY "Only admins can manage user badges"
-  ON user_badges
-  FOR ALL
-  TO authenticated
-  USING (is_admin());
+    -- 3. Only admins can manage user badges
+    CREATE POLICY "Only admins can manage user badges"
+      ON user_badges
+      FOR ALL
+      TO authenticated
+      USING (is_admin());
+  ELSE
+    RAISE NOTICE 'Skipping user_badges-table policies – table does not exist in this environment.';
+  END IF;
+END $$;
 
--- ================================================================
 -- SECTION 15: STORAGE OBJECTS
 -- ================================================================
 
--- Enable RLS on storage.objects
-ALTER TABLE IF EXISTS storage.objects ENABLE ROW LEVEL SECURITY;
+DO $$
+DECLARE
+  _has_storage BOOLEAN;
+BEGIN
+  /* ------------------------------------------------------------
+     Check that the storage.objects table exists before proceeding
+  ------------------------------------------------------------ */
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'storage'
+      AND table_name   = 'objects'
+  ) INTO _has_storage;
 
--- Drop existing policies
-SELECT safe_drop_policy('Avatar images are publicly accessible', 'objects');
-SELECT safe_drop_policy('Users can upload own avatar', 'objects');
-SELECT safe_drop_policy('Users can update own avatar', 'objects');
-SELECT safe_drop_policy('Users can delete own avatar', 'objects');
-SELECT safe_drop_policy('Show images are publicly accessible', 'objects');
-SELECT safe_drop_policy('Organizers can upload show images', 'objects');
+  IF NOT _has_storage THEN
+    RAISE NOTICE 'Skipping storage.objects policies – table not present.';
+    RETURN;
+  END IF;
 
--- Create new policies
--- 1. Avatar images are publicly accessible
-CREATE POLICY "Avatar images are publicly accessible"
-  ON storage.objects
-  FOR SELECT
-  TO public
-  USING (bucket_id = 'avatars');
+  /* ------------------------------------------------------------
+     Try to enable RLS and (re-)create policies.  If the executing
+     role is not the owner of storage.objects we will catch the
+     insufficient_privilege error and skip this section gracefully.
+  ------------------------------------------------------------ */
+  BEGIN
+    -- Enable RLS
+    EXECUTE 'ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY';
 
--- 2. Users can upload their own avatar
-CREATE POLICY "Users can upload own avatar"
-  ON storage.objects
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    bucket_id = 'avatars' AND
-    (storage.foldername(name))[1] = auth.uid()::text
-  );
+    -- Drop existing policies via helper
+    PERFORM safe_drop_policy('Avatar images are publicly accessible', 'objects');
+    PERFORM safe_drop_policy('Users can upload own avatar',          'objects');
+    PERFORM safe_drop_policy('Users can update own avatar',          'objects');
+    PERFORM safe_drop_policy('Users can delete own avatar',          'objects');
+    PERFORM safe_drop_policy('Show images are publicly accessible',  'objects');
+    PERFORM safe_drop_policy('Organizers can upload show images',    'objects');
 
--- 3. Users can update their own avatar
-CREATE POLICY "Users can update own avatar"
-  ON storage.objects
-  FOR UPDATE
-  TO authenticated
-  USING (
-    bucket_id = 'avatars' AND
-    (storage.foldername(name))[1] = auth.uid()::text
-  );
+    /* ---------- Avatar bucket policies ---------- */
+    CREATE POLICY "Avatar images are publicly accessible"
+      ON storage.objects
+      FOR SELECT
+      TO public
+      USING (bucket_id = 'avatars');
 
--- 4. Users can delete their own avatar
-CREATE POLICY "Users can delete own avatar"
-  ON storage.objects
-  FOR DELETE
-  TO authenticated
-  USING (
-    bucket_id = 'avatars' AND
-    (storage.foldername(name))[1] = auth.uid()::text
-  );
+    CREATE POLICY "Users can upload own avatar"
+      ON storage.objects
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (
+        bucket_id = 'avatars'
+        AND (storage.foldername(name))[1] = auth.uid()::text
+      );
 
--- 5. Show images are publicly accessible
-CREATE POLICY "Show images are publicly accessible"
-  ON storage.objects
-  FOR SELECT
-  TO public
-  USING (bucket_id = 'shows');
+    CREATE POLICY "Users can update own avatar"
+      ON storage.objects
+      FOR UPDATE
+      TO authenticated
+      USING (
+        bucket_id = 'avatars'
+        AND (storage.foldername(name))[1] = auth.uid()::text
+      );
 
--- 6. Organizers can upload show images
-CREATE POLICY "Organizers can upload show images"
-  ON storage.objects
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    bucket_id = 'shows' AND
-    is_show_organizer()
-  );
+    CREATE POLICY "Users can delete own avatar"
+      ON storage.objects
+      FOR DELETE
+      TO authenticated
+      USING (
+        bucket_id = 'avatars'
+        AND (storage.foldername(name))[1] = auth.uid()::text
+      );
+
+    /* ---------- Shows bucket policies ---------- */
+    CREATE POLICY "Show images are publicly accessible"
+      ON storage.objects
+      FOR SELECT
+      TO public
+      USING (bucket_id = 'shows');
+
+    CREATE POLICY "Organizers can upload show images"
+      ON storage.objects
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (
+        bucket_id = 'shows'
+        AND is_show_organizer()
+      );
+
+    RAISE NOTICE 'storage.objects policies applied successfully.';
+
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      RAISE NOTICE 'Skipping storage.objects policies – current role lacks ownership privileges.';
+    WHEN others THEN
+      RAISE WARNING 'Unhandled error while configuring storage.objects policies: %', SQLERRM;
+  END;
+END $$;
 
 -- ================================================================
 -- SECTION 16: PLANNED_ATTENDANCE TABLE
@@ -941,7 +996,7 @@ CREATE POLICY "Users can view their own planned attendance"
   ON planned_attendance
   FOR SELECT
   TO authenticated
-  USING (userid = auth.uid());
+  USING (user_id = auth.uid());
 
 -- 2. MVP dealers can view planned attendance for shows they participate in
 CREATE POLICY "MVP dealers can view planned attendance for their shows"
@@ -952,7 +1007,7 @@ CREATE POLICY "MVP dealers can view planned attendance for their shows"
     -- User is an MVP dealer
     is_mvp_dealer() AND
     -- For shows they participate in
-    participates_in_show(showid)
+    participates_in_show(show_id)
   );
 
 -- 3. Show organizers can view planned attendance for shows they organize
@@ -964,7 +1019,7 @@ CREATE POLICY "Show organizers can view planned attendance for their shows"
     -- User is a show organizer
     is_show_organizer() AND
     -- For shows they organize
-    organizes_show(showid)
+    organizes_show(show_id)
   );
 
 -- 4. Users can create their own planned attendance
@@ -972,14 +1027,14 @@ CREATE POLICY "Users can create their own planned attendance"
   ON planned_attendance
   FOR INSERT
   TO authenticated
-  WITH CHECK (userid = auth.uid());
+  WITH CHECK (user_id = auth.uid());
 
 -- 5. Users can delete their own planned attendance
 CREATE POLICY "Users can delete their own planned attendance"
   ON planned_attendance
   FOR DELETE
   TO authenticated
-  USING (userid = auth.uid());
+  USING (user_id = auth.uid());
 
 -- ================================================================
 -- SECTION 17: VERIFY ALL TABLES HAVE RLS ENABLED
