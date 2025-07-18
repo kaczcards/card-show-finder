@@ -6,6 +6,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Global toast notifications
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+// Sentry error tracking
+import { initSentry } from './src/services/sentryConfig';
+import SentryErrorBoundary from './src/components/SentryErrorBoundary';
 
 /**
  * ---------------------------------------------------------------------------
@@ -106,6 +109,13 @@ export default function App() {
   const [netError, setNetError] = useState<string | null>(null);
 
   useEffect(() => {
+    // --------------------------------------------------
+    // Initialise Sentry (crash & error reporting)
+    // --------------------------------------------------
+    // Runs only once on first render thanks to empty
+    // dependency array for this useEffect.
+    initSentry();
+
     /**
      * Quick network diagnostic – attempts to fetch a known-good public
      * JSON endpoint with a 5 second timeout.  Logs full details so we
@@ -213,17 +223,19 @@ export default function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <RootNavigator />
-            <StatusBar style="auto" />
-            {/* Global toast portal */}
-            <Toast config={toastConfig} />
-          </AuthProvider>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <SentryErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <RootNavigator />
+              <StatusBar style="auto" />
+              {/* Global toast portal */}
+              <Toast config={toastConfig} />
+            </AuthProvider>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </SentryErrorBoundary>
   );
 }
