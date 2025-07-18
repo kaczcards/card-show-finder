@@ -715,7 +715,7 @@ CREATE POLICY "Users can create reviews for shows they attended"
   FOR INSERT
   TO authenticated
   WITH CHECK (
-    reviewer_id = auth.uid() AND
+    user_id = auth.uid() AND
     EXISTS (
       SELECT 1 FROM show_participants sp
       WHERE sp.userid = auth.uid()
@@ -728,15 +728,15 @@ CREATE POLICY "Users can update their own reviews"
   ON reviews
   FOR UPDATE
   TO authenticated
-  USING (reviewer_id = auth.uid())
-  WITH CHECK (reviewer_id = auth.uid());
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
 
 -- 4. Users can delete their own reviews
 CREATE POLICY "Users can delete their own reviews"
   ON reviews
   FOR DELETE
   TO authenticated
-  USING (reviewer_id = auth.uid());
+  USING (user_id = auth.uid());
 
 -- 5. Admins can moderate all reviews
 CREATE POLICY "Admins can moderate all reviews"
