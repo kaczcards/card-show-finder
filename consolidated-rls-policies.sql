@@ -795,61 +795,87 @@ CREATE POLICY "Organizers can create show series"
 -- SECTION 13: BADGES TABLE
 -- ================================================================
 
--- Enable RLS on badges table
-ALTER TABLE IF EXISTS public.badges ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  -- Only apply RLS if the *badges* table is present in this installation
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name   = 'badges'
+  ) THEN
+    -- Enable RLS on badges table
+    ALTER TABLE public.badges ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
-SELECT safe_drop_policy('Anyone can view badges', 'badges');
-SELECT safe_drop_policy('Only admins can manage badges', 'badges');
+    -- Drop existing policies
+    PERFORM safe_drop_policy('Anyone can view badges', 'badges');
+    PERFORM safe_drop_policy('Only admins can manage badges', 'badges');
 
--- Create new policies
--- 1. Anyone can view badges
-CREATE POLICY "Anyone can view badges"
-  ON badges
-  FOR SELECT
-  TO public
-  USING (true);
+    -- Create new policies
+    -- 1. Anyone can view badges
+    CREATE POLICY IF NOT EXISTS "Anyone can view badges"
+      ON badges
+      FOR SELECT
+      TO public
+      USING (true);
 
--- 2. Only admins can manage badges
-CREATE POLICY "Only admins can manage badges"
-  ON badges
-  FOR ALL
-  TO authenticated
-  USING (is_admin());
+    -- 2. Only admins can manage badges
+    CREATE POLICY IF NOT EXISTS "Only admins can manage badges"
+      ON badges
+      FOR ALL
+      TO authenticated
+      USING (is_admin());
+  ELSE
+    RAISE NOTICE 'Skipping badges-table policies – table does not exist in this environment.';
+  END IF;
+END $$;
 
 -- ================================================================
 -- SECTION 14: USER_BADGES TABLE
 -- ================================================================
 
--- Enable RLS on user_badges table if it exists
-ALTER TABLE IF EXISTS public.user_badges ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  -- Only apply RLS if the *user_badges* table is present
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name   = 'user_badges'
+  ) THEN
+    -- Enable RLS on user_badges table
+    ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
-SELECT safe_drop_policy('Users can view their own badges', 'user_badges');
-SELECT safe_drop_policy('Users can view other users badges', 'user_badges');
-SELECT safe_drop_policy('Only admins can manage user badges', 'user_badges');
+    -- Drop existing policies
+    PERFORM safe_drop_policy('Users can view their own badges', 'user_badges');
+    PERFORM safe_drop_policy('Users can view other users badges', 'user_badges');
+    PERFORM safe_drop_policy('Only admins can manage user badges', 'user_badges');
 
--- Create new policies
--- 1. Users can view their own badges
-CREATE POLICY "Users can view their own badges"
-  ON user_badges
-  FOR SELECT
-  TO authenticated
-  USING (user_id = auth.uid());
+    -- Create new policies
+    -- 1. Users can view their own badges
+    CREATE POLICY IF NOT EXISTS "Users can view their own badges"
+      ON user_badges
+      FOR SELECT
+      TO authenticated
+      USING (user_id = auth.uid());
 
--- 2. Users can view other users' badges
-CREATE POLICY "Users can view other users badges"
-  ON user_badges
-  FOR SELECT
-  TO authenticated
-  USING (true);
+    -- 2. Users can view other users' badges
+    CREATE POLICY IF NOT EXISTS "Users can view other users badges"
+      ON user_badges
+      FOR SELECT
+      TO authenticated
+      USING (true);
 
--- 3. Only admins can manage user badges
-CREATE POLICY "Only admins can manage user badges"
-  ON user_badges
-  FOR ALL
-  TO authenticated
-  USING (is_admin());
+    -- 3. Only admins can manage user badges
+    CREATE POLICY IF NOT EXISTS "Only admins can manage user badges"
+      ON user_badges
+      FOR ALL
+      TO authenticated
+      USING (is_admin());
+  ELSE
+    RAISE NOTICE 'Skipping user_badges-table policies – table does not exist in this environment.';
+  END IF;
+END $$;
 
 -- ================================================================
 -- SECTION 15: STORAGE OBJECTS
