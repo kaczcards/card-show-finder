@@ -53,6 +53,31 @@ EXCEPTION WHEN undefined_table THEN
 END$$;
 
 -- ================================================================
+-- PRE-FLIGHT (2): FIX KNOWN INFINITE-RECURSION POLICY
+-- ================================================================
+-- The original "show_participants_select_mvp_dealer" policy queries the
+-- *same* table inside its USING clause, producing 42P17 infinite-recursion
+-- errors during simple SELECTs.  For the purpose of this test-suite we
+-- replace it with a safe, non-recursive version.
+
+DO $fix_sp_rls$
+BEGIN
+  IF to_regclass('public.show_participants') IS NOT NULL THEN
+    -- Drop only if it exists – keeps script idempotent.
+    EXECUTE
+      $$DROP POLICY IF EXISTS "show_participants_select_mvp_dealer" ON public.show_participants$$;
+
+    -- Re-create a simplified, non-recursive policy:
+    EXECUTE
+      $$CREATE POLICY "show_participants_select_mvp_dealer" ON public.show_participants
+          FOR SELECT
+          TO authenticated
+          USING (is_mvp_dealer())$$;
+  END IF;
+END;
+$fix_sp_rls$;
+
+-- ================================================================
 -- SECTION 1: TEST PLAN AND SETUP
 -- ================================================================
 
