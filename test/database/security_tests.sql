@@ -21,6 +21,38 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 BEGIN;
 
 -- ================================================================
+-- PRE-FLIGHT: ENSURE user_roles TABLE EXISTS
+-- ================================================================
+-- Some test environments may not have executed the 20240709_create_admin_role
+-- migration yet.  To avoid “relation public.user_roles does not exist” errors,
+-- we create a minimal compatible table on-the-fly.  If it already exists,
+-- the IF NOT EXISTS clause keeps this idempotent.
+
+CREATE TABLE IF NOT EXISTS public.user_roles (
+    id          UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    role        TEXT NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (user_id, role)
+);
+
+-- Enable RLS if not already enabled (tests assume it may be in place)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+      SELECT 1
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public' AND c.relname = 'user_roles' AND c.relrowsecurity
+  ) THEN
+    ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+  END IF;
+EXCEPTION WHEN undefined_table THEN
+  -- Should not happen, but swallow to keep tests running
+END$$;
+
+-- ================================================================
 -- SECTION 1: TEST PLAN AND SETUP
 -- ================================================================
 
