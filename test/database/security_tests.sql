@@ -202,13 +202,40 @@ BEGIN
         (test_conversation_id2, test_organizer_id)
     ON CONFLICT (conversation_id, user_id) DO NOTHING;
     
+    -------------------------------------------------------------------
+    -- Ensure messages table has a message_text column for the tests.
+    -- Older schemas only have `content`.  Adding a nullable column keeps
+    -- production safe yet lets the test-suite run unchanged.
+    -------------------------------------------------------------------
+    DO $msg_col$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM   information_schema.columns
+            WHERE  table_schema = 'public'
+            AND    table_name   = 'messages'
+            AND    column_name  = 'message_text'
+        ) THEN
+            ALTER TABLE public.messages
+              ADD COLUMN message_text TEXT;
+
+            -- Back-fill so existing rows stay consistent
+            UPDATE public.messages
+               SET message_text = content
+             WHERE message_text IS NULL;
+        END IF;
+    EXCEPTION WHEN undefined_table THEN
+        -- Messaging feature may be absent in some envs; ignore gracefully.
+    END;
+    $msg_col$;
+
     -- Create test messages
-    INSERT INTO public.messages (conversation_id, sender_id, message_text)
+    INSERT INTO public.messages (conversation_id, sender_id, content, message_text)
     VALUES
-        (test_conversation_id1, test_attendee_id, 'Test message from attendee'),
-        (test_conversation_id1, test_dealer_id, 'Test message from dealer'),
-        (test_conversation_id2, test_mvp_dealer_id, 'Test message from MVP dealer'),
-        (test_conversation_id2, test_organizer_id, 'Test message from organizer')
+        (test_conversation_id1, test_attendee_id, 'Test message from attendee', 'Test message from attendee'),
+        (test_conversation_id1, test_dealer_id,   'Test message from dealer',   'Test message from dealer'),
+        (test_conversation_id2, test_mvp_dealer_id, 'Test message from MVP dealer', 'Test message from MVP dealer'),
+        (test_conversation_id2, test_organizer_id,  'Test message from organizer',  'Test message from organizer')
     ON CONFLICT DO NOTHING;
     
     -- Create test reviews
