@@ -48,16 +48,17 @@ BEGIN
     END IF;
     
     -- Create profiles with different roles
-    INSERT INTO public.profiles (id, username, full_name, role)
+    INSERT INTO public.profiles (id, first_name, last_name, email, role)
     VALUES
-        (test_attendee_id, 'test_attendee', 'Test Attendee', 'attendee'),
-        (test_dealer_id, 'test_dealer', 'Test Dealer', 'dealer'),
-        (test_mvp_dealer_id, 'test_mvp_dealer', 'Test MVP Dealer', 'mvp_dealer'),
-        (test_organizer_id, 'test_organizer', 'Test Organizer', 'show_organizer'),
-        (test_admin_id, 'test_admin', 'Test Admin', 'show_organizer')
+        (test_attendee_id, 'Test', 'Attendee', 'test_attendee@example.com', 'attendee'),
+        (test_dealer_id, 'Test', 'Dealer', 'test_dealer@example.com', 'dealer'),
+        (test_mvp_dealer_id, 'Test', 'MVP Dealer', 'test_mvp_dealer@example.com', 'mvp_dealer'),
+        (test_organizer_id, 'Test', 'Organizer', 'test_organizer@example.com', 'show_organizer'),
+        (test_admin_id, 'Test', 'Admin', 'test_admin@example.com', 'show_organizer')
     ON CONFLICT (id) DO UPDATE 
-    SET username = EXCLUDED.username, 
-        full_name = EXCLUDED.full_name, 
+    SET first_name = EXCLUDED.first_name, 
+        last_name = EXCLUDED.last_name, 
+        email = EXCLUDED.email,
         role = EXCLUDED.role;
     
     -- Add admin role to admin user
@@ -89,11 +90,11 @@ DECLARE
     test_series_id UUID := 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 BEGIN
     -- Create test shows
-    INSERT INTO public.shows (id, title, location, start_date, end_date, organizer_id)
+    INSERT INTO public.shows (id, title, location, address, start_date, end_date, organizer_id)
     VALUES
-        (test_show_id1, 'Test Show 1', 'Test Location 1', CURRENT_DATE, CURRENT_DATE + 1, test_organizer_id),
-        (test_show_id2, 'Test Show 2', 'Test Location 2', CURRENT_DATE + 7, CURRENT_DATE + 8, test_organizer_id),
-        (test_show_id3, 'Test Show 3', 'Test Location 3', CURRENT_DATE + 14, CURRENT_DATE + 15, test_admin_id)
+        (test_show_id1, 'Test Show 1', 'Test Location 1', 'Test Address 1', CURRENT_DATE, CURRENT_DATE + 1, test_organizer_id),
+        (test_show_id2, 'Test Show 2', 'Test Location 2', 'Test Address 2', CURRENT_DATE + 7, CURRENT_DATE + 8, test_organizer_id),
+        (test_show_id3, 'Test Show 3', 'Test Location 3', 'Test Address 3', CURRENT_DATE + 14, CURRENT_DATE + 15, test_admin_id)
     ON CONFLICT (id) DO UPDATE 
     SET title = EXCLUDED.title, 
         location = EXCLUDED.location;
@@ -129,13 +130,12 @@ BEGIN
     ON CONFLICT (user_id, show_id) DO NOTHING;
     
     -- Create test want lists
-    INSERT INTO public.want_lists (id, userid, title, items)
+    INSERT INTO public.want_lists (id, userid, content)
     VALUES
-        (test_wantlist_id1, test_attendee_id, 'Test Want List 1', '{"Card 1", "Card 2"}'),
-        (test_wantlist_id2, test_dealer_id, 'Test Want List 2', '{"Card 3", "Card 4"}')
+        (test_wantlist_id1, test_attendee_id, 'Card 1, Card 2'),
+        (test_wantlist_id2, test_dealer_id, 'Card 3, Card 4')
     ON CONFLICT (id) DO UPDATE 
-    SET title = EXCLUDED.title, 
-        items = EXCLUDED.items;
+    SET content = EXCLUDED.content;
     
     -- Share want list with show
     INSERT INTO public.shared_want_lists (userid, showid, wantlistid)
@@ -379,14 +379,14 @@ SELECT results_eq(
 -- Test users can update their own profile
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'UPDATE profiles SET bio = ''Updated bio'' WHERE id = ''11111111-1111-1111-1111-111111111111''',
+    'UPDATE profiles SET first_name = ''Updated'' WHERE id = ''11111111-1111-1111-1111-111111111111''',
     'User should be able to update their own profile'
 );
 
 -- Test users cannot update other users' profiles
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'UPDATE profiles SET bio = ''Unauthorized update'' WHERE id = ''22222222-2222-2222-2222-222222222222''',
+    'UPDATE profiles SET first_name = ''Unauthorized'' WHERE id = ''22222222-2222-2222-2222-222222222222''',
     '42501',
     'new row violates row-level security policy',
     'User should not be able to update other users profiles'
@@ -401,7 +401,7 @@ SELECT results_eq(
 );
 
 SELECT lives_ok(
-    'UPDATE profiles SET bio = ''Admin update'' WHERE id = ''22222222-2222-2222-2222-222222222222''',
+    'UPDATE profiles SET first_name = ''Admin'' WHERE id = ''22222222-2222-2222-2222-222222222222''',
     'Admin should be able to update any profile'
 );
 
@@ -448,8 +448,8 @@ SELECT lives_ok(
 -- Test organizers can insert new shows
 SELECT set_test_user('44444444-4444-4444-4444-444444444444');
 SELECT lives_ok(
-    'INSERT INTO shows (id, title, location, start_date, end_date, organizer_id) 
-     VALUES (''77777777-7777-7777-7777-777777777777'', ''New Test Show'', ''New Location'', CURRENT_DATE + 30, CURRENT_DATE + 31, ''44444444-4444-4444-4444-444444444444'')',
+    'INSERT INTO shows (id, title, location, address, start_date, end_date, organizer_id) 
+     VALUES (''77777777-7777-7777-7777-777777777777'', ''New Test Show'', ''New Location'', ''New Address'', CURRENT_DATE + 30, CURRENT_DATE + 31, ''44444444-4444-4444-4444-444444444444'')',
     'Organizer should be able to insert new shows'
 );
 
@@ -656,14 +656,14 @@ SELECT results_eq(
 -- Test users can create their own want lists
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'INSERT INTO want_lists (id, userid, title, items) VALUES (''cccccccc-cccc-cccc-cccc-cccccccccccc'', ''11111111-1111-1111-1111-111111111111'', ''New Want List'', ''{"New Card 1", "New Card 2"}'')',
+    'INSERT INTO want_lists (id, userid, content) VALUES (''cccccccc-cccc-cccc-cccc-cccccccccccc'', ''11111111-1111-1111-1111-111111111111'', ''New Card 1, New Card 2'')',
     'User should be able to create their own want lists'
 );
 
 -- Test users cannot create want lists for other users
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'INSERT INTO want_lists (id, userid, title, items) VALUES (''dddddddd-dddd-dddd-dddd-dddddddddddd'', ''22222222-2222-2222-2222-222222222222'', ''Unauthorized Want List'', ''{"Card"}'')',
+    'INSERT INTO want_lists (id, userid, content) VALUES (''dddddddd-dddd-dddd-dddd-dddddddddddd'', ''22222222-2222-2222-2222-222222222222'', ''Unauthorized Card'')',
     '42501',
     'new row violates row-level security policy',
     'User should not be able to create want lists for other users'
@@ -672,14 +672,14 @@ SELECT throws_ok(
 -- Test users can update their own want lists
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'UPDATE want_lists SET title = ''Updated Want List'' WHERE userid = ''11111111-1111-1111-1111-111111111111''',
+    'UPDATE want_lists SET content = ''Updated Want List'' WHERE userid = ''11111111-1111-1111-1111-111111111111''',
     'User should be able to update their own want lists'
 );
 
 -- Test users cannot update other users' want lists
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'UPDATE want_lists SET title = ''Unauthorized Update'' WHERE userid = ''22222222-2222-2222-2222-222222222222''',
+    'UPDATE want_lists SET content = ''Unauthorized Update'' WHERE userid = ''22222222-2222-2222-2222-222222222222''',
     '42501',
     'new row violates row-level security policy',
     'User should not be able to update other users want lists'
@@ -729,7 +729,7 @@ SELECT results_eq(
 -- Test users can share their own want lists
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'INSERT INTO want_lists (id, userid, title, items) VALUES (''eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'', ''11111111-1111-1111-1111-111111111111'', ''New Want List 2'', ''{"Card"}'')',
+    'INSERT INTO want_lists (id, userid, content) VALUES (''eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'', ''11111111-1111-1111-1111-111111111111'', ''New Want List 2'')',
     'Set up new want list for sharing test'
 );
 
@@ -1239,7 +1239,7 @@ SELECT throws_ok(
 -- Test unauthorized profile update
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'UPDATE profiles SET bio = ''Unauthorized update'' WHERE id = ''22222222-2222-2222-2222-222222222222''',
+    'UPDATE profiles SET first_name = ''Unauthorized'' WHERE id = ''22222222-2222-2222-2222-222222222222''',
     '42501',
     'new row violates row-level security policy',
     'User cannot update other users'' profiles'
