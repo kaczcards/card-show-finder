@@ -151,7 +151,7 @@ DECLARE
   expected_policies JSONB;
   policy_name TEXT;
   policy_found BOOLEAN;
-  table_name TEXT;
+  target_table_name TEXT;  -- renamed to avoid collision with column name
 BEGIN
   -- Define expected policies for key tables
   expected_policies = '{
@@ -201,17 +201,18 @@ BEGIN
   }';
 
   -- Check each table in the expected policies list
-  FOR table_name IN SELECT * FROM jsonb_object_keys(expected_policies)
+  FOR target_table_name IN SELECT * FROM jsonb_object_keys(expected_policies)
   LOOP
     -- Check if table exists
     IF NOT EXISTS (
       SELECT 1 FROM information_schema.tables 
-      WHERE table_schema = 'public' AND table_name = table_name
+      WHERE table_schema = 'public' 
+        AND table_name   = target_table_name
     ) THEN
       INSERT INTO rls_verification_results 
         (check_type, object_name, status, details, severity)
       VALUES 
-        ('Table Existence', table_name, 'WARNING', 
+        ('Table Existence', target_table_name, 'WARNING', 
          'Table does not exist but has expected policies defined', 'MEDIUM');
          
       -- Update summary
@@ -220,19 +221,19 @@ BEGIN
     END IF;
     
     -- For each expected policy, check if it exists
-    FOR policy_name IN SELECT * FROM jsonb_array_elements_text(expected_policies->table_name)
+    FOR policy_name IN SELECT * FROM jsonb_array_elements_text(expected_policies->target_table_name)
     LOOP
       IF EXISTS (
         SELECT 1 FROM pg_policies
         WHERE schemaname = 'public' 
-        AND tablename = table_name
+        AND tablename = target_table_name
         AND policyname = policy_name
       ) THEN
         -- Policy exists - good
         INSERT INTO rls_verification_results 
           (check_type, object_name, status, details, severity)
         VALUES 
-          ('Policy Exists', table_name || '.' || policy_name, 'PASS', 
+          ('Policy Exists', target_table_name || '.' || policy_name, 'PASS', 
            'Policy exists as expected', 'INFO');
            
         -- Update summary
@@ -242,7 +243,7 @@ BEGIN
         INSERT INTO rls_verification_results 
           (check_type, object_name, status, details, severity)
         VALUES 
-          ('Policy Exists', table_name || '.' || policy_name, 'FAIL', 
+        ('Policy Exists', target_table_name || '.' || policy_name, 'FAIL', 
            'Expected policy does not exist', 'HIGH');
            
         -- Update summary
