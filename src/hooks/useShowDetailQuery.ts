@@ -81,19 +81,21 @@ export const useShowDetailQuery = (showId: string) => {
     
     // Enhanced version that adds social media links for MVP Dealers
     const enhanceWithSocialMediaLinks = async (data: ShowDetailResponse) => {
-      // Find any MVP Dealers who need social media links
-      const mvpDealers = data.participatingDealers.filter(
-        dealer => dealer.role === 'MVP_DEALER'
+      // Find any dealers with elevated privileges (MVP Dealers or Show Organizers)
+      const privilegedDealers = data.participatingDealers.filter(
+        dealer =>
+          dealer.role === 'MVP_DEALER' ||
+          dealer.role === 'SHOW_ORGANIZER'
       );
       
-      if (mvpDealers.length === 0) return data; // No MVP dealers to enhance
+      if (privilegedDealers.length === 0) return data; // No privileged dealers to enhance
       
       try {
         // Fetch profiles for all MVP dealers in a single batch
         const { data: profiles, error } = await supabase
           .from('profiles')
           .select('id, facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url')
-          .in('id', mvpDealers.map(dealer => dealer.id));
+          .in('id', privilegedDealers.map(dealer => dealer.id));
         
         if (error || !profiles) {
           console.error('Error fetching dealer social media:', error);
@@ -114,7 +116,10 @@ export const useShowDetailQuery = (showId: string) => {
         
         // Enhance the dealers with social media links
         const enhancedDealers = data.participatingDealers.map(dealer => {
-          if (dealer.role === 'MVP_DEALER' && profileMap.has(dealer.id)) {
+          if (
+            (dealer.role === 'MVP_DEALER' || dealer.role === 'SHOW_ORGANIZER') &&
+            profileMap.has(dealer.id)
+          ) {
             return {
               ...dealer,
               ...profileMap.get(dealer.id)
