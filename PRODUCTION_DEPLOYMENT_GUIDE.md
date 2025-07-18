@@ -131,3 +131,27 @@ Deployment is **complete** when:
 * No RLS errors appear in logs for 24 h  
 
 Happy collecting 🚀
+
+---
+
+## 7. Database Backup Configuration 🗄️
+
+> _One-time setup for **new production** Supabase projects (skip if PITR is already enabled)._  
+
+1. **Open** Supabase Dashboard → **Project Settings → Database**  
+2. Scroll to **Point-in-Time Recovery (PITR)**  
+3. Toggle **Enable PITR** → set **Retention period** to **30 days** → **Save**  
+   *This gives you continuous WAL backups that fully cover a weekly-backup requirement.*  
+4. **Verify** success:  
+   * Dashboard shows “PITR enabled – retaining WAL files for **30 days**”  
+   * Latest base snapshot status is **COMPLETED** (should be <24 h old)  
+5. (Optional) run `node scripts/verify_backup_status.js` to programmatically check:  
+   ```bash
+   SUPABASE_ACCESS_TOKEN=<token> \
+   PROJECT_REF=<project_ref> \
+   node scripts/verify_backup_status.js
+   ```  
+   The script will flag any issues with snapshots or retention.
+
+For deeper recovery workflows, off-site dumps, and troubleshooting, see  
+`docs/DATABASE_BACKUP.md`.

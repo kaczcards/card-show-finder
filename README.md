@@ -16,6 +16,7 @@ Built with **React Native (Expo)** + **Supabase** so one code-base runs everywhe
 8. NPM Scripts
 9. Roadmap
 10. Contributing & License
+11. Database Backup & Recovery
 
 ---
 
@@ -168,3 +169,25 @@ Pull requests welcome!
 This project is licensed under the **MIT License** – see `LICENSE`.
 
 Happy collecting 🚀
+
+---
+
+## 11. Database Backup & Recovery
+
+Card Show Finder’s PostgreSQL database is protected by **Supabase Point-in-Time Recovery (PITR)**.
+
+* **Frequency** – continuous WAL streaming satisfies a *minimum* weekly-backup requirement  
+* **Retention** – PITR files are kept for **30 days**  
+* **Scope** – the *entire* database cluster (all schemas, tables & extensions)
+
+For a deeper dive (restore workflows, off-site dumps, verification scripts) see  
+`docs/DATABASE_BACKUP.md`.
+
+### Quick check – is my backup healthy?
+
+1. Supabase Dashboard → **Project Settings → Database → Backups**  
+2. Confirm “Point-in-Time Recovery” is **Enabled** and retention shows **30 days**  
+3. The latest snapshot should display a **COMPLETED** status within the last 24 h  
+4. (Optional) run `node scripts/verify_backup_status.js` to programmatically verify backups
+
+If any of the above checks fail, follow the troubleshooting steps in the backup documentation.
