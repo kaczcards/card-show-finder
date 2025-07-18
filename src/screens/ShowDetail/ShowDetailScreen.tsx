@@ -155,7 +155,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         onOpenMap={openMapLocation}
         onShare={shareShow}
         onReview={() => setShowReviewForm(true)}
-        show={show}               {/* Pass show object for date-based review logic */}
+        show={show}
       />
 
       <View style={styles.detailsContainer}>
