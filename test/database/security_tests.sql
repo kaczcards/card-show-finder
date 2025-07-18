@@ -230,12 +230,21 @@ BEGIN
     $msg_col$;
 
     -- Create test messages
-    INSERT INTO public.messages (conversation_id, sender_id, content, message_text)
+    -- Legacy schema requires `recipient_id` (NOT NULL).  Provide the
+    -- counterpart in each conversation to satisfy the constraint while
+    -- keeping inserts meaningful for both legacy and enhanced schemas.
+    INSERT INTO public.messages (conversation_id, sender_id, recipient_id, content, message_text)
     VALUES
-        (test_conversation_id1, test_attendee_id, 'Test message from attendee', 'Test message from attendee'),
-        (test_conversation_id1, test_dealer_id,   'Test message from dealer',   'Test message from dealer'),
-        (test_conversation_id2, test_mvp_dealer_id, 'Test message from MVP dealer', 'Test message from MVP dealer'),
-        (test_conversation_id2, test_organizer_id,  'Test message from organizer',  'Test message from organizer')
+        -- Conversation 1
+        (test_conversation_id1, test_attendee_id,  test_dealer_id,
+         'Test message from attendee', 'Test message from attendee'),
+        (test_conversation_id1, test_dealer_id,    test_attendee_id,
+         'Test message from dealer',   'Test message from dealer'),
+        -- Conversation 2
+        (test_conversation_id2, test_mvp_dealer_id, test_organizer_id,
+         'Test message from MVP dealer', 'Test message from MVP dealer'),
+        (test_conversation_id2, test_organizer_id,  test_mvp_dealer_id,
+         'Test message from organizer',  'Test message from organizer')
     ON CONFLICT DO NOTHING;
     
     -- Create test reviews
