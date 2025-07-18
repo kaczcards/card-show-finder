@@ -379,7 +379,7 @@ CREATE POLICY "want_lists_select_self"
   ON want_lists
   FOR SELECT
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (userid = auth.uid());
 
 -- 2. MVP dealers can view want lists shared with shows they participate in
 CREATE POLICY "want_lists_select_mvp_dealer"
@@ -422,22 +422,22 @@ CREATE POLICY "want_lists_insert"
   ON want_lists
   FOR INSERT
   TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (userid = auth.uid());
 
 -- 5. Users can update their own want lists
 CREATE POLICY "want_lists_update"
   ON want_lists
   FOR UPDATE
   TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+  USING (userid = auth.uid())
+  WITH CHECK (userid = auth.uid());
 
 -- 6. Users can delete their own want lists
 CREATE POLICY "want_lists_delete"
   ON want_lists
   FOR DELETE
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (userid = auth.uid());
 
 -- ================================================================
 -- SECTION 7: SHARED_WANT_LISTS TABLE
@@ -463,7 +463,7 @@ CREATE POLICY "shared_want_lists_select_self"
     EXISTS (
       SELECT 1 FROM want_lists wl
       WHERE wl.id = shared_want_lists.wantlistid
-      AND wl.user_id = auth.uid()
+      AND wl.userid = auth.uid()
     )
   );
 
@@ -500,7 +500,7 @@ CREATE POLICY "shared_want_lists_insert"
     EXISTS (
       SELECT 1 FROM want_lists wl
       WHERE wl.id = shared_want_lists.wantlistid
-      AND wl.user_id = auth.uid()
+      AND wl.userid = auth.uid()
     )
   );
 
@@ -513,7 +513,7 @@ CREATE POLICY "shared_want_lists_delete"
     EXISTS (
       SELECT 1 FROM want_lists wl
       WHERE wl.id = shared_want_lists.wantlistid
-      AND wl.user_id = auth.uid()
+      AND wl.userid = auth.uid()
     )
   );
 
@@ -941,7 +941,7 @@ CREATE POLICY "Users can view their own planned attendance"
   ON planned_attendance
   FOR SELECT
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (userid = auth.uid());
 
 -- 2. MVP dealers can view planned attendance for shows they participate in
 CREATE POLICY "MVP dealers can view planned attendance for their shows"
@@ -952,7 +952,7 @@ CREATE POLICY "MVP dealers can view planned attendance for their shows"
     -- User is an MVP dealer
     is_mvp_dealer() AND
     -- For shows they participate in
-    participates_in_show(show_id)
+    participates_in_show(showid)
   );
 
 -- 3. Show organizers can view planned attendance for shows they organize
@@ -964,7 +964,7 @@ CREATE POLICY "Show organizers can view planned attendance for their shows"
     -- User is a show organizer
     is_show_organizer() AND
     -- For shows they organize
-    organizes_show(show_id)
+    organizes_show(showid)
   );
 
 -- 4. Users can create their own planned attendance
@@ -972,14 +972,14 @@ CREATE POLICY "Users can create their own planned attendance"
   ON planned_attendance
   FOR INSERT
   TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (userid = auth.uid());
 
 -- 5. Users can delete their own planned attendance
 CREATE POLICY "Users can delete their own planned attendance"
   ON planned_attendance
   FOR DELETE
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (userid = auth.uid());
 
 -- ================================================================
 -- SECTION 17: VERIFY ALL TABLES HAVE RLS ENABLED
