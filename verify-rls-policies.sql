@@ -151,6 +151,7 @@ DECLARE
   expected_policies JSONB;
   policy_name TEXT;
   policy_found BOOLEAN;
+  table_name TEXT;
 BEGIN
   -- Define expected policies for key tables
   expected_policies = '{
@@ -159,11 +160,11 @@ BEGIN
     "shows": ["Anyone can view shows", "Organizers can update own shows", 
               "Organizers can delete own shows", "Organizers can insert shows", 
               "Admins can update show coordinates"],
-    "user_favorite_shows": ["Allow authenticated users to view their own favorite shows", 
-                           "Allow MVP dealers to view favorite shows for shows they participate in", 
-                           "Allow show organizers to view favorite shows for shows they organize", 
-                           "Allow authenticated users to insert their own favorite shows", 
-                           "Allow authenticated users to delete their own favorite shows"],
+    "user_favorite_shows": ["user_fav_shows_sel_self", 
+                           "user_fav_shows_sel_mvp_dealer", 
+                           "user_fav_shows_sel_org", 
+                           "user_fav_shows_ins_self", 
+                           "user_fav_shows_del_self"],
     "show_participants": ["show_participants_select_self", "show_participants_select_organizer", 
                          "show_participants_select_mvp_dealer", "show_participants_insert", 
                          "show_participants_update_self", "show_participants_delete_self", 
@@ -200,7 +201,7 @@ BEGIN
   }';
 
   -- Check each table in the expected policies list
-  FOR table_name IN SELECT jsonb_object_keys(expected_policies)
+  FOR table_name IN SELECT * FROM jsonb_object_keys(expected_policies)
   LOOP
     -- Check if table exists
     IF NOT EXISTS (
@@ -219,7 +220,7 @@ BEGIN
     END IF;
     
     -- For each expected policy, check if it exists
-    FOR policy_name IN SELECT jsonb_array_elements_text(expected_policies->table_name)
+    FOR policy_name IN SELECT * FROM jsonb_array_elements_text(expected_policies->table_name)
     LOOP
       IF EXISTS (
         SELECT 1 FROM pg_policies
@@ -450,6 +451,8 @@ DECLARE
   missing_policies INTEGER;
   overall_status TEXT;
   overall_color TEXT;
+  category_rec RECORD;
+  issue_rec RECORD;
 BEGIN
   -- Count issues by severity
   SELECT COUNT(*) INTO critical_count FROM rls_verification_results WHERE severity = 'CRITICAL';
