@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Linking, Alert } from 'react-native';
-import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import SocialIcon from '../../../components/ui/SocialIcon';
 
 type UserRole = 'SHOW_ORGANIZER' | 'MVP_DEALER' | 'DEALER' | 'USER';
 
@@ -94,23 +95,17 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
       )}
       
       {dealer.whatnotUrl && (
-        <TouchableOpacity 
-          style={styles.socialIcon} 
+        <SocialIcon
+          platform="whatnot"
           onPress={() => handleOpenLink(dealer.whatnotUrl)}
-          activeOpacity={0.7}
-        >
-          <MaterialCommunityIcons name="shopping" size={22} color="#FF5A5F" />
-        </TouchableOpacity>
+        />
       )}
       
       {dealer.ebayStoreUrl && (
-        <TouchableOpacity 
-          style={styles.socialIcon} 
+        <SocialIcon
+          platform="ebay"
           onPress={() => handleOpenLink(dealer.ebayStoreUrl)}
-          activeOpacity={0.7}
-        >
-          <FontAwesome name="shopping-cart" size={22} color="#e53238" />
-        </TouchableOpacity>
+        />
       )}
     </View>
   );
