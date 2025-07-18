@@ -413,7 +413,17 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Check if user is a dealer
-  const isDealer = user && (user.role === UserRole.DEALER || user.role === UserRole.MVP_DEALER);
+  /**
+   * Users allowed to access this screen:
+   *   • Regular dealers
+   *   • MVP dealers
+   *   • Show organizers (who may also sell as dealers)
+   */
+  const isDealer =
+    user &&
+    (user.role === UserRole.DEALER ||
+      user.role === UserRole.MVP_DEALER ||
+      user.role === UserRole.SHOW_ORGANIZER);
   
   if (!isDealer) {
     return (
