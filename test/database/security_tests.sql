@@ -186,12 +186,12 @@ BEGIN
     ON CONFLICT (user_id, show_id) DO NOTHING;
     
     -- Create test conversations
-    INSERT INTO public.conversations (id, title, created_at)
+    INSERT INTO public.conversations (id, type, created_at, last_message_text)
     VALUES
-        (test_conversation_id1, 'Test Conversation 1', NOW()),
-        (test_conversation_id2, 'Test Conversation 2', NOW())
+        (test_conversation_id1, 'group', NOW(), 'Test Conversation 1'),
+        (test_conversation_id2, 'group', NOW(), 'Test Conversation 2')
     ON CONFLICT (id) DO UPDATE 
-    SET title = EXCLUDED.title;
+    SET last_message_text = EXCLUDED.last_message_text;
     
     -- Create test conversation participants
     INSERT INTO public.conversation_participants (conversation_id, user_id)
@@ -203,7 +203,7 @@ BEGIN
     ON CONFLICT (conversation_id, user_id) DO NOTHING;
     
     -- Create test messages
-    INSERT INTO public.messages (conversation_id, sender_id, content)
+    INSERT INTO public.messages (conversation_id, sender_id, message_text)
     VALUES
         (test_conversation_id1, test_attendee_id, 'Test message from attendee'),
         (test_conversation_id1, test_dealer_id, 'Test message from dealer'),
@@ -814,7 +814,7 @@ SELECT results_eq(
 -- Test users can create conversations
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'INSERT INTO conversations (id, title, created_at) VALUES (''ffffffff-ffff-ffff-ffff-ffffffffffff'', ''New Conversation'', NOW())',
+    'INSERT INTO conversations (id, type, created_at, last_message_text) VALUES (''ffffffff-ffff-ffff-ffff-ffffffffffff'', ''group'', NOW(), ''New Conversation'')',
     'User should be able to create conversations'
 );
 
@@ -827,14 +827,14 @@ SELECT lives_ok(
 
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'UPDATE conversations SET title = ''Updated Conversation'' WHERE id = ''ffffffff-ffff-ffff-ffff-ffffffffffff''',
+    'UPDATE conversations SET last_message_text = ''Updated Conversation'' WHERE id = ''ffffffff-ffff-ffff-ffff-ffffffffffff''',
     'User should be able to update conversations they participate in'
 );
 
 -- Test users cannot update conversations they don't participate in
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'UPDATE conversations SET title = ''Unauthorized Update'' WHERE id = ''cccccccc-cccc-cccc-cccc-cccccccccccc''',
+    'UPDATE conversations SET last_message_text = ''Unauthorized Update'' WHERE id = ''cccccccc-cccc-cccc-cccc-cccccccccccc''',
     '42501',
     'new row violates row-level security policy',
     'User should not be able to update conversations they don''t participate in'
@@ -941,14 +941,14 @@ SELECT results_eq(
 -- Test users can send messages to conversations they participate in
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'INSERT INTO messages (conversation_id, sender_id, content) VALUES (''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'', ''11111111-1111-1111-1111-111111111111'', ''New test message'')',
+    'INSERT INTO messages (conversation_id, sender_id, message_text) VALUES (''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'', ''11111111-1111-1111-1111-111111111111'', ''New test message'')',
     'User should be able to send messages to conversations they participate in'
 );
 
 -- Test users cannot send messages to conversations they don't participate in
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'INSERT INTO messages (conversation_id, sender_id, content) VALUES (''cccccccc-cccc-cccc-cccc-cccccccccccc'', ''11111111-1111-1111-1111-111111111111'', ''Unauthorized message'')',
+    'INSERT INTO messages (conversation_id, sender_id, message_text) VALUES (''cccccccc-cccc-cccc-cccc-cccccccccccc'', ''11111111-1111-1111-1111-111111111111'', ''Unauthorized message'')',
     '42501',
     'new row violates row-level security policy',
     'User should not be able to send messages to conversations they don''t participate in'
@@ -957,7 +957,7 @@ SELECT throws_ok(
 -- Test users cannot send messages as other users
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'INSERT INTO messages (conversation_id, sender_id, content) VALUES (''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'', ''22222222-2222-2222-2222-222222222222'', ''Impersonated message'')',
+    'INSERT INTO messages (conversation_id, sender_id, message_text) VALUES (''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'', ''22222222-2222-2222-2222-222222222222'', ''Impersonated message'')',
     '42501',
     'new row violates row-level security policy',
     'User should not be able to send messages as other users'
@@ -966,14 +966,14 @@ SELECT throws_ok(
 -- Test users can update their own messages
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'UPDATE messages SET content = ''Updated message'' WHERE sender_id = ''11111111-1111-1111-1111-111111111111'' AND conversation_id = ''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb''',
+    'UPDATE messages SET message_text = ''Updated message'' WHERE sender_id = ''11111111-1111-1111-1111-111111111111'' AND conversation_id = ''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb''',
     'User should be able to update their own messages'
 );
 
 -- Test users cannot update other users' messages
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'UPDATE messages SET content = ''Unauthorized update'' WHERE sender_id = ''22222222-2222-2222-2222-222222222222''',
+    'UPDATE messages SET message_text = ''Unauthorized update'' WHERE sender_id = ''22222222-2222-2222-2222-222222222222''',
     '42501',
     'new row violates row-level security policy',
     'User should not be able to update other users'' messages'
@@ -982,7 +982,7 @@ SELECT throws_ok(
 -- Test users can delete their own messages
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-    'DELETE FROM messages WHERE sender_id = ''11111111-1111-1111-1111-111111111111'' AND content = ''New test message''',
+'DELETE FROM messages WHERE sender_id = ''11111111-1111-1111-1111-111111111111'' AND message_text = ''New test message''',
     'User should be able to delete their own messages'
 );
 
@@ -1262,7 +1262,7 @@ SELECT results_eq(
 -- Test unauthorized message sending as another user
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'INSERT INTO messages (conversation_id, sender_id, content) VALUES (''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'', ''22222222-2222-2222-2222-222222222222'', ''Impersonated message'')',
+    'INSERT INTO messages (conversation_id, sender_id, message_text) VALUES (''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'', ''22222222-2222-2222-2222-222222222222'', ''Impersonated message'')',
     '42501',
     'new row violates row-level security policy',
     'User cannot send messages as another user'
