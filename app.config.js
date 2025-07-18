@@ -9,6 +9,7 @@ const {
   EXPO_PUBLIC_SUPABASE_URL,
   EXPO_PUBLIC_SUPABASE_ANON_KEY,
   EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+  EXPO_PUBLIC_SENTRY_DSN,
 } = process.env;
 
 // --------------------------------------------------
@@ -19,6 +20,14 @@ if (!EXPO_PUBLIC_SUPABASE_URL) {
   console.warn(
     '[app.config.js] Missing environment variable: EXPO_PUBLIC_SUPABASE_URL. ' +
       'Authentication requests will fail until this is provided.'
+  );
+}
+
+if (!EXPO_PUBLIC_SENTRY_DSN) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[app.config.js] Missing environment variable: EXPO_PUBLIC_SENTRY_DSN. ' +
+      'Crash reporting via Sentry will be disabled until this is provided.'
   );
 }
 
@@ -119,12 +128,26 @@ module.exports = {
     supabaseUrl: EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: EXPO_PUBLIC_SUPABASE_ANON_KEY,
     googleMapsApiKey: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+    sentryDsn: EXPO_PUBLIC_SENTRY_DSN,
   },
   plugins: [
     [
       "expo-location",
       {
         locationAlwaysAndWhenInUsePermission: "Allow Card Show Finder to access your location so we can display nearby card shows."
+      }
+    ],
+    "sentry-expo"
+  ],
+  hooks: {
+    postPublish: [
+      {
+        file: "sentry-expo/upload-sourcemaps",
+        config: {
+          organization: "YOUR_SENTRY_ORGANIZATION",
+          project: "card-show-finder",
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+        }
       }
     ]
   ]
