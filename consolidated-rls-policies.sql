@@ -813,14 +813,14 @@ BEGIN
 
     -- Create new policies
     -- 1. Anyone can view badges
-    CREATE POLICY IF NOT EXISTS "Anyone can view badges"
+    CREATE POLICY "Anyone can view badges"
       ON badges
       FOR SELECT
       TO public
       USING (true);
 
     -- 2. Only admins can manage badges
-    CREATE POLICY IF NOT EXISTS "Only admins can manage badges"
+    CREATE POLICY "Only admins can manage badges"
       ON badges
       FOR ALL
       TO authenticated
@@ -853,21 +853,21 @@ BEGIN
 
     -- Create new policies
     -- 1. Users can view their own badges
-    CREATE POLICY IF NOT EXISTS "Users can view their own badges"
+    CREATE POLICY "Users can view their own badges"
       ON user_badges
       FOR SELECT
       TO authenticated
       USING (user_id = auth.uid());
 
     -- 2. Users can view other users' badges
-    CREATE POLICY IF NOT EXISTS "Users can view other users badges"
+    CREATE POLICY "Users can view other users badges"
       ON user_badges
       FOR SELECT
       TO authenticated
       USING (true);
 
     -- 3. Only admins can manage user badges
-    CREATE POLICY IF NOT EXISTS "Only admins can manage user badges"
+    CREATE POLICY "Only admins can manage user badges"
       ON user_badges
       FOR ALL
       TO authenticated
