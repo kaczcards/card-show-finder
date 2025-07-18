@@ -32,7 +32,8 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
 // Social media icons component for MVP Dealers
 const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
-  if (dealer.role !== 'MVP_DEALER') return null;
+  // Show social icons for MVP Dealers **and** Show Organizers acting as dealers
+  if (dealer.role !== 'MVP_DEALER' && dealer.role !== 'SHOW_ORGANIZER') return null;
   
   /**
    * Safely open a URL.  If a user entered their link without a protocol
@@ -168,7 +169,7 @@ const DealersList: React.FC<DealersListProps> = ({
             
             return (
               <View key={dealer.id} style={styles.dealerItem}>
-                {dealer.role === 'MVP_DEALER' ? (
+                {dealer.role === 'MVP_DEALER' || dealer.role === 'SHOW_ORGANIZER' ? (
                   // Make the entire row clickable for MVP dealers
                   <TouchableOpacity 
                     style={[

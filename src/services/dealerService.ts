@@ -439,7 +439,9 @@ export const getDealersForShow = async (
     // Only select columns that definitely exist in the schema
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, email')
+      .select(
+        'id, first_name, last_name, email, role, facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url'
+      )
       .in('id', userIds);
 
     if (profilesError) {
@@ -466,7 +468,14 @@ export const getDealersForShow = async (
           ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() 
           : 'Unknown Dealer',
         dealerEmail: profile?.email,
-        dealerProfileImage: undefined // Profile image URL is not available in the schema
+        dealerProfileImage: undefined, // Profile image URL is not available in the schema
+        // Additional fields for UI (role + social links)
+        role: profile?.role ?? 'USER',
+        facebookUrl: profile?.facebook_url ?? undefined,
+        instagramUrl: profile?.instagram_url ?? undefined,
+        twitterUrl: profile?.twitter_url ?? undefined,
+        whatnotUrl: profile?.whatnot_url ?? undefined,
+        ebayStoreUrl: profile?.ebay_store_url ?? undefined
       };
     });
 
