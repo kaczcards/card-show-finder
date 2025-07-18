@@ -877,75 +877,104 @@ BEGIN
   END IF;
 END $$;
 
--- ================================================================
 -- SECTION 15: STORAGE OBJECTS
 -- ================================================================
 
--- Enable RLS on storage.objects
-ALTER TABLE IF EXISTS storage.objects ENABLE ROW LEVEL SECURITY;
+DO $$
+DECLARE
+  _has_storage BOOLEAN;
+BEGIN
+  /* ------------------------------------------------------------
+     Check that the storage.objects table exists before proceeding
+  ------------------------------------------------------------ */
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'storage'
+      AND table_name   = 'objects'
+  ) INTO _has_storage;
 
--- Drop existing policies
-SELECT safe_drop_policy('Avatar images are publicly accessible', 'objects');
-SELECT safe_drop_policy('Users can upload own avatar', 'objects');
-SELECT safe_drop_policy('Users can update own avatar', 'objects');
-SELECT safe_drop_policy('Users can delete own avatar', 'objects');
-SELECT safe_drop_policy('Show images are publicly accessible', 'objects');
-SELECT safe_drop_policy('Organizers can upload show images', 'objects');
+  IF NOT _has_storage THEN
+    RAISE NOTICE 'Skipping storage.objects policies – table not present.';
+    RETURN;
+  END IF;
 
--- Create new policies
--- 1. Avatar images are publicly accessible
-CREATE POLICY "Avatar images are publicly accessible"
-  ON storage.objects
-  FOR SELECT
-  TO public
-  USING (bucket_id = 'avatars');
+  /* ------------------------------------------------------------
+     Try to enable RLS and (re-)create policies.  If the executing
+     role is not the owner of storage.objects we will catch the
+     insufficient_privilege error and skip this section gracefully.
+  ------------------------------------------------------------ */
+  BEGIN
+    -- Enable RLS
+    EXECUTE 'ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY';
 
--- 2. Users can upload their own avatar
-CREATE POLICY "Users can upload own avatar"
-  ON storage.objects
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    bucket_id = 'avatars' AND
-    (storage.foldername(name))[1] = auth.uid()::text
-  );
+    -- Drop existing policies via helper
+    PERFORM safe_drop_policy('Avatar images are publicly accessible', 'objects');
+    PERFORM safe_drop_policy('Users can upload own avatar',          'objects');
+    PERFORM safe_drop_policy('Users can update own avatar',          'objects');
+    PERFORM safe_drop_policy('Users can delete own avatar',          'objects');
+    PERFORM safe_drop_policy('Show images are publicly accessible',  'objects');
+    PERFORM safe_drop_policy('Organizers can upload show images',    'objects');
 
--- 3. Users can update their own avatar
-CREATE POLICY "Users can update own avatar"
-  ON storage.objects
-  FOR UPDATE
-  TO authenticated
-  USING (
-    bucket_id = 'avatars' AND
-    (storage.foldername(name))[1] = auth.uid()::text
-  );
+    /* ---------- Avatar bucket policies ---------- */
+    CREATE POLICY "Avatar images are publicly accessible"
+      ON storage.objects
+      FOR SELECT
+      TO public
+      USING (bucket_id = 'avatars');
 
--- 4. Users can delete their own avatar
-CREATE POLICY "Users can delete own avatar"
-  ON storage.objects
-  FOR DELETE
-  TO authenticated
-  USING (
-    bucket_id = 'avatars' AND
-    (storage.foldername(name))[1] = auth.uid()::text
-  );
+    CREATE POLICY "Users can upload own avatar"
+      ON storage.objects
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (
+        bucket_id = 'avatars'
+        AND (storage.foldername(name))[1] = auth.uid()::text
+      );
 
--- 5. Show images are publicly accessible
-CREATE POLICY "Show images are publicly accessible"
-  ON storage.objects
-  FOR SELECT
-  TO public
-  USING (bucket_id = 'shows');
+    CREATE POLICY "Users can update own avatar"
+      ON storage.objects
+      FOR UPDATE
+      TO authenticated
+      USING (
+        bucket_id = 'avatars'
+        AND (storage.foldername(name))[1] = auth.uid()::text
+      );
 
--- 6. Organizers can upload show images
-CREATE POLICY "Organizers can upload show images"
-  ON storage.objects
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    bucket_id = 'shows' AND
-    is_show_organizer()
-  );
+    CREATE POLICY "Users can delete own avatar"
+      ON storage.objects
+      FOR DELETE
+      TO authenticated
+      USING (
+        bucket_id = 'avatars'
+        AND (storage.foldername(name))[1] = auth.uid()::text
+      );
+
+    /* ---------- Shows bucket policies ---------- */
+    CREATE POLICY "Show images are publicly accessible"
+      ON storage.objects
+      FOR SELECT
+      TO public
+      USING (bucket_id = 'shows');
+
+    CREATE POLICY "Organizers can upload show images"
+      ON storage.objects
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (
+        bucket_id = 'shows'
+        AND is_show_organizer()
+      );
+
+    RAISE NOTICE 'storage.objects policies applied successfully.';
+
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      RAISE NOTICE 'Skipping storage.objects policies – current role lacks ownership privileges.';
+    WHEN others THEN
+      RAISE WARNING 'Unhandled error while configuring storage.objects policies: %', SQLERRM;
+  END;
+END $$;
 
 -- ================================================================
 -- SECTION 16: PLANNED_ATTENDANCE TABLE
