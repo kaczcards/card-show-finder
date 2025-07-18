@@ -74,6 +74,8 @@ $$;
 DO $$
 DECLARE
     remaining_count INTEGER;
+    -- record variable used in FOR loop below
+    policy_record  RECORD;
 BEGIN
     -- Count remaining policies in public schema
     SELECT COUNT(*) INTO remaining_count
