@@ -132,10 +132,10 @@ BEGIN
         location = EXCLUDED.location;
     
     -- Create test show series
-    INSERT INTO public.show_series (id, title, organizer_id)
+    INSERT INTO public.show_series (id, name, organizer_id)
     VALUES (test_series_id, 'Test Series', test_organizer_id)
     ON CONFLICT (id) DO UPDATE 
-    SET title = EXCLUDED.title;
+    SET name = EXCLUDED.name;
     
     -- Link show to series
     UPDATE public.shows SET series_id = test_series_id WHERE id = test_show_id1;
@@ -1085,7 +1085,7 @@ SELECT throws_ok(
 -- Test organizers can delete their own show series
 SELECT set_test_user('44444444-4444-4444-4444-444444444444');
 SELECT lives_ok(
-    'INSERT INTO show_series (id, title, organizer_id) VALUES (''ffffffff-ffff-ffff-ffff-ffffffffffff'', ''Test Series 2'', ''44444444-4444-4444-4444-444444444444'')',
+    'INSERT INTO show_series (id, name, organizer_id) VALUES (''ffffffff-ffff-ffff-ffff-ffffffffffff'', ''Test Series 2'', ''44444444-4444-4444-4444-444444444444'')',
     'Create test series for deletion'
 );
 
@@ -1098,14 +1098,14 @@ SELECT lives_ok(
 -- Test organizers can create show series
 SELECT set_test_user('44444444-4444-4444-4444-444444444444');
 SELECT lives_ok(
-    'INSERT INTO show_series (id, title, organizer_id) VALUES (''ffffffff-ffff-ffff-ffff-ffffffffffff'', ''New Test Series'', ''44444444-4444-4444-4444-444444444444'')',
+    'INSERT INTO show_series (id, name, organizer_id) VALUES (''ffffffff-ffff-ffff-ffff-ffffffffffff'', ''New Test Series'', ''44444444-4444-4444-4444-444444444444'')',
     'Organizer should be able to create show series'
 );
 
 -- Test non-organizers cannot create show series
 SELECT set_test_user('11111111-1111-1111-1111-111111111111');
 SELECT throws_ok(
-    'INSERT INTO show_series (id, title, organizer_id) VALUES (''gggggggg-gggg-gggg-gggg-gggggggggggg'', ''Unauthorized Series'', ''11111111-1111-1111-1111-111111111111'')',
+    'INSERT INTO show_series (id, name, organizer_id) VALUES (''gggggggg-gggg-gggg-gggg-gggggggggggg'', ''Unauthorized Series'', ''11111111-1111-1111-1111-111111111111'')',
     '42501',
     'new row violates row-level security policy',
     'Non-organizer should not be able to create show series'
