@@ -217,22 +217,22 @@ CREATE POLICY "Admins can update show coordinates"
 ALTER TABLE IF EXISTS public.user_favorite_shows ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies
-SELECT safe_drop_policy('Allow authenticated users to view their own favorite shows', 'user_favorite_shows');
-SELECT safe_drop_policy('Allow authenticated users to insert their own favorite shows', 'user_favorite_shows');
-SELECT safe_drop_policy('Allow authenticated users to delete their own favorite shows', 'user_favorite_shows');
-SELECT safe_drop_policy('Allow MVP dealers to view favorite shows for shows they participate in', 'user_favorite_shows');
-SELECT safe_drop_policy('Allow show organizers to view favorite shows for shows they organize', 'user_favorite_shows');
+SELECT safe_drop_policy('user_fav_shows_sel_self',        'user_favorite_shows');
+SELECT safe_drop_policy('user_fav_shows_sel_mvp_dealer',  'user_favorite_shows');
+SELECT safe_drop_policy('user_fav_shows_sel_org',         'user_favorite_shows');
+SELECT safe_drop_policy('user_fav_shows_ins_self',        'user_favorite_shows');
+SELECT safe_drop_policy('user_fav_shows_del_self',        'user_favorite_shows');
 
 -- Create new policies
 -- 1. Users can view their own favorite shows
-CREATE POLICY "Allow authenticated users to view their own favorite shows"
+CREATE POLICY "user_fav_shows_sel_self"
   ON user_favorite_shows
   FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
 -- 2. MVP dealers can view favorite shows for shows they participate in
-CREATE POLICY "Allow MVP dealers to view favorite shows for shows they participate in"
+CREATE POLICY "user_fav_shows_sel_mvp_dealer"
   ON user_favorite_shows
   FOR SELECT
   TO authenticated
@@ -244,7 +244,7 @@ CREATE POLICY "Allow MVP dealers to view favorite shows for shows they participa
   );
 
 -- 3. Show organizers can view favorite shows for shows they organize
-CREATE POLICY "Allow show organizers to view favorite shows for shows they organize"
+CREATE POLICY "user_fav_shows_sel_org"
   ON user_favorite_shows
   FOR SELECT
   TO authenticated
@@ -256,14 +256,14 @@ CREATE POLICY "Allow show organizers to view favorite shows for shows they organ
   );
 
 -- 4. Users can insert their own favorite shows
-CREATE POLICY "Allow authenticated users to insert their own favorite shows"
+CREATE POLICY "user_fav_shows_ins_self"
   ON user_favorite_shows
   FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
 -- 5. Users can delete their own favorite shows
-CREATE POLICY "Allow authenticated users to delete their own favorite shows"
+CREATE POLICY "user_fav_shows_del_self"
   ON user_favorite_shows
   FOR DELETE
   TO authenticated
