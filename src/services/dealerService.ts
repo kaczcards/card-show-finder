@@ -217,7 +217,7 @@ export const registerForShow = async (
      */
     const rawRole = (userData?.role || '').toString().toLowerCase();
     const isDealerLike =
-      rawRole.includes('dealer') || rawRole.includes('mvp');
+      rawRole.includes('dealer') || rawRole.includes('mvp') || rawRole.includes('organizer'); // allow organizers
 
     if (
       !userRole &&
@@ -233,7 +233,8 @@ export const registerForShow = async (
 
     if (
       effectiveRole !== UserRole.DEALER &&
-      effectiveRole !== UserRole.MVP_DEALER
+      effectiveRole !== UserRole.MVP_DEALER &&
+      effectiveRole !== UserRole.SHOW_ORGANIZER // organizers can register as dealers
     ) {
       return { data: null, error: 'User is not a dealer' };
     }
