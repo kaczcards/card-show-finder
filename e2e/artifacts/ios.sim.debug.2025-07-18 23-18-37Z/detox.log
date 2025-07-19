@@ -1,0 +1,142 @@
+19:18:37.013 detox[7604] B node_modules/.bin/detox test --configuration ios.sim.debug
+  data: {
+    "id": "b5ab2bde-f016-7da9-286e-f02affdbada8",
+    "detoxConfig": {
+      "configurationName": "ios.sim.debug",
+      "apps": {
+        "default": {
+          "type": "ios.app",
+          "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/cardshowfinder.app",
+          "build": "xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build"
+        }
+      },
+      "artifacts": {
+        "rootDir": "e2e/artifacts/ios.sim.debug.2025-07-18 23-18-37Z",
+        "plugins": {
+          "log": {
+            "enabled": true,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "screenshot": {
+            "enabled": true,
+            "shouldTakeAutomaticSnapshots": true,
+            "keepOnlyFailedTestsArtifacts": false,
+            "takeWhen": {
+              "testStart": false,
+              "testDone": true,
+              "testFail": true
+            }
+          },
+          "video": {
+            "enabled": false,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "instruments": {
+            "enabled": true,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "uiHierarchy": {
+            "enabled": false,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "timeline": {
+            "enabled": true
+          }
+        },
+        "pathBuilder": "./e2e/artifacts/pathbuilder.js"
+      },
+      "behavior": {
+        "init": {
+          "keepLockFile": false,
+          "reinstallApp": true,
+          "exposeGlobals": true,
+          "launchApp": true
+        },
+        "cleanup": {
+          "shutdownDevice": false
+        },
+        "launchApp": "auto"
+      },
+      "cli": {
+        "configuration": "ios.sim.debug",
+        "start": true
+      },
+      "commands": [
+        {
+          "appName": "default",
+          "build": "xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build"
+        }
+      ],
+      "device": {
+        "type": "ios.simulator",
+        "device": {
+          "type": "iPhone 16 Plus",
+          "os": "iOS 18.5"
+        }
+      },
+      "logger": {
+        "level": "info",
+        "overrideConsole": true,
+        "detectAnomalies": true,
+        "options": {
+          "showLoggerName": true,
+          "showPid": true,
+          "showLevel": false,
+          "showMetadata": false,
+          "basepath": "/Users/kevin/card-show-finder/node_modules/detox/src",
+          "prefixers": {},
+          "stringifiers": {},
+          "inspectionDepth": 5,
+          "showLoggerTimestamp": true,
+          "showLoggerLevel": true
+        }
+      },
+      "testRunner": {
+        "retries": 0,
+        "forwardEnv": false,
+        "detached": false,
+        "bail": false,
+        "noRetryArgs": [
+          "shard"
+        ],
+        "jest": {
+          "setupTimeout": 120000,
+          "teardownTimeout": 30000,
+          "retryAfterCircusRetries": false,
+          "reportSpecs": true,
+          "reportWorkerAssign": true,
+          "testEnvironment": "node",
+          "testRunner": "jest-circus/runner"
+        },
+        "args": {
+          "$0": "jest",
+          "_": [],
+          "config": "e2e/jest.config.js",
+          "--": []
+        }
+      },
+      "session": {
+        "autoStart": true,
+        "debugSynchronization": 10000,
+        "server": "ws://localhost:8099",
+        "sessionId": "test"
+      }
+    },
+    "detoxIPCServer": "primary-7604",
+    "testResults": [],
+    "testSessionIndex": 0,
+    "workersCount": 0
+  }
+19:18:37.017 detox[7604] i Server path not specified, so defaulting to ipc.config.socketRoot + ipc.config.appspace + ipc.config.id /tmp/detox.primary-7604
+19:18:37.017 detox[7604] i starting server on  /tmp/detox.primary-7604 
+19:18:37.018 detox[7604] i starting TLS server false
+19:18:37.018 detox[7604] i starting server as Unix || Windows Socket
+19:18:37.019 detox[7604] i Detox server listening on localhost:8099...
+19:18:37.023 detox[7604] i Serialized the session state at: /var/folders/2v/gmmgyhbs6w30hm_0wql0670h0000gn/T/b5ab2bde-f016-7da9-286e-f02affdbada8.detox.json
+19:18:37.025 detox[7604] B jest --config e2e/jest.config.js
+19:18:37.030 detox[7604] i (node:7604) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+19:18:37.134 detox[7604] E Command failed with exit code = 1:
+jest --config e2e/jest.config.js
+19:18:37.135 detox[7604] i Detox server has been closed gracefully
+19:18:37.135 detox[7604] E node_modules/.bin/detox test --configuration ios.sim.debug

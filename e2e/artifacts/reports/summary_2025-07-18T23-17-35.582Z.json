@@ -1,0 +1,268 @@
+{
+  "timestamp": "2025-07-18T23:17:35.582Z",
+  "duration": 318,
+  "stats": {
+    "total": 27,
+    "passed": 0,
+    "failed": 27,
+    "skipped": 0,
+    "passRate": "0.00"
+  },
+  "slowTests": [],
+  "failedTests": [
+    {
+      "title": "should successfully register a new user with valid credentials",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should show validation errors for invalid registration data",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle duplicate email registration attempt",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should allow user to cancel registration and return to login",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should successfully login with valid credentials",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should show error message for invalid credentials",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should show validation errors for empty login fields",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should remember email if \"Remember Me\" is checked",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle non-existent user login attempt",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should successfully logout a logged in user",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should clear user session data after logout",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should navigate to forgot password screen",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should show validation error for invalid email in forgot password",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should show success message after submitting valid email for password reset",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should allow navigation back to login from forgot password screen",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle reset password screen with valid token",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should maintain user session after app restart",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should clear session when app data is cleared",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle network errors during login gracefully",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle server errors during authentication",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle validation errors with clear messages",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle extremely long email addresses",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle special characters in password",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should handle rapid repeated login attempts",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should enforce password strength requirements",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should mask password input",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    },
+    {
+      "title": "should have protection against brute force attacks",
+      "path": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js"
+    }
+  ],
+  "performanceIssues": [],
+  "testResults": [
+    {
+      "testFilePath": "/Users/kevin/card-show-finder/e2e/tests/authentication.test.js",
+      "numPassingTests": 0,
+      "numFailingTests": 27,
+      "numPendingTests": 0,
+      "testResults": [
+        {
+          "title": "should successfully register a new user with valid credentials",
+          "status": "failed",
+          "duration": 1
+        },
+        {
+          "title": "should show validation errors for invalid registration data",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should handle duplicate email registration attempt",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should allow user to cancel registration and return to login",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should successfully login with valid credentials",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should show error message for invalid credentials",
+          "status": "failed",
+          "duration": 1
+        },
+        {
+          "title": "should show validation errors for empty login fields",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should remember email if \"Remember Me\" is checked",
+          "status": "failed",
+          "duration": 1
+        },
+        {
+          "title": "should handle non-existent user login attempt",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should successfully logout a logged in user",
+          "status": "failed",
+          "duration": 1
+        },
+        {
+          "title": "should clear user session data after logout",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should navigate to forgot password screen",
+          "status": "failed",
+          "duration": 1
+        },
+        {
+          "title": "should show validation error for invalid email in forgot password",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should show success message after submitting valid email for password reset",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should allow navigation back to login from forgot password screen",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should handle reset password screen with valid token",
+          "status": "failed",
+          "duration": 1
+        },
+        {
+          "title": "should maintain user session after app restart",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should clear session when app data is cleared",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should handle network errors during login gracefully",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should handle server errors during authentication",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should handle validation errors with clear messages",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should handle extremely long email addresses",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should handle special characters in password",
+          "status": "failed",
+          "duration": 1
+        },
+        {
+          "title": "should handle rapid repeated login attempts",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should enforce password strength requirements",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should mask password input",
+          "status": "failed",
+          "duration": 0
+        },
+        {
+          "title": "should have protection against brute force attacks",
+          "status": "failed",
+          "duration": 0
+        }
+      ]
+    }
+  ]
+}

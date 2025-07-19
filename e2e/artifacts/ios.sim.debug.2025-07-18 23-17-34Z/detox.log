@@ -1,0 +1,252 @@
+19:17:34.279 detox[7233] B node_modules/.bin/detox test --configuration ios.sim.debug
+  data: {
+    "id": "fbffbf37-2e6d-d738-b510-d0f9f2385a07",
+    "detoxConfig": {
+      "configurationName": "ios.sim.debug",
+      "apps": {
+        "default": {
+          "type": "ios.app",
+          "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/cardshowfinder.app",
+          "build": "xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build"
+        }
+      },
+      "artifacts": {
+        "rootDir": "e2e/artifacts/ios.sim.debug.2025-07-18 23-17-34Z",
+        "plugins": {
+          "log": {
+            "enabled": true,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "screenshot": {
+            "enabled": true,
+            "shouldTakeAutomaticSnapshots": true,
+            "keepOnlyFailedTestsArtifacts": false,
+            "takeWhen": {
+              "testStart": false,
+              "testDone": true,
+              "testFail": true
+            }
+          },
+          "video": {
+            "enabled": false,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "instruments": {
+            "enabled": true,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "uiHierarchy": {
+            "enabled": false,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "timeline": {
+            "enabled": true
+          }
+        },
+        "pathBuilder": "./e2e/artifacts/pathbuilder.js"
+      },
+      "behavior": {
+        "init": {
+          "keepLockFile": false,
+          "reinstallApp": true,
+          "exposeGlobals": true,
+          "launchApp": true
+        },
+        "cleanup": {
+          "shutdownDevice": false
+        },
+        "launchApp": "auto"
+      },
+      "cli": {
+        "configuration": "ios.sim.debug",
+        "start": true
+      },
+      "commands": [
+        {
+          "appName": "default",
+          "build": "xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build"
+        }
+      ],
+      "device": {
+        "type": "ios.simulator",
+        "device": {
+          "type": "iPhone 16 Plus",
+          "os": "iOS 18.5"
+        }
+      },
+      "logger": {
+        "level": "info",
+        "overrideConsole": true,
+        "detectAnomalies": true,
+        "options": {
+          "showLoggerName": true,
+          "showPid": true,
+          "showLevel": false,
+          "showMetadata": false,
+          "basepath": "/Users/kevin/card-show-finder/node_modules/detox/src",
+          "prefixers": {},
+          "stringifiers": {},
+          "inspectionDepth": 5,
+          "showLoggerTimestamp": true,
+          "showLoggerLevel": true
+        }
+      },
+      "testRunner": {
+        "retries": 0,
+        "forwardEnv": false,
+        "detached": false,
+        "bail": false,
+        "noRetryArgs": [
+          "shard"
+        ],
+        "jest": {
+          "setupTimeout": 120000,
+          "teardownTimeout": 30000,
+          "retryAfterCircusRetries": false,
+          "reportSpecs": true,
+          "reportWorkerAssign": true,
+          "testEnvironment": "node",
+          "testRunner": "jest-circus/runner"
+        },
+        "args": {
+          "$0": "jest",
+          "_": [],
+          "config": "e2e/jest.config.js",
+          "--": []
+        }
+      },
+      "session": {
+        "autoStart": true,
+        "debugSynchronization": 10000,
+        "server": "ws://localhost:8099",
+        "sessionId": "test"
+      }
+    },
+    "detoxIPCServer": "primary-7233",
+    "testResults": [],
+    "testSessionIndex": 0,
+    "workersCount": 0
+  }
+19:17:34.282 detox[7233] i Server path not specified, so defaulting to ipc.config.socketRoot + ipc.config.appspace + ipc.config.id /tmp/detox.primary-7233
+19:17:34.283 detox[7233] i starting server on  /tmp/detox.primary-7233 
+19:17:34.283 detox[7233] i starting TLS server false
+19:17:34.283 detox[7233] i starting server as Unix || Windows Socket
+19:17:34.284 detox[7233] i Detox server listening on localhost:8099...
+19:17:34.286 detox[7233] i Serialized the session state at: /var/folders/2v/gmmgyhbs6w30hm_0wql0670h0000gn/T/fbffbf37-2e6d-d738-b510-d0f9f2385a07.detox.json
+19:17:34.287 detox[7233] B jest --config e2e/jest.config.js
+19:17:34.289 detox[7233] i (node:7233) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+19:17:34.762 detox[7234] i Starting Detox E2E test setup
+19:17:35.066 detox[7234] i Failed to connect to Supabase: relation "user_roles" does not exist
+19:17:35.067 detox[7234] i Using real API calls with test keys for external services
+19:17:35.067 detox[7234] i Setting up performance monitoring
+19:17:35.067 detox[7234] i Performance monitoring enabled. Log file: /Users/kevin/card-show-finder/e2e/artifacts/performance.log
+19:17:35.067 detox[7234] i Validating test environment
+19:17:35.067 detox[7234] i All required environment variables are present
+19:17:35.068 detox[7234] i Detox version: 20.40.2
+19:17:35.123 detox[7234] i Xcode version: Xcode 16.4
+19:17:35.253 detox[7234] i Target simulator (iPhone 16 Plus) is available
+19:17:35.253 detox[7234] i Environment validation completed
+19:17:35.253 detox[7234] i Detox E2E test setup completed successfully
+19:17:35.264 detox[7234] i 
+🧪 Starting Card Show Finder E2E Tests
+19:17:35.264 detox[7234] i 📱 Test artifacts will be saved to: /Users/kevin/card-show-finder/e2e/artifacts
+19:17:35.270 detox[7234] i 
+▶️  Running: undefined (authentication.test.js)
+19:17:35.579 detox[7234] i 
+📊 Test Results (authentication.test.js):
+19:17:35.579 detox[7234] i    ✅ Passed: 0/27
+19:17:35.579 detox[7234] i    ❌ Failed: 27/27
+19:17:35.579 detox[7234] i    ⏱️  Duration: 0.30s
+19:17:35.582 detox[7234] i 
+=================================================
+19:17:35.582 detox[7234] i 📱 CARD SHOW FINDER E2E TEST SUMMARY
+19:17:35.582 detox[7234] i =================================================
+19:17:35.582 detox[7234] i ✅ Passed: 0
+19:17:35.582 detox[7234] i ❌ Failed: 27
+19:17:35.582 detox[7234] i ⏭️  Skipped: 0
+19:17:35.582 detox[7234] i 🧪 Total: 27
+19:17:35.583 detox[7234] i ⏱️  Total Duration: 0.32s
+19:17:35.583 detox[7234] i 
+❌ Failed Tests:
+19:17:35.583 detox[7234] i    - should successfully register a new user with valid credentials
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should show validation errors for invalid registration data
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should handle duplicate email registration attempt
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should allow user to cancel registration and return to login
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should successfully login with valid credentials
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should show error message for invalid credentials
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should show validation errors for empty login fields
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should remember email if "Remember Me" is checked
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should handle non-existent user login attempt
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should successfully logout a logged in user
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should clear user session data after logout
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should navigate to forgot password screen
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should show validation error for invalid email in forgot password
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should show success message after submitting valid email for password reset
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should allow navigation back to login from forgot password screen
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should handle reset password screen with valid token
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should maintain user session after app restart
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should clear session when app data is cleared
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should handle network errors during login gracefully
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.583 detox[7234] i    - should handle server errors during authentication
+19:17:35.583 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.584 detox[7234] i    - should handle validation errors with clear messages
+19:17:35.584 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.584 detox[7234] i    - should handle extremely long email addresses
+19:17:35.584 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.584 detox[7234] i    - should handle special characters in password
+19:17:35.584 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.584 detox[7234] i    - should handle rapid repeated login attempts
+19:17:35.584 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.584 detox[7234] i    - should enforce password strength requirements
+19:17:35.584 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.584 detox[7234] i    - should mask password input
+19:17:35.584 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.584 detox[7234] i    - should have protection against brute force attacks
+19:17:35.584 detox[7234] i      Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+19:17:35.584 detox[7234] i 
+📷 Screenshots for failed tests saved to: /Users/kevin/card-show-finder/e2e/artifacts/screenshots
+19:17:35.584 detox[7234] i 📊 Detailed reports saved to: /Users/kevin/card-show-finder/e2e/artifacts/reports
+19:17:35.584 detox[7234] i 
+=================================================
+19:17:35.584 detox[7234] i E2E Testing completed in 0.32s
+19:17:35.584 detox[7234] i =================================================
+
+19:17:35.603 detox[7234] i Starting Detox E2E test teardown
+19:17:35.604 detox[7234] i Starting test database cleanup...
+19:17:35.604 detox[7234] i Test data not found in global object. Skipping database cleanup.
+19:17:35.611 detox[7234] i Generating test report...
+19:17:35.612 detox[7234] i Test report generated: /Users/kevin/card-show-finder/e2e/artifacts/test-report.json
+19:17:35.612 detox[7234] i Test summary: 0 passed, 0 failed, 0 skipped
+19:17:35.612 detox[7234] i Total duration: 359ms
+19:17:35.612 detox[7234] i Logging performance metrics...
+19:17:35.612 detox[7234] i No performance measurements were collected.
+19:17:35.612 detox[7234] i Checking artifacts cleanup configuration...
+19:17:35.612 detox[7234] i Artifacts cleanup is disabled. Skipping.
+19:17:35.612 detox[7234] i Detox cleanup handled automatically by the test runner
+19:17:35.612 detox[7234] i Detox E2E test teardown completed
+19:17:35.536 detox[7234] i App startup time: 0ms
+19:17:35.538 detox[7234] i Test Suite Completed: 2025-07-18T23:17:35.538Z
+19:17:35.759 detox[7233] E Command failed with exit code = 1:
+jest --config e2e/jest.config.js
+19:17:35.759 detox[7233] i Detox server has been closed gracefully
+19:17:35.760 detox[7233] E node_modules/.bin/detox test --configuration ios.sim.debug

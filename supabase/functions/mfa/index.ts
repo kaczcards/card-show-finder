@@ -21,6 +21,7 @@ import * as OTPAuth from "https://esm.sh/otpauth@9.1.4";
 import * as base32 from "https://esm.sh/hi-base32@0.5.1";
 import * as qrcode from "https://esm.sh/qrcode@1.5.3";
 import { corsHeaders } from "../_shared/cors.ts";
+import { applySecurity } from "../_shared/security.ts";
 
 // Environment variables
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
@@ -1089,6 +1090,10 @@ serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+  
+  // Apply global security (rate-limit + WAF) for MFA endpoints
+  const securityResp = await applySecurity(req, "auth");
+  if (securityResp) return securityResp;
   
   try {
     const url = new URL(req.url);
