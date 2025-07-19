@@ -15,19 +15,6 @@
     "test:e2e:clean": "detox clean-framework-cache && detox build --configuration ios.sim.debug",
     "test:e2e:android": "detox test --configuration android.emu.debug",
     "test:e2e:android:build": "detox build --configuration android.emu.debug",
-
-    /* ------------------------------------------------------------------
-     * Detox E2E batch-runner helpers
-     * ------------------------------------------------------------------
-     *  ▸ test:e2e:batch       – Run a specific batch, e.g.
-     *        npm run test:e2e:batch -- --batch auth-basic
-     *  ▸ test:e2e:all         – Run all active batches sequentially
-     *  ▸ test:e2e:auth        – Convenience shortcut for the first
-     *    authentication batch (auth-basic)
-     *  ▸ test:e2e:tag:<tag>   – Run every batch that contains <tag>
-     *    Example: npm run test:e2e:tag -- --tag auth
-     * ------------------------------------------------------------------ */
-
     "test:e2e:batch": "node e2e/scripts/run-batch.js",
     "test:e2e:all": "node e2e/scripts/run-all-batches.js",
     "test:e2e:auth": "npm run test:e2e:batch -- --batch auth-basic",
