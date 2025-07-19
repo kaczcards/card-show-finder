@@ -9,12 +9,35 @@
     "web": "expo start --web",
     "postinstall": "patch-package",
     "geocode": "node geocode-shows.js",
-    "verify-backups": "node scripts/verify_backup_status.js"
+    "verify-backups": "node scripts/verify_backup_status.js",
+    "test:e2e": "detox test --configuration ios.sim.debug",
+    "test:e2e:build": "detox build --configuration ios.sim.debug",
+    "test:e2e:clean": "detox clean-framework-cache && detox build --configuration ios.sim.debug",
+    "test:e2e:android": "detox test --configuration android.emu.debug",
+    "test:e2e:android:build": "detox build --configuration android.emu.debug",
+
+    /* ------------------------------------------------------------------
+     * Detox E2E batch-runner helpers
+     * ------------------------------------------------------------------
+     *  ▸ test:e2e:batch       – Run a specific batch, e.g.
+     *        npm run test:e2e:batch -- --batch auth-basic
+     *  ▸ test:e2e:all         – Run all active batches sequentially
+     *  ▸ test:e2e:auth        – Convenience shortcut for the first
+     *    authentication batch (auth-basic)
+     *  ▸ test:e2e:tag:<tag>   – Run every batch that contains <tag>
+     *    Example: npm run test:e2e:tag -- --tag auth
+     * ------------------------------------------------------------------ */
+
+    "test:e2e:batch": "node e2e/scripts/run-batch.js",
+    "test:e2e:all": "node e2e/scripts/run-all-batches.js",
+    "test:e2e:auth": "npm run test:e2e:batch -- --batch auth-basic",
+    "test:e2e:auth-advanced": "npm run test:e2e:batch -- --batch auth-advanced",
+    "test:e2e:tag": "npm run test:e2e:batch -- --tag"
   },
   "dependencies": {
     "@mapbox/geo-viewport": "^0.5.0",
     "@react-native-async-storage/async-storage": "^2.1.2",
-    "@react-native-community/datetimepicker": "^7.4.0",
+    "@react-native-community/datetimepicker": "^8.2.0",
     "@react-native-community/netinfo": "^11.4.1",
     "@react-native-picker/picker": "^2.11.1",
     "@react-navigation/bottom-tabs": "^7.3.15",
@@ -28,6 +51,7 @@
     "@supabase/supabase-js": "^2.38.0",
     "@tanstack/react-query": "^5.82.0",
     "chalk": "^4.1.2",
+    "dotenv": "^16.6.1",
     "expo": "~53.0.19",
     "expo-haptics": "^14.1.4",
     "expo-image-picker": "^16.1.4",
@@ -52,21 +76,26 @@
     "react-native-vector-icons": "^10.2.0",
     "sentry-expo": "^7.2.0",
     "stripe": "^18.2.1",
-    "dotenv": "^16.6.1",
     "supercluster": "^8.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@config-plugins/detox": "^11.0.0",
     "@eslint/js": "^9.30.1",
+    "@jest/globals": "^30.0.4",
     "@types/react": "~19.0.10",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
     "@typescript-eslint/parser": "^8.36.0",
+    "detox": "^20.40.2",
+    "detox-expo-helpers": "^0.6.0",
     "eslint": "^9.30.1",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-native": "^5.0.0",
+    "jest": "^30.0.4",
+    "jest-circus": "^30.0.4",
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
     "supabase": "^2.26.9",
