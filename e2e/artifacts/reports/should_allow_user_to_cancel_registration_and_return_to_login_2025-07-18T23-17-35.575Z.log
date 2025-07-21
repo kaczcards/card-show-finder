@@ -1,0 +1,67 @@
+Test: should allow user to cancel registration and return to login
+Path: /Users/kevin/card-show-finder/e2e/tests/authentication.test.js
+Timestamp: 2025-07-18T23-17-35.575Z
+
+Failure Messages:
+TypeError: detox.init is not a function
+    at Object.init (/Users/kevin/card-show-finder/e2e/init.js:178:15)
+    at Promise.finally.completed (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1559:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1499:10)
+    at _callCircusHook (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:978:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTestsForDescribeBlock (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:775:7)
+    at run (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:757:3)
+    at runAndTransformResultsToJestFormat (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1920:21)
+    at jestAdapter (/Users/kevin/card-show-finder/node_modules/jest-circus/build/runner.js:101:19)
+    at runTestInternal (/Users/kevin/card-show-finder/node_modules/jest-runner/build/index.js:272:16)
+    at runTest (/Users/kevin/card-show-finder/node_modules/jest-runner/build/index.js:340:7)
+
+DetoxRuntimeError: Detox worker instance has not been installed in this context (DetoxSecondaryContext).
+
+HINT: If you are using Detox with Jest according to the latest guide, please report this issue on our GitHub tracker:
+https://github.com/wix/Detox/issues
+Otherwise, make sure you call detox.installWorker() beforehand.
+    at DetoxSecondaryContext.get [worker] (/Users/kevin/card-show-finder/node_modules/detox/src/realms/DetoxContext.js:135:13)
+    at /Users/kevin/card-show-finder/node_modules/detox/src/realms/DetoxContext.js:72:36
+    at getter (/Users/kevin/card-show-finder/node_modules/funpermaproxy/lib/permaproxy.js:10:24)
+    at Object.get (/Users/kevin/card-show-finder/node_modules/funpermaproxy/lib/permaproxy.js:21:22)
+    at Object.launchApp (/Users/kevin/card-show-finder/e2e/tests/authentication.test.js:21:18)
+    at Promise.finally.completed (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1559:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1499:10)
+    at _callCircusHook (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:978:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTestsForDescribeBlock (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:775:7)
+    at _runTestsForDescribeBlock (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:829:11)
+    at run (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:757:3)
+    at runAndTransformResultsToJestFormat (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1920:21)
+    at jestAdapter (/Users/kevin/card-show-finder/node_modules/jest-circus/build/runner.js:101:19)
+    at runTestInternal (/Users/kevin/card-show-finder/node_modules/jest-runner/build/index.js:272:16)
+    at runTest (/Users/kevin/card-show-finder/node_modules/jest-runner/build/index.js:340:7)
+
+DetoxRuntimeError: Detox worker instance has not been installed in this context (DetoxSecondaryContext).
+
+HINT: If you are using Detox with Jest according to the latest guide, please report this issue on our GitHub tracker:
+https://github.com/wix/Detox/issues
+Otherwise, make sure you call detox.installWorker() beforehand.
+    at DetoxSecondaryContext.get [worker] (/Users/kevin/card-show-finder/node_modules/detox/src/realms/DetoxContext.js:135:13)
+    at /Users/kevin/card-show-finder/node_modules/detox/src/realms/DetoxContext.js:72:36
+    at getter (/Users/kevin/card-show-finder/node_modules/funpermaproxy/lib/permaproxy.js:10:24)
+    at Object.get (/Users/kevin/card-show-finder/node_modules/funpermaproxy/lib/permaproxy.js:21:22)
+    at takeScreenshot (/Users/kevin/card-show-finder/e2e/helpers/testHelpers.js:416:16)
+    at Object.takeScreenshot (/Users/kevin/card-show-finder/e2e/tests/authentication.test.js:41:11)
+    at Promise.finally.completed (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1559:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1499:10)
+    at _callCircusHook (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:978:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:951:5)
+    at _runTestsForDescribeBlock (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:839:13)
+    at _runTestsForDescribeBlock (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:829:11)
+    at _runTestsForDescribeBlock (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:829:11)
+    at run (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:757:3)
+    at runAndTransformResultsToJestFormat (/Users/kevin/card-show-finder/node_modules/jest-circus/build/jestAdapterInit.js:1920:21)
+    at jestAdapter (/Users/kevin/card-show-finder/node_modules/jest-circus/build/runner.js:101:19)
+    at runTestInternal (/Users/kevin/card-show-finder/node_modules/jest-runner/build/index.js:272:16)
+    at runTest (/Users/kevin/card-show-finder/node_modules/jest-runner/build/index.js:340:7)

@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { UserCard, WantList, UserRole } from '../types';
+import { storageService } from './storageService'; // Signed-URL helper
 
 /**
  * Collection Service
@@ -23,18 +24,26 @@ export const getUserCards = async (userId: string): Promise<{ data: UserCard[] |
     
     if (error) throw error;
     
-    // Transform lowercase column names to camelCase for our app
-    const transformedData = data?.map(card => ({
-      id: card.id,
-      userId: card.userid,
-      imageUrl: card.imageurl,
-      title: card.title,
-      description: card.description,
-      category: card.category,
-      isCompressed: card.iscompressed,
-      createdAt: card.createdat,
-      updatedAt: card.updatedat
-    }));
+    // Transform lowercase column names to camelCase & replace image paths with signed URLs
+    const transformedData = data
+      ? await Promise.all(
+          data.map(async (card) => {
+            // Generate a signed URL; fall back to raw path if something goes wrong
+            const { data: signedUrl } = await storageService.getSignedUrl(card.imageurl || '');
+            return {
+              id: card.id,
+              userId: card.userid,
+              imageUrl: signedUrl || card.imageurl,
+              title: card.title,
+              description: card.description,
+              category: card.category,
+              isCompressed: card.iscompressed,
+              createdAt: card.createdat,
+              updatedAt: card.updatedat,
+            };
+          })
+        )
+      : null;
     
     return { data: transformedData, error: null };
   } catch (error) {
@@ -70,21 +79,14 @@ export const addUserCard = async (
     // Upload the card image to storage if it's a base64 string
     let imageUrl = cardData.imageUrl;
     if (imageUrl.startsWith('data:image')) {
-      const fileName = `card_${userId}_${Date.now()}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('card_images')
-        .upload(fileName, Buffer.from(imageUrl.split(',')[1], 'base64'), {
-          contentType: 'image/jpeg'
-        });
-      
-      if (uploadError) throw uploadError;
-      
-      // Get the public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('card_images')
-        .getPublicUrl(fileName);
-      
-      imageUrl = publicUrlData.publicUrl;
+      const { data: path, error: uploadErr } = await storageService.uploadImage(
+        userId,
+        imageUrl,
+        undefined,
+        'image/jpeg'
+      );
+      if (uploadErr || !path) throw uploadErr;
+      imageUrl = path; // store the path; we'll convert to signed URL on return
     }
     
     // Add the card to the database using lowercase column names
@@ -105,11 +107,17 @@ export const addUserCard = async (
     
     if (error) throw error;
     
-    // Transform to camelCase for our app
+    // Transform to camelCase for our app & attach signed URL
+    let signedUrl: string | undefined;
+    if (data?.imageurl) {
+      const { data: url } = await storageService.getSignedUrl(data.imageurl);
+      signedUrl = url || data.imageurl;
+    }
+
     const transformedData = data ? {
       id: data.id,
       userId: data.userid,
-      imageUrl: data.imageurl,
+      imageUrl: signedUrl,
       title: data.title,
       description: data.description,
       category: data.category,
@@ -160,13 +168,8 @@ export const deleteUserCard = async (
     if (error) throw error;
     
     // Delete the image from storage if it's stored in Supabase
-    if (card.imageurl && card.imageurl.includes('card_images')) {
-      const fileName = card.imageurl.split('/').pop();
-      if (fileName) {
-        await supabase.storage
-          .from('card_images')
-          .remove([fileName]);
-      }
+    if (card.imageurl) {
+      await storageService.deleteImage(card.imageurl);
     }
     
     return { success: true, error: null };
@@ -207,31 +210,17 @@ export const updateUserCard = async (
     let imageUrl = updates.imageUrl || existingCard.imageurl;
     if (updates.imageUrl && updates.imageUrl.startsWith('data:image')) {
       // Delete old image if it's in our storage
-      if (existingCard.imageurl && existingCard.imageurl.includes('card_images')) {
-        const oldFileName = existingCard.imageurl.split('/').pop();
-        if (oldFileName) {
-          await supabase.storage
-            .from('card_images')
-            .remove([oldFileName]);
-        }
+      if (existingCard.imageurl) {
+        await storageService.deleteImage(existingCard.imageurl);
       }
-      
-      // Upload new image
-      const fileName = `card_${userId}_${Date.now()}`;
-      const { error: uploadError } = await supabase.storage
-        .from('card_images')
-        .upload(fileName, Buffer.from(updates.imageUrl.split(',')[1], 'base64'), {
-          contentType: 'image/jpeg'
-        });
-      
-      if (uploadError) throw uploadError;
-      
-      // Get the public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('card_images')
-        .getPublicUrl(fileName);
-      
-      imageUrl = publicUrlData.publicUrl;
+      const { data: newPath, error: uploadErr } = await storageService.uploadImage(
+        userId,
+        updates.imageUrl,
+        undefined,
+        'image/jpeg'
+      );
+      if (uploadErr || !newPath) throw uploadErr;
+      imageUrl = newPath;
     }
     
     // Update the card with lowercase column names
@@ -255,11 +244,17 @@ export const updateUserCard = async (
     
     if (error) throw error;
     
-    // Transform to camelCase for our app
+    // Transform to camelCase for our app & attach signed URL
+    let signedUrl: string | undefined;
+    if (data?.imageurl) {
+      const { data: url } = await storageService.getSignedUrl(data.imageurl);
+      signedUrl = url || data.imageurl;
+    }
+
     const transformedData = data ? {
       id: data.id,
       userId: data.userid,
-      imageUrl: data.imageurl,
+      imageUrl: signedUrl,
       title: data.title,
       description: data.description,
       category: data.category,
