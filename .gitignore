@@ -41,3 +41,18 @@ GoogleService-Info.plist
 
 # typescript
 *.tsbuildinfo
+
+# ─────────────────────────────────────────────────────────────
+# E2E / Detox
+#   These directories are generated automatically when running
+#   Detox-based end-to-end tests.  They may contain large logs,
+#   screenshots, videos and HTML reports that should **not** be
+#   committed to version control.  Keep the `.gitkeep` files so
+#   the folders themselves remain in the repo.
+# ─────────────────────────────────────────────────────────────
+e2e/artifacts/
+e2e/reports/
+
+# Keep placeholder files
+!e2e/artifacts/.gitkeep
+!e2e/reports/.gitkeep

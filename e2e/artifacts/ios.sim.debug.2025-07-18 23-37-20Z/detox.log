@@ -1,0 +1,369 @@
+19:37:20.163 detox[17028] B node_modules/.bin/detox test --configuration ios.sim.debug --reuse
+  data: {
+    "id": "6b500cf1-d2a1-dbdf-f3e6-47f979ab5100",
+    "detoxConfig": {
+      "configurationName": "ios.sim.debug",
+      "apps": {
+        "default": {
+          "type": "ios.app",
+          "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/cardshowfinder.app",
+          "build": "xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build"
+        }
+      },
+      "artifacts": {
+        "rootDir": "e2e/artifacts/ios.sim.debug.2025-07-18 23-37-20Z",
+        "plugins": {
+          "log": {
+            "enabled": true,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "screenshot": {
+            "enabled": true,
+            "shouldTakeAutomaticSnapshots": true,
+            "keepOnlyFailedTestsArtifacts": false,
+            "takeWhen": {
+              "testStart": false,
+              "testDone": true,
+              "testFail": true
+            }
+          },
+          "video": {
+            "enabled": false,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "instruments": {
+            "enabled": true,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "uiHierarchy": {
+            "enabled": false,
+            "keepOnlyFailedTestsArtifacts": false
+          },
+          "timeline": {
+            "enabled": true
+          }
+        },
+        "pathBuilder": "./e2e/artifacts/pathbuilder.js"
+      },
+      "behavior": {
+        "init": {
+          "keepLockFile": false,
+          "reinstallApp": false,
+          "exposeGlobals": true,
+          "launchApp": true
+        },
+        "cleanup": {
+          "shutdownDevice": false
+        },
+        "launchApp": "auto"
+      },
+      "cli": {
+        "configuration": "ios.sim.debug",
+        "reuse": true,
+        "start": true
+      },
+      "commands": [
+        {
+          "appName": "default",
+          "build": "xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build"
+        }
+      ],
+      "device": {
+        "type": "ios.simulator",
+        "device": {
+          "type": "iPhone 16 Plus",
+          "os": "iOS 18.5"
+        }
+      },
+      "logger": {
+        "level": "info",
+        "overrideConsole": true,
+        "detectAnomalies": true,
+        "options": {
+          "showLoggerName": true,
+          "showPid": true,
+          "showLevel": false,
+          "showMetadata": false,
+          "basepath": "/Users/kevin/card-show-finder/node_modules/detox/src",
+          "prefixers": {},
+          "stringifiers": {},
+          "inspectionDepth": 5,
+          "showLoggerTimestamp": true,
+          "showLoggerLevel": true
+        }
+      },
+      "testRunner": {
+        "retries": 0,
+        "forwardEnv": false,
+        "detached": false,
+        "bail": false,
+        "noRetryArgs": [
+          "shard"
+        ],
+        "jest": {
+          "setupTimeout": 120000,
+          "teardownTimeout": 30000,
+          "retryAfterCircusRetries": false,
+          "reportSpecs": true,
+          "reportWorkerAssign": true,
+          "testEnvironment": "node",
+          "testRunner": "jest-circus/runner"
+        },
+        "args": {
+          "$0": "jest",
+          "_": [],
+          "config": "e2e/jest.config.js",
+          "--": []
+        }
+      },
+      "session": {
+        "autoStart": true,
+        "debugSynchronization": 10000,
+        "server": "ws://localhost:8099",
+        "sessionId": "test"
+      }
+    },
+    "detoxIPCServer": "primary-17028",
+    "testResults": [],
+    "testSessionIndex": 0,
+    "workersCount": 0
+  }
+19:37:20.169 detox[17028] i Server path not specified, so defaulting to ipc.config.socketRoot + ipc.config.appspace + ipc.config.id /tmp/detox.primary-17028
+19:37:20.169 detox[17028] i starting server on  /tmp/detox.primary-17028 
+19:37:20.169 detox[17028] i starting TLS server false
+19:37:20.170 detox[17028] i starting server as Unix || Windows Socket
+19:37:20.172 detox[17028] i Detox server listening on localhost:8099...
+19:37:20.176 detox[17028] i Serialized the session state at: /var/folders/2v/gmmgyhbs6w30hm_0wql0670h0000gn/T/6b500cf1-d2a1-dbdf-f3e6-47f979ab5100.detox.json
+19:37:20.177 detox[17028] B jest --config e2e/jest.config.js
+19:37:20.179 detox[17028] i (node:17028) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+19:37:21.126 detox[17029] i Starting Detox E2E test setup
+19:37:21.482 detox[17029] i Failed to connect to Supabase: relation "user_roles" does not exist
+19:37:21.483 detox[17029] i Using real API calls with test keys for external services
+19:37:21.484 detox[17029] i Setting up performance monitoring
+19:37:21.484 detox[17029] i Performance monitoring enabled. Log file: /Users/kevin/card-show-finder/e2e/artifacts/performance.log
+19:37:21.484 detox[17029] i Validating test environment
+19:37:21.485 detox[17029] i All required environment variables are present
+19:37:21.486 detox[17029] i Detox version: 20.40.2
+19:37:21.694 detox[17029] i Xcode version: Xcode 16.4
+19:37:21.908 detox[17029] i Target simulator (iPhone 16 Plus) is available
+19:37:21.909 detox[17029] i Environment validation completed
+19:37:21.909 detox[17029] i Detox E2E test setup completed successfully
+19:37:21.918 detox[17029] i 
+🧪 Starting Card Show Finder E2E Tests
+19:37:21.918 detox[17029] i 📱 Test artifacts will be saved to: /Users/kevin/card-show-finder/e2e/artifacts
+19:37:21.926 detox[17029] i 
+▶️  Running: undefined (authentication.test.js)
+19:37:21.995 detox[17029] B e2e/tests/authentication.test.js
+19:37:22.011 detox[17029] B set up environment
+19:37:22.032 detox[17029] i Service path not specified, so defaulting to ipc.config.socketRoot + ipc.config.appspace + id 
+19:37:22.032 detox[17029] i requested connection to  primary-17028 /tmp/detox.primary-17028
+19:37:22.032 detox[17029] i Connecting client on Unix Socket : /tmp/detox.primary-17028
+19:37:22.034 detox[17028] i ## socket connection to server detected ##
+19:37:22.035 detox[17029] i retrying reset
+19:37:22.035 detox[17029] i dispatching event to  primary-17028 /tmp/detox.primary-17028  :  registerContext , { id: 'secondary-17029' }
+19:37:22.037 detox[17028] i received event of :  registerContext { id: 'secondary-17029' }
+19:37:22.037 detox[17028] i dispatching event to socket  :  registerContextDone {
+  testResults: [],
+  testSessionIndex: 0,
+  unsafe_earlyTeardown: undefined
+}
+19:37:22.037 detox[17029] i ## received events ##
+19:37:22.038 detox[17029] i detected event registerContextDone { testResults: [], testSessionIndex: 0 }
+19:37:22.038 detox[17029] i dispatching event to  primary-17028 /tmp/detox.primary-17028  :  registerWorker , { workerId: 'w1' }
+19:37:22.039 detox[17028] i received event of :  registerWorker { workerId: 'w1' }
+19:37:22.039 detox[17028] i dispatching event to socket  :  registerWorkerDone { workersCount: 1 }
+19:37:22.039 detox[17028] i broadcasting event to all known sockets listening to  /tmp/detox.primary-17028  :   sessionStateUpdate { workersCount: 1 }
+19:37:22.039 detox[17029] i ## received events ##
+19:37:22.039 detox[17029] i detected event registerWorkerDone { workersCount: 1 }
+19:37:22.221 detox[17029] i ## received events ##
+19:37:22.222 detox[17029] i detected event sessionStateUpdate { workersCount: 1 }
+19:37:22.226 detox[17028] B connection :8099<->:64405
+19:37:22.227 detox[17029] i opened web socket to: ws://localhost:8099
+19:37:22.229 detox[17029] i send message
+  data: {"type":"login","params":{"sessionId":"test","role":"tester"},"messageId":0}
+19:37:22.230 detox[17028] i get
+  data: {"type":"login","params":{"sessionId":"test","role":"tester"},"messageId":0}
+19:37:22.230 detox[17028] i created session test
+19:37:22.230 detox[17028] i send
+  data: {
+    "type": "loginSuccess",
+    "params": {
+      "testerConnected": true,
+      "appConnected": false
+    },
+    "messageId": 0
+  }
+19:37:22.231 detox[17028] i tester joined session test
+19:37:22.231 detox[17029] i get message
+  data: {"type":"loginSuccess","params":{"testerConnected":true,"appConnected":false},"messageId":0}
+   
+19:37:22.326 detox[17028] i received event of :  allocateDevice {
+  deviceConfig: {
+    type: 'ios.simulator',
+    device: { type: 'iPhone 16 Plus', os: 'iOS 18.5' }
+  }
+}
+19:37:22.326 detox[17029] i dispatching event to  primary-17028 /tmp/detox.primary-17028  :  allocateDevice , {
+  deviceConfig: {
+    type: 'ios.simulator',
+    device: { type: 'iPhone 16 Plus', os: 'iOS 18.5' }
+  }
+}
+19:37:22.330 detox[17028] B init
+  args: ()
+19:37:22.332 detox[17028] E init
+19:37:22.333 detox[17028] B allocate
+  data: {
+    "type": "ios.simulator",
+    "device": {
+      "type": "iPhone 16 Plus",
+      "os": "iOS 18.5"
+    }
+  }
+19:37:22.346 detox[17028] i applesimutils --list --byOS "iOS 18.5" --byType "iPhone 16 Plus" --fields udid,os,identifier
+19:37:22.346 detox[17028] i Searching for device by type = "iPhone 16 Plus" and by OS = "iOS 18.5" ...
+19:37:22.498 detox[17028] i [
+  {
+    "os" : {
+      "identifier" : "com.apple.CoreSimulator.SimRuntime.iOS-18-5"
+    },
+    "udid" : "836E12A4-A4BD-4DBC-8086-18EC2977BC72"
+  }
+]
+
+19:37:22.499 detox[17028] i settled on 836E12A4-A4BD-4DBC-8086-18EC2977BC72
+  data: {
+    "id": "836E12A4-A4BD-4DBC-8086-18EC2977BC72",
+    "udid": "836E12A4-A4BD-4DBC-8086-18EC2977BC72"
+  }
+19:37:22.499 detox[17028] E allocate
+19:37:22.499 detox[17028] B post-allocate: 836E12A4-A4BD-4DBC-8086-18EC2977BC72
+  data: {
+    "id": "836E12A4-A4BD-4DBC-8086-18EC2977BC72",
+    "udid": "836E12A4-A4BD-4DBC-8086-18EC2977BC72"
+  }
+19:37:22.499 detox[17028] i applesimutils --list --byId 836E12A4-A4BD-4DBC-8086-18EC2977BC72 --maxResults 1 --fields udid,os,version,state
+19:37:22.644 detox[17028] i [
+  {
+    "state" : "Booted",
+    "os" : {
+      "version" : "18.5"
+    },
+    "udid" : "836E12A4-A4BD-4DBC-8086-18EC2977BC72"
+  }
+]
+
+19:37:22.644 detox[17028] E post-allocate: 836E12A4-A4BD-4DBC-8086-18EC2977BC72
+19:37:22.644 detox[17028] i dispatching event to socket  :  allocateDeviceDone {
+  deviceCookie: {
+    id: '836E12A4-A4BD-4DBC-8086-18EC2977BC72',
+    udid: '836E12A4-A4BD-4DBC-8086-18EC2977BC72',
+    type: 'ios.simulator',
+    bootArgs: undefined,
+    headless: undefined
+  }
+}
+19:37:22.644 detox[17029] i ## received events ##
+19:37:22.645 detox[17029] i detected event allocateDeviceDone {
+  deviceCookie: {
+    id: '836E12A4-A4BD-4DBC-8086-18EC2977BC72',
+    udid: '836E12A4-A4BD-4DBC-8086-18EC2977BC72',
+    type: 'ios.simulator'
+  }
+}
+19:37:22.657 detox[17029] B onBootDevice
+  args: ({"deviceId":"836E12A4-A4BD-4DBC-8086-18EC2977BC72"})
+19:37:22.657 detox[17029] E onBootDevice
+19:37:22.657 detox[17029] B installUtilBinaries
+  args: ()
+19:37:22.657 detox[17029] E installUtilBinaries
+19:37:22.658 detox[17029] B selectApp
+  args: ("default")
+19:37:22.658 detox[17029] E selectApp
+  error: Failed to find the app binary at:
+  /Users/kevin/card-show-finder/ios/build/Build/Products/Debug-iphonesimulator/cardshowfinder.app
+  
+  HINT: Make sure that:
+  1. You built the app before running tests:
+    detox build -c <your-configuration-name>
+  2. The app binary can be found at the given path.
+19:37:22.658 detox[17029] E set up environment
+  error: Failed to find the app binary at:
+  /Users/kevin/card-show-finder/ios/build/Build/Products/Debug-iphonesimulator/cardshowfinder.app
+  
+  HINT: Make sure that:
+  1. You built the app before running tests:
+    detox build -c <your-configuration-name>
+  2. The app binary can be found at the given path.
+19:37:22.659 detox[17029] B tear down environment
+19:37:22.659 detox[17029] B onBeforeCleanup
+  args: ()
+19:37:22.661 detox[17029] i saving FileArtifact to: /Users/kevin/card-show-finder/e2e/artifacts/misc/unknown-suite/unknown-test/unknown-test_unknown_2025-07-18T23-37-22 { append: true }
+19:37:22.662 detox[17029] i saving FileArtifact to: /Users/kevin/card-show-finder/e2e/artifacts/misc/unknown-suite/unknown-test/unknown-test_unknown_2025-07-18T23-37-22 { append: true }
+19:37:22.662 detox[17029] E onBeforeCleanup
+19:37:22.664 detox[17028] i tester exited session test
+19:37:22.664 detox[17028] E connection :8099<->:64405
+19:37:22.664 detox[17029] i dispatching event to  primary-17028 /tmp/detox.primary-17028  :  deallocateDevice , {
+  deviceCookie: {
+    id: '836E12A4-A4BD-4DBC-8086-18EC2977BC72',
+    udid: '836E12A4-A4BD-4DBC-8086-18EC2977BC72',
+    type: 'ios.simulator'
+  }
+}
+19:37:22.665 detox[17028] i received event of :  deallocateDevice {
+  deviceCookie: {
+    id: '836E12A4-A4BD-4DBC-8086-18EC2977BC72',
+    udid: '836E12A4-A4BD-4DBC-8086-18EC2977BC72',
+    type: 'ios.simulator'
+  }
+}
+19:37:22.665 detox[17028] B free: 836E12A4-A4BD-4DBC-8086-18EC2977BC72
+  data: {}
+19:37:22.666 detox[17028] E free: 836E12A4-A4BD-4DBC-8086-18EC2977BC72
+19:37:22.666 detox[17028] i dispatching event to socket  :  deallocateDeviceDone {}
+19:37:22.666 detox[17029] i ## received events ##
+19:37:22.666 detox[17029] i detected event deallocateDeviceDone {}
+19:37:22.667 detox[17028] i socket disconnected secondary-17029
+19:37:22.667 detox[17029] i connection closed primary-17028 /tmp/detox.primary-17028 0 tries remaining of 0
+19:37:22.667 detox[17029] i secondary-17029 exceeded connection rety amount of  or stopRetrying flag set.
+19:37:22.667 detox[17029] E tear down environment
+19:37:22.667 detox[17029] E e2e/tests/authentication.test.js
+19:37:22.688 detox[17029] i 
+📊 Test Results (authentication.test.js):
+19:37:22.690 detox[17029] i    ✅ Passed: 0/0
+19:37:22.690 detox[17029] i    ⏱️  Duration: 0.76s
+19:37:22.693 detox[17029] i 
+=================================================
+19:37:22.693 detox[17029] i 📱 CARD SHOW FINDER E2E TEST SUMMARY
+19:37:22.693 detox[17029] i =================================================
+19:37:22.694 detox[17029] i ✅ Passed: 0
+19:37:22.694 detox[17029] i ❌ Failed: 0
+19:37:22.694 detox[17029] i ⏭️  Skipped: 0
+19:37:22.694 detox[17029] i 🧪 Total: 0
+19:37:22.694 detox[17029] i ⏱️  Total Duration: 0.78s
+19:37:22.694 detox[17029] i 
+=================================================
+19:37:22.694 detox[17029] i E2E Testing completed in 0.78s
+19:37:22.694 detox[17029] i =================================================
+
+19:37:22.731 detox[17029] i Starting Detox E2E test teardown
+19:37:22.731 detox[17029] i Starting test database cleanup...
+19:37:22.732 detox[17029] i Test data not found in global object. Skipping database cleanup.
+19:37:22.741 detox[17029] i Generating test report...
+19:37:22.742 detox[17029] i Test report generated: /Users/kevin/card-show-finder/e2e/artifacts/test-report.json
+19:37:22.742 detox[17029] i Test summary: 0 passed, 0 failed, 0 skipped
+19:37:22.742 detox[17029] i Total duration: 832ms
+19:37:22.742 detox[17029] i Logging performance metrics...
+19:37:22.742 detox[17029] i No performance measurements were collected.
+19:37:22.742 detox[17029] i Checking artifacts cleanup configuration...
+19:37:22.742 detox[17029] i Artifacts cleanup is disabled. Skipping.
+19:37:22.742 detox[17029] i Detox cleanup handled automatically by the test runner
+19:37:22.742 detox[17029] i Detox E2E test teardown completed
+19:37:22.751 detox[17028] E Command failed with exit code = 1:
+jest --config e2e/jest.config.js
+19:37:22.752 detox[17028] B cleanup
+  args: ()
+19:37:22.753 detox[17028] E cleanup
+19:37:22.753 detox[17028] i Detox server has been closed gracefully
+19:37:22.754 detox[17028] E node_modules/.bin/detox test --configuration ios.sim.debug --reuse
