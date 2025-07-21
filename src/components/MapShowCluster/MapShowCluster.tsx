@@ -10,8 +10,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SocialIcon from '../ui/SocialIcon';
-import { Marker, Callout } from 'react-native-maps';
-import FixedClusteredMapView from 'react-native-maps-super-cluster';
+// Fallback map components that gracefully degrade when the native
+// react-native-maps module isn’t available (e.g. running in Expo Go).
+import {
+  Marker,
+  Callout,
+  FixedClusteredMapView,
+} from '../MapFallback';
 import { Show } from '../../types';
 import { formatDate, formatEntryFee } from '../../utils/formatters';
 import { sanitizeCoordinates } from '../../utils/coordinateUtils'; 
