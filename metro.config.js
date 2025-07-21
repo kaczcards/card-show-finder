@@ -5,11 +5,11 @@ const path = require('path');
 // Get the default Expo configuration
 const defaultConfig = getDefaultConfig(__dirname);
 
-// Configure Metro with Node.js polyfills
+// Standard Expo Metro configuration
 module.exports = {
   ...defaultConfig,
   
-  // Configure the resolver with Node.js polyfills
+  // Configure the resolver
   resolver: {
     ...defaultConfig.resolver,
     // Ensure these file extensions are properly resolved
@@ -21,15 +21,6 @@ module.exports = {
     nodeModulesPaths: [
       path.resolve(__dirname, 'node_modules'),
     ],
-    // Add Node.js module polyfills
-    extraNodeModules: {
-      // Map 'buffer' imports to the buffer polyfill package
-      'buffer': path.resolve(__dirname, 'node_modules/buffer'),
-      // Add other Node.js polyfills if needed
-      'stream': path.resolve(__dirname, 'node_modules/readable-stream'),
-      'crypto': path.resolve(__dirname, 'node_modules/react-native-crypto'),
-      'process': path.resolve(__dirname, 'node_modules/process')
-    }
   },
   
   // Configure the transformer with Hermes support

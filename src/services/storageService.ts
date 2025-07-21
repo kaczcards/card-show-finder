@@ -1,5 +1,4 @@
 import { supabase } from '../supabase';
-import { Buffer } from 'buffer';
 
 /**
  * Interface for URL cache entries
@@ -121,13 +120,13 @@ class StorageService {
       // Create path with user folder structure
       const filePath = `${userId}/${finalFileName}`;
       
-      let fileData: File | Blob | Buffer;
+      let fileData: File | Blob | Uint8Array;
       
       // Handle different file types
       if (typeof file === 'string' && file.startsWith('data:')) {
         // Base64 data URL
         const base64Data = file.split(',')[1];
-        fileData = Buffer.from(base64Data, 'base64');
+        fileData = this.base64ToUint8Array(base64Data);
         
         // Extract content type if not provided
         if (!contentType) {
@@ -137,7 +136,7 @@ class StorageService {
         fileData = file;
       } else if (typeof file === 'string') {
         // Assume it's already base64 encoded without data URL prefix
-        fileData = Buffer.from(file, 'base64');
+        fileData = this.base64ToUint8Array(file);
       } else {
         throw new Error('Unsupported file format');
       }
@@ -399,6 +398,47 @@ class StorageService {
    */
   clearCache(): void {
     this.signedUrlCache.clear();
+  }
+
+  /**
+   * Convert a base-64 string to Uint8Array (React-Native friendly)
+   * @param base64 - Base-64 encoded data (without data-URI prefix)
+   */
+  private base64ToUint8Array(base64: string): Uint8Array {
+    // atob is available in React Native >= 0.64 / Expo SDK 41+. Add fallback if needed.
+    // Use atob when available (modern React-Native & Expo provide it).
+    // For environments without atob (very old RN versions), perform
+    // a manual base-64 decoding.
+    const binaryString = globalThis.atob
+      ? globalThis.atob(base64)
+      : (() => {
+          const chars =
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+          let str = '';
+          let i = 0;
+          for (; i < base64.length; i += 4) {
+            const enc1 = chars.indexOf(base64.charAt(i));
+            const enc2 = chars.indexOf(base64.charAt(i + 1));
+            const enc3 = chars.indexOf(base64.charAt(i + 2));
+            const enc4 = chars.indexOf(base64.charAt(i + 3));
+
+            const chr1 = (enc1 << 2) | (enc2 >> 4);
+            const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            const chr3 = ((enc3 & 3) << 6) | enc4;
+
+            str += String.fromCharCode(chr1);
+            if (enc3 !== 64) str += String.fromCharCode(chr2);
+            if (enc4 !== 64) str += String.fromCharCode(chr3);
+          }
+          return str;
+        })();
+
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
   }
 }
 
