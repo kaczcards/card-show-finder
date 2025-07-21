@@ -144,7 +144,15 @@ module.exports = {
       {
         file: "sentry-expo/upload-sourcemaps",
         config: {
-          organization: "YOUR_SENTRY_ORGANIZATION",
+          /**
+           * ------------------------------------------------------------------
+           * Set your Sentry **organization slug** here.
+           * You can find it in the Sentry web UI:
+           *   Settings ▸ Organization Settings ▸ General Settings ▸ “Slug”
+           * Example:  "my-startup"  (do **not** include quotes when you paste)
+           * ------------------------------------------------------------------
+           */
+          organization: "triforce-studios-llc",
           project: "card-show-finder",
           authToken: process.env.SENTRY_AUTH_TOKEN,
         }
