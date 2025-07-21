@@ -63,7 +63,6 @@ module.exports = {
   },
   ios: {
     supportsTablet: true,
-    googleServicesFile: "./GoogleService-Info.plist",
     jsEngine: "jsc",
     infoPlist: {
       NSLocationWhenInUseUsageDescription: "Allow Card Show Finder to access your location so we can display nearby card shows."
@@ -76,26 +75,21 @@ module.exports = {
     associatedDomains: [
       "applinks:cardshowfinder.app"
     ],
+    /* Unique identifier used for App Store publishing */
     bundleIdentifier: "com.kaczcards.cardshowfinder"
   },
   android: {
+    package: "com.kaczcards.cardshowfinder",
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#ffffff",
     },
     edgeToEdgeEnabled: true,
-    googleServicesFile: "./google-services.json",
-    permissions: [
-      "ACCESS_FINE_LOCATION",
-      "ACCESS_COARSE_LOCATION"
-    ],
+    permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
     jsEngine: "jsc",
-    package: "com.kaczcards.cardshowfinder"
-    ,
+
     /* ------------------------------------------------------------------
-     * Deep-link / Intent filters (Android)
-     *  – Handles both the custom scheme  cardshowfinder://reset-password
-     *    and the universal https link  https://cardshowfinder.app/reset-password
+     * Deep-link / Intent filters
      * ------------------------------------------------------------------ */
     intentFilters: [
       {
@@ -104,22 +98,22 @@ module.exports = {
           {
             scheme: "https",
             host: "cardshowfinder.app",
-            pathPrefix: "/reset-password"
-          }
+            pathPrefix: "/reset-password",
+          },
         ],
-        category: ["BROWSABLE", "DEFAULT"]
+        category: ["BROWSABLE", "DEFAULT"],
       },
       {
         action: "VIEW",
         data: [
           {
             scheme: "cardshowfinder",
-            host: "reset-password"
-          }
+            host: "reset-password",
+          },
         ],
-        category: ["BROWSABLE", "DEFAULT"]
-      }
-    ]
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+    ],
   },
   web: {
     favicon: "./assets/favicon.png"
@@ -137,8 +131,9 @@ module.exports = {
         locationAlwaysAndWhenInUsePermission: "Allow Card Show Finder to access your location so we can display nearby card shows."
       }
     ],
-    "sentry-expo"
+    /* Sentry plugin removed while investigating native crash */
   ],
+  /* Sentry post-publish hook to upload sourcemaps */
   hooks: {
     postPublish: [
       {
@@ -160,3 +155,4 @@ module.exports = {
     ]
   }
 };
+

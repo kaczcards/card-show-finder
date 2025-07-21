@@ -16,7 +16,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+// Use fallback map components that gracefully degrade when the native
+// react-native-maps module isn’t available (e.g. running in Expo Go).
+import MapFallback, {
+  MapView,
+  Marker,
+  Callout,
+  PROVIDER_GOOGLE,
+  Region,
+} from '../../components/MapFallback';
 import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
