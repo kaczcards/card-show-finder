@@ -31,6 +31,39 @@ if (typeof globalThis.structuredClone !== 'function') {
   globalThis.structuredClone = (val: any): any => JSON.parse(JSON.stringify(val));
 }
 
+/**
+ * ---------------------------------------------------------------------------
+ * Polyfill: `__extends`
+ * ---------------------------------------------------------------------------
+ * The TypeScript compiler emits a helper called `__extends` for class
+ * inheritance when `tslib` isn’t used.  Hermes doesn’t provide this helper
+ * by default, which results in the runtime error:
+ *     “TypeError: Cannot read property '__extends' of undefined”
+ *
+ * We define a light-weight version here **before** any libraries that rely on
+ * class inheritance are imported.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, func-names
+if (typeof globalThis.__extends !== 'function') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.__extends = function (d: any, b: any) {
+    // Copy static properties
+    for (const p in b) {
+      if (Object.prototype.hasOwnProperty.call(b, p)) {
+        d[p] = b[p];
+      }
+    }
+    // Temporary constructor
+    function __() {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      this.constructor = d;
+    }
+    // Set prototype chain
+    d.prototype = b === null ? Object.create(b) : ((__.prototype = b.prototype), new (__ as any)());
+  };
+}
+
 // Import context providers
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';
