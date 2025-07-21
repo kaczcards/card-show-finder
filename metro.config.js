@@ -5,11 +5,11 @@ const path = require('path');
 // Get the default Expo configuration
 const defaultConfig = getDefaultConfig(__dirname);
 
-// Standard Expo Metro configuration
+// Configure Metro with minimal customizations
 module.exports = {
   ...defaultConfig,
   
-  // Configure the resolver
+  // Configure the resolver with minimal customizations
   resolver: {
     ...defaultConfig.resolver,
     // Ensure these file extensions are properly resolved
@@ -23,7 +23,7 @@ module.exports = {
     ],
   },
   
-  // Configure the transformer with Hermes support
+  // Configure the transformer with minimal customizations
   transformer: {
     ...defaultConfig.transformer,
     // Enable hermes transform
