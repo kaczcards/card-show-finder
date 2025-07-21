@@ -63,7 +63,6 @@ module.exports = {
   },
   ios: {
     supportsTablet: true,
-    googleServicesFile: "./GoogleService-Info.plist",
     jsEngine: "jsc",
     infoPlist: {
       NSLocationWhenInUseUsageDescription: "Allow Card Show Finder to access your location so we can display nearby card shows."
@@ -86,7 +85,6 @@ module.exports = {
       backgroundColor: "#ffffff",
     },
     edgeToEdgeEnabled: true,
-    googleServicesFile: "./google-services.json",
     permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
     jsEngine: "jsc",
 
