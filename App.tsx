@@ -6,9 +6,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Global toast notifications
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
-// Sentry error tracking
-import { initSentry } from './src/services/sentryConfig';
-import SentryErrorBoundary from './src/components/SentryErrorBoundary';
 
 /**
  * ---------------------------------------------------------------------------
@@ -29,6 +26,39 @@ if (typeof globalThis.structuredClone !== 'function') {
   // on those types, so this is sufficient.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   globalThis.structuredClone = (val: any): any => JSON.parse(JSON.stringify(val));
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Polyfill: `__extends`
+ * ---------------------------------------------------------------------------
+ * The TypeScript compiler emits a helper called `__extends` for class
+ * inheritance when `tslib` isn’t used.  Hermes doesn’t provide this helper
+ * by default, which results in the runtime error:
+ *     “TypeError: Cannot read property '__extends' of undefined”
+ *
+ * We define a light-weight version here **before** any libraries that rely on
+ * class inheritance are imported.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, func-names
+if (typeof globalThis.__extends !== 'function') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.__extends = function (d: any, b: any) {
+    // Copy static properties
+    for (const p in b) {
+      if (Object.prototype.hasOwnProperty.call(b, p)) {
+        d[p] = b[p];
+      }
+    }
+    // Temporary constructor
+    function __() {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      this.constructor = d;
+    }
+    // Set prototype chain
+    d.prototype = b === null ? Object.create(b) : ((__.prototype = b.prototype), new (__ as any)());
+  };
 }
 
 // Import context providers
@@ -109,13 +139,6 @@ export default function App() {
   const [netError, setNetError] = useState<string | null>(null);
 
   useEffect(() => {
-    // --------------------------------------------------
-    // Initialise Sentry (crash & error reporting)
-    // --------------------------------------------------
-    // Runs only once on first render thanks to empty
-    // dependency array for this useEffect.
-    initSentry();
-
     /**
      * Quick network diagnostic – attempts to fetch a known-good public
      * JSON endpoint with a 5 second timeout.  Logs full details so we
@@ -223,7 +246,6 @@ export default function App() {
   }
 
   return (
-    <SentryErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
           <ThemeProvider>
@@ -236,6 +258,5 @@ export default function App() {
           </ThemeProvider>
         </SafeAreaProvider>
       </QueryClientProvider>
-    </SentryErrorBoundary>
   );
 }
