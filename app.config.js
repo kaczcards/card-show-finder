@@ -133,5 +133,26 @@ module.exports = {
     ],
     /* Sentry plugin removed while investigating native crash */
   ],
-  /* All Sentry post-publish hooks removed */
+  /* Sentry post-publish hook to upload sourcemaps */
+  hooks: {
+    postPublish: [
+      {
+        file: "sentry-expo/upload-sourcemaps",
+        config: {
+          /**
+           * ------------------------------------------------------------------
+           * Set your Sentry **organization slug** here.
+           * You can find it in the Sentry web UI:
+           *   Settings ▸ Organization Settings ▸ General Settings ▸ “Slug”
+           * Example:  "my-startup"  (do **not** include quotes when you paste)
+           * ------------------------------------------------------------------
+           */
+          organization: "triforce-studios-llc",
+          project: "card-show-finder",
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+        }
+      }
+    ]
+  }
 };
+
