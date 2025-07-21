@@ -80,11 +80,6 @@ export const initSentry = (options: SentryConfigOptions = {}): void => {
     debug,
     environment,
     tracesSampleRate: enableTracing ? 0.2 : 0, // Sample 20% of transactions in non-dev
-    integrations: [
-      new Sentry.Native.ReactNativeTracing({
-        routingInstrumentation: new Sentry.Native.ReactNavigationInstrumentation(),
-      }),
-    ],
     beforeSend(event) {
       // You can modify or filter events before they are sent to Sentry
       // For example, remove sensitive data
