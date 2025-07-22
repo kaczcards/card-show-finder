@@ -1703,4 +1703,6 @@ GRANT EXECUTE ON FUNCTION public.get_paginated_shows TO anon;
 GRANT EXECUTE ON FUNCTION public.get_show_details_by_id TO anon;
 
 -- Final migration comment
-COMMENT ON MIGRATION IS 'Canonical database consolidation that fixes all stability issues, infinite recursion problems, and establishes a single source of truth for database functions and policies';
+-- Canonical database consolidation that fixes all stability issues,
+-- resolves infinite recursion problems, and establishes a single
+-- source of truth for database functions and policies.
