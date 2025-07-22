@@ -26,7 +26,15 @@
     "test:e2e:all": "node e2e/scripts/run-all-batches.js",
     "test:e2e:auth": "npm run test:e2e:batch -- --batch auth-basic",
     "test:e2e:auth-advanced": "npm run test:e2e:batch -- --batch auth-advanced",
-    "test:e2e:tag": "npm run test:e2e:batch -- --tag"
+    "test:e2e:tag": "npm run test:e2e:batch -- --tag",
+
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "build:web": "expo export:web",
+    "preview": "expo start --no-dev --minify"
   },
   "dependencies": {
     "@mapbox/geo-viewport": "^0.5.0",
