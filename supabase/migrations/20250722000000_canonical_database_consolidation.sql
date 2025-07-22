@@ -158,20 +158,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Drop existing coordinate validation functions to avoid parameter naming conflicts
+DROP FUNCTION IF EXISTS validate_coordinates(FLOAT, FLOAT);
+DROP FUNCTION IF EXISTS create_geography_point(FLOAT, FLOAT);
+
 -- Function to validate coordinates for shows
 CREATE OR REPLACE FUNCTION validate_coordinates(
   lat FLOAT,
-  long FLOAT
+  lng FLOAT
 ) RETURNS BOOLEAN AS $$
 BEGIN
   -- Check if coordinates are within valid ranges
   -- Latitude: -90 to 90, Longitude: -180 to 180
-  IF lat < -90 OR lat > 90 OR long < -180 OR long > 180 THEN
+  IF lat < -90 OR lat > 90 OR lng < -180 OR lng > 180 THEN
     RETURN FALSE;
   END IF;
   
   -- Check if coordinates are not at 0,0 (null island)
-  IF lat = 0 AND long = 0 THEN
+  IF lat = 0 AND lng = 0 THEN
     RETURN FALSE;
   END IF;
   
@@ -179,17 +183,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to create a PostGIS point from lat/long
+-- Function to create a PostGIS point from lat/lng
 CREATE OR REPLACE FUNCTION create_geography_point(
   lat FLOAT,
-  long FLOAT
+  lng FLOAT
 ) RETURNS GEOGRAPHY AS $$
 BEGIN
-  IF NOT validate_coordinates(lat, long) THEN
-    RAISE EXCEPTION 'Invalid coordinates: latitude=%, longitude=%', lat, long;
+  IF NOT validate_coordinates(lat, lng) THEN
+    RAISE EXCEPTION 'Invalid coordinates: latitude=%, longitude=%', lat, lng;
   END IF;
   
-  RETURN ST_SetSRID(ST_MakePoint(long, lat), 4326)::GEOGRAPHY;
+  RETURN ST_SetSRID(ST_MakePoint(lng, lat), 4326)::GEOGRAPHY;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -214,7 +218,7 @@ DROP FUNCTION IF EXISTS public.get_paginated_shows;
 
 CREATE OR REPLACE FUNCTION public.get_paginated_shows(
   lat float,                          -- Latitude of center point
-  long float,                         -- Longitude of center point
+  lng float,                          -- Longitude of center point
   radius_miles float DEFAULT 25,      -- Search radius in miles
   start_date timestamp with time zone DEFAULT current_date, -- Start of date range
   end_date timestamp with time zone DEFAULT (current_date + interval '30 days'), -- End of date range
@@ -253,7 +257,7 @@ BEGIN
     -- Filter for shows within the specified radius
     ST_DWithin(
       s.coordinates::geography,
-      ST_SetSRID(ST_MakePoint(get_paginated_shows.long, get_paginated_shows.lat), 4326)::geography,
+      ST_SetSRID(ST_MakePoint(get_paginated_shows.lng, get_paginated_shows.lat), 4326)::geography,
       get_paginated_shows.radius_miles * 1609.34  -- Convert miles to meters
     ) AND
     
@@ -298,7 +302,7 @@ BEGIN
         -- Calculate distance in miles from the search point
         'distance_miles', ST_Distance(
           s.coordinates::geography,
-          ST_SetSRID(ST_MakePoint(get_paginated_shows.long, get_paginated_shows.lat), 4326)::geography
+          ST_SetSRID(ST_MakePoint(get_paginated_shows.lng, get_paginated_shows.lat), 4326)::geography
         ) / 1609.34
       )
     ) INTO shows_data
@@ -316,7 +320,7 @@ BEGIN
     -- Filter for shows within the specified radius
     ST_DWithin(
       s.coordinates::geography,
-      ST_SetSRID(ST_MakePoint(get_paginated_shows.long, get_paginated_shows.lat), 4326)::geography,
+      ST_SetSRID(ST_MakePoint(get_paginated_shows.lng, get_paginated_shows.lat), 4326)::geography,
       get_paginated_shows.radius_miles * 1609.34  -- Convert miles to meters
     ) AND
     
@@ -344,7 +348,7 @@ BEGIN
     -- Then by distance (closest first)
     ST_Distance(
       s.coordinates::geography, 
-      ST_SetSRID(ST_MakePoint(get_paginated_shows.long, get_paginated_shows.lat), 4326)::geography
+      ST_SetSRID(ST_MakePoint(get_paginated_shows.lng, get_paginated_shows.lat), 4326)::geography
     ) ASC
   LIMIT get_paginated_shows.page_size
   OFFSET offset_val;
@@ -393,7 +397,7 @@ This fixed version properly handles:
 
 Parameters:
   lat - Latitude of the center point
-  long - Longitude of the center point
+  lng - Longitude of the center point
   radius_miles - Radius in miles (default: 25)
   start_date - Start date for filtering shows (default: current date)
   end_date - End date for filtering shows (default: current date + 30 days)
@@ -532,7 +536,7 @@ CREATE OR REPLACE FUNCTION public.create_show_with_coordinates(
   entry_fee NUMERIC,
   image_url TEXT,
   lat FLOAT,
-  long FLOAT,
+  lng FLOAT,
   features JSONB DEFAULT NULL,
   categories TEXT[] DEFAULT NULL,
   series_id UUID DEFAULT NULL
@@ -546,16 +550,16 @@ DECLARE
   coordinates GEOGRAPHY;
 BEGIN
   -- Validate coordinates
-  IF NOT validate_coordinates(lat, long) THEN
+  IF NOT validate_coordinates(lat, lng) THEN
     RETURN jsonb_build_object(
       'success', false,
       'error', 'Invalid coordinates provided',
-      'details', jsonb_build_object('lat', lat, 'long', long)
+      'details', jsonb_build_object('lat', lat, 'lng', lng)
     );
   END IF;
   
   -- Create geography point
-  coordinates := create_geography_point(lat, long);
+  coordinates := create_geography_point(lat, lng);
   
   -- Insert the new show
   INSERT INTO public.shows (
@@ -598,7 +602,7 @@ BEGIN
     'id', new_show_id,
     'coordinates', jsonb_build_object(
       'latitude', lat,
-      'longitude', long
+      'longitude', lng
     )
   );
 EXCEPTION
@@ -631,7 +635,7 @@ Parameters:
   entry_fee - Entry fee amount
   image_url - URL to show image
   lat - Latitude (must be between -90 and 90)
-  long - Longitude (must be between -180 and 180)
+  lng - Longitude (must be between -180 and 180)
   features - Optional JSONB object with show features
   categories - Optional array of show categories
   series_id - Optional UUID of show series this show belongs to
@@ -1703,4 +1707,6 @@ GRANT EXECUTE ON FUNCTION public.get_paginated_shows TO anon;
 GRANT EXECUTE ON FUNCTION public.get_show_details_by_id TO anon;
 
 -- Final migration comment
-COMMENT ON MIGRATION IS 'Canonical database consolidation that fixes all stability issues, infinite recursion problems, and establishes a single source of truth for database functions and policies';
+-- Canonical database consolidation that fixes all stability issues,
+-- resolves infinite recursion problems, and establishes a single
+-- source of truth for database functions and policies.
