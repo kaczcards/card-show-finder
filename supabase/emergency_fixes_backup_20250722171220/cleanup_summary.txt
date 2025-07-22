@@ -1,0 +1,31 @@
+Emergency Fix Cleanup Summary
+Date: Tue Jul 22 17:12:50 EDT 2025
+Total files removed: 25
+Total files backed up: 25
+
+Files removed:
+  - 20240709_create_admin_role.sql
+  - 20250711004000_create_show_details_rpc.sql
+  - 20250711014500_create_paginated_shows_rpc.sql
+  - 20250711095000_create_messaging_rpc.sql
+  - 20250711120000_create_message_rpc.sql
+  - 20250713010000_fix_paginated_shows_ambiguous_date.sql
+  - 20250713020000_fix_all_ambiguous_references_in_paginated_shows.sql
+  - 20250713030000_fix_paginated_shows_group_by_error.sql
+  - 20250713040000_fix_paginated_shows_bypass_location.sql
+  - 20250713050000_fix_paginated_shows_bypass_date.sql
+  - 20250713060000_fix_paginated_shows_full_debug.sql
+  - 20250713070000_fix_paginated_shows_final.sql
+  - 20250713080000_fix_paginated_shows_minimal.sql
+  - 20250714010000_fix_homepage_show_display.sql
+  - 20250714020000_fix_cte_in_paginated_shows.sql
+  - 20250714030000_diagnostic_and_fix_get_shows.sql
+  - 20250714040000_fix_ambiguous_column_reference.sql
+  - 20250714050000_fix_show_details_for_organizer_shows.sql
+  - 20250714060000_fix_show_details_table_error.sql
+  - 20250716000000_add_coordinate_validation.sql
+  - 20250718000000_add_organizer_to_dealer_list.sql
+  - 20250719000000_create_stripe_webhook_tables.sql
+  - 20250720000000_add_mfa_support.sql
+  - 20250721000000_add_security_tables.sql
+  - 20250722000000_fix_show_participants_infinite_recursion.sql
