@@ -26,12 +26,7 @@ module.exports = {
   // Configure the transformer with minimal customizations
   transformer: {
     ...defaultConfig.transformer,
-    // Enable hermes transform
-    hermesEnabled: true,
-    // Preserve class names and function names for better debugging
-    minifierConfig: {
-      keep_classnames: true, // Helps with TypeScript inheritance
-      keep_fnames: true      // Helps with function names in stack traces
-    }
+    // Enable Hermes transform for production
+    hermesEnabled: true
   }
 };

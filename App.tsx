@@ -8,58 +8,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 /**
- * ---------------------------------------------------------------------------
- * Polyfill: `structuredClone`
- * ---------------------------------------------------------------------------
- * React-Native does not yet include the Web-standard `structuredClone`
- * function.  Newer versions of `@supabase/supabase-js` rely on it for deep
- * cloning session / payload objects.  We add a lightweight polyfill that
- * covers the common case (plain JSON-serialisable data).
- *
- * NOTE:  This lives here (top-level of the app) so it is executed **before**
- * any library code runs, ensuring the global is available everywhere.
+ * Polyfills removed – With the project now running on a stable Hermes setup
+ * (and up-to-date dependencies), manual `structuredClone` and `__extends`
+ * polyfills are no longer required and have been deleted to prevent any
+ * potential conflicts.
  */
-// eslint-disable-next-line no-underscore-dangle
-if (typeof globalThis.structuredClone !== 'function') {
-  // Simple, fast clone via JSON for serialisable objects.
-  // For non-serialisable data (Dates, Maps, etc.) Supabase does not rely
-  // on those types, so this is sufficient.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  globalThis.structuredClone = (val: any): any => JSON.parse(JSON.stringify(val));
-}
-
-/**
- * ---------------------------------------------------------------------------
- * Polyfill: `__extends`
- * ---------------------------------------------------------------------------
- * The TypeScript compiler emits a helper called `__extends` for class
- * inheritance when `tslib` isn’t used.  Hermes doesn’t provide this helper
- * by default, which results in the runtime error:
- *     “TypeError: Cannot read property '__extends' of undefined”
- *
- * We define a light-weight version here **before** any libraries that rely on
- * class inheritance are imported.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, func-names
-if (typeof globalThis.__extends !== 'function') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  globalThis.__extends = function (d: any, b: any) {
-    // Copy static properties
-    for (const p in b) {
-      if (Object.prototype.hasOwnProperty.call(b, p)) {
-        d[p] = b[p];
-      }
-    }
-    // Temporary constructor
-    function __() {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      this.constructor = d;
-    }
-    // Set prototype chain
-    d.prototype = b === null ? Object.create(b) : ((__.prototype = b.prototype), new (__ as any)());
-  };
-}
 
 // Import context providers
 import { AuthProvider } from './src/contexts/AuthContext';
