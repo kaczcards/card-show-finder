@@ -527,19 +527,19 @@ COMMENT ON FUNCTION public.get_show_details_by_id IS 'Gets detailed information 
 DROP FUNCTION IF EXISTS public.create_show_with_coordinates;
 
 CREATE OR REPLACE FUNCTION public.create_show_with_coordinates(
-  title TEXT,
-  description TEXT,
-  location TEXT,
-  address TEXT,
-  start_date TIMESTAMP WITH TIME ZONE,
-  end_date TIMESTAMP WITH TIME ZONE,
-  entry_fee NUMERIC,
-  image_url TEXT,
-  lat FLOAT,
-  lng FLOAT,
-  features JSONB DEFAULT NULL,
-  categories TEXT[] DEFAULT NULL,
-  series_id UUID DEFAULT NULL
+  p_title TEXT,
+  p_description TEXT,
+  p_location TEXT,
+  p_address TEXT,
+  p_start_date TIMESTAMP WITH TIME ZONE,
+  p_end_date TIMESTAMP WITH TIME ZONE,
+  p_entry_fee NUMERIC,
+  p_image_url TEXT,
+  p_latitude FLOAT,
+  p_longitude FLOAT,
+  p_features JSONB DEFAULT NULL,
+  p_categories TEXT[] DEFAULT NULL,
+  p_series_id UUID DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -550,16 +550,16 @@ DECLARE
   coordinates GEOGRAPHY;
 BEGIN
   -- Validate coordinates
-  IF NOT validate_coordinates(lat, lng) THEN
+  IF NOT validate_coordinates(p_latitude, p_longitude) THEN
     RETURN jsonb_build_object(
       'success', false,
       'error', 'Invalid coordinates provided',
-      'details', jsonb_build_object('lat', lat, 'lng', lng)
+      'details', jsonb_build_object('lat', p_latitude, 'lng', p_longitude)
     );
   END IF;
   
   -- Create geography point
-  coordinates := create_geography_point(lat, lng);
+  coordinates := create_geography_point(p_latitude, p_longitude);
   
   -- Insert the new show
   INSERT INTO public.shows (
@@ -579,20 +579,20 @@ BEGIN
     series_id
   )
   VALUES (
-    create_show_with_coordinates.title,
-    create_show_with_coordinates.description,
-    create_show_with_coordinates.location,
-    create_show_with_coordinates.address,
-    create_show_with_coordinates.start_date,
-    create_show_with_coordinates.end_date,
-    create_show_with_coordinates.entry_fee,
-    create_show_with_coordinates.image_url,
+    create_show_with_coordinates.p_title,
+    create_show_with_coordinates.p_description,
+    create_show_with_coordinates.p_location,
+    create_show_with_coordinates.p_address,
+    create_show_with_coordinates.p_start_date,
+    create_show_with_coordinates.p_end_date,
+    create_show_with_coordinates.p_entry_fee,
+    create_show_with_coordinates.p_image_url,
     coordinates,
-    COALESCE(create_show_with_coordinates.features, '{}'::JSONB),
-    COALESCE(create_show_with_coordinates.categories, '{}'::TEXT[]),
+    COALESCE(create_show_with_coordinates.p_features, '{}'::JSONB),
+    COALESCE(create_show_with_coordinates.p_categories, '{}'::TEXT[]),
     'ACTIVE',
     auth.uid(),
-    create_show_with_coordinates.series_id
+    create_show_with_coordinates.p_series_id
   )
   RETURNING id INTO new_show_id;
   
@@ -601,8 +601,8 @@ BEGIN
     'success', true,
     'id', new_show_id,
     'coordinates', jsonb_build_object(
-      'latitude', lat,
-      'longitude', lng
+      'latitude', p_latitude,
+      'longitude', p_longitude
     )
   );
 EXCEPTION
