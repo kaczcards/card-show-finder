@@ -6,16 +6,97 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development",
+      "cache": {
+        "key": "dev-${{ github.sha }}",
+        "cacheDefaultPaths": true
+      },
+      "env": {
+        "APP_ENV": "development"
+      },
+      "ios": {
+        "resourceClass": "m1-medium",
+        "autoIncrement": "buildNumber",
+        "scheme": "cardshowfinderDev"
+      },
+      "android": {
+        "gradleCommand": ":app:assembleDebug",
+        "resourceClass": "large",
+        "autoIncrement": "versionCode",
+        "buildType": "apk"
+      }
     },
-    "preview": {
-      "distribution": "internal"
+    "staging": {
+      "distribution": "internal",
+      "developmentClient": false,
+      "channel": "staging",
+      "env": {
+        "APP_ENV": "staging"
+      },
+      "cache": {
+        "key": "staging-${{ github.sha }}",
+        "cacheDefaultPaths": true
+      },
+      "ios": {
+        "resourceClass": "m1-medium",
+        "autoIncrement": "buildNumber",
+        "scheme": "cardshowfinderStaging"
+      },
+      "android": {
+        "resourceClass": "large",
+        "autoIncrement": "versionCode",
+        "buildType": "app-bundle"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "channel": "production",
+      "developmentClient": false,
+      "env": {
+        "APP_ENV": "production"
+      },
+      "cache": {
+        "key": "prod-${{ eas.build.id }}",
+        "cacheDefaultPaths": true
+      },
+      "ios": {
+        "resourceClass": "m1-large",
+        "autoIncrement": "buildNumber",
+        "scheme": "cardshowfinder"
+      },
+      "android": {
+        "resourceClass": "xlarge",
+        "autoIncrement": "versionCode",
+        "buildType": "app-bundle"
+      }
     }
   },
+  "hooks": {
+    "prebuild": "npm run test && npm run lint",
+    "postbuild": "echo \"✅ Build completed for $APP_ENV environment\""
+  },
   "submit": {
-    "production": {}
+    "staging": {
+      "ios": {
+        "appleId": "$APPLE_ID",
+        "ascAppId": "$ASC_APP_ID",
+        "appleTeamId": "$APPLE_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./android-service-account.json",
+        "track": "internal"
+      }
+    },
+    "production": {
+      "ios": {
+        "appleId": "$APPLE_ID",
+        "ascAppId": "$ASC_APP_ID",
+        "appleTeamId": "$APPLE_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./android-service-account.json",
+        "track": "production"
+      }
+    }
   }
 }
