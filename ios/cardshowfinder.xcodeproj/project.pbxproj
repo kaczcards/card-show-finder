@@ -7,29 +7,29 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		126C1DEEE3AFFA0B3FD923D7 /* libPods-cardshowfinder.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 59D922EED91813F476659B85 /* libPods-cardshowfinder.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		2E32D2D9C3F6C8CC18528961 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F08892C80447367378EE90AF /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		4799DAF975AC9AFCCBB64553 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B14E5E86D0C1B08B1F7CC8E2 /* ExpoModulesProvider.swift */; };
-		980872822A3B6A51344C4D4F /* libPods-cardshowfinder.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DB4370DC985C8BA9FA0F4950 /* libPods-cardshowfinder.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E9DA88A361C1C98DF8405C5B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 130B2E70054DF1E29ACB1F90 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		FEE96666AED35A291F926274 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E747590D18E5A2849206CCE2 /* ExpoModulesProvider.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0F57FC861C68AF672749E526 /* Pods-cardshowfinder.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cardshowfinder.release.xcconfig"; path = "Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder.release.xcconfig"; sourceTree = "<group>"; };
-		130B2E70054DF1E29ACB1F90 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = cardshowfinder/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* cardshowfinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cardshowfinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = cardshowfinder/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = cardshowfinder/Info.plist; sourceTree = "<group>"; };
-		8706B5E766A5A3CB6318E5C8 /* Pods-cardshowfinder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cardshowfinder.debug.xcconfig"; path = "Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder.debug.xcconfig"; sourceTree = "<group>"; };
+		59D922EED91813F476659B85 /* libPods-cardshowfinder.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-cardshowfinder.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		83E7C6E80C0E6A5340076AEF /* Pods-cardshowfinder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cardshowfinder.debug.xcconfig"; path = "Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = cardshowfinder/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B14E5E86D0C1B08B1F7CC8E2 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-cardshowfinder/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		DB4370DC985C8BA9FA0F4950 /* libPods-cardshowfinder.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-cardshowfinder.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E747590D18E5A2849206CCE2 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-cardshowfinder/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F08892C80447367378EE90AF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = cardshowfinder/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = cardshowfinder/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* cardshowfinder-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "cardshowfinder-Bridging-Header.h"; path = "cardshowfinder/cardshowfinder-Bridging-Header.h"; sourceTree = "<group>"; };
+		F421749770442612A9977130 /* Pods-cardshowfinder.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cardshowfinder.release.xcconfig"; path = "Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				980872822A3B6A51344C4D4F /* libPods-cardshowfinder.a in Frameworks */,
+				126C1DEEE3AFFA0B3FD923D7 /* libPods-cardshowfinder.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,36 +53,36 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				130B2E70054DF1E29ACB1F90 /* PrivacyInfo.xcprivacy */,
+				F08892C80447367378EE90AF /* PrivacyInfo.xcprivacy */,
 			);
 			name = cardshowfinder;
 			sourceTree = "<group>";
 		};
-		1A1191EAB6F6C70162C47848 /* Pods */ = {
+		22E0390D8E67E2C204981C09 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				8706B5E766A5A3CB6318E5C8 /* Pods-cardshowfinder.debug.xcconfig */,
-				0F57FC861C68AF672749E526 /* Pods-cardshowfinder.release.xcconfig */,
+				D2209843FE52AAC5E82A495E /* cardshowfinder */,
 			);
-			name = Pods;
-			path = Pods;
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				DB4370DC985C8BA9FA0F4950 /* libPods-cardshowfinder.a */,
+				59D922EED91813F476659B85 /* libPods-cardshowfinder.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		5B2DC0D295221B85A197CD1C /* cardshowfinder */ = {
+		3400C54FEE166C97F94EB7EB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				B14E5E86D0C1B08B1F7CC8E2 /* ExpoModulesProvider.swift */,
+				83E7C6E80C0E6A5340076AEF /* Pods-cardshowfinder.debug.xcconfig */,
+				F421749770442612A9977130 /* Pods-cardshowfinder.release.xcconfig */,
 			);
-			name = cardshowfinder;
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -99,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				1A1191EAB6F6C70162C47848 /* Pods */,
-				E10F4D4FEDD4542225A4DB61 /* ExpoModulesProviders */,
+				3400C54FEE166C97F94EB7EB /* Pods */,
+				22E0390D8E67E2C204981C09 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -124,12 +124,12 @@
 			path = cardshowfinder/Supporting;
 			sourceTree = "<group>";
 		};
-		E10F4D4FEDD4542225A4DB61 /* ExpoModulesProviders */ = {
+		D2209843FE52AAC5E82A495E /* cardshowfinder */ = {
 			isa = PBXGroup;
 			children = (
-				5B2DC0D295221B85A197CD1C /* cardshowfinder */,
+				E747590D18E5A2849206CCE2 /* ExpoModulesProvider.swift */,
 			);
-			name = ExpoModulesProviders;
+			name = cardshowfinder;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,13 +140,12 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "cardshowfinder" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				1B03BAF4D2C09F5629B122F2 /* [Expo] Configure project */,
+				C2B8001CE12B9DE4D767C2A9 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				253B6E0CF1968037DF38128E /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +195,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				E9DA88A361C1C98DF8405C5B /* PrivacyInfo.xcprivacy in Resources */,
+				2E32D2D9C3F6C8CC18528961 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,43 +237,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		1B03BAF4D2C09F5629B122F2 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-cardshowfinder/expo-configure-project.sh\"\n";
-		};
-		253B6E0CF1968037DF38128E /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
@@ -351,6 +313,25 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		C2B8001CE12B9DE4D767C2A9 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-cardshowfinder/expo-configure-project.sh\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -359,7 +340,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				4799DAF975AC9AFCCBB64553 /* ExpoModulesProvider.swift in Sources */,
+				FEE96666AED35A291F926274 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -368,7 +349,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8706B5E766A5A3CB6318E5C8 /* Pods-cardshowfinder.debug.xcconfig */;
+			baseConfigurationReference = 83E7C6E80C0E6A5340076AEF /* Pods-cardshowfinder.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -404,7 +385,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0F57FC861C68AF672749E526 /* Pods-cardshowfinder.release.xcconfig */;
+			baseConfigurationReference = F421749770442612A9977130 /* Pods-cardshowfinder.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -494,7 +475,7 @@
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
-				USE_HERMES = true;
+				USE_HERMES = false;
 			};
 			name = Debug;
 		};
@@ -551,7 +532,7 @@
 				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
-				USE_HERMES = true;
+				USE_HERMES = false;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

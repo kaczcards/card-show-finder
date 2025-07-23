@@ -16,6 +16,7 @@
  *   --fail-fast        Stop on first segment failure
  *   --report=<path>    Save JSON report to file
  *   --update-baseline  Update performance baselines
+ *   --no-clean        Skip `expo prebuild --clean` step inside build verification
  * 
  * Segments:
  *   lint               ESLint checks
@@ -179,7 +180,8 @@ const options = {
   timingOnly: args.includes('--timing-only'),
   failFast: args.includes('--fail-fast'),
   report: args.find(arg => arg.startsWith('--report='))?.split('=')[1],
-  updateBaseline: args.includes('--update-baseline')
+  updateBaseline: args.includes('--update-baseline'),
+  noClean: args.includes('--no-clean')
 };
 
 // Extract segments to run
@@ -271,6 +273,11 @@ async function executeSegment(segment) {
   let args = [...config.args];
   if (segment === 'perf' && options.updateBaseline) {
     args.push('--', '--update-baseline');
+  }
+
+  // Add no-clean flag to build verification if requested
+  if (segment === 'build' && options.noClean) {
+    args.push('--', '--no-clean');
   }
   
   return new Promise((resolve) => {
