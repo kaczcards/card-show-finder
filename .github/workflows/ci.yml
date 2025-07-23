@@ -157,17 +157,6 @@ jobs:
           brew install applesimutils
           npm install -g detox-cli
 
-      - name: Setup Hermes configuration
-        run: |
-          # Ensure Hermes is enabled on both platforms
-          echo "Configuring iOS for Hermes..."
-          jq '.["expo.jsEngine"]="hermes" | .["newArchEnabled"]="false"' ios/Podfile.properties.json > ios/Podfile.properties.json.tmp
-          mv ios/Podfile.properties.json.tmp ios/Podfile.properties.json
-          
-          echo "Configuring Android for Hermes..."
-          sed -i.bak 's/hermesEnabled=false/hermesEnabled=true/g' android/gradle.properties
-          sed -i.bak 's/newArchEnabled=true/newArchEnabled=false/g' android/gradle.properties
-
       - name: Build iOS app for Detox
         run: |
           cd ios && pod install && cd ..
