@@ -18,7 +18,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
+const { execSync } = require('child_process');
 
 // Default SQL test file path
 const SQL_TEST_FILE = './test/database/run_security_tests.sql';
@@ -46,56 +46,53 @@ const colorize = {
 async function runSecurityTests() {
   console.log(colorize.bold(colorize.blue('=== Running Security Tests ===')));
   
-  // Check for required environment variables
-  if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-    console.error(colorize.red('Error: Missing required environment variables.'));
-    console.error(colorize.yellow('Required: EXPO_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_KEY'));
+  // Resolve SQL file path early (fail fast if not found)
+  const sqlFilePath = path.resolve(process.env.SQL_TEST_FILE || SQL_TEST_FILE);
+  console.log(colorize.blue(`Reading SQL file: ${sqlFilePath}`));
+  if (!fs.existsSync(sqlFilePath)) {
+    console.error(colorize.red(`Error: SQL file not found at ${sqlFilePath}`));
     process.exit(1);
   }
   
-  // Create Supabase client
-  const supabase = createClient(
-    process.env.EXPO_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-  );
-  
   try {
-    // Test connection
-    console.log(colorize.blue(`Connecting to Supabase at ${process.env.EXPO_PUBLIC_SUPABASE_URL}...`));
-    const { error: connectionError } = await supabase.from('profiles').select('id').limit(1);
-    
-    if (connectionError) {
-      console.error(colorize.red(`Connection failed: ${connectionError.message}`));
-      process.exit(1);
-    }
-    
-    console.log(colorize.green('Connected successfully'));
-    
-    // Read SQL file
-    const sqlFilePath = path.resolve(process.env.SQL_TEST_FILE || SQL_TEST_FILE);
-    console.log(colorize.blue(`Reading SQL file: ${sqlFilePath}`));
-    
-    if (!fs.existsSync(sqlFilePath)) {
-      console.error(colorize.red(`Error: SQL file not found at ${sqlFilePath}`));
-      process.exit(1);
-    }
-    
-    const sqlContent = fs.readFileSync(sqlFilePath, 'utf8');
-    
-    // Execute SQL directly
-    console.log(colorize.blue('Executing security tests...'));
-    const { data, error } = await supabase.sql(sqlContent);
-    
-    if (error) {
-      console.error(colorize.red(`SQL execution error: ${error.message}`));
-      process.exit(1);
-    }
-    
-    // Parse results from the output
-    const output = JSON.stringify(data);
+    // Build psql command
+    const pgConfig = {
+      host: process.env.PGHOST || 'localhost',
+      port: process.env.PGPORT || '5432',
+      user: process.env.PGUSER || 'postgres',
+      password: process.env.PGPASSWORD || 'postgres',
+      database: process.env.PGDATABASE || 'postgres'
+    };
+
+    console.log(
+      colorize.blue(
+        `Executing security tests against postgres://${pgConfig.user}@${pgConfig.host}:${pgConfig.port}/${pgConfig.database}`
+      )
+    );
+
+    const env = {
+      ...process.env,
+      PGPASSWORD: pgConfig.password
+    };
+
+    const command = `psql -h ${pgConfig.host} -p ${pgConfig.port} -U ${pgConfig.user} -d ${pgConfig.database} -v ON_ERROR_STOP=1 -f "${sqlFilePath}"`;
+
+    const stdout = execSync(command, { env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+
+    // Parse results from stdout
+    const output = stdout.toString();
     
     // Look for summary pattern in output
-    const summaryMatch = output.match(/Total tests: (\d+)\s+Passed: (\d+)\s+Failed: (\d+)/);
+    const summaryMatch = output.match(/Total tests: (\\d+)/i) &&
+                         output.match(/Passed tests?: (\\d+)/i) &&
+                         output.match(/Failed tests?: (\\d+)/i)
+      ? [
+          null,
+          output.match(/Total tests: (\\d+)/i)[1],
+          output.match(/Passed tests?: (\\d+)/i)[1],
+          output.match(/Failed tests?: (\\d+)/i)[1]
+        ]
+      : null;
     
     if (summaryMatch) {
       const total = parseInt(summaryMatch[1], 10);
@@ -143,7 +140,7 @@ async function runSecurityTests() {
       process.exit(hasFailed ? 1 : 0);
     }
   } catch (error) {
-    console.error(colorize.red(`Unexpected error: ${error.message}`));
+    console.error(colorize.red(`Unexpected error: ${error.message || error}`));
     process.exit(1);
   }
 }
