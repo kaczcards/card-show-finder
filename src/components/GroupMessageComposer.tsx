@@ -32,7 +32,8 @@ const GroupMessageComposer: React.FC<GroupMessageComposerProps> = ({
   showTitle = 'Show',
   onMessageSent
 }) => {
-  const { user, userProfile } = useAuth();
+  // Access authentication information from context
+  const { authState } = useAuth();
   
   // State
   const [messageText, setMessageText] = useState('');
@@ -48,19 +49,19 @@ const GroupMessageComposer: React.FC<GroupMessageComposerProps> = ({
   
   // Check if current user can broadcast messages
   useEffect(() => {
-    if (!user || !userProfile) {
+    if (!authState.user || !authState.profile) {
       setCanBroadcast(false);
       return;
     }
     
     // Only show organizers or MVP dealers can broadcast
-    const userRole = userProfile.role as UserRole;
+    const userRole = authState.profile.role as UserRole;
     const hasPermission = userRoleService.IS_TEST_MODE || 
                          userRole === UserRole.SHOW_ORGANIZER ||
                          userRole === UserRole.MVP_DEALER;
     
     setCanBroadcast(hasPermission);
-  }, [user, userProfile]);
+  }, [authState.user, authState.profile]);
   
   // Reset form when modal is opened
   useEffect(() => {
@@ -76,7 +77,7 @@ const GroupMessageComposer: React.FC<GroupMessageComposerProps> = ({
   
   // Handle sending broadcast message
   const handleBroadcast = async () => {
-    if (!user || !messageText.trim() || sending) return;
+    if (!authState.user || !messageText.trim() || sending) return;
     
     // Validate target groups (at least one must be selected)
     if (!targetGroups.attendees && !targetGroups.dealers && !targetGroups.mvpDealers) {
@@ -95,7 +96,7 @@ const GroupMessageComposer: React.FC<GroupMessageComposerProps> = ({
       
       // Send broadcast
       await messagingService.sendBroadcastMessage({
-        senderId: user.id,
+        senderId: authState.user.id,
         message: messageText.trim(),
         recipientRoles,
         showId

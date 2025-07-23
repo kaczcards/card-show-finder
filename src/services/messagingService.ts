@@ -62,6 +62,39 @@ export const findDirectConversation = async (
   userB: string
 ): Promise<string | null> => {
   try {
+    /* ------------------------------------------------------------------
+     * 1️⃣  Preferred path – use the PostgreSQL RPC function
+     * ------------------------------------------------------------------
+     * The `find_direct_conversation` function executes server-side,
+     * returning the conversation id (or `null`).  This is significantly
+     * faster than multiple round-trips & client-side filtering.
+     * If the RPC is missing (older DB) or fails, we silently fall back
+     * to the legacy client-side approach further below.
+     * ------------------------------------------------------------------ */
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'find_direct_conversation',
+        { user_a: userA, user_b: userB },
+      );
+
+      if (!rpcError) {
+        // RPC executed – it either returned an id or null
+        if (rpcData) return rpcData as string;
+      } else {
+        // Log in verbose mode but do not throw – we will use fallback logic
+        console.warn(
+          '[messagingService/findDirectConversation] RPC error, falling back:',
+          rpcError.message,
+        );
+      }
+    } catch (rpcEx) {
+      // Network / function not found … fall back gracefully
+      console.warn(
+        '[messagingService/findDirectConversation] RPC exception, falling back:',
+        rpcEx,
+      );
+    }
+
     // Try to find in conversation_participants table (preferred approach)
     const { data: convoData, error: convoError } = await supabase
       .from('conversations')

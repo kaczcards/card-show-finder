@@ -1,0 +1,427 @@
+name: Security Scanning
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight UTC
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'supabase/migrations/**'
+      - 'db_migrations/**'
+      - '**/*.sql'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      full-scan:
+        description: 'Run full security scan (including intensive checks)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 18
+  SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+jobs:
+  dependency-scanning:
+    name: Dependency Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'card-show-finder'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          args: >
+            --suppression suppression.xml
+            --failOnCVSS 7
+            --enableRetired
+
+      - name: Upload dependency check report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: reports
+
+      - name: Check for Dependabot alerts
+        uses: github/dependency-review-action@v3
+        if: github.event_name == 'pull_request'
+        with:
+          fail-on-severity: high
+
+  secret-detection:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Detect hardcoded secrets
+        run: |
+          # Install detect-secrets
+          pip install detect-secrets
+
+          # Run scan
+          detect-secrets scan --baseline .secrets.baseline
+
+      - name: Check for exposed env variables
+        run: |
+          # Look for .env files not in .gitignore
+          find . -name ".env*" | grep -v ".env.example" > exposed_env_files.txt
+          
+          if [ -s exposed_env_files.txt ]; then
+            echo "⚠️ Warning: Potentially exposed .env files found:"
+            cat exposed_env_files.txt
+            echo "Please ensure these files are in .gitignore"
+          fi
+
+  code-scanning:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript, typescript
+          queries: security-extended,security-and-quality
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint security rules
+        run: |
+          npm install -g eslint @typescript-eslint/parser eslint-plugin-security
+          eslint --config .eslintrc.json --plugin security --ext .js,.jsx,.ts,.tsx src/ --format sarif --output-file eslint-results.sarif
+
+      - name: Upload ESLint results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: eslint-results.sarif
+          category: eslint
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  database-security:
+    name: Database Security Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install PostgreSQL client and pgTAP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          
+          # Install pgTAP for database testing
+          git clone https://github.com/theory/pgtap.git
+          cd pgtap
+          make
+          sudo make install
+          cd ..
+
+      - name: Install Supabase CLI
+        run: |
+          curl -s https://packages.supabase.com/gpg-key.asc | sudo apt-key add -
+          echo "deb https://packages.supabase.com/apt stable main" | sudo tee /etc/apt/sources.list.d/supabase.list
+          sudo apt-get update
+          sudo apt-get install -y supabase
+
+      - name: Setup database schema
+        run: |
+          psql -h localhost -U postgres -d postgres -f supabase/migrations/20250722000000_canonical_database_consolidation.sql
+        env:
+          PGPASSWORD: postgres
+
+      - name: Run comprehensive database security tests
+        run: |
+          # Run the security test suite
+          npm run test:security:verbose
+          
+          # Run RLS policy verification tests
+          psql -h localhost -U postgres -d postgres -f test/database/comprehensive_rls_security_tests.sql > security_test_results.log
+        env:
+          PGPASSWORD: postgres
+
+      - name: Check for SQL injection vulnerabilities
+        run: |
+          # Install sqlmap
+          pip install sqlmap
+          
+          # Run basic SQL injection checks on database functions
+          grep -r "CREATE OR REPLACE FUNCTION" --include="*.sql" . | cut -d':' -f2 | grep -o "function [^(]*" | cut -d' ' -f2 > db_functions.txt
+          
+          # Log potentially vulnerable functions (string concatenation in SQL)
+          grep -r "EXECUTE" --include="*.sql" . | grep -E "EXECUTE.*\|\|" > potential_sqli.log
+          
+          if [ -s potential_sqli.log ]; then
+            echo "⚠️ Warning: Potential SQL injection vulnerabilities found:"
+            cat potential_sqli.log
+          fi
+
+      - name: Upload security test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: database-security-results
+          path: |
+            security_test_results.log
+            potential_sqli.log
+
+  mobile-security:
+    name: Mobile App Security Scan
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.full-scan == 'true' || github.event_name == 'schedule' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for insecure configurations
+        run: |
+          # Check for insecure Android configurations
+          grep -r "android:allowBackup=\"true\"" --include="*.xml" . || true
+          grep -r "android:debuggable=\"true\"" --include="*.xml" . || true
+          
+          # Check for insecure iOS configurations
+          grep -r "NSAllowsArbitraryLoads" --include="*.plist" . || true
+          
+          # Check for sensitive data in logs
+          grep -r "console.log" --include="*.js" --include="*.ts" --include="*.tsx" . | grep -E "password|token|key|secret" > sensitive_logs.txt
+          
+          if [ -s sensitive_logs.txt ]; then
+            echo "⚠️ Warning: Potentially sensitive data being logged:"
+            cat sensitive_logs.txt
+          fi
+
+      - name: Check for secure storage usage
+        run: |
+          # Look for secure storage practices
+          grep -r "AsyncStorage" --include="*.js" --include="*.ts" --include="*.tsx" . | grep -E "password|token|key|secret" > insecure_storage.txt
+          
+          if [ -s insecure_storage.txt ]; then
+            echo "⚠️ Warning: Potentially insecure storage of sensitive data:"
+            cat insecure_storage.txt
+            echo "Consider using SecureStore or EncryptedStorage instead"
+          fi
+
+      - name: Check for certificate pinning
+        run: |
+          # Check if certificate pinning is implemented
+          if ! grep -r "pinningMode" --include="*.js" --include="*.ts" --include="*.tsx" . && ! grep -r "SSLPinningMode" --include="*.m" --include="*.swift" .; then
+            echo "⚠️ Warning: No certificate pinning detected. Consider implementing SSL pinning for production."
+          fi
+
+      - name: Upload mobile security results
+        uses: actions/upload-artifact@v3
+        with:
+          name: mobile-security-results
+          path: |
+            sensitive_logs.txt
+            insecure_storage.txt
+
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [dependency-scanning, secret-detection, code-scanning, database-security, mobile-security]
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: security-artifacts
+
+      - name: Generate comprehensive security report
+        run: |
+          echo "# Security Scan Report" > security-report.md
+          echo "Generated on: $(date)" >> security-report.md
+          echo "Repository: ${{ github.repository }}" >> security-report.md
+          echo "Branch: ${{ github.ref_name }}" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "## Summary" >> security-report.md
+          echo "- Dependency Scanning: ${{ needs.dependency-scanning.result }}" >> security-report.md
+          echo "- Secret Detection: ${{ needs.secret-detection.result }}" >> security-report.md
+          echo "- Code Scanning: ${{ needs.code-scanning.result }}" >> security-report.md
+          echo "- Database Security: ${{ needs.database-security.result }}" >> security-report.md
+          if [[ "${{ github.event.inputs.full-scan }}" == "true" || "${{ github.event_name }}" == "schedule" ]]; then
+            echo "- Mobile Security: ${{ needs.mobile-security.result }}" >> security-report.md
+          fi
+          echo "" >> security-report.md
+          
+          # Include detailed findings from each scan
+          if [ -d "security-artifacts" ]; then
+            find security-artifacts -type f -name "*.log" -o -name "*.txt" | while read file; do
+              echo "## Findings from $(basename $file)" >> security-report.md
+              echo '```' >> security-report.md
+              cat "$file" >> security-report.md
+              echo '```' >> security-report.md
+              echo "" >> security-report.md
+            done
+          fi
+          
+          echo "## Recommendations" >> security-report.md
+          echo "1. Review and address any high-severity findings immediately" >> security-report.md
+          echo "2. Update dependencies with known vulnerabilities" >> security-report.md
+          echo "3. Ensure proper secret management practices" >> security-report.md
+          echo "4. Verify Row-Level Security policies for all database tables" >> security-report.md
+          echo "5. Implement certificate pinning for API communications" >> security-report.md
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: security-report.md
+
+      - name: Create security issue
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.full-scan == 'true' }}
+        uses: peter-evans/create-issue-from-file@v4
+        with:
+          title: Security Scan Report - ${{ github.ref_name }} - ${{ github.run_number }}
+          content-filepath: security-report.md
+          labels: security, automated
+          assignees: kaczcards
+
+  notify:
+    name: Security Notification
+    runs-on: ubuntu-latest
+    needs: [security-report]
+    if: always()
+    steps:
+      - name: Check scan results
+        id: check
+        run: |
+          if [[ "${{ needs.dependency-scanning.result }}" == "failure" || \
+                "${{ needs.secret-detection.result }}" == "failure" || \
+                "${{ needs.code-scanning.result }}" == "failure" || \
+                "${{ needs.database-security.result }}" == "failure" || \
+                "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "STATUS=failure" >> $GITHUB_ENV
+            echo "EMOJI=🚨" >> $GITHUB_ENV
+          else
+            echo "STATUS=success" >> $GITHUB_ENV
+            echo "EMOJI=✅" >> $GITHUB_ENV
+          fi
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ env.STATUS }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: "${{ env.EMOJI }} Security Scan ${{ env.STATUS }} for ${{ github.repository }} (${{ github.ref_name }})"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send critical security alert
+        if: ${{ env.STATUS == 'failure' && env.NOTIFICATION_EMAIL != '' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "🚨 SECURITY ALERT: Issues Detected in ${{ github.repository }}"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: Security Scanner <security@kaczcards.com>
+          body: |
+            ## 🚨 SECURITY ISSUES DETECTED
+            
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            ### Failed Checks:
+            ${{ needs.dependency-scanning.result == 'failure' && '- ❌ Dependency vulnerabilities detected' || '' }}
+            ${{ needs.secret-detection.result == 'failure' && '- ❌ Secrets or credentials exposed' || '' }}
+            ${{ needs.code-scanning.result == 'failure' && '- ❌ Code security issues found' || '' }}
+            ${{ needs.database-security.result == 'failure' && '- ❌ Database security vulnerabilities' || '' }}
+            ${{ needs.mobile-security.result == 'failure' && '- ❌ Mobile app security issues' || '' }}
+            
+            Please review the security report and take immediate action to address these issues.
+            
+            -- 
+            Card Show Finder Security Team

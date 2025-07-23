@@ -48,6 +48,17 @@ const ChatList: React.FC<ChatListProps> = ({
     isSending
   } = useConversationsQuery(userId);
 
+  /**
+   * React Query sometimes infers the `conversations` result as
+   * `never[] | NonNullable<NoInfer<TQueryFnData>>` which causes all of the
+   * downstream `length`, `find`, etc. property accesses to error out. We know
+   * that our hook always returns an array of `Conversation` objects (defaulting
+   * to an empty array), so cast it once here and use the strongly-typed alias
+   * everywhere else. This keeps the rest of the component code clean while
+   * satisfying TypeScript.
+   */
+  const conversationsList: Conversation[] = conversations as Conversation[];
+
   // Find initial conversation if provided
   // Track which initialConversationId we have already processed so we don't trigger
   // handleSelectConversation on every render (which caused an infinite loop).
@@ -56,11 +67,11 @@ const ChatList: React.FC<ChatListProps> = ({
   React.useEffect(() => {
     if (
       initialConversationId &&
-      conversations.length > 0 &&
+      conversationsList.length > 0 &&
       processedInitialIdRef.current !== initialConversationId
     ) {
-      const conversation = conversations.find(
-        (c) => c.id === initialConversationId
+      const conversation = conversationsList.find(
+        (c: Conversation) => c.id === initialConversationId
       );
       if (conversation) {
         handleSelectConversation(conversation);
@@ -115,7 +126,7 @@ const ChatList: React.FC<ChatListProps> = ({
 
   // Render conversation list view
   const renderConversationList = () => {
-    if (isLoadingConversations && conversations.length === 0) {
+    if (isLoadingConversations && conversationsList.length === 0) {
       return <LoadingState />;
     }
 
@@ -131,7 +142,7 @@ const ChatList: React.FC<ChatListProps> = ({
     return (
       <View style={styles.container}>
         <FlatList
-          data={conversations}
+          data={conversationsList}
           renderItem={({ item }) => (
             <ChatItem
               conversation={item}
@@ -140,7 +151,7 @@ const ChatList: React.FC<ChatListProps> = ({
             />
           )}
           keyExtractor={(item) => item.id}
-          refreshing={isLoadingConversations && conversations.length > 0}
+          refreshing={isLoadingConversations && conversationsList.length > 0}
           onRefresh={refetchConversations}
           ListEmptyComponent={
             <EmptyState 
@@ -149,7 +160,13 @@ const ChatList: React.FC<ChatListProps> = ({
             />
           }
           contentContainerStyle={
-            conversations.length === 0 ? styles.fullScreenContainer : styles.listContainer
+            conversationsList.length === 0 ? styles.fullScreenContainer : styles.listContainer
+            /**
+             * We intentionally keep the original `conversations` prop for
+             * FlatList `data` above to avoid unnecessary re-renders caused by
+             * a new reference.  The style computation, however, only needs the
+             * array length so we reference the typed alias here.
+             */
           }
         />
         
