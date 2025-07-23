@@ -37,7 +37,7 @@
     "test:api": "jest --runInBand --selectProjects api",
     "test:perf": "node e2e/scripts/run-batch.js --batch perf --perf",
     "test:sec": "npm audit --audit-level=high && gitleaks detect --no-banner",
-    "test:build:verify": "node scripts/test-build-verify.js",
+    "test:build:verify": "scripts/test-build-verify.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
