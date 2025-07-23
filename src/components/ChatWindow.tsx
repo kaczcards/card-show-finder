@@ -12,7 +12,9 @@ import {
   Image,
   Keyboard,
   Alert,
-  Animated
+  Animated,
+  NativeSyntheticEvent,
+  NativeScrollEvent
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as messagingService from '../services/messagingService';
@@ -286,7 +288,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   };
   
   // Handle scroll events
-  const handleScroll = (event) => {
+  const handleScroll = (
+    event: NativeSyntheticEvent<NativeScrollEvent>
+  ) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     const paddingToBottom = 20;
     const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
@@ -450,7 +454,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     <View style={styles.centerContainer}>
       <Ionicons name="alert-circle" size={40} color="#FF3B30" />
       <Text style={styles.errorText}>{error}</Text>
-      <TouchableOpacity style={styles.retryLoadButton} onPress={fetchMessages}>
+      <TouchableOpacity
+        style={styles.retryLoadButton}
+        onPress={() => fetchMessages()}
+      >
         <Text style={styles.retryLoadText}>Retry</Text>
       </TouchableOpacity>
     </View>
@@ -492,7 +499,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 renderItem={({ item }) => (
                   <View>
                     {renderDateSeparator(item.date)}
-                    {item.messages.map((message) => (
+                    {item.messages.map((message: Message) => (
                       <View key={message.id}>
                         {renderMessage({ item: message })}
                       </View>

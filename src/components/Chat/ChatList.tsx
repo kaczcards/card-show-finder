@@ -93,6 +93,15 @@ const ChatList: React.FC<ChatListProps> = ({
     userId
   );
 
+  /**
+   * Similar to the conversations cast above, React Query occasionally infers
+   * the `messages` result as `never[] | NonNullable<NoInfer<TQueryFnData>>`
+   * which breaks downstream type-safety.  We know the hook always returns an
+   * array of `Message` objects (defaulting to []), so cast once here and use
+   * the strongly-typed alias everywhere else.
+   */
+  const messagesList: Message[] = messages as Message[];
+
   // Handle selecting a conversation
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
@@ -213,7 +222,7 @@ const ChatList: React.FC<ChatListProps> = ({
           />
         ) : (
           <FlatList
-            data={messages}
+            data={messagesList}
             renderItem={({ item }) => (
               <MessageBubble
                 message={item}

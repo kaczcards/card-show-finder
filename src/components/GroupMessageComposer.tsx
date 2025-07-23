@@ -49,19 +49,20 @@ const GroupMessageComposer: React.FC<GroupMessageComposerProps> = ({
   
   // Check if current user can broadcast messages
   useEffect(() => {
-    if (!authState.user || !authState.profile) {
+    // Guard: no authenticated user → cannot broadcast
+    if (!authState.user) {
       setCanBroadcast(false);
       return;
     }
     
     // Only show organizers or MVP dealers can broadcast
-    const userRole = authState.profile.role as UserRole;
+    const userRole = authState.user.role as UserRole;
     const hasPermission = userRoleService.IS_TEST_MODE || 
                          userRole === UserRole.SHOW_ORGANIZER ||
                          userRole === UserRole.MVP_DEALER;
     
     setCanBroadcast(hasPermission);
-  }, [authState.user, authState.profile]);
+  }, [authState.user]);
   
   // Reset form when modal is opened
   useEffect(() => {
