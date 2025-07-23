@@ -206,7 +206,7 @@ const ChatList: React.FC<ChatListProps> = ({
           onBack={handleBackToList}
         />
         
-        {isLoadingMessages && messages.length === 0 ? (
+        {isLoadingMessages && messagesList.length === 0 ? (
           <LoadingState message="Loading messages..." />
         ) : messagesError ? (
           <ErrorState 
@@ -214,7 +214,7 @@ const ChatList: React.FC<ChatListProps> = ({
             title="Couldn't load messages" 
             onRetry={messagesError.retry}
           />
-        ) : messages.length === 0 ? (
+        ) : messagesList.length === 0 ? (
           <EmptyState 
             title="No messages yet"
             subtitle="Start the conversation by sending a message"
