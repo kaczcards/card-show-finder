@@ -28,7 +28,7 @@
     "test:e2e:tag": "npm run test:e2e:batch -- --tag",
     "test:e2e:core": "npm run test:e2e:batch -- --batch core",
     "test:e2e:edge": "npm run test:e2e:batch -- --batch edge",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 3000",
     "typecheck": "tsc --noEmit",
     "test:lint": "npm run lint",
     "test:type": "npm run typecheck",
