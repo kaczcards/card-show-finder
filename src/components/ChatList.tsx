@@ -108,7 +108,7 @@ const ChatList: React.FC<ChatListProps> = ({
           <View style={styles.chatHeader}>
             <Text style={[
               styles.chatName,
-              hasUnread && styles.unreadChatName
+              ...(hasUnread ? [styles.unreadChatName] : [])
             ]} numberOfLines={1}>
               {displayName}
             </Text>
@@ -121,7 +121,7 @@ const ChatList: React.FC<ChatListProps> = ({
             <Text 
               style={[
                 styles.messagePreview,
-                hasUnread && styles.unreadMessagePreview
+                ...(hasUnread ? [styles.unreadMessagePreview] : [])
               ]}
               numberOfLines={1}
             >

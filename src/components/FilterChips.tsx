@@ -119,9 +119,9 @@ const FilterChips: React.FC<FilterChipsProps> = ({
       >
         {filterChips.map((chip, index) => (
           <TouchableOpacity
-            key={`${chip.key}-${index}-${chip.value || ''}`}
+            key={`${chip.key}-${index}`}
             style={styles.chip}
-            onPress={() => onRemoveFilter(chip.key, chip.value)}
+            onPress={() => onRemoveFilter(chip.key)}
             activeOpacity={0.7}
           >
             <Text style={styles.chipText}>{chip.label}</Text>

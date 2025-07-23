@@ -252,8 +252,9 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
     setLocalFilters(defaultFilters);
     
     // Update date text inputs
-    setStartDateText(defaultFilters.startDate!.toISOString().split('T')[0]);
-    setEndDateText(defaultFilters.endDate!.toISOString().split('T')[0]);
+    // Ensure we convert to Date before calling toISOString in case defaults are strings
+    setStartDateText(new Date(defaultFilters.startDate!).toISOString().split('T')[0]);
+    setEndDateText(new Date(defaultFilters.endDate!).toISOString().split('T')[0]);
     setMaxEntryFeeText('');
   };
 
