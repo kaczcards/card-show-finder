@@ -8,11 +8,34 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 /**
- * Polyfills removed – With the project now running on a stable Hermes setup
- * (and up-to-date dependencies), manual `structuredClone` and `__extends`
- * polyfills are no longer required and have been deleted to prevent any
- * potential conflicts.
+ * Essential polyfills for the React Native environment
+ *
+ * • `structuredClone` – required by Supabase and other modern libraries but
+ *   missing from the Hermes runtime (and JSC on older RN versions).  
+ *   The fallback below handles the common cases by using
+ *   `JSON.parse(JSON.stringify(obj))`.  For complex, non-serialisable
+ *   objects (e.g. Date, Map), we return the original reference with a warn.
  */
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore – add property to global if it doesn't already exist
+if (typeof global.structuredClone === 'undefined') {
+  // eslint-disable-next-line no-global-assign
+  global.structuredClone = (obj: any) => {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    try {
+      return JSON.parse(JSON.stringify(obj));
+    } catch (error) {
+      console.warn(
+        '[Polyfill] structuredClone fallback used for complex object:',
+        error
+      );
+      return obj; // best-effort fallback
+    }
+  };
+}
 
 // Import context providers
 import { AuthProvider } from './src/contexts/AuthContext';
