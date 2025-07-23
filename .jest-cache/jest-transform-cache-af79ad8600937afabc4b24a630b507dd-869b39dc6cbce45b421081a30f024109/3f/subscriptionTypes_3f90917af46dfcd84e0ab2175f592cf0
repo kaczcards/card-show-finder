@@ -1,0 +1,586 @@
+9bd1fb932b0165ab45337d18a1768f89
+"use strict";
+
+/* istanbul ignore next */
+function cov_1qpb250xb1() {
+  var path = "/Users/kevin/card-show-finder/src/services/subscriptionTypes.ts";
+  var hash = "eba1e3f66976539fdbb2de325f8b69bcd20822bc";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/services/subscriptionTypes.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 0
+        },
+        end: {
+          line: 2,
+          column: 62
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 0
+        },
+        end: {
+          line: 3,
+          column: 128
+        }
+      },
+      "2": {
+        start: {
+          line: 8,
+          column: 0
+        },
+        end: {
+          line: 11,
+          column: 87
+        }
+      },
+      "3": {
+        start: {
+          line: 9,
+          column: 4
+        },
+        end: {
+          line: 9,
+          column: 46
+        }
+      },
+      "4": {
+        start: {
+          line: 10,
+          column: 4
+        },
+        end: {
+          line: 10,
+          column: 52
+        }
+      },
+      "5": {
+        start: {
+          line: 16,
+          column: 0
+        },
+        end: {
+          line: 19,
+          column: 87
+        }
+      },
+      "6": {
+        start: {
+          line: 17,
+          column: 4
+        },
+        end: {
+          line: 17,
+          column: 74
+        }
+      },
+      "7": {
+        start: {
+          line: 18,
+          column: 4
+        },
+        end: {
+          line: 18,
+          column: 73
+        }
+      },
+      "8": {
+        start: {
+          line: 23,
+          column: 0
+        },
+        end: {
+          line: 98,
+          column: 2
+        }
+      },
+      "9": {
+        start: {
+          line: 104,
+          column: 28
+        },
+        end: {
+          line: 120,
+          column: 1
+        }
+      },
+      "10": {
+        start: {
+          line: 105,
+          column: 16
+        },
+        end: {
+          line: 105,
+          column: 26
+        }
+      },
+      "11": {
+        start: {
+          line: 108,
+          column: 22
+        },
+        end: {
+          line: 108,
+          column: 41
+        }
+      },
+      "12": {
+        start: {
+          line: 110,
+          column: 4
+        },
+        end: {
+          line: 118,
+          column: 5
+        }
+      },
+      "13": {
+        start: {
+          line: 112,
+          column: 12
+        },
+        end: {
+          line: 112,
+          column: 28
+        }
+      },
+      "14": {
+        start: {
+          line: 113,
+          column: 12
+        },
+        end: {
+          line: 113,
+          column: 18
+        }
+      },
+      "15": {
+        start: {
+          line: 116,
+          column: 12
+        },
+        end: {
+          line: 116,
+          column: 27
+        }
+      },
+      "16": {
+        start: {
+          line: 117,
+          column: 12
+        },
+        end: {
+          line: 117,
+          column: 18
+        }
+      },
+      "17": {
+        start: {
+          line: 119,
+          column: 4
+        },
+        end: {
+          line: 119,
+          column: 59
+        }
+      },
+      "18": {
+        start: {
+          line: 121,
+          column: 0
+        },
+        end: {
+          line: 121,
+          column: 50
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 8,
+            column: 1
+          },
+          end: {
+            line: 8,
+            column: 2
+          }
+        },
+        loc: {
+          start: {
+            line: 8,
+            column: 33
+          },
+          end: {
+            line: 11,
+            column: 1
+          }
+        },
+        line: 8
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 16,
+            column: 1
+          },
+          end: {
+            line: 16,
+            column: 2
+          }
+        },
+        loc: {
+          start: {
+            line: 16,
+            column: 33
+          },
+          end: {
+            line: 19,
+            column: 1
+          }
+        },
+        line: 16
+      },
+      "2": {
+        name: "(anonymous_2)",
+        decl: {
+          start: {
+            line: 104,
+            column: 28
+          },
+          end: {
+            line: 104,
+            column: 29
+          }
+        },
+        loc: {
+          start: {
+            line: 104,
+            column: 38
+          },
+          end: {
+            line: 120,
+            column: 1
+          }
+        },
+        line: 104
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 11,
+            column: 3
+          },
+          end: {
+            line: 11,
+            column: 85
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 11,
+            column: 3
+          },
+          end: {
+            line: 11,
+            column: 23
+          }
+        }, {
+          start: {
+            line: 11,
+            column: 28
+          },
+          end: {
+            line: 11,
+            column: 84
+          }
+        }],
+        line: 11
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 19,
+            column: 3
+          },
+          end: {
+            line: 19,
+            column: 85
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 19,
+            column: 3
+          },
+          end: {
+            line: 19,
+            column: 23
+          }
+        }, {
+          start: {
+            line: 19,
+            column: 28
+          },
+          end: {
+            line: 19,
+            column: 84
+          }
+        }],
+        line: 19
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 110,
+            column: 4
+          },
+          end: {
+            line: 118,
+            column: 5
+          }
+        },
+        type: "switch",
+        locations: [{
+          start: {
+            line: 111,
+            column: 8
+          },
+          end: {
+            line: 113,
+            column: 18
+          }
+        }, {
+          start: {
+            line: 114,
+            column: 8
+          },
+          end: {
+            line: 114,
+            column: 42
+          }
+        }, {
+          start: {
+            line: 115,
+            column: 8
+          },
+          end: {
+            line: 117,
+            column: 18
+          }
+        }],
+        line: 110
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0,
+      "13": 0,
+      "14": 0,
+      "15": 0,
+      "16": 0,
+      "17": 0,
+      "18": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    },
+    b: {
+      "0": [0, 0],
+      "1": [0, 0],
+      "2": [0, 0, 0]
+    },
+    inputSourceMap: {
+      file: "/Users/kevin/card-show-finder/src/services/subscriptionTypes.ts",
+      mappings: "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",
+      names: [],
+      sources: ["/Users/kevin/card-show-finder/src/services/subscriptionTypes.ts"],
+      sourcesContent: ["// src/services/subscriptionTypes.ts\nimport { UserRole } from './userRoleService';\n\n/**\n * Subscription plan types available in the app\n */\nexport enum SubscriptionPlanType {\n  DEALER = 'dealer',\n  ORGANIZER = 'organizer'\n}\n\n/**\n * Subscription plan durations in months\n */\nexport enum SubscriptionDuration {\n  MONTHLY = 1,\n  ANNUAL = 12\n}\n\n/**\n * Subscription plan details\n */\nexport interface SubscriptionPlan {\n  id: string;\n  type: SubscriptionPlanType;\n  name: string;\n  description: string;\n  price: number; // Price in USD\n  duration: SubscriptionDuration; // Duration in months\n  features: string[];\n  /** Free-trial length in days (optional, e.g. 7-day trial) */\n  trialDays?: number;\n  isPopular?: boolean;\n}\n\n/**\n * Represents the outcome of a payment operation.\n */\nexport interface StripePaymentResult {\n  success: boolean;\n  error?: string;\n  transactionId?: string;\n}\n\n/**\n * Available subscription plans\n */\nexport const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [\n  /* ---------- MVP DEALER ---------- */\n  {\n    id: 'mvp-dealer-monthly',\n    type: SubscriptionPlanType.DEALER,\n    name: 'MVP Dealer Monthly',\n    description: 'Preview inventory, interact with collectors & more (monthly)',\n    price: 29,\n    duration: SubscriptionDuration.MONTHLY,\n    trialDays: 7,\n    features: [\n      'Preview inventory for upcoming shows you attend',\n      'Interact with collectors planning to attend those shows',\n      'View want lists of collectors within a 25-mile radius',\n      'Share external links (website, eBay, WhatNot, etc.)',\n      'Dealer badge on profile'\n    ]\n  },\n  {\n    id: 'mvp-dealer-annual',\n    type: SubscriptionPlanType.DEALER,\n    name: 'MVP Dealer Annual',\n    description: 'Save 25% with annual billing',\n    price: 261, // $29 \xD7 12 \xD7 0.75\n    duration: SubscriptionDuration.ANNUAL,\n    trialDays: 7,\n    isPopular: true,\n    features: [\n      'Preview inventory for upcoming shows you attend',\n      'Interact with collectors planning to attend those shows',\n      'View want lists of collectors within a 25-mile radius',\n      'Share external links (website, eBay, WhatNot, etc.)',\n      'Dealer badge on profile',\n      'Featured dealer status'\n    ]\n  },\n\n  /* ---------- SHOW ORGANIZER ---------- */\n  {\n    id: 'show-organizer-monthly',\n    type: SubscriptionPlanType.ORGANIZER,\n    name: 'Show Organizer Monthly',\n    description: 'Organize shows & engage dealers/collectors (monthly)',\n    price: 49,\n    duration: SubscriptionDuration.MONTHLY,\n    trialDays: 7,\n    features: [\n      'All MVP Dealer features',\n      'Claim ownership of recurring shows',\n      'Message dealers & collectors before/after shows',\n      'Edit upcoming show times, dates & details',\n      'Respond to collector reviews',\n      'Promote your events',\n      'Access attendee data'\n    ]\n  },\n  {\n    id: 'show-organizer-annual',\n    type: SubscriptionPlanType.ORGANIZER,\n    name: 'Show Organizer Annual',\n    description: 'Save 25% with annual billing',\n    price: 441, // $49 \xD7 12 \xD7 0.75\n    duration: SubscriptionDuration.ANNUAL,\n    trialDays: 7,\n    isPopular: true,\n    features: [\n      'All MVP Dealer features',\n      'Claim ownership of recurring shows',\n      'Message dealers & collectors before/after shows',\n      'Edit upcoming show times, dates & details',\n      'Respond to collector reviews',\n      'Promote your events',\n      'Access attendee data',\n      'Featured show placement'\n    ]\n  }\n];\n\n/**\n * Helper function to calculate the expiry date based on the current date and plan duration\n * @param plan The subscription plan\n * @returns Date when the subscription will expire\n */\nexport const calculateExpiryDate = (plan: SubscriptionPlan): Date => {\n  const now = new Date();\n\n  // We purposely ignore `trialDays` here; trials are applied in higher-level\n  // payment logic.  This helper strictly converts *paid* duration \u2192 expiry.\n  const MS_IN_DAY = 24 * 60 * 60 * 1000;\n\n  let daysToAdd: number;\n  switch (plan.duration) {\n    case SubscriptionDuration.ANNUAL:\n      daysToAdd = 365;           // Fixed-length year to keep math explicit\n      break;\n    case SubscriptionDuration.MONTHLY:\n    default:\n      daysToAdd = 30;            // Fixed-length \u201Cbilling month\u201D\n      break;\n  }\n\n  return new Date(now.getTime() + daysToAdd * MS_IN_DAY);\n};\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "eba1e3f66976539fdbb2de325f8b69bcd20822bc"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_1qpb250xb1 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_1qpb250xb1();
+cov_1qpb250xb1().s[0]++;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/* istanbul ignore next */
+cov_1qpb250xb1().s[1]++;
+exports.calculateExpiryDate = exports.SUBSCRIPTION_PLANS = exports.SubscriptionDuration = exports.SubscriptionPlanType = void 0;
+/**
+ * Subscription plan types available in the app
+ */
+var SubscriptionPlanType;
+/* istanbul ignore next */
+cov_1qpb250xb1().s[2]++;
+(function (SubscriptionPlanType) {
+  /* istanbul ignore next */
+  cov_1qpb250xb1().f[0]++;
+  cov_1qpb250xb1().s[3]++;
+  SubscriptionPlanType["DEALER"] = "dealer";
+  /* istanbul ignore next */
+  cov_1qpb250xb1().s[4]++;
+  SubscriptionPlanType["ORGANIZER"] = "organizer";
+})(
+/* istanbul ignore next */
+(cov_1qpb250xb1().b[0][0]++, SubscriptionPlanType) ||
+/* istanbul ignore next */
+(cov_1qpb250xb1().b[0][1]++, exports.SubscriptionPlanType = SubscriptionPlanType = {}));
+/**
+ * Subscription plan durations in months
+ */
+var SubscriptionDuration;
+/* istanbul ignore next */
+cov_1qpb250xb1().s[5]++;
+(function (SubscriptionDuration) {
+  /* istanbul ignore next */
+  cov_1qpb250xb1().f[1]++;
+  cov_1qpb250xb1().s[6]++;
+  SubscriptionDuration[SubscriptionDuration["MONTHLY"] = 1] = "MONTHLY";
+  /* istanbul ignore next */
+  cov_1qpb250xb1().s[7]++;
+  SubscriptionDuration[SubscriptionDuration["ANNUAL"] = 12] = "ANNUAL";
+})(
+/* istanbul ignore next */
+(cov_1qpb250xb1().b[1][0]++, SubscriptionDuration) ||
+/* istanbul ignore next */
+(cov_1qpb250xb1().b[1][1]++, exports.SubscriptionDuration = SubscriptionDuration = {}));
+/**
+ * Available subscription plans
+ */
+/* istanbul ignore next */
+cov_1qpb250xb1().s[8]++;
+exports.SUBSCRIPTION_PLANS = [/* ---------- MVP DEALER ---------- */
+{
+  id: 'mvp-dealer-monthly',
+  type: SubscriptionPlanType.DEALER,
+  name: 'MVP Dealer Monthly',
+  description: 'Preview inventory, interact with collectors & more (monthly)',
+  price: 29,
+  duration: SubscriptionDuration.MONTHLY,
+  trialDays: 7,
+  features: ['Preview inventory for upcoming shows you attend', 'Interact with collectors planning to attend those shows', 'View want lists of collectors within a 25-mile radius', 'Share external links (website, eBay, WhatNot, etc.)', 'Dealer badge on profile']
+}, {
+  id: 'mvp-dealer-annual',
+  type: SubscriptionPlanType.DEALER,
+  name: 'MVP Dealer Annual',
+  description: 'Save 25% with annual billing',
+  price: 261,
+  // $29 × 12 × 0.75
+  duration: SubscriptionDuration.ANNUAL,
+  trialDays: 7,
+  isPopular: true,
+  features: ['Preview inventory for upcoming shows you attend', 'Interact with collectors planning to attend those shows', 'View want lists of collectors within a 25-mile radius', 'Share external links (website, eBay, WhatNot, etc.)', 'Dealer badge on profile', 'Featured dealer status']
+}, /* ---------- SHOW ORGANIZER ---------- */
+{
+  id: 'show-organizer-monthly',
+  type: SubscriptionPlanType.ORGANIZER,
+  name: 'Show Organizer Monthly',
+  description: 'Organize shows & engage dealers/collectors (monthly)',
+  price: 49,
+  duration: SubscriptionDuration.MONTHLY,
+  trialDays: 7,
+  features: ['All MVP Dealer features', 'Claim ownership of recurring shows', 'Message dealers & collectors before/after shows', 'Edit upcoming show times, dates & details', 'Respond to collector reviews', 'Promote your events', 'Access attendee data']
+}, {
+  id: 'show-organizer-annual',
+  type: SubscriptionPlanType.ORGANIZER,
+  name: 'Show Organizer Annual',
+  description: 'Save 25% with annual billing',
+  price: 441,
+  // $49 × 12 × 0.75
+  duration: SubscriptionDuration.ANNUAL,
+  trialDays: 7,
+  isPopular: true,
+  features: ['All MVP Dealer features', 'Claim ownership of recurring shows', 'Message dealers & collectors before/after shows', 'Edit upcoming show times, dates & details', 'Respond to collector reviews', 'Promote your events', 'Access attendee data', 'Featured show placement']
+}];
+/**
+ * Helper function to calculate the expiry date based on the current date and plan duration
+ * @param plan The subscription plan
+ * @returns Date when the subscription will expire
+ */
+/* istanbul ignore next */
+cov_1qpb250xb1().s[9]++;
+const calculateExpiryDate = plan => {
+  /* istanbul ignore next */
+  cov_1qpb250xb1().f[2]++;
+  const now =
+  /* istanbul ignore next */
+  (cov_1qpb250xb1().s[10]++, new Date());
+  // We purposely ignore `trialDays` here; trials are applied in higher-level
+  // payment logic.  This helper strictly converts *paid* duration → expiry.
+  const MS_IN_DAY =
+  /* istanbul ignore next */
+  (cov_1qpb250xb1().s[11]++, 24 * 60 * 60 * 1000);
+  let daysToAdd;
+  /* istanbul ignore next */
+  cov_1qpb250xb1().s[12]++;
+  switch (plan.duration) {
+    case SubscriptionDuration.ANNUAL:
+      /* istanbul ignore next */
+      cov_1qpb250xb1().b[2][0]++;
+      cov_1qpb250xb1().s[13]++;
+      daysToAdd = 365; // Fixed-length year to keep math explicit
+      /* istanbul ignore next */
+      cov_1qpb250xb1().s[14]++;
+      break;
+    case SubscriptionDuration.MONTHLY:
+      /* istanbul ignore next */
+      cov_1qpb250xb1().b[2][1]++;
+    default:
+      /* istanbul ignore next */
+      cov_1qpb250xb1().b[2][2]++;
+      cov_1qpb250xb1().s[15]++;
+      daysToAdd = 30; // Fixed-length “billing month”
+      /* istanbul ignore next */
+      cov_1qpb250xb1().s[16]++;
+      break;
+  }
+  /* istanbul ignore next */
+  cov_1qpb250xb1().s[17]++;
+  return new Date(now.getTime() + daysToAdd * MS_IN_DAY);
+};
+/* istanbul ignore next */
+cov_1qpb250xb1().s[18]++;
+exports.calculateExpiryDate = calculateExpiryDate;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjb3ZfMXFwYjI1MHhiMSIsImFjdHVhbENvdmVyYWdlIiwicyIsIlN1YnNjcmlwdGlvblBsYW5UeXBlIiwiZiIsImIiLCJleHBvcnRzIiwiU3Vic2NyaXB0aW9uRHVyYXRpb24iLCJTVUJTQ1JJUFRJT05fUExBTlMiLCJpZCIsInR5cGUiLCJERUFMRVIiLCJuYW1lIiwiZGVzY3JpcHRpb24iLCJwcmljZSIsImR1cmF0aW9uIiwiTU9OVEhMWSIsInRyaWFsRGF5cyIsImZlYXR1cmVzIiwiQU5OVUFMIiwiaXNQb3B1bGFyIiwiT1JHQU5JWkVSIiwiY2FsY3VsYXRlRXhwaXJ5RGF0ZSIsInBsYW4iLCJub3ciLCJEYXRlIiwiTVNfSU5fREFZIiwiZGF5c1RvQWRkIiwiZ2V0VGltZSJdLCJzb3VyY2VzIjpbIi9Vc2Vycy9rZXZpbi9jYXJkLXNob3ctZmluZGVyL3NyYy9zZXJ2aWNlcy9zdWJzY3JpcHRpb25UeXBlcy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyIvLyBzcmMvc2VydmljZXMvc3Vic2NyaXB0aW9uVHlwZXMudHNcbmltcG9ydCB7IFVzZXJSb2xlIH0gZnJvbSAnLi91c2VyUm9sZVNlcnZpY2UnO1xuXG4vKipcbiAqIFN1YnNjcmlwdGlvbiBwbGFuIHR5cGVzIGF2YWlsYWJsZSBpbiB0aGUgYXBwXG4gKi9cbmV4cG9ydCBlbnVtIFN1YnNjcmlwdGlvblBsYW5UeXBlIHtcbiAgREVBTEVSID0gJ2RlYWxlcicsXG4gIE9SR0FOSVpFUiA9ICdvcmdhbml6ZXInXG59XG5cbi8qKlxuICogU3Vic2NyaXB0aW9uIHBsYW4gZHVyYXRpb25zIGluIG1vbnRoc1xuICovXG5leHBvcnQgZW51bSBTdWJzY3JpcHRpb25EdXJhdGlvbiB7XG4gIE1PTlRITFkgPSAxLFxuICBBTk5VQUwgPSAxMlxufVxuXG4vKipcbiAqIFN1YnNjcmlwdGlvbiBwbGFuIGRldGFpbHNcbiAqL1xuZXhwb3J0IGludGVyZmFjZSBTdWJzY3JpcHRpb25QbGFuIHtcbiAgaWQ6IHN0cmluZztcbiAgdHlwZTogU3Vic2NyaXB0aW9uUGxhblR5cGU7XG4gIG5hbWU6IHN0cmluZztcbiAgZGVzY3JpcHRpb246IHN0cmluZztcbiAgcHJpY2U6IG51bWJlcjsgLy8gUHJpY2UgaW4gVVNEXG4gIGR1cmF0aW9uOiBTdWJzY3JpcHRpb25EdXJhdGlvbjsgLy8gRHVyYXRpb24gaW4gbW9udGhzXG4gIGZlYXR1cmVzOiBzdHJpbmdbXTtcbiAgLyoqIEZyZWUtdHJpYWwgbGVuZ3RoIGluIGRheXMgKG9wdGlvbmFsLCBlLmcuIDctZGF5IHRyaWFsKSAqL1xuICB0cmlhbERheXM/OiBudW1iZXI7XG4gIGlzUG9wdWxhcj86IGJvb2xlYW47XG59XG5cbi8qKlxuICogUmVwcmVzZW50cyB0aGUgb3V0Y29tZSBvZiBhIHBheW1lbnQgb3BlcmF0aW9uLlxuICovXG5leHBvcnQgaW50ZXJmYWNlIFN0cmlwZVBheW1lbnRSZXN1bHQge1xuICBzdWNjZXNzOiBib29sZWFuO1xuICBlcnJvcj86IHN0cmluZztcbiAgdHJhbnNhY3Rpb25JZD86IHN0cmluZztcbn1cblxuLyoqXG4gKiBBdmFpbGFibGUgc3Vic2NyaXB0aW9uIHBsYW5zXG4gKi9cbmV4cG9ydCBjb25zdCBTVUJTQ1JJUFRJT05fUExBTlM6IFN1YnNjcmlwdGlvblBsYW5bXSA9IFtcbiAgLyogLS0tLS0tLS0tLSBNVlAgREVBTEVSIC0tLS0tLS0tLS0gKi9cbiAge1xuICAgIGlkOiAnbXZwLWRlYWxlci1tb250aGx5JyxcbiAgICB0eXBlOiBTdWJzY3JpcHRpb25QbGFuVHlwZS5ERUFMRVIsXG4gICAgbmFtZTogJ01WUCBEZWFsZXIgTW9udGhseScsXG4gICAgZGVzY3JpcHRpb246ICdQcmV2aWV3IGludmVudG9yeSwgaW50ZXJhY3Qgd2l0aCBjb2xsZWN0b3JzICYgbW9yZSAobW9udGhseSknLFxuICAgIHByaWNlOiAyOSxcbiAgICBkdXJhdGlvbjogU3Vic2NyaXB0aW9uRHVyYXRpb24uTU9OVEhMWSxcbiAgICB0cmlhbERheXM6IDcsXG4gICAgZmVhdHVyZXM6IFtcbiAgICAgICdQcmV2aWV3IGludmVudG9yeSBmb3IgdXBjb21pbmcgc2hvd3MgeW91IGF0dGVuZCcsXG4gICAgICAnSW50ZXJhY3Qgd2l0aCBjb2xsZWN0b3JzIHBsYW5uaW5nIHRvIGF0dGVuZCB0aG9zZSBzaG93cycsXG4gICAgICAnVmlldyB3YW50IGxpc3RzIG9mIGNvbGxlY3RvcnMgd2l0aGluIGEgMjUtbWlsZSByYWRpdXMnLFxuICAgICAgJ1NoYXJlIGV4dGVybmFsIGxpbmtzICh3ZWJzaXRlLCBlQmF5LCBXaGF0Tm90LCBldGMuKScsXG4gICAgICAnRGVhbGVyIGJhZGdlIG9uIHByb2ZpbGUnXG4gICAgXVxuICB9LFxuICB7XG4gICAgaWQ6ICdtdnAtZGVhbGVyLWFubnVhbCcsXG4gICAgdHlwZTogU3Vic2NyaXB0aW9uUGxhblR5cGUuREVBTEVSLFxuICAgIG5hbWU6ICdNVlAgRGVhbGVyIEFubnVhbCcsXG4gICAgZGVzY3JpcHRpb246ICdTYXZlIDI1JSB3aXRoIGFubnVhbCBiaWxsaW5nJyxcbiAgICBwcmljZTogMjYxLCAvLyAkMjkgw5cgMTIgw5cgMC43NVxuICAgIGR1cmF0aW9uOiBTdWJzY3JpcHRpb25EdXJhdGlvbi5BTk5VQUwsXG4gICAgdHJpYWxEYXlzOiA3LFxuICAgIGlzUG9wdWxhcjogdHJ1ZSxcbiAgICBmZWF0dXJlczogW1xuICAgICAgJ1ByZXZpZXcgaW52ZW50b3J5IGZvciB1cGNvbWluZyBzaG93cyB5b3UgYXR0ZW5kJyxcbiAgICAgICdJbnRlcmFjdCB3aXRoIGNvbGxlY3RvcnMgcGxhbm5pbmcgdG8gYXR0ZW5kIHRob3NlIHNob3dzJyxcbiAgICAgICdWaWV3IHdhbnQgbGlzdHMgb2YgY29sbGVjdG9ycyB3aXRoaW4gYSAyNS1taWxlIHJhZGl1cycsXG4gICAgICAnU2hhcmUgZXh0ZXJuYWwgbGlua3MgKHdlYnNpdGUsIGVCYXksIFdoYXROb3QsIGV0Yy4pJyxcbiAgICAgICdEZWFsZXIgYmFkZ2Ugb24gcHJvZmlsZScsXG4gICAgICAnRmVhdHVyZWQgZGVhbGVyIHN0YXR1cydcbiAgICBdXG4gIH0sXG5cbiAgLyogLS0tLS0tLS0tLSBTSE9XIE9SR0FOSVpFUiAtLS0tLS0tLS0tICovXG4gIHtcbiAgICBpZDogJ3Nob3ctb3JnYW5pemVyLW1vbnRobHknLFxuICAgIHR5cGU6IFN1YnNjcmlwdGlvblBsYW5UeXBlLk9SR0FOSVpFUixcbiAgICBuYW1lOiAnU2hvdyBPcmdhbml6ZXIgTW9udGhseScsXG4gICAgZGVzY3JpcHRpb246ICdPcmdhbml6ZSBzaG93cyAmIGVuZ2FnZSBkZWFsZXJzL2NvbGxlY3RvcnMgKG1vbnRobHkpJyxcbiAgICBwcmljZTogNDksXG4gICAgZHVyYXRpb246IFN1YnNjcmlwdGlvbkR1cmF0aW9uLk1PTlRITFksXG4gICAgdHJpYWxEYXlzOiA3LFxuICAgIGZlYXR1cmVzOiBbXG4gICAgICAnQWxsIE1WUCBEZWFsZXIgZmVhdHVyZXMnLFxuICAgICAgJ0NsYWltIG93bmVyc2hpcCBvZiByZWN1cnJpbmcgc2hvd3MnLFxuICAgICAgJ01lc3NhZ2UgZGVhbGVycyAmIGNvbGxlY3RvcnMgYmVmb3JlL2FmdGVyIHNob3dzJyxcbiAgICAgICdFZGl0IHVwY29taW5nIHNob3cgdGltZXMsIGRhdGVzICYgZGV0YWlscycsXG4gICAgICAnUmVzcG9uZCB0byBjb2xsZWN0b3IgcmV2aWV3cycsXG4gICAgICAnUHJvbW90ZSB5b3VyIGV2ZW50cycsXG4gICAgICAnQWNjZXNzIGF0dGVuZGVlIGRhdGEnXG4gICAgXVxuICB9LFxuICB7XG4gICAgaWQ6ICdzaG93LW9yZ2FuaXplci1hbm51YWwnLFxuICAgIHR5cGU6IFN1YnNjcmlwdGlvblBsYW5UeXBlLk9SR0FOSVpFUixcbiAgICBuYW1lOiAnU2hvdyBPcmdhbml6ZXIgQW5udWFsJyxcbiAgICBkZXNjcmlwdGlvbjogJ1NhdmUgMjUlIHdpdGggYW5udWFsIGJpbGxpbmcnLFxuICAgIHByaWNlOiA0NDEsIC8vICQ0OSDDlyAxMiDDlyAwLjc1XG4gICAgZHVyYXRpb246IFN1YnNjcmlwdGlvbkR1cmF0aW9uLkFOTlVBTCxcbiAgICB0cmlhbERheXM6IDcsXG4gICAgaXNQb3B1bGFyOiB0cnVlLFxuICAgIGZlYXR1cmVzOiBbXG4gICAgICAnQWxsIE1WUCBEZWFsZXIgZmVhdHVyZXMnLFxuICAgICAgJ0NsYWltIG93bmVyc2hpcCBvZiByZWN1cnJpbmcgc2hvd3MnLFxuICAgICAgJ01lc3NhZ2UgZGVhbGVycyAmIGNvbGxlY3RvcnMgYmVmb3JlL2FmdGVyIHNob3dzJyxcbiAgICAgICdFZGl0IHVwY29taW5nIHNob3cgdGltZXMsIGRhdGVzICYgZGV0YWlscycsXG4gICAgICAnUmVzcG9uZCB0byBjb2xsZWN0b3IgcmV2aWV3cycsXG4gICAgICAnUHJvbW90ZSB5b3VyIGV2ZW50cycsXG4gICAgICAnQWNjZXNzIGF0dGVuZGVlIGRhdGEnLFxuICAgICAgJ0ZlYXR1cmVkIHNob3cgcGxhY2VtZW50J1xuICAgIF1cbiAgfVxuXTtcblxuLyoqXG4gKiBIZWxwZXIgZnVuY3Rpb24gdG8gY2FsY3VsYXRlIHRoZSBleHBpcnkgZGF0ZSBiYXNlZCBvbiB0aGUgY3VycmVudCBkYXRlIGFuZCBwbGFuIGR1cmF0aW9uXG4gKiBAcGFyYW0gcGxhbiBUaGUgc3Vic2NyaXB0aW9uIHBsYW5cbiAqIEByZXR1cm5zIERhdGUgd2hlbiB0aGUgc3Vic2NyaXB0aW9uIHdpbGwgZXhwaXJlXG4gKi9cbmV4cG9ydCBjb25zdCBjYWxjdWxhdGVFeHBpcnlEYXRlID0gKHBsYW46IFN1YnNjcmlwdGlvblBsYW4pOiBEYXRlID0+IHtcbiAgY29uc3Qgbm93ID0gbmV3IERhdGUoKTtcblxuICAvLyBXZSBwdXJwb3NlbHkgaWdub3JlIGB0cmlhbERheXNgIGhlcmU7IHRyaWFscyBhcmUgYXBwbGllZCBpbiBoaWdoZXItbGV2ZWxcbiAgLy8gcGF5bWVudCBsb2dpYy4gIFRoaXMgaGVscGVyIHN0cmljdGx5IGNvbnZlcnRzICpwYWlkKiBkdXJhdGlvbiDihpIgZXhwaXJ5LlxuICBjb25zdCBNU19JTl9EQVkgPSAyNCAqIDYwICogNjAgKiAxMDAwO1xuXG4gIGxldCBkYXlzVG9BZGQ6IG51bWJlcjtcbiAgc3dpdGNoIChwbGFuLmR1cmF0aW9uKSB7XG4gICAgY2FzZSBTdWJzY3JpcHRpb25EdXJhdGlvbi5BTk5VQUw6XG4gICAgICBkYXlzVG9BZGQgPSAzNjU7ICAgICAgICAgICAvLyBGaXhlZC1sZW5ndGggeWVhciB0byBrZWVwIG1hdGggZXhwbGljaXRcbiAgICAgIGJyZWFrO1xuICAgIGNhc2UgU3Vic2NyaXB0aW9uRHVyYXRpb24uTU9OVEhMWTpcbiAgICBkZWZhdWx0OlxuICAgICAgZGF5c1RvQWRkID0gMzA7ICAgICAgICAgICAgLy8gRml4ZWQtbGVuZ3RoIOKAnGJpbGxpbmcgbW9udGjigJ1cbiAgICAgIGJyZWFrO1xuICB9XG5cbiAgcmV0dXJuIG5ldyBEYXRlKG5vdy5nZXRUaW1lKCkgKyBkYXlzVG9BZGQgKiBNU19JTl9EQVkpO1xufTtcbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7SUFjWTtJQUFBQSxjQUFBLFlBQUFBLENBQUE7TUFBQSxPQUFBQyxjQUFBO0lBQUE7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S0FBSyxFQUFFLEdBQUc7RUFBRTtFQUNaQyxRQUFRLEVBQUVSLG9CQUFvQixDQUFDWSxNQUFNO0VBQ3JDRixTQUFTLEVBQUUsQ0FBQztFQUNaRyxTQUFTLEVBQUUsSUFBSTtFQUNmRixRQUFRLEVBQUUsQ0FDUix5QkFBeUIsRUFDekIsb0NBQW9DLEVBQ3BDLGlEQUFpRCxFQUNqRCwyQ0FBMkMsRUFDM0MsOEJBQThCLEVBQzlCLHFCQUFxQixFQUNyQixzQkFBc0IsRUFDdEIseUJBQXlCO0NBRTVCLENBQ0Y7QUFFRDs7Ozs7QUFBQTtBQUFBbEIsY0FBQSxHQUFBRSxDQUFBO0FBS08sTUFBTW9CLG1CQUFtQixHQUFJQyxJQUFzQixJQUFVO0VBQUE7RUFBQXZCLGNBQUEsR0FBQUksQ0FBQTtFQUNsRSxNQUFNb0IsR0FBRztFQUFBO0VBQUEsQ0FBQXhCLGNBQUEsR0FBQUUsQ0FBQSxRQUFHLElBQUl1QixJQUFJLEVBQUU7RUFFdEI7RUFDQTtFQUNBLE1BQU1DLFNBQVM7RUFBQTtFQUFBLENBQUExQixjQUFBLEdBQUFFLENBQUEsUUFBRyxFQUFFLEdBQUcsRUFBRSxHQUFHLEVBQUUsR0FBRyxJQUFJO0VBRXJDLElBQUl5QixTQUFpQjtFQUFDO0VBQUEzQixjQUFBLEdBQUFFLENBQUE7RUFDdEIsUUFBUXFCLElBQUksQ0FBQ1IsUUFBUTtJQUNuQixLQUFLUixvQkFBb0IsQ0FBQ1ksTUFBTTtNQUFBO01BQUFuQixjQUFBLEdBQUFLLENBQUE7TUFBQUwsY0FBQSxHQUFBRSxDQUFBO01BQzlCeUIsU0FBUyxHQUFHLEdBQUcsQ0FBQyxDQUFXO01BQUE7TUFBQTNCLGNBQUEsR0FBQUUsQ0FBQTtNQUMzQjtJQUNGLEtBQUtLLG9CQUFvQixDQUFDUyxPQUFPO01BQUE7TUFBQWhCLGNBQUEsR0FBQUssQ0FBQTtJQUNqQztNQUFBO01BQUFMLGNBQUEsR0FBQUssQ0FBQTtNQUFBTCxjQUFBLEdBQUFFLENBQUE7TUFDRXlCLFNBQVMsR0FBRyxFQUFFLENBQUMsQ0FBWTtNQUFBO01BQUEzQixjQUFBLEdBQUFFLENBQUE7TUFDM0I7RUFDSjtFQUFDO0VBQUFGLGNBQUEsR0FBQUUsQ0FBQTtFQUVELE9BQU8sSUFBSXVCLElBQUksQ0FBQ0QsR0FBRyxDQUFDSSxPQUFPLEVBQUUsR0FBR0QsU0FBUyxHQUFHRCxTQUFTLENBQUM7QUFDeEQsQ0FBQztBQUFDO0FBQUExQixjQUFBLEdBQUFFLENBQUE7QUFuQldJLE9BQUEsQ0FBQWdCLG1CQUFtQixHQUFBQSxtQkFBQSIsImlnbm9yZUxpc3QiOltdfQ==

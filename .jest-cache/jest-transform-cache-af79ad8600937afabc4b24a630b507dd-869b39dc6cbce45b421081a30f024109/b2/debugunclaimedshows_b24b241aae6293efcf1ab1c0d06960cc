@@ -1,0 +1,653 @@
+33ecfed3739cc00db673816ec1fb6dcf
+"use strict";
+
+/* istanbul ignore next */
+function cov_un1urhoal() {
+  var path = "/Users/kevin/card-show-finder/src/debug-unclaimed-shows.ts";
+  var hash = "20590d8920ca641911cf6c63309dd79a611632ff";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/debug-unclaimed-shows.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 0
+        },
+        end: {
+          line: 2,
+          column: 62
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 0
+        },
+        end: {
+          line: 3,
+          column: 72
+        }
+      },
+      "2": {
+        start: {
+          line: 5,
+          column: 28
+        },
+        end: {
+          line: 5,
+          column: 67
+        }
+      },
+      "3": {
+        start: {
+          line: 7,
+          column: 4
+        },
+        end: {
+          line: 7,
+          column: 49
+        }
+      },
+      "4": {
+        start: {
+          line: 8,
+          column: 4
+        },
+        end: {
+          line: 41,
+          column: 5
+        }
+      },
+      "5": {
+        start: {
+          line: 10,
+          column: 8
+        },
+        end: {
+          line: 10,
+          column: 58
+        }
+      },
+      "6": {
+        start: {
+          line: 11,
+          column: 32
+        },
+        end: {
+          line: 13,
+          column: 10
+        }
+      },
+      "7": {
+        start: {
+          line: 14,
+          column: 8
+        },
+        end: {
+          line: 14,
+          column: 74
+        }
+      },
+      "8": {
+        start: {
+          line: 15,
+          column: 8
+        },
+        end: {
+          line: 15,
+          column: 123
+        }
+      },
+      "9": {
+        start: {
+          line: 16,
+          column: 8
+        },
+        end: {
+          line: 16,
+          column: 123
+        }
+      },
+      "10": {
+        start: {
+          line: 18,
+          column: 27
+        },
+        end: {
+          line: 18,
+          column: 48
+        }
+      },
+      "11": {
+        start: {
+          line: 19,
+          column: 8
+        },
+        end: {
+          line: 19,
+          column: 80
+        }
+      },
+      "12": {
+        start: {
+          line: 21,
+          column: 8
+        },
+        end: {
+          line: 21,
+          column: 59
+        }
+      },
+      "13": {
+        start: {
+          line: 22,
+          column: 31
+        },
+        end: {
+          line: 22,
+          column: 94
+        }
+      },
+      "14": {
+        start: {
+          line: 23,
+          column: 8
+        },
+        end: {
+          line: 23,
+          column: 72
+        }
+      },
+      "15": {
+        start: {
+          line: 24,
+          column: 8
+        },
+        end: {
+          line: 24,
+          column: 120
+        }
+      },
+      "16": {
+        start: {
+          line: 25,
+          column: 8
+        },
+        end: {
+          line: 25,
+          column: 120
+        }
+      },
+      "17": {
+        start: {
+          line: 27,
+          column: 26
+        },
+        end: {
+          line: 27,
+          column: 46
+        }
+      },
+      "18": {
+        start: {
+          line: 28,
+          column: 8
+        },
+        end: {
+          line: 28,
+          column: 78
+        }
+      },
+      "19": {
+        start: {
+          line: 30,
+          column: 8
+        },
+        end: {
+          line: 30,
+          column: 55
+        }
+      },
+      "20": {
+        start: {
+          line: 32,
+          column: 30
+        },
+        end: {
+          line: 35,
+          column: 9
+        }
+      },
+      "21": {
+        start: {
+          line: 36,
+          column: 8
+        },
+        end: {
+          line: 36,
+          column: 76
+        }
+      },
+      "22": {
+        start: {
+          line: 37,
+          column: 8
+        },
+        end: {
+          line: 37,
+          column: 55
+        }
+      },
+      "23": {
+        start: {
+          line: 40,
+          column: 8
+        },
+        end: {
+          line: 40,
+          column: 59
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "testUnclaimedShowsDataHandling",
+        decl: {
+          start: {
+            line: 6,
+            column: 15
+          },
+          end: {
+            line: 6,
+            column: 45
+          }
+        },
+        loc: {
+          start: {
+            line: 6,
+            column: 48
+          },
+          end: {
+            line: 42,
+            column: 1
+          }
+        },
+        line: 6
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 15,
+            column: 56
+          },
+          end: {
+            line: 15,
+            column: 121
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 15,
+            column: 89
+          },
+          end: {
+            line: 15,
+            column: 96
+          }
+        }, {
+          start: {
+            line: 15,
+            column: 99
+          },
+          end: {
+            line: 15,
+            column: 121
+          }
+        }],
+        line: 15
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 16,
+            column: 58
+          },
+          end: {
+            line: 16,
+            column: 121
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 16,
+            column: 91
+          },
+          end: {
+            line: 16,
+            column: 113
+          }
+        }, {
+          start: {
+            line: 16,
+            column: 116
+          },
+          end: {
+            line: 16,
+            column: 121
+          }
+        }],
+        line: 16
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 18,
+            column: 27
+          },
+          end: {
+            line: 18,
+            column: 48
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 18,
+            column: 27
+          },
+          end: {
+            line: 18,
+            column: 42
+          }
+        }, {
+          start: {
+            line: 18,
+            column: 46
+          },
+          end: {
+            line: 18,
+            column: 48
+          }
+        }],
+        line: 18
+      },
+      "3": {
+        loc: {
+          start: {
+            line: 24,
+            column: 55
+          },
+          end: {
+            line: 24,
+            column: 118
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 24,
+            column: 87
+          },
+          end: {
+            line: 24,
+            column: 94
+          }
+        }, {
+          start: {
+            line: 24,
+            column: 97
+          },
+          end: {
+            line: 24,
+            column: 118
+          }
+        }],
+        line: 24
+      },
+      "4": {
+        loc: {
+          start: {
+            line: 25,
+            column: 57
+          },
+          end: {
+            line: 25,
+            column: 118
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 25,
+            column: 89
+          },
+          end: {
+            line: 25,
+            column: 110
+          }
+        }, {
+          start: {
+            line: 25,
+            column: 113
+          },
+          end: {
+            line: 25,
+            column: 118
+          }
+        }],
+        line: 25
+      },
+      "5": {
+        loc: {
+          start: {
+            line: 27,
+            column: 26
+          },
+          end: {
+            line: 27,
+            column: 46
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 27,
+            column: 26
+          },
+          end: {
+            line: 27,
+            column: 40
+          }
+        }, {
+          start: {
+            line: 27,
+            column: 44
+          },
+          end: {
+            line: 27,
+            column: 46
+          }
+        }],
+        line: 27
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0,
+      "13": 0,
+      "14": 0,
+      "15": 0,
+      "16": 0,
+      "17": 0,
+      "18": 0,
+      "19": 0,
+      "20": 0,
+      "21": 0,
+      "22": 0,
+      "23": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {
+      "0": [0, 0],
+      "1": [0, 0],
+      "2": [0, 0],
+      "3": [0, 0],
+      "4": [0, 0],
+      "5": [0, 0]
+    },
+    inputSourceMap: {
+      file: "/Users/kevin/card-show-finder/src/debug-unclaimed-shows.ts",
+      mappings: ";;AA+CS,wEAA8B;AA/CvC,0DAA0D;AAC1D,oEAAiE;AAEjE,KAAK,UAAU,8BAA8B;IAC3C,OAAO,CAAC,GAAG,CAAC,+BAA+B,CAAC,CAAC;IAE7C,IAAI,CAAC;QACH,iCAAiC;QACjC,OAAO,CAAC,GAAG,CAAC,oCAAoC,CAAC,CAAC;QAClD,MAAM,eAAe,GAAG,MAAM,qCAAiB,CAAC,gBAAgB,CAAC;YAC/D,WAAW,EAAE,IAAI;SAClB,CAAC,CAAC;QACH,OAAO,CAAC,GAAG,CAAC,mCAAmC,EAAE,eAAe,CAAC,CAAC;QAClE,OAAO,CAAC,GAAG,CAAC,kCAAkC,EAAE,KAAK,CAAC,OAAO,CAAC,eAAe,CAAC,CAAC,CAAC,CAAC,OAAO,CAAC,CAAC,CAAC,OAAO,eAAe,CAAC,CAAC;QACnH,OAAO,CAAC,GAAG,CAAC,oCAAoC,EAAE,KAAK,CAAC,OAAO,CAAC,eAAe,CAAC,CAAC,CAAC,CAAC,eAAe,CAAC,MAAM,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC;QAEnH,qCAAqC;QACrC,MAAM,UAAU,GAAG,eAAe,IAAI,EAAE,CAAC;QACzC,OAAO,CAAC,GAAG,CAAC,+BAA+B,EAAE,KAAK,CAAC,OAAO,CAAC,UAAU,CAAC,CAAC,CAAC;QAExE,kCAAkC;QAClC,OAAO,CAAC,GAAG,CAAC,qCAAqC,CAAC,CAAC;QACnD,MAAM,cAAc,GAAG,MAAM,qCAAiB,CAAC,iBAAiB,EAAE,CAAC;QACnE,OAAO,CAAC,GAAG,CAAC,kCAAkC,EAAE,cAAc,CAAC,CAAC;QAChE,OAAO,CAAC,GAAG,CAAC,iCAAiC,EAAE,KAAK,CAAC,OAAO,CAAC,cAAc,CAAC,CAAC,CAAC,CAAC,OAAO,CAAC,CAAC,CAAC,OAAO,cAAc,CAAC,CAAC;QAChH,OAAO,CAAC,GAAG,CAAC,mCAAmC,EAAE,KAAK,CAAC,OAAO,CAAC,cAAc,CAAC,CAAC,CAAC,CAAC,cAAc,CAAC,MAAM,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC;QAEhH,qCAAqC;QACrC,MAAM,SAAS,GAAG,cAAc,IAAI,EAAE,CAAC;QACvC,OAAO,CAAC,GAAG,CAAC,8BAA8B,EAAE,KAAK,CAAC,OAAO,CAAC,SAAS,CAAC,CAAC,CAAC;QAEtE,yBAAyB;QACzB,OAAO,CAAC,GAAG,CAAC,iCAAiC,CAAC,CAAC;QAC/C,4EAA4E;QAC5E,MAAM,aAAa,GAAG;YACpB,GAAG,UAAU;YACb,GAAG,SAAS;SACb,CAAC;QACF,OAAO,CAAC,GAAG,CAAC,gCAAgC,EAAE,aAAa,CAAC,MAAM,CAAC,CAAC;QAEpE,OAAO,CAAC,GAAG,CAAC,iCAAiC,CAAC,CAAC;IACjD,CAAC;IAAC,OAAO,KAAK,EAAE,CAAC;QACf,OAAO,CAAC,KAAK,CAAC,4BAA4B,EAAE,KAAK,CAAC,CAAC;IACrD,CAAC;AACH,CAAC",
+      names: [],
+      sources: ["/Users/kevin/card-show-finder/src/debug-unclaimed-shows.ts"],
+      sourcesContent: ["// Temporary debug file to test the useUnclaimedShows hook\nimport { showSeriesService } from './services/showSeriesService';\n\nasync function testUnclaimedShowsDataHandling() {\n  console.log('---- STARTING DEBUG TEST ----');\n  \n  try {\n    // Test getAllShowSeries function\n    console.log('[TEST] Testing getAllShowSeries...');\n    const unclaimedSeries = await showSeriesService.getAllShowSeries({\n      organizerId: null\n    });\n    console.log('[DEBUG] Value of unclaimedSeries:', unclaimedSeries);\n    console.log('[DEBUG] Type of unclaimedSeries:', Array.isArray(unclaimedSeries) ? 'array' : typeof unclaimedSeries);\n    console.log('[DEBUG] Length of unclaimedSeries:', Array.isArray(unclaimedSeries) ? unclaimedSeries.length : 'N/A');\n    \n    // Ensure it's an array even if empty\n    const safeSeries = unclaimedSeries || [];\n    console.log('[DEBUG] Safe series is array:', Array.isArray(safeSeries));\n    \n    // Test getUnclaimedShows function\n    console.log('[TEST] Testing getUnclaimedShows...');\n    const unclaimedShows = await showSeriesService.getUnclaimedShows();\n    console.log('[DEBUG] Value of unclaimedShows:', unclaimedShows);\n    console.log('[DEBUG] Type of unclaimedShows:', Array.isArray(unclaimedShows) ? 'array' : typeof unclaimedShows);\n    console.log('[DEBUG] Length of unclaimedShows:', Array.isArray(unclaimedShows) ? unclaimedShows.length : 'N/A');\n    \n    // Ensure it's an array even if empty\n    const safeShows = unclaimedShows || [];\n    console.log('[DEBUG] Safe shows is array:', Array.isArray(safeShows));\n    \n    // Test the combined data\n    console.log('[TEST] Testing combined data...');\n    // This would crash if either unclaimedSeries or unclaimedShows is undefined\n    const combinedItems = [\n      ...safeSeries,\n      ...safeShows\n    ];\n    console.log('[DEBUG] Combined items length:', combinedItems.length);\n    \n    console.log('---- DEBUG TEST SUCCESSFUL ----');\n  } catch (error) {\n    console.error('[ERROR] Debug test failed:', error);\n  }\n}\n\n// Export for use in other modules if needed\nexport { testUnclaimedShowsDataHandling };\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "20590d8920ca641911cf6c63309dd79a611632ff"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_un1urhoal = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_un1urhoal();
+cov_un1urhoal().s[0]++;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/* istanbul ignore next */
+cov_un1urhoal().s[1]++;
+exports.testUnclaimedShowsDataHandling = testUnclaimedShowsDataHandling;
+// Temporary debug file to test the useUnclaimedShows hook
+const showSeriesService_1 =
+/* istanbul ignore next */
+(cov_un1urhoal().s[2]++, require("./services/showSeriesService"));
+async function testUnclaimedShowsDataHandling() {
+  /* istanbul ignore next */
+  cov_un1urhoal().f[0]++;
+  cov_un1urhoal().s[3]++;
+  console.log('---- STARTING DEBUG TEST ----');
+  /* istanbul ignore next */
+  cov_un1urhoal().s[4]++;
+  try {
+    /* istanbul ignore next */
+    cov_un1urhoal().s[5]++;
+    // Test getAllShowSeries function
+    console.log('[TEST] Testing getAllShowSeries...');
+    const unclaimedSeries =
+    /* istanbul ignore next */
+    (cov_un1urhoal().s[6]++, await showSeriesService_1.showSeriesService.getAllShowSeries({
+      organizerId: null
+    }));
+    /* istanbul ignore next */
+    cov_un1urhoal().s[7]++;
+    console.log('[DEBUG] Value of unclaimedSeries:', unclaimedSeries);
+    /* istanbul ignore next */
+    cov_un1urhoal().s[8]++;
+    console.log('[DEBUG] Type of unclaimedSeries:', Array.isArray(unclaimedSeries) ?
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[0][0]++, 'array') :
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[0][1]++, typeof unclaimedSeries));
+    /* istanbul ignore next */
+    cov_un1urhoal().s[9]++;
+    console.log('[DEBUG] Length of unclaimedSeries:', Array.isArray(unclaimedSeries) ?
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[1][0]++, unclaimedSeries.length) :
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[1][1]++, 'N/A'));
+    // Ensure it's an array even if empty
+    const safeSeries =
+    /* istanbul ignore next */
+    (cov_un1urhoal().s[10]++,
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[2][0]++, unclaimedSeries) ||
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[2][1]++, []));
+    /* istanbul ignore next */
+    cov_un1urhoal().s[11]++;
+    console.log('[DEBUG] Safe series is array:', Array.isArray(safeSeries));
+    // Test getUnclaimedShows function
+    /* istanbul ignore next */
+    cov_un1urhoal().s[12]++;
+    console.log('[TEST] Testing getUnclaimedShows...');
+    const unclaimedShows =
+    /* istanbul ignore next */
+    (cov_un1urhoal().s[13]++, await showSeriesService_1.showSeriesService.getUnclaimedShows());
+    /* istanbul ignore next */
+    cov_un1urhoal().s[14]++;
+    console.log('[DEBUG] Value of unclaimedShows:', unclaimedShows);
+    /* istanbul ignore next */
+    cov_un1urhoal().s[15]++;
+    console.log('[DEBUG] Type of unclaimedShows:', Array.isArray(unclaimedShows) ?
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[3][0]++, 'array') :
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[3][1]++, typeof unclaimedShows));
+    /* istanbul ignore next */
+    cov_un1urhoal().s[16]++;
+    console.log('[DEBUG] Length of unclaimedShows:', Array.isArray(unclaimedShows) ?
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[4][0]++, unclaimedShows.length) :
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[4][1]++, 'N/A'));
+    // Ensure it's an array even if empty
+    const safeShows =
+    /* istanbul ignore next */
+    (cov_un1urhoal().s[17]++,
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[5][0]++, unclaimedShows) ||
+    /* istanbul ignore next */
+    (cov_un1urhoal().b[5][1]++, []));
+    /* istanbul ignore next */
+    cov_un1urhoal().s[18]++;
+    console.log('[DEBUG] Safe shows is array:', Array.isArray(safeShows));
+    // Test the combined data
+    /* istanbul ignore next */
+    cov_un1urhoal().s[19]++;
+    console.log('[TEST] Testing combined data...');
+    // This would crash if either unclaimedSeries or unclaimedShows is undefined
+    const combinedItems =
+    /* istanbul ignore next */
+    (cov_un1urhoal().s[20]++, [...safeSeries, ...safeShows]);
+    /* istanbul ignore next */
+    cov_un1urhoal().s[21]++;
+    console.log('[DEBUG] Combined items length:', combinedItems.length);
+    /* istanbul ignore next */
+    cov_un1urhoal().s[22]++;
+    console.log('---- DEBUG TEST SUCCESSFUL ----');
+  } catch (error) {
+    /* istanbul ignore next */
+    cov_un1urhoal().s[23]++;
+    console.error('[ERROR] Debug test failed:', error);
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjb3ZfdW4xdXJob2FsIiwiYWN0dWFsQ292ZXJhZ2UiLCJzIiwiZXhwb3J0cyIsInRlc3RVbmNsYWltZWRTaG93c0RhdGFIYW5kbGluZyIsInNob3dTZXJpZXNTZXJ2aWNlXzEiLCJyZXF1aXJlIiwiZiIsImNvbnNvbGUiLCJsb2ciLCJ1bmNsYWltZWRTZXJpZXMiLCJzaG93U2VyaWVzU2VydmljZSIsImdldEFsbFNob3dTZXJpZXMiLCJvcmdhbml6ZXJJZCIsIkFycmF5IiwiaXNBcnJheSIsImIiLCJsZW5ndGgiLCJzYWZlU2VyaWVzIiwidW5jbGFpbWVkU2hvd3MiLCJnZXRVbmNsYWltZWRTaG93cyIsInNhZmVTaG93cyIsImNvbWJpbmVkSXRlbXMiLCJlcnJvciJdLCJzb3VyY2VzIjpbIi9Vc2Vycy9rZXZpbi9jYXJkLXNob3ctZmluZGVyL3NyYy9kZWJ1Zy11bmNsYWltZWQtc2hvd3MudHMiXSwic291cmNlc0NvbnRlbnQiOlsiLy8gVGVtcG9yYXJ5IGRlYnVnIGZpbGUgdG8gdGVzdCB0aGUgdXNlVW5jbGFpbWVkU2hvd3MgaG9va1xuaW1wb3J0IHsgc2hvd1Nlcmllc1NlcnZpY2UgfSBmcm9tICcuL3NlcnZpY2VzL3Nob3dTZXJpZXNTZXJ2aWNlJztcblxuYXN5bmMgZnVuY3Rpb24gdGVzdFVuY2xhaW1lZFNob3dzRGF0YUhhbmRsaW5nKCkge1xuICBjb25zb2xlLmxvZygnLS0tLSBTVEFSVElORyBERUJVRyBURVNUIC0tLS0nKTtcbiAgXG4gIHRyeSB7XG4gICAgLy8gVGVzdCBnZXRBbGxTaG93U2VyaWVzIGZ1bmN0aW9uXG4gICAgY29uc29sZS5sb2coJ1tURVNUXSBUZXN0aW5nIGdldEFsbFNob3dTZXJpZXMuLi4nKTtcbiAgICBjb25zdCB1bmNsYWltZWRTZXJpZXMgPSBhd2FpdCBzaG93U2VyaWVzU2VydmljZS5nZXRBbGxTaG93U2VyaWVzKHtcbiAgICAgIG9yZ2FuaXplcklkOiBudWxsXG4gICAgfSk7XG4gICAgY29uc29sZS5sb2coJ1tERUJVR10gVmFsdWUgb2YgdW5jbGFpbWVkU2VyaWVzOicsIHVuY2xhaW1lZFNlcmllcyk7XG4gICAgY29uc29sZS5sb2coJ1tERUJVR10gVHlwZSBvZiB1bmNsYWltZWRTZXJpZXM6JywgQXJyYXkuaXNBcnJheSh1bmNsYWltZWRTZXJpZXMpID8gJ2FycmF5JyA6IHR5cGVvZiB1bmNsYWltZWRTZXJpZXMpO1xuICAgIGNvbnNvbGUubG9nKCdbREVCVUddIExlbmd0aCBvZiB1bmNsYWltZWRTZXJpZXM6JywgQXJyYXkuaXNBcnJheSh1bmNsYWltZWRTZXJpZXMpID8gdW5jbGFpbWVkU2VyaWVzLmxlbmd0aCA6ICdOL0EnKTtcbiAgICBcbiAgICAvLyBFbnN1cmUgaXQncyBhbiBhcnJheSBldmVuIGlmIGVtcHR5XG4gICAgY29uc3Qgc2FmZVNlcmllcyA9IHVuY2xhaW1lZFNlcmllcyB8fCBbXTtcbiAgICBjb25zb2xlLmxvZygnW0RFQlVHXSBTYWZlIHNlcmllcyBpcyBhcnJheTonLCBBcnJheS5pc0FycmF5KHNhZmVTZXJpZXMpKTtcbiAgICBcbiAgICAvLyBUZXN0IGdldFVuY2xhaW1lZFNob3dzIGZ1bmN0aW9uXG4gICAgY29uc29sZS5sb2coJ1tURVNUXSBUZXN0aW5nIGdldFVuY2xhaW1lZFNob3dzLi4uJyk7XG4gICAgY29uc3QgdW5jbGFpbWVkU2hvd3MgPSBhd2FpdCBzaG93U2VyaWVzU2VydmljZS5nZXRVbmNsYWltZWRTaG93cygpO1xuICAgIGNvbnNvbGUubG9nKCdbREVCVUddIFZhbHVlIG9mIHVuY2xhaW1lZFNob3dzOicsIHVuY2xhaW1lZFNob3dzKTtcbiAgICBjb25zb2xlLmxvZygnW0RFQlVHXSBUeXBlIG9mIHVuY2xhaW1lZFNob3dzOicsIEFycmF5LmlzQXJyYXkodW5jbGFpbWVkU2hvd3MpID8gJ2FycmF5JyA6IHR5cGVvZiB1bmNsYWltZWRTaG93cyk7XG4gICAgY29uc29sZS5sb2coJ1tERUJVR10gTGVuZ3RoIG9mIHVuY2xhaW1lZFNob3dzOicsIEFycmF5LmlzQXJyYXkodW5jbGFpbWVkU2hvd3MpID8gdW5jbGFpbWVkU2hvd3MubGVuZ3RoIDogJ04vQScpO1xuICAgIFxuICAgIC8vIEVuc3VyZSBpdCdzIGFuIGFycmF5IGV2ZW4gaWYgZW1wdHlcbiAgICBjb25zdCBzYWZlU2hvd3MgPSB1bmNsYWltZWRTaG93cyB8fCBbXTtcbiAgICBjb25zb2xlLmxvZygnW0RFQlVHXSBTYWZlIHNob3dzIGlzIGFycmF5OicsIEFycmF5LmlzQXJyYXkoc2FmZVNob3dzKSk7XG4gICAgXG4gICAgLy8gVGVzdCB0aGUgY29tYmluZWQgZGF0YVxuICAgIGNvbnNvbGUubG9nKCdbVEVTVF0gVGVzdGluZyBjb21iaW5lZCBkYXRhLi4uJyk7XG4gICAgLy8gVGhpcyB3b3VsZCBjcmFzaCBpZiBlaXRoZXIgdW5jbGFpbWVkU2VyaWVzIG9yIHVuY2xhaW1lZFNob3dzIGlzIHVuZGVmaW5lZFxuICAgIGNvbnN0IGNvbWJpbmVkSXRlbXMgPSBbXG4gICAgICAuLi5zYWZlU2VyaWVzLFxuICAgICAgLi4uc2FmZVNob3dzXG4gICAgXTtcbiAgICBjb25zb2xlLmxvZygnW0RFQlVHXSBDb21iaW5lZCBpdGVtcyBsZW5ndGg6JywgY29tYmluZWRJdGVtcy5sZW5ndGgpO1xuICAgIFxuICAgIGNvbnNvbGUubG9nKCctLS0tIERFQlVHIFRFU1QgU1VDQ0VTU0ZVTCAtLS0tJyk7XG4gIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgY29uc29sZS5lcnJvcignW0VSUk9SXSBEZWJ1ZyB0ZXN0IGZhaWxlZDonLCBlcnJvcik7XG4gIH1cbn1cblxuLy8gRXhwb3J0IGZvciB1c2UgaW4gb3RoZXIgbW9kdWxlcyBpZiBuZWVkZWRcbmV4cG9ydCB7IHRlc3RVbmNsYWltZWRTaG93c0RhdGFIYW5kbGluZyB9O1xuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7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

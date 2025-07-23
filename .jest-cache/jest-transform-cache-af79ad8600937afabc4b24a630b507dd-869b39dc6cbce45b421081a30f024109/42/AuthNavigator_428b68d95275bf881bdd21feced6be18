@@ -1,0 +1,127 @@
+ca5dbdcfd39c0d04badd7d4dc8b393a7
+function cov_1px2i6r3u1() {
+  var path = "/Users/kevin/card-show-finder/src/navigation/AuthNavigator.tsx";
+  var hash = "886049562e3c849dd5c2216314803e243ae01cc6";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/navigation/AuthNavigator.tsx",
+    statementMap: {
+      "0": {
+        start: {
+          line: 21,
+          column: 18
+        },
+        end: {
+          line: 21,
+          column: 66
+        }
+      },
+      "1": {
+        start: {
+          line: 27,
+          column: 32
+        },
+        end: {
+          line: 46,
+          column: 1
+        }
+      },
+      "2": {
+        start: {
+          line: 28,
+          column: 2
+        },
+        end: {
+          line: 45,
+          column: 4
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 27,
+            column: 32
+          },
+          end: {
+            line: 27,
+            column: 33
+          }
+        },
+        loc: {
+          start: {
+            line: 27,
+            column: 38
+          },
+          end: {
+            line: 46,
+            column: 1
+          }
+        },
+        line: 27
+      }
+    },
+    branchMap: {},
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "886049562e3c849dd5c2216314803e243ae01cc6"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_1px2i6r3u1 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_1px2i6r3u1();
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { LoginScreen, RegisterScreen, ForgotPasswordScreen, ResetPasswordScreen } from '../screens/Auth';
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+var AuthStack = (cov_1px2i6r3u1().s[0]++, createNativeStackNavigator());
+cov_1px2i6r3u1().s[1]++;
+var AuthNavigator = function AuthNavigator() {
+  cov_1px2i6r3u1().f[0]++;
+  cov_1px2i6r3u1().s[2]++;
+  return _jsxs(AuthStack.Navigator, {
+    initialRouteName: "Login",
+    screenOptions: {
+      headerShown: false,
+      contentStyle: {
+        backgroundColor: 'white'
+      },
+      animation: 'slide_from_right'
+    },
+    children: [_jsx(AuthStack.Screen, {
+      name: "Login",
+      component: LoginScreen
+    }), _jsx(AuthStack.Screen, {
+      name: "Register",
+      component: RegisterScreen
+    }), _jsx(AuthStack.Screen, {
+      name: "ForgotPassword",
+      component: ForgotPasswordScreen
+    }), _jsx(AuthStack.Screen, {
+      name: "ResetPassword",
+      component: ResetPasswordScreen
+    })]
+  });
+};
+export default AuthNavigator;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsImNyZWF0ZU5hdGl2ZVN0YWNrTmF2aWdhdG9yIiwiTG9naW5TY3JlZW4iLCJSZWdpc3RlclNjcmVlbiIsIkZvcmdvdFBhc3N3b3JkU2NyZWVuIiwiUmVzZXRQYXNzd29yZFNjcmVlbiIsImpzeCIsIl9qc3giLCJqc3hzIiwiX2pzeHMiLCJBdXRoU3RhY2siLCJjb3ZfMXB4Mmk2cjN1MSIsInMiLCJBdXRoTmF2aWdhdG9yIiwiZiIsIk5hdmlnYXRvciIsImluaXRpYWxSb3V0ZU5hbWUiLCJzY3JlZW5PcHRpb25zIiwiaGVhZGVyU2hvd24iLCJjb250ZW50U3R5bGUiLCJiYWNrZ3JvdW5kQ29sb3IiLCJhbmltYXRpb24iLCJjaGlsZHJlbiIsIlNjcmVlbiIsIm5hbWUiLCJjb21wb25lbnQiXSwic291cmNlcyI6WyJBdXRoTmF2aWdhdG9yLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgUmVhY3QgZnJvbSAncmVhY3QnO1xuaW1wb3J0IHsgY3JlYXRlTmF0aXZlU3RhY2tOYXZpZ2F0b3IgfSBmcm9tICdAcmVhY3QtbmF2aWdhdGlvbi9uYXRpdmUtc3RhY2snO1xuXG4vLyBJbXBvcnQgYXV0aCBzY3JlZW5zXG5pbXBvcnQge1xuICBMb2dpblNjcmVlbixcbiAgUmVnaXN0ZXJTY3JlZW4sXG4gIEZvcmdvdFBhc3N3b3JkU2NyZWVuLFxuICBSZXNldFBhc3N3b3JkU2NyZWVuLFxufSBmcm9tICcuLi9zY3JlZW5zL0F1dGgnO1xuXG4vLyBEZWZpbmUgbmF2aWdhdGlvbiB0eXBlcyBmb3IgYXV0aCBmbG93XG5leHBvcnQgdHlwZSBBdXRoU3RhY2tQYXJhbUxpc3QgPSB7XG4gIExvZ2luOiB1bmRlZmluZWQ7XG4gIFJlZ2lzdGVyOiB1bmRlZmluZWQ7XG4gIEZvcmdvdFBhc3N3b3JkOiB1bmRlZmluZWQ7XG4gIFJlc2V0UGFzc3dvcmQ6IHsgdG9rZW4/OiBzdHJpbmcgfSB8IHVuZGVmaW5lZDtcbn07XG5cbi8vIENyZWF0ZSBuYXZpZ2F0aW9uIHN0YWNrXG5jb25zdCBBdXRoU3RhY2sgPSBjcmVhdGVOYXRpdmVTdGFja05hdmlnYXRvcjxBdXRoU3RhY2tQYXJhbUxpc3Q+KCk7XG5cbi8qKlxuICogQXV0aE5hdmlnYXRvciAtIEhhbmRsZXMgbmF2aWdhdGlvbiBiZXR3ZWVuIGF1dGhlbnRpY2F0aW9uIHNjcmVlbnNcbiAqIEluY2x1ZGVzIExvZ2luLCBSZWdpc3RlciwgYW5kIEZvcmdvdCBQYXNzd29yZCBzY3JlZW5zXG4gKi9cbmNvbnN0IEF1dGhOYXZpZ2F0b3I6IFJlYWN0LkZDID0gKCkgPT4ge1xuICByZXR1cm4gKFxuICAgIDxBdXRoU3RhY2suTmF2aWdhdG9yXG4gICAgICBpbml0aWFsUm91dGVOYW1lPVwiTG9naW5cIlxuICAgICAgc2NyZWVuT3B0aW9ucz17e1xuICAgICAgICBoZWFkZXJTaG93bjogZmFsc2UsXG4gICAgICAgIGNvbnRlbnRTdHlsZTogeyBiYWNrZ3JvdW5kQ29sb3I6ICd3aGl0ZScgfSxcbiAgICAgICAgYW5pbWF0aW9uOiAnc2xpZGVfZnJvbV9yaWdodCcsXG4gICAgICB9fVxuICAgID5cbiAgICAgIDxBdXRoU3RhY2suU2NyZWVuIG5hbWU9XCJMb2dpblwiIGNvbXBvbmVudD17TG9naW5TY3JlZW59IC8+XG4gICAgICA8QXV0aFN0YWNrLlNjcmVlbiBuYW1lPVwiUmVnaXN0ZXJcIiBjb21wb25lbnQ9e1JlZ2lzdGVyU2NyZWVufSAvPlxuICAgICAgPEF1dGhTdGFjay5TY3JlZW4gbmFtZT1cIkZvcmdvdFBhc3N3b3JkXCIgY29tcG9uZW50PXtGb3Jnb3RQYXNzd29yZFNjcmVlbn0gLz5cbiAgICAgIDxBdXRoU3RhY2suU2NyZWVuXG4gICAgICAgIG5hbWU9XCJSZXNldFBhc3N3b3JkXCJcbiAgICAgICAgY29tcG9uZW50PXtSZXNldFBhc3N3b3JkU2NyZWVufVxuICAgICAgLz5cbiAgICA8L0F1dGhTdGFjay5OYXZpZ2F0b3I+XG4gICk7XG59O1xuXG5leHBvcnQgZGVmYXVsdCBBdXRoTmF2aWdhdG9yO1xuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUEsT0FBT0EsS0FBSyxNQUFNLE9BQU87QUFDekIsU0FBU0MsMEJBQTBCLFFBQVEsZ0NBQWdDO0FBRzNFLFNBQ0VDLFdBQVcsRUFDWEMsY0FBYyxFQUNkQyxvQkFBb0IsRUFDcEJDLG1CQUFtQixRQUNkLGlCQUFpQjtBQUFDLFNBQUFDLEdBQUEsSUFBQUMsSUFBQSxFQUFBQyxJQUFBLElBQUFDLEtBQUE7QUFXekIsSUFBTUMsU0FBUyxJQUFBQyxjQUFBLEdBQUFDLENBQUEsT0FBR1gsMEJBQTBCLENBQXFCLENBQUM7QUFBQ1UsY0FBQSxHQUFBQyxDQUFBO0FBTW5FLElBQU1DLGFBQXVCLEdBQUcsU0FBMUJBLGFBQXVCQSxDQUFBLEVBQVM7RUFBQUYsY0FBQSxHQUFBRyxDQUFBO0VBQUFILGNBQUEsR0FBQUMsQ0FBQTtFQUNwQyxPQUNFSCxLQUFBLENBQUNDLFNBQVMsQ0FBQ0ssU0FBUztJQUNsQkMsZ0JBQWdCLEVBQUMsT0FBTztJQUN4QkMsYUFBYSxFQUFFO01BQ2JDLFdBQVcsRUFBRSxLQUFLO01BQ2xCQyxZQUFZLEVBQUU7UUFBRUMsZUFBZSxFQUFFO01BQVEsQ0FBQztNQUMxQ0MsU0FBUyxFQUFFO0lBQ2IsQ0FBRTtJQUFBQyxRQUFBLEdBRUZmLElBQUEsQ0FBQ0csU0FBUyxDQUFDYSxNQUFNO01BQUNDLElBQUksRUFBQyxPQUFPO01BQUNDLFNBQVMsRUFBRXZCO0lBQVksQ0FBRSxDQUFDLEVBQ3pESyxJQUFBLENBQUNHLFNBQVMsQ0FBQ2EsTUFBTTtNQUFDQyxJQUFJLEVBQUMsVUFBVTtNQUFDQyxTQUFTLEVBQUV0QjtJQUFlLENBQUUsQ0FBQyxFQUMvREksSUFBQSxDQUFDRyxTQUFTLENBQUNhLE1BQU07TUFBQ0MsSUFBSSxFQUFDLGdCQUFnQjtNQUFDQyxTQUFTLEVBQUVyQjtJQUFxQixDQUFFLENBQUMsRUFDM0VHLElBQUEsQ0FBQ0csU0FBUyxDQUFDYSxNQUFNO01BQ2ZDLElBQUksRUFBQyxlQUFlO01BQ3BCQyxTQUFTLEVBQUVwQjtJQUFvQixDQUNoQyxDQUFDO0VBQUEsQ0FDaUIsQ0FBQztBQUUxQixDQUFDO0FBRUQsZUFBZVEsYUFBYSIsImlnbm9yZUxpc3QiOltdfQ==

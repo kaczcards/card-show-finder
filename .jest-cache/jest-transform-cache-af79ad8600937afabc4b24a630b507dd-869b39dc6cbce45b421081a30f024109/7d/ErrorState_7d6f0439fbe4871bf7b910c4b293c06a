@@ -1,0 +1,255 @@
+9e68d4a7e80f13cd98d32672eb86e98e
+function cov_17v7ryj4pv() {
+  var path = "/Users/kevin/card-show-finder/src/components/Chat/components/ErrorState.tsx";
+  var hash = "50b2a6eda2bee8392027adff4cc71323bb53ecd5";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/components/Chat/components/ErrorState.tsx",
+    statementMap: {
+      "0": {
+        start: {
+          line: 11,
+          column: 46
+        },
+        end: {
+          line: 32,
+          column: 1
+        }
+      },
+      "1": {
+        start: {
+          line: 16,
+          column: 2
+        },
+        end: {
+          line: 31,
+          column: 4
+        }
+      },
+      "2": {
+        start: {
+          line: 34,
+          column: 15
+        },
+        end: {
+          line: 65,
+          column: 2
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 11,
+            column: 46
+          },
+          end: {
+            line: 11,
+            column: 47
+          }
+        },
+        loc: {
+          start: {
+            line: 15,
+            column: 6
+          },
+          end: {
+            line: 32,
+            column: 1
+          }
+        },
+        line: 15
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 14,
+            column: 2
+          },
+          end: {
+            line: 14,
+            column: 32
+          }
+        },
+        type: "default-arg",
+        locations: [{
+          start: {
+            line: 14,
+            column: 10
+          },
+          end: {
+            line: 14,
+            column: 32
+          }
+        }],
+        line: 14
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 20,
+            column: 38
+          },
+          end: {
+            line: 20,
+            column: 71
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 20,
+            column: 38
+          },
+          end: {
+            line: 20,
+            column: 43
+          }
+        }, {
+          start: {
+            line: 20,
+            column: 47
+          },
+          end: {
+            line: 20,
+            column: 71
+          }
+        }],
+        line: 20
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 22,
+            column: 7
+          },
+          end: {
+            line: 29,
+            column: 7
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 22,
+            column: 7
+          },
+          end: {
+            line: 22,
+            column: 14
+          }
+        }, {
+          start: {
+            line: 23,
+            column: 8
+          },
+          end: {
+            line: 28,
+            column: 27
+          }
+        }],
+        line: 22
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {
+      "0": [0],
+      "1": [0, 0],
+      "2": [0, 0]
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "50b2a6eda2bee8392027adff4cc71323bb53ecd5"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_17v7ryj4pv = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_17v7ryj4pv();
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+cov_17v7ryj4pv().s[0]++;
+var ErrorState = function ErrorState(_ref) {
+  var error = _ref.error,
+    onRetry = _ref.onRetry,
+    _ref$title = _ref.title,
+    title = _ref$title === void 0 ? (cov_17v7ryj4pv().b[0][0]++, 'Something went wrong') : _ref$title;
+  cov_17v7ryj4pv().f[0]++;
+  cov_17v7ryj4pv().s[1]++;
+  return _jsxs(View, {
+    style: styles.centerContainer,
+    children: [_jsx(Ionicons, {
+      name: "alert-circle",
+      size: 48,
+      color: "#FF3B30"
+    }), _jsx(Text, {
+      style: styles.errorTitle,
+      children: title
+    }), _jsx(Text, {
+      style: styles.errorText,
+      children: (cov_17v7ryj4pv().b[1][0]++, error) || (cov_17v7ryj4pv().b[1][1]++, 'Failed to load content')
+    }), (cov_17v7ryj4pv().b[2][0]++, onRetry) && (cov_17v7ryj4pv().b[2][1]++, _jsx(TouchableOpacity, {
+      style: styles.retryButton,
+      onPress: onRetry,
+      children: _jsx(Text, {
+        style: styles.retryButtonText,
+        children: "Try Again"
+      })
+    }))]
+  });
+};
+var styles = (cov_17v7ryj4pv().s[2]++, StyleSheet.create({
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 12,
+    marginBottom: 4,
+    color: '#333333'
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    marginVertical: 12,
+    textAlign: 'center'
+  },
+  retryButton: {
+    backgroundColor: '#FF6A00',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 12
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 'bold'
+  }
+}));
+export default ErrorState;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIlZpZXciLCJUZXh0IiwiU3R5bGVTaGVldCIsIlRvdWNoYWJsZU9wYWNpdHkiLCJJb25pY29ucyIsImpzeCIsIl9qc3giLCJqc3hzIiwiX2pzeHMiLCJjb3ZfMTd2N3J5ajRwdiIsInMiLCJFcnJvclN0YXRlIiwiX3JlZiIsImVycm9yIiwib25SZXRyeSIsIl9yZWYkdGl0bGUiLCJ0aXRsZSIsImIiLCJmIiwic3R5bGUiLCJzdHlsZXMiLCJjZW50ZXJDb250YWluZXIiLCJjaGlsZHJlbiIsIm5hbWUiLCJzaXplIiwiY29sb3IiLCJlcnJvclRpdGxlIiwiZXJyb3JUZXh0IiwicmV0cnlCdXR0b24iLCJvblByZXNzIiwicmV0cnlCdXR0b25UZXh0IiwiY3JlYXRlIiwiZmxleCIsImp1c3RpZnlDb250ZW50IiwiYWxpZ25JdGVtcyIsInBhZGRpbmciLCJmb250U2l6ZSIsImZvbnRXZWlnaHQiLCJtYXJnaW5Ub3AiLCJtYXJnaW5Cb3R0b20iLCJtYXJnaW5WZXJ0aWNhbCIsInRleHRBbGlnbiIsImJhY2tncm91bmRDb2xvciIsInBhZGRpbmdWZXJ0aWNhbCIsInBhZGRpbmdIb3Jpem9udGFsIiwiYm9yZGVyUmFkaXVzIl0sInNvdXJjZXMiOlsiRXJyb3JTdGF0ZS50c3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IFJlYWN0IGZyb20gJ3JlYWN0JztcbmltcG9ydCB7IFZpZXcsIFRleHQsIFN0eWxlU2hlZXQsIFRvdWNoYWJsZU9wYWNpdHkgfSBmcm9tICdyZWFjdC1uYXRpdmUnO1xuaW1wb3J0IHsgSW9uaWNvbnMgfSBmcm9tICdAZXhwby92ZWN0b3ItaWNvbnMnO1xuXG5pbnRlcmZhY2UgRXJyb3JTdGF0ZVByb3BzIHtcbiAgZXJyb3I6IHN0cmluZyB8IG51bGw7XG4gIG9uUmV0cnk/OiAoKSA9PiB2b2lkO1xuICB0aXRsZT86IHN0cmluZztcbn1cblxuY29uc3QgRXJyb3JTdGF0ZTogUmVhY3QuRkM8RXJyb3JTdGF0ZVByb3BzPiA9ICh7XG4gIGVycm9yLFxuICBvblJldHJ5LFxuICB0aXRsZSA9ICdTb21ldGhpbmcgd2VudCB3cm9uZydcbn0pID0+IHtcbiAgcmV0dXJuIChcbiAgICA8VmlldyBzdHlsZT17c3R5bGVzLmNlbnRlckNvbnRhaW5lcn0+XG4gICAgICA8SW9uaWNvbnMgbmFtZT1cImFsZXJ0LWNpcmNsZVwiIHNpemU9ezQ4fSBjb2xvcj1cIiNGRjNCMzBcIiAvPlxuICAgICAgPFRleHQgc3R5bGU9e3N0eWxlcy5lcnJvclRpdGxlfT57dGl0bGV9PC9UZXh0PlxuICAgICAgPFRleHQgc3R5bGU9e3N0eWxlcy5lcnJvclRleHR9PntlcnJvciB8fCAnRmFpbGVkIHRvIGxvYWQgY29udGVudCd9PC9UZXh0PlxuICAgICAgXG4gICAgICB7b25SZXRyeSAmJiAoXG4gICAgICAgIDxUb3VjaGFibGVPcGFjaXR5XG4gICAgICAgICAgc3R5bGU9e3N0eWxlcy5yZXRyeUJ1dHRvbn1cbiAgICAgICAgICBvblByZXNzPXtvblJldHJ5fVxuICAgICAgICA+XG4gICAgICAgICAgPFRleHQgc3R5bGU9e3N0eWxlcy5yZXRyeUJ1dHRvblRleHR9PlRyeSBBZ2FpbjwvVGV4dD5cbiAgICAgICAgPC9Ub3VjaGFibGVPcGFjaXR5PlxuICAgICAgKX1cbiAgICA8L1ZpZXc+XG4gICk7XG59O1xuXG5jb25zdCBzdHlsZXMgPSBTdHlsZVNoZWV0LmNyZWF0ZSh7XG4gIGNlbnRlckNvbnRhaW5lcjoge1xuICAgIGZsZXg6IDEsXG4gICAganVzdGlmeUNvbnRlbnQ6ICdjZW50ZXInLFxuICAgIGFsaWduSXRlbXM6ICdjZW50ZXInLFxuICAgIHBhZGRpbmc6IDIwLFxuICB9LFxuICBlcnJvclRpdGxlOiB7XG4gICAgZm9udFNpemU6IDE4LFxuICAgIGZvbnRXZWlnaHQ6ICdib2xkJyxcbiAgICBtYXJnaW5Ub3A6IDEyLFxuICAgIG1hcmdpbkJvdHRvbTogNCxcbiAgICBjb2xvcjogJyMzMzMzMzMnLFxuICB9LFxuICBlcnJvclRleHQ6IHtcbiAgICBmb250U2l6ZTogMTYsXG4gICAgY29sb3I6ICcjRkYzQjMwJyxcbiAgICBtYXJnaW5WZXJ0aWNhbDogMTIsXG4gICAgdGV4dEFsaWduOiAnY2VudGVyJyxcbiAgfSxcbiAgcmV0cnlCdXR0b246IHtcbiAgICBiYWNrZ3JvdW5kQ29sb3I6ICcjRkY2QTAwJyxcbiAgICBwYWRkaW5nVmVydGljYWw6IDEwLFxuICAgIHBhZGRpbmdIb3Jpem9udGFsOiAyMCxcbiAgICBib3JkZXJSYWRpdXM6IDgsXG4gICAgbWFyZ2luVG9wOiAxMixcbiAgfSxcbiAgcmV0cnlCdXR0b25UZXh0OiB7XG4gICAgY29sb3I6ICd3aGl0ZScsXG4gICAgZm9udFdlaWdodDogJ2JvbGQnLFxuICB9LFxufSk7XG5cbmV4cG9ydCBkZWZhdWx0IEVycm9yU3RhdGU7XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLE9BQU9BLEtBQUssTUFBTSxPQUFPO0FBQ3pCLFNBQVNDLElBQUksRUFBRUMsSUFBSSxFQUFFQyxVQUFVLEVBQUVDLGdCQUFnQixRQUFRLGNBQWM7QUFDdkUsU0FBU0MsUUFBUSxRQUFRLG9CQUFvQjtBQUFDLFNBQUFDLEdBQUEsSUFBQUMsSUFBQSxFQUFBQyxJQUFBLElBQUFDLEtBQUE7QUFBQUMsY0FBQSxHQUFBQyxDQUFBO0FBUTlDLElBQU1DLFVBQXFDLEdBQUcsU0FBeENBLFVBQXFDQSxDQUFBQyxJQUFBLEVBSXJDO0VBQUEsSUFISkMsS0FBSyxHQUFBRCxJQUFBLENBQUxDLEtBQUs7SUFDTEMsT0FBTyxHQUFBRixJQUFBLENBQVBFLE9BQU87SUFBQUMsVUFBQSxHQUFBSCxJQUFBLENBQ1BJLEtBQUs7SUFBTEEsS0FBSyxHQUFBRCxVQUFBLGVBQUFOLGNBQUEsR0FBQVEsQ0FBQSxVQUFHLHNCQUFzQixJQUFBRixVQUFBO0VBQUFOLGNBQUEsR0FBQVMsQ0FBQTtFQUFBVCxjQUFBLEdBQUFDLENBQUE7RUFFOUIsT0FDRUYsS0FBQSxDQUFDUixJQUFJO0lBQUNtQixLQUFLLEVBQUVDLE1BQU0sQ0FBQ0MsZUFBZ0I7SUFBQUMsUUFBQSxHQUNsQ2hCLElBQUEsQ0FBQ0YsUUFBUTtNQUFDbUIsSUFBSSxFQUFDLGNBQWM7TUFBQ0MsSUFBSSxFQUFFLEVBQUc7TUFBQ0MsS0FBSyxFQUFDO0lBQVMsQ0FBRSxDQUFDLEVBQzFEbkIsSUFBQSxDQUFDTCxJQUFJO01BQUNrQixLQUFLLEVBQUVDLE1BQU0sQ0FBQ00sVUFBVztNQUFBSixRQUFBLEVBQUVOO0lBQUssQ0FBTyxDQUFDLEVBQzlDVixJQUFBLENBQUNMLElBQUk7TUFBQ2tCLEtBQUssRUFBRUMsTUFBTSxDQUFDTyxTQUFVO01BQUFMLFFBQUEsRUFBRSxDQUFBYixjQUFBLEdBQUFRLENBQUEsVUFBQUosS0FBSyxNQUFBSixjQUFBLEdBQUFRLENBQUEsVUFBSSx3QkFBd0I7SUFBQSxDQUFPLENBQUMsRUFFeEUsQ0FBQVIsY0FBQSxHQUFBUSxDQUFBLFVBQUFILE9BQU8sTUFBQUwsY0FBQSxHQUFBUSxDQUFBLFVBQ05YLElBQUEsQ0FBQ0gsZ0JBQWdCO01BQ2ZnQixLQUFLLEVBQUVDLE1BQU0sQ0FBQ1EsV0FBWTtNQUMxQkMsT0FBTyxFQUFFZixPQUFRO01BQUFRLFFBQUEsRUFFakJoQixJQUFBLENBQUNMLElBQUk7UUFBQ2tCLEtBQUssRUFBRUMsTUFBTSxDQUFDVSxlQUFnQjtRQUFBUixRQUFBLEVBQUM7TUFBUyxDQUFNO0lBQUMsQ0FDckMsQ0FBQyxDQUNwQjtFQUFBLENBQ0csQ0FBQztBQUVYLENBQUM7QUFFRCxJQUFNRixNQUFNLElBQUFYLGNBQUEsR0FBQUMsQ0FBQSxPQUFHUixVQUFVLENBQUM2QixNQUFNLENBQUM7RUFDL0JWLGVBQWUsRUFBRTtJQUNmVyxJQUFJLEVBQUUsQ0FBQztJQUNQQyxjQUFjLEVBQUUsUUFBUTtJQUN4QkMsVUFBVSxFQUFFLFFBQVE7SUFDcEJDLE9BQU8sRUFBRTtFQUNYLENBQUM7RUFDRFQsVUFBVSxFQUFFO0lBQ1ZVLFFBQVEsRUFBRSxFQUFFO0lBQ1pDLFVBQVUsRUFBRSxNQUFNO0lBQ2xCQyxTQUFTLEVBQUUsRUFBRTtJQUNiQyxZQUFZLEVBQUUsQ0FBQztJQUNmZCxLQUFLLEVBQUU7RUFDVCxDQUFDO0VBQ0RFLFNBQVMsRUFBRTtJQUNUUyxRQUFRLEVBQUUsRUFBRTtJQUNaWCxLQUFLLEVBQUUsU0FBUztJQUNoQmUsY0FBYyxFQUFFLEVBQUU7SUFDbEJDLFNBQVMsRUFBRTtFQUNiLENBQUM7RUFDRGIsV0FBVyxFQUFFO0lBQ1hjLGVBQWUsRUFBRSxTQUFTO0lBQzFCQyxlQUFlLEVBQUUsRUFBRTtJQUNuQkMsaUJBQWlCLEVBQUUsRUFBRTtJQUNyQkMsWUFBWSxFQUFFLENBQUM7SUFDZlAsU0FBUyxFQUFFO0VBQ2IsQ0FBQztFQUNEUixlQUFlLEVBQUU7SUFDZkwsS0FBSyxFQUFFLE9BQU87SUFDZFksVUFBVSxFQUFFO0VBQ2Q7QUFDRixDQUFDLENBQUM7QUFFRixlQUFlMUIsVUFBVSIsImlnbm9yZUxpc3QiOltdfQ==
