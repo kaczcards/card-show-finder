@@ -26,7 +26,6 @@ module.exports = {
   // Configure the transformer with minimal customizations
   transformer: {
     ...defaultConfig.transformer,
-    // Enable Hermes transform for production
-    hermesEnabled: true
+    // No custom Hermes setting here – platform-specific configs control engine choice
   }
 };

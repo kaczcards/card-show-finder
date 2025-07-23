@@ -72,7 +72,7 @@ const HomeScreen = ({
   // Default filter values
   const defaultFilters: ShowFilters = {
     // Increase default radius so users see more nearby shows
-    radius: 100,
+    radius: 50,
     startDate: new Date(),
     endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     maxEntryFee: undefined,
@@ -208,10 +208,34 @@ const HomeScreen = ({
     isRefreshing,
     error
   } = useInfiniteShows({
-    coordinates: coordinates || { latitude: 0, longitude: 0 },
+    // Use Carmel, IN as a sensible fallback so users see real shows
+    coordinates: coordinates || { latitude: 39.9784, longitude: -86.118 },
     ...filters,
     enabled: true // Always enable the query, even without coordinates
   });
+
+  /* ------------------------------------------------------------------
+   * Debugging – log coordinate / results changes
+   * ----------------------------------------------------------------*/
+  const effectiveCoords = coordinates || { latitude: 39.9784, longitude: -86.118 };
+
+  // Log when coordinates or filters change
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[HomeScreen] useInfiniteShows called with:', {
+      coordinates: effectiveCoords,
+      filters,
+    });
+  }, [effectiveCoords.latitude, effectiveCoords.longitude, filters]);
+
+  // Log whenever shows / totalCount updates
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[HomeScreen] shows/totalCount updated:', {
+      showsLength: shows.length,
+      totalCount,
+    });
+  }, [shows.length, totalCount]);
 
   /* ------------------------------------------------------------------
    * Emergency fetch – if main query says there are shows but we got none
