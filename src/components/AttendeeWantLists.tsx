@@ -179,7 +179,8 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
         
         <View style={styles.cardFooter}>
           <Text style={styles.updatedText}>
-            Updated: {formatDate(item.updatedAt, true)}
+            {/* Use proper DateTimeFormatOptions instead of boolean */}
+            Updated: {formatDate(item.updatedAt, { dateStyle: 'short' })}
           </Text>
         </View>
       </View>

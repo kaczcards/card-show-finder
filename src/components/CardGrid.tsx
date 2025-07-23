@@ -32,7 +32,8 @@ const CardGrid: React.FC<CardGridProps> = ({
   const itemWidth = (screenWidth - 48) / 2; // 16px padding on each side, 16px between items
 
   // Create a full array of 10 items (filled with cards or empty slots)
-  const gridItems = [...cards];
+  // Explicitly allow null placeholders so TypeScript understands the mixed array
+  const gridItems: (UserCard | null)[] = [...cards];
   const emptySlots = Math.max(0, 10 - gridItems.length);
   
   // Add empty slots to fill the grid up to 10 items
