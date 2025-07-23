@@ -94,9 +94,40 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
     enabled = true,
   } = params;
   
-  // Validate that coordinates are provided
-  if (!coordinates || typeof coordinates.latitude !== 'number' || typeof coordinates.longitude !== 'number') {
-    throw new Error('Valid coordinates are required for useInfiniteShows');
+  /**
+   * ------------------------------------------------------------------
+   * Coordinate handling
+   * ------------------------------------------------------------------
+   * HomeScreen (and potentially other callers) may pass `null` or an
+   * incomplete coordinates object while location permissions are being
+   * resolved.  Previously we threw an error, which prevented the hook
+   * from ever executing and left the UI in an empty-state loop.
+   *
+   * Instead, we now:
+   *   1. Detect whether the incoming coordinates are valid numbers
+   *   2. If invalid, fall back to a sensible default (Carmel, IN) which
+   *      is seeded with real shows in seed data
+   *   3. Log a debug message so developers can see when the fallback
+   *      path is taken
+   */
+  const isValidCoordinates =
+    coordinates &&
+    typeof coordinates.latitude === 'number' &&
+    typeof coordinates.longitude === 'number' &&
+    !Number.isNaN(coordinates.latitude) &&
+    !Number.isNaN(coordinates.longitude);
+
+  const effectiveCoordinates: Coordinates = isValidCoordinates
+    ? coordinates
+    : { latitude: 39.9784, longitude: -86.118 }; // Carmel, IN
+
+  if (!isValidCoordinates) {
+    // eslint-disable-next-line no-console
+    console.debug(
+      '[useInfiniteShows] Invalid or missing coordinates supplied. ' +
+        'Falling back to default coordinates (Carmel, IN).',
+      coordinates
+    );
   }
   
   // Set up the infinite query
@@ -111,7 +142,7 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
     refetch,
   } = useInfiniteQuery({
     queryKey: ['shows', 'infinite', { 
-      coordinates, 
+      coordinates: effectiveCoordinates, 
       radius, 
       startDate, 
       endDate, 
@@ -123,8 +154,8 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
     queryFn: async ({ pageParam = 1 }) => {
       // Prepare parameters for the paginated shows query
       const queryParams: PaginatedShowsParams = {
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
+        latitude: effectiveCoordinates.latitude,
+        longitude: effectiveCoordinates.longitude,
         radius,
         startDate,
         endDate,

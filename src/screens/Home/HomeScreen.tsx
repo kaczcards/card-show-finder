@@ -215,6 +215,29 @@ const HomeScreen = ({
   });
 
   /* ------------------------------------------------------------------
+   * Debugging – log coordinate / results changes
+   * ----------------------------------------------------------------*/
+  const effectiveCoords = coordinates || { latitude: 39.9784, longitude: -86.118 };
+
+  // Log when coordinates or filters change
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[HomeScreen] useInfiniteShows called with:', {
+      coordinates: effectiveCoords,
+      filters,
+    });
+  }, [effectiveCoords.latitude, effectiveCoords.longitude, filters]);
+
+  // Log whenever shows / totalCount updates
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[HomeScreen] shows/totalCount updated:', {
+      showsLength: shows.length,
+      totalCount,
+    });
+  }, [shows.length, totalCount]);
+
+  /* ------------------------------------------------------------------
    * Emergency fetch – if main query says there are shows but we got none
    * ----------------------------------------------------------------*/
   useEffect(() => {
