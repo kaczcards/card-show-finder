@@ -13,6 +13,35 @@ module.exports = [
       'dist/**',
       '.expo/**',
       'coverage/**',
+      // cache & generated
+      '.jest-cache/**',
+      '.jest/**',
+      // large script / tooling directories
+      'scripts/**',
+      'e2e/**',
+      // database & misc utility scripts
+      'apply-*.js',
+      'add-styles.js',
+      'check-show-coordinates.js',
+      'geocode-shows.js',
+      // migrations & duplicated project dir
+      'db_migrations/**',
+      'card-show-finder/**',
+      // debug-only files
+      'debug-*.ts',
+      'debug-*.js',
+      // additional one-off utility / maintenance scripts
+      'fix-*.js',
+      'find-*.js',
+      'run-*.js',
+      'quick-*.js',
+      'modify-*.js',
+      'direct-*.js',
+      'jest.setup.js',
+      '*_service.js',
+      '*_admin*.js',
+      // backup / disabled test files
+      '__tests__/**/*.bak',
       '**/*.config.js',
       '*.lock',
       '*.log',
