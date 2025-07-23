@@ -21,7 +21,12 @@ import { showSeriesService } from '../services/showSeriesService';
 interface AddEditShowModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (show: Partial<Show>) => void;
+  /**
+   * Save handler receives either a single show (create / edit)
+   * or an object that also contains a `recurringShows` array when
+   * the user opts to create multiple occurrences.
+   */
+  onSave: (show: Partial<Show> & { recurringShows?: Partial<Show>[] }) => void;
   show?: Show; // Provided if editing an existing show
   seriesId?: string; // Provided if adding to an existing series
 }
