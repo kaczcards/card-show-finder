@@ -72,7 +72,7 @@ const HomeScreen = ({
   // Default filter values
   const defaultFilters: ShowFilters = {
     // Increase default radius so users see more nearby shows
-    radius: 100,
+    radius: 50,
     startDate: new Date(),
     endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     maxEntryFee: undefined,
@@ -208,7 +208,8 @@ const HomeScreen = ({
     isRefreshing,
     error
   } = useInfiniteShows({
-    coordinates: coordinates || { latitude: 0, longitude: 0 },
+    // Use Carmel, IN as a sensible fallback so users see real shows
+    coordinates: coordinates || { latitude: 39.9784, longitude: -86.118 },
     ...filters,
     enabled: true // Always enable the query, even without coordinates
   });
