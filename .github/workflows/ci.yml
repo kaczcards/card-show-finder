@@ -1,0 +1,286 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 18
+  EXPO_CLI_VERSION: 6.3.10
+  SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+  EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+  EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.EXPO_PUBLIC_SENTRY_DSN }}
+
+jobs:
+  lint-and-typecheck:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript type check
+        run: npm run typecheck
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Jest tests
+        run: npm test -- --coverage
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-coverage
+          path: coverage/
+
+  database-tests:
+    name: Database Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install Supabase CLI
+        run: |
+          curl -s https://packages.supabase.com/gpg-key.asc | sudo apt-key add -
+          echo "deb https://packages.supabase.com/apt stable main" | sudo tee /etc/apt/sources.list.d/supabase.list
+          sudo apt-get update
+          sudo apt-get install -y supabase
+
+      - name: Setup database schema
+        run: |
+          psql -h localhost -U postgres -d postgres -f supabase/migrations/20250722000000_canonical_database_consolidation.sql
+        env:
+          PGPASSWORD: postgres
+
+      - name: Run database security tests
+        run: npm run test:db:security
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: macos-latest
+    needs: [unit-tests, database-tests]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Expo CLI
+        run: npm install -g expo-cli@${{ env.EXPO_CLI_VERSION }}
+
+      - name: Cache Detox build
+        uses: actions/cache@v3
+        with:
+          path: |
+            ios/build
+            ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-detox-build-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-detox-build-
+
+      - name: Install Detox dependencies
+        run: |
+          brew tap wix/brew
+          brew install applesimutils
+          npm install -g detox-cli
+
+      - name: Setup Hermes configuration
+        run: |
+          # Ensure Hermes is enabled on both platforms
+          echo "Configuring iOS for Hermes..."
+          jq '.["expo.jsEngine"]="hermes" | .["newArchEnabled"]="false"' ios/Podfile.properties.json > ios/Podfile.properties.json.tmp
+          mv ios/Podfile.properties.json.tmp ios/Podfile.properties.json
+          
+          echo "Configuring Android for Hermes..."
+          sed -i.bak 's/hermesEnabled=false/hermesEnabled=true/g' android/gradle.properties
+          sed -i.bak 's/newArchEnabled=true/newArchEnabled=false/g' android/gradle.properties
+
+      - name: Build iOS app for Detox
+        run: |
+          cd ios && pod install && cd ..
+          npm run test:e2e:build
+
+      - name: Run E2E tests (auth batch)
+        run: npm run test:e2e:auth
+
+      - name: Upload E2E test artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-artifacts
+          path: e2e/artifacts
+
+  build-verification:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: [unit-tests, database-tests]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Setup EAS credentials
+        run: |
+          echo "EXPO_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Verify iOS build configuration
+        run: |
+          npx expo prebuild --platform ios --clean
+          grep -q "\"expo.jsEngine\": \"hermes\"" ios/Podfile.properties.json
+          grep -q "\"newArchEnabled\": \"false\"" ios/Podfile.properties.json
+
+      - name: Verify Android build configuration
+        run: |
+          npx expo prebuild --platform android --clean
+          grep -q "hermesEnabled=true" android/gradle.properties
+          grep -q "newArchEnabled=false" android/gradle.properties
+
+      - name: Determine build profile
+        id: build-profile
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "PROFILE=production" >> $GITHUB_ENV
+          else
+            echo "PROFILE=staging" >> $GITHUB_ENV
+          fi
+
+      - name: Build preview (EAS)
+        run: |
+          eas build --platform all --profile ${{ env.PROFILE }} --non-interactive --no-wait
+          echo "✅ Build verification successful for ${{ env.PROFILE }} profile"
+
+  notify:
+    name: Notify on completion
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, database-tests, e2e-tests, build-verification]
+    if: always()
+    steps:
+      - name: Check build result
+        id: check
+        run: |
+          if [[ "${{ needs.lint-and-typecheck.result }}" == "success" && \
+                "${{ needs.unit-tests.result }}" == "success" && \
+                "${{ needs.database-tests.result }}" == "success" && \
+                "${{ needs.e2e-tests.result }}" == "success" && \
+                "${{ contains(needs.*.result, 'failure') }}" == "false" ]]; then
+            echo "STATUS=success" >> $GITHUB_ENV
+            echo "EMOJI=✅" >> $GITHUB_ENV
+          else
+            echo "STATUS=failure" >> $GITHUB_ENV
+            echo "EMOJI=❌" >> $GITHUB_ENV
+          fi
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ env.STATUS }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: "${{ env.EMOJI }} CI Pipeline ${{ env.STATUS }} for ${{ github.repository }} (${{ github.ref_name }})"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send email notification
+        if: env.STATUS == 'failure' && env.NOTIFICATION_EMAIL != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ CI Pipeline Failed: ${{ github.repository }} (${{ github.ref_name }})"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: CI Pipeline <noreply@kaczcards.com>
+          body: |
+            CI Pipeline failed for ${{ github.repository }}
+            
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            
+            See details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
