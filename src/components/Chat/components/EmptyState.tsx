@@ -5,7 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 interface EmptyStateProps {
   title?: string;
   subtitle?: string;
-  iconName?: string;
+  // Accept any valid Ionicons glyph as well as arbitrary strings for flexibility
+  iconName?: keyof typeof Ionicons.glyphMap | string;
   iconSize?: number;
   iconColor?: string;
 }
@@ -19,7 +20,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <View style={styles.centerContainer}>
-      <Ionicons name={iconName} size={iconSize} color={iconColor} />
+      {/* Type assertion keeps TS happy while still allowing dynamic strings */}
+      <Ionicons name={iconName as any} size={iconSize} color={iconColor} />
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptySubtitle}>
         {subtitle}

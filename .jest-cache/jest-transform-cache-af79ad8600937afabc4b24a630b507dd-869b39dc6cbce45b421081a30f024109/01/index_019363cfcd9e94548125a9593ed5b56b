@@ -1,0 +1,403 @@
+984a4f05a800b92145b2da9378c8b410
+"use strict";
+
+/* istanbul ignore next */
+function cov_oeqcpk678() {
+  var path = "/Users/kevin/card-show-finder/src/components/Chat/index.ts";
+  var hash = "9df39ee037ae9785b9d7f612bddeff2b32aa085b";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/components/Chat/index.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 22
+        },
+        end: {
+          line: 4,
+          column: 1
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 4
+        },
+        end: {
+          line: 3,
+          column: 62
+        }
+      },
+      "2": {
+        start: {
+          line: 5,
+          column: 0
+        },
+        end: {
+          line: 5,
+          column: 62
+        }
+      },
+      "3": {
+        start: {
+          line: 6,
+          column: 0
+        },
+        end: {
+          line: 6,
+          column: 44
+        }
+      },
+      "4": {
+        start: {
+          line: 7,
+          column: 17
+        },
+        end: {
+          line: 7,
+          column: 38
+        }
+      },
+      "5": {
+        start: {
+          line: 8,
+          column: 0
+        },
+        end: {
+          line: 8,
+          column: 130
+        }
+      },
+      "6": {
+        start: {
+          line: 8,
+          column: 81
+        },
+        end: {
+          line: 8,
+          column: 124
+        }
+      },
+      "7": {
+        start: {
+          line: 9,
+          column: 17
+        },
+        end: {
+          line: 9,
+          column: 38
+        }
+      },
+      "8": {
+        start: {
+          line: 10,
+          column: 0
+        },
+        end: {
+          line: 10,
+          column: 131
+        }
+      },
+      "9": {
+        start: {
+          line: 10,
+          column: 82
+        },
+        end: {
+          line: 10,
+          column: 125
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 2,
+            column: 56
+          },
+          end: {
+            line: 2,
+            column: 57
+          }
+        },
+        loc: {
+          start: {
+            line: 2,
+            column: 71
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        },
+        line: 2
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 8,
+            column: 67
+          },
+          end: {
+            line: 8,
+            column: 68
+          }
+        },
+        loc: {
+          start: {
+            line: 8,
+            column: 79
+          },
+          end: {
+            line: 8,
+            column: 126
+          }
+        },
+        line: 8
+      },
+      "2": {
+        name: "(anonymous_2)",
+        decl: {
+          start: {
+            line: 10,
+            column: 68
+          },
+          end: {
+            line: 10,
+            column: 69
+          }
+        },
+        loc: {
+          start: {
+            line: 10,
+            column: 80
+          },
+          end: {
+            line: 10,
+            column: 127
+          }
+        },
+        line: 10
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 2,
+            column: 22
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 2,
+            column: 23
+          },
+          end: {
+            line: 2,
+            column: 27
+          }
+        }, {
+          start: {
+            line: 2,
+            column: 31
+          },
+          end: {
+            line: 2,
+            column: 51
+          }
+        }, {
+          start: {
+            line: 2,
+            column: 56
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        }],
+        line: 2
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 3,
+            column: 11
+          },
+          end: {
+            line: 3,
+            column: 61
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 37
+          },
+          end: {
+            line: 3,
+            column: 40
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 43
+          },
+          end: {
+            line: 3,
+            column: 61
+          }
+        }],
+        line: 3
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 3,
+            column: 12
+          },
+          end: {
+            line: 3,
+            column: 33
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 12
+          },
+          end: {
+            line: 3,
+            column: 15
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 19
+          },
+          end: {
+            line: 3,
+            column: 33
+          }
+        }],
+        line: 3
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    },
+    b: {
+      "0": [0, 0, 0],
+      "1": [0, 0],
+      "2": [0, 0]
+    },
+    inputSourceMap: {
+      file: "/Users/kevin/card-show-finder/src/components/Chat/index.ts",
+      mappings: ";;;;;;AAAA,uCAAqC;AAA5B,oHAAA,OAAO,OAAA;AAChB,uCAAiD;AAAxC,qHAAA,OAAO,OAAY",
+      names: [],
+      sources: ["/Users/kevin/card-show-finder/src/components/Chat/index.ts"],
+      sourcesContent: ["export { default } from './ChatList';\nexport { default as ChatList } from './ChatList';\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "9df39ee037ae9785b9d7f612bddeff2b32aa085b"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_oeqcpk678 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_oeqcpk678();
+var __importDefault =
+/* istanbul ignore next */
+(cov_oeqcpk678().s[0]++,
+/* istanbul ignore next */
+(cov_oeqcpk678().b[0][0]++, this) &&
+/* istanbul ignore next */
+(cov_oeqcpk678().b[0][1]++, this.__importDefault) ||
+/* istanbul ignore next */
+(cov_oeqcpk678().b[0][2]++, function (mod) {
+  /* istanbul ignore next */
+  cov_oeqcpk678().f[0]++;
+  cov_oeqcpk678().s[1]++;
+  return /* istanbul ignore next */(cov_oeqcpk678().b[2][0]++, mod) &&
+  /* istanbul ignore next */
+  (cov_oeqcpk678().b[2][1]++, mod.__esModule) ?
+  /* istanbul ignore next */
+  (cov_oeqcpk678().b[1][0]++, mod) :
+  /* istanbul ignore next */
+  (cov_oeqcpk678().b[1][1]++, {
+    "default": mod
+  });
+}));
+/* istanbul ignore next */
+cov_oeqcpk678().s[2]++;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/* istanbul ignore next */
+cov_oeqcpk678().s[3]++;
+exports.ChatList = exports.default = void 0;
+var ChatList_1 =
+/* istanbul ignore next */
+(cov_oeqcpk678().s[4]++, require("./ChatList"));
+/* istanbul ignore next */
+cov_oeqcpk678().s[5]++;
+Object.defineProperty(exports, "default", {
+  enumerable: true,
+  get: function () {
+    /* istanbul ignore next */
+    cov_oeqcpk678().f[1]++;
+    cov_oeqcpk678().s[6]++;
+    return __importDefault(ChatList_1).default;
+  }
+});
+var ChatList_2 =
+/* istanbul ignore next */
+(cov_oeqcpk678().s[7]++, require("./ChatList"));
+/* istanbul ignore next */
+cov_oeqcpk678().s[8]++;
+Object.defineProperty(exports, "ChatList", {
+  enumerable: true,
+  get: function () {
+    /* istanbul ignore next */
+    cov_oeqcpk678().f[2]++;
+    cov_oeqcpk678().s[9]++;
+    return __importDefault(ChatList_2).default;
+  }
+});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJDaGF0TGlzdF8xIiwiY292X29lcWNwazY3OCIsInMiLCJyZXF1aXJlIiwiT2JqZWN0IiwiZGVmaW5lUHJvcGVydHkiLCJleHBvcnRzIiwiZW51bWVyYWJsZSIsImdldCIsImYiLCJfX2ltcG9ydERlZmF1bHQiLCJkZWZhdWx0IiwiQ2hhdExpc3RfMiJdLCJzb3VyY2VzIjpbIi9Vc2Vycy9rZXZpbi9jYXJkLXNob3ctZmluZGVyL3NyYy9jb21wb25lbnRzL0NoYXQvaW5kZXgudHMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IHsgZGVmYXVsdCB9IGZyb20gJy4vQ2hhdExpc3QnO1xuZXhwb3J0IHsgZGVmYXVsdCBhcyBDaGF0TGlzdCB9IGZyb20gJy4vQ2hhdExpc3QnO1xuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUEsSUFBQUEsVUFBQTtBQUFBO0FBQUEsQ0FBQUMsYUFBQSxHQUFBQyxDQUFBLE9BQUFDLE9BQUE7QUFBcUM7QUFBQUYsYUFBQSxHQUFBQyxDQUFBO0FBQTVCRSxNQUFBLENBQUFDLGNBQUEsQ0FBQUMsT0FBQTtFQUFBQyxVQUFBO0VBQUFDLEdBQUEsV0FBQUEsQ0FBQTtJQUFBO0lBQUFQLGFBQUEsR0FBQVEsQ0FBQTtJQUFBUixhQUFBLEdBQUFDLENBQUE7SUFBQSxPQUFBUSxlQUFBLENBQUFWLFVBQUEsRUFBQVcsT0FBTztFQUFBO0FBQUE7QUFDaEIsSUFBQUMsVUFBQTtBQUFBO0FBQUEsQ0FBQVgsYUFBQSxHQUFBQyxDQUFBLE9BQUFDLE9BQUE7QUFBaUQ7QUFBQUYsYUFBQSxHQUFBQyxDQUFBO0FBQXhDRSxNQUFBLENBQUFDLGNBQUEsQ0FBQUMsT0FBQTtFQUFBQyxVQUFBO0VBQUFDLEdBQUEsV0FBQUEsQ0FBQTtJQUFBO0lBQUFQLGFBQUEsR0FBQVEsQ0FBQTtJQUFBUixhQUFBLEdBQUFDLENBQUE7SUFBQSxPQUFBUSxlQUFBLENBQUFFLFVBQUEsRUFBQUQsT0FBTztFQUFBO0FBQUEiLCJpZ25vcmVMaXN0IjpbXX0=

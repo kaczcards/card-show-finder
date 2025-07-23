@@ -1,0 +1,386 @@
+ad00a98e6091f5865b1001aa48828c4f
+"use strict";
+
+/* istanbul ignore next */
+function cov_1uerc8qkyc() {
+  var path = "/Users/kevin/card-show-finder/src/screens/Auth/index.ts";
+  var hash = "41ffb3e4f98c2c5999210723658ac5ee0627b3f1";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/screens/Auth/index.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 22
+        },
+        end: {
+          line: 4,
+          column: 1
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 4
+        },
+        end: {
+          line: 3,
+          column: 62
+        }
+      },
+      "2": {
+        start: {
+          line: 5,
+          column: 0
+        },
+        end: {
+          line: 5,
+          column: 62
+        }
+      },
+      "3": {
+        start: {
+          line: 6,
+          column: 0
+        },
+        end: {
+          line: 6,
+          column: 115
+        }
+      },
+      "4": {
+        start: {
+          line: 7,
+          column: 22
+        },
+        end: {
+          line: 7,
+          column: 63
+        }
+      },
+      "5": {
+        start: {
+          line: 8,
+          column: 0
+        },
+        end: {
+          line: 8,
+          column: 44
+        }
+      },
+      "6": {
+        start: {
+          line: 9,
+          column: 25
+        },
+        end: {
+          line: 9,
+          column: 69
+        }
+      },
+      "7": {
+        start: {
+          line: 10,
+          column: 0
+        },
+        end: {
+          line: 10,
+          column: 50
+        }
+      },
+      "8": {
+        start: {
+          line: 11,
+          column: 31
+        },
+        end: {
+          line: 11,
+          column: 81
+        }
+      },
+      "9": {
+        start: {
+          line: 12,
+          column: 0
+        },
+        end: {
+          line: 12,
+          column: 62
+        }
+      },
+      "10": {
+        start: {
+          line: 13,
+          column: 30
+        },
+        end: {
+          line: 13,
+          column: 79
+        }
+      },
+      "11": {
+        start: {
+          line: 14,
+          column: 0
+        },
+        end: {
+          line: 14,
+          column: 60
+        }
+      },
+      "12": {
+        start: {
+          line: 16,
+          column: 0
+        },
+        end: {
+          line: 16,
+          column: 40
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 2,
+            column: 56
+          },
+          end: {
+            line: 2,
+            column: 57
+          }
+        },
+        loc: {
+          start: {
+            line: 2,
+            column: 71
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        },
+        line: 2
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 2,
+            column: 22
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 2,
+            column: 23
+          },
+          end: {
+            line: 2,
+            column: 27
+          }
+        }, {
+          start: {
+            line: 2,
+            column: 31
+          },
+          end: {
+            line: 2,
+            column: 51
+          }
+        }, {
+          start: {
+            line: 2,
+            column: 56
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        }],
+        line: 2
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 3,
+            column: 11
+          },
+          end: {
+            line: 3,
+            column: 61
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 37
+          },
+          end: {
+            line: 3,
+            column: 40
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 43
+          },
+          end: {
+            line: 3,
+            column: 61
+          }
+        }],
+        line: 3
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 3,
+            column: 12
+          },
+          end: {
+            line: 3,
+            column: 33
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 12
+          },
+          end: {
+            line: 3,
+            column: 15
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 19
+          },
+          end: {
+            line: 3,
+            column: 33
+          }
+        }],
+        line: 3
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {
+      "0": [0, 0, 0],
+      "1": [0, 0],
+      "2": [0, 0]
+    },
+    inputSourceMap: {
+      file: "/Users/kevin/card-show-finder/src/screens/Auth/index.ts",
+      mappings: ";;;;;;AAAA,gEAAwC;AAMtC,sBANK,qBAAW,CAML;AALb,sEAA8C;AAM5C,yBANK,wBAAc,CAML;AALhB,kFAA0D;AAMxD,+BANK,8BAAoB,CAML;AALtB,gFAAwD;AAMtD,8BANK,6BAAmB,CAML;AAGrB,gEAAgE;AAChE,kBAAe,qBAAW,CAAC",
+      names: [],
+      sources: ["/Users/kevin/card-show-finder/src/screens/Auth/index.ts"],
+      sourcesContent: ["import LoginScreen from './LoginScreen';\nimport RegisterScreen from './RegisterScreen';\nimport ForgotPasswordScreen from './ForgotPasswordScreen';\nimport ResetPasswordScreen from './ResetPasswordScreen';\n\nexport {\n  LoginScreen,\n  RegisterScreen,\n  ForgotPasswordScreen,\n  ResetPasswordScreen\n};\n\n// Default export for convenience when importing the main screen\nexport default LoginScreen;\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "41ffb3e4f98c2c5999210723658ac5ee0627b3f1"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_1uerc8qkyc = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_1uerc8qkyc();
+var __importDefault =
+/* istanbul ignore next */
+(cov_1uerc8qkyc().s[0]++,
+/* istanbul ignore next */
+(cov_1uerc8qkyc().b[0][0]++, this) &&
+/* istanbul ignore next */
+(cov_1uerc8qkyc().b[0][1]++, this.__importDefault) ||
+/* istanbul ignore next */
+(cov_1uerc8qkyc().b[0][2]++, function (mod) {
+  /* istanbul ignore next */
+  cov_1uerc8qkyc().f[0]++;
+  cov_1uerc8qkyc().s[1]++;
+  return /* istanbul ignore next */(cov_1uerc8qkyc().b[2][0]++, mod) &&
+  /* istanbul ignore next */
+  (cov_1uerc8qkyc().b[2][1]++, mod.__esModule) ?
+  /* istanbul ignore next */
+  (cov_1uerc8qkyc().b[1][0]++, mod) :
+  /* istanbul ignore next */
+  (cov_1uerc8qkyc().b[1][1]++, {
+    "default": mod
+  });
+}));
+/* istanbul ignore next */
+cov_1uerc8qkyc().s[2]++;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/* istanbul ignore next */
+cov_1uerc8qkyc().s[3]++;
+exports.ResetPasswordScreen = exports.ForgotPasswordScreen = exports.RegisterScreen = exports.LoginScreen = void 0;
+const LoginScreen_1 =
+/* istanbul ignore next */
+(cov_1uerc8qkyc().s[4]++, __importDefault(require("./LoginScreen")));
+/* istanbul ignore next */
+cov_1uerc8qkyc().s[5]++;
+exports.LoginScreen = LoginScreen_1.default;
+const RegisterScreen_1 =
+/* istanbul ignore next */
+(cov_1uerc8qkyc().s[6]++, __importDefault(require("./RegisterScreen")));
+/* istanbul ignore next */
+cov_1uerc8qkyc().s[7]++;
+exports.RegisterScreen = RegisterScreen_1.default;
+const ForgotPasswordScreen_1 =
+/* istanbul ignore next */
+(cov_1uerc8qkyc().s[8]++, __importDefault(require("./ForgotPasswordScreen")));
+/* istanbul ignore next */
+cov_1uerc8qkyc().s[9]++;
+exports.ForgotPasswordScreen = ForgotPasswordScreen_1.default;
+const ResetPasswordScreen_1 =
+/* istanbul ignore next */
+(cov_1uerc8qkyc().s[10]++, __importDefault(require("./ResetPasswordScreen")));
+/* istanbul ignore next */
+cov_1uerc8qkyc().s[11]++;
+exports.ResetPasswordScreen = ResetPasswordScreen_1.default;
+// Default export for convenience when importing the main screen
+/* istanbul ignore next */
+cov_1uerc8qkyc().s[12]++;
+exports.default = LoginScreen_1.default;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjb3ZfMXVlcmM4cWt5YyIsImFjdHVhbENvdmVyYWdlIiwiTG9naW5TY3JlZW5fMSIsInMiLCJfX2ltcG9ydERlZmF1bHQiLCJyZXF1aXJlIiwiZXhwb3J0cyIsIkxvZ2luU2NyZWVuIiwiZGVmYXVsdCIsIlJlZ2lzdGVyU2NyZWVuXzEiLCJSZWdpc3RlclNjcmVlbiIsIkZvcmdvdFBhc3N3b3JkU2NyZWVuXzEiLCJGb3Jnb3RQYXNzd29yZFNjcmVlbiIsIlJlc2V0UGFzc3dvcmRTY3JlZW5fMSIsIlJlc2V0UGFzc3dvcmRTY3JlZW4iXSwic291cmNlcyI6WyIvVXNlcnMva2V2aW4vY2FyZC1zaG93LWZpbmRlci9zcmMvc2NyZWVucy9BdXRoL2luZGV4LnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBMb2dpblNjcmVlbiBmcm9tICcuL0xvZ2luU2NyZWVuJztcbmltcG9ydCBSZWdpc3RlclNjcmVlbiBmcm9tICcuL1JlZ2lzdGVyU2NyZWVuJztcbmltcG9ydCBGb3Jnb3RQYXNzd29yZFNjcmVlbiBmcm9tICcuL0ZvcmdvdFBhc3N3b3JkU2NyZWVuJztcbmltcG9ydCBSZXNldFBhc3N3b3JkU2NyZWVuIGZyb20gJy4vUmVzZXRQYXNzd29yZFNjcmVlbic7XG5cbmV4cG9ydCB7XG4gIExvZ2luU2NyZWVuLFxuICBSZWdpc3RlclNjcmVlbixcbiAgRm9yZ290UGFzc3dvcmRTY3JlZW4sXG4gIFJlc2V0UGFzc3dvcmRTY3JlZW5cbn07XG5cbi8vIERlZmF1bHQgZXhwb3J0IGZvciBjb252ZW5pZW5jZSB3aGVuIGltcG9ydGluZyB0aGUgbWFpbiBzY3JlZW5cbmV4cG9ydCBkZWZhdWx0IExvZ2luU2NyZWVuO1xuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7SUFhQTtJQUFBQSxjQUFBLFlBQUFBLENBQUE7TUFBQSxPQUFBQyxjQUFBO0lBQUE7RUFBQTtFQUFBLE9BQUFBLGNBQUE7QUFBQTtBQUFBRCxjQUFBOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBYkEsTUFBQUUsYUFBQTtBQUFBO0FBQUEsQ0FBQUYsY0FBQSxHQUFBRyxDQUFBLE9BQUFDLGVBQUEsQ0FBQUMsT0FBQTtBQUF3QztBQUFBTCxjQUFBLEdBQUFHLENBQUE7QUFNdENHLE9BQUEsQ0FBQUMsV0FBQSxHQU5LTCxhQUFBLENBQUFNLE9BQVc7QUFDbEIsTUFBQUMsZ0JBQUE7QUFBQTtBQUFBLENBQUFULGNBQUEsR0FBQUcsQ0FBQSxPQUFBQyxlQUFBLENBQUFDLE9BQUE7QUFBOEM7QUFBQUwsY0FBQSxHQUFBRyxDQUFBO0FBTTVDRyxPQUFBLENBQUFJLGNBQUEsR0FOS0QsZ0JBQUEsQ0FBQUQsT0FBYztBQUNyQixNQUFBRyxzQkFBQTtBQUFBO0FBQUEsQ0FBQVgsY0FBQSxHQUFBRyxDQUFBLE9BQUFDLGVBQUEsQ0FBQUMsT0FBQTtBQUEwRDtBQUFBTCxjQUFBLEdBQUFHLENBQUE7QUFNeERHLE9BQUEsQ0FBQU0sb0JBQUEsR0FOS0Qsc0JBQUEsQ0FBQUgsT0FBb0I7QUFDM0IsTUFBQUsscUJBQUE7QUFBQTtBQUFBLENBQUFiLGNBQUEsR0FBQUcsQ0FBQSxRQUFBQyxlQUFBLENBQUFDLE9BQUE7QUFBd0Q7QUFBQUwsY0FBQSxHQUFBRyxDQUFBO0FBTXRERyxPQUFBLENBQUFRLG1CQUFBLEdBTktELHFCQUFBLENBQUFMLE9BQW1CO0FBUzFCO0FBQUE7QUFBQVIsY0FBQSxHQUFBRyxDQUFBO0FBQ0FHLE9BQUEsQ0FBQUUsT0FBQSxHQUFlTixhQUFBLENBQUFNLE9BQVciLCJpZ25vcmVMaXN0IjpbXX0=

@@ -13,7 +13,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import * as messagingService from '../../services/messagingService';
 import * as userRoleService from '../../services/userRoleService';
 import { Message } from '../../services/messagingService';

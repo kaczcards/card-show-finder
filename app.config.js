@@ -54,7 +54,14 @@ module.exports = {
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light",
-  newArchEnabled: true,
+  /**
+   * ------------------------------------------------------------------
+   * Disable React-Native New Architecture for now.
+   * While the new architecture (Fabric + TurboModules) is promising,
+   * a number of 3rd-party libraries we rely on are not yet stable.
+   * ------------------------------------------------------------------
+   */
+  newArchEnabled: false,
   scheme: "cardshowfinder",
   splash: {
     image: "./assets/splash.jpg",
@@ -63,7 +70,14 @@ module.exports = {
   },
   ios: {
     supportsTablet: true,
-    jsEngine: "jsc",
+    /**
+     * ------------------------------------------------------------------
+     * Use Hermes on iOS for smaller bundle size & better runtime
+     * performance.  Must be set here so `expo prebuild` generates
+     * the correct Podfile.properties.json every time.
+     * ------------------------------------------------------------------
+     */
+    jsEngine: "hermes",
     infoPlist: {
       NSLocationWhenInUseUsageDescription: "Allow Card Show Finder to access your location so we can display nearby card shows."
     },
@@ -86,7 +100,12 @@ module.exports = {
     },
     edgeToEdgeEnabled: true,
     permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
-    jsEngine: "jsc",
+    /**
+     * Match iOS – run Hermes on Android as well.
+     * Keeping this in app config prevents configuration drift
+     * when platform folders are regenerated.
+     */
+    jsEngine: "hermes",
 
     /* ------------------------------------------------------------------
      * Deep-link / Intent filters

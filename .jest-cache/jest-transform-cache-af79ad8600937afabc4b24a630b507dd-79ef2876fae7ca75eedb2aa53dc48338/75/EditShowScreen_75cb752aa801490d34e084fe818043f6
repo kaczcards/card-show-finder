@@ -1,0 +1,218 @@
+bc84761bcc8fe862160ab65801c907dc
+function cov_2cakvjtcoy() {
+  var path = "/Users/kevin/card-show-finder/src/screens/EditShow/EditShowScreen.tsx";
+  var hash = "40a6e892e05aa66753d7587b70231aa3f97d9fc6";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/screens/EditShow/EditShowScreen.tsx",
+    statementMap: {
+      "0": {
+        start: {
+          line: 10,
+          column: 54
+        },
+        end: {
+          line: 31,
+          column: 1
+        }
+      },
+      "1": {
+        start: {
+          line: 11,
+          column: 21
+        },
+        end: {
+          line: 11,
+          column: 33
+        }
+      },
+      "2": {
+        start: {
+          line: 14,
+          column: 2
+        },
+        end: {
+          line: 18,
+          column: 19
+        }
+      },
+      "3": {
+        start: {
+          line: 15,
+          column: 4
+        },
+        end: {
+          line: 17,
+          column: 7
+        }
+      },
+      "4": {
+        start: {
+          line: 20,
+          column: 2
+        },
+        end: {
+          line: 30,
+          column: 4
+        }
+      },
+      "5": {
+        start: {
+          line: 33,
+          column: 15
+        },
+        end: {
+          line: 60,
+          column: 2
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 10,
+            column: 54
+          },
+          end: {
+            line: 10,
+            column: 55
+          }
+        },
+        loc: {
+          start: {
+            line: 10,
+            column: 81
+          },
+          end: {
+            line: 31,
+            column: 1
+          }
+        },
+        line: 10
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 14,
+            column: 18
+          },
+          end: {
+            line: 14,
+            column: 19
+          }
+        },
+        loc: {
+          start: {
+            line: 14,
+            column: 24
+          },
+          end: {
+            line: 18,
+            column: 3
+          }
+        },
+        line: 14
+      }
+    },
+    branchMap: {},
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0
+    },
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "40a6e892e05aa66753d7587b70231aa3f97d9fc6"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_2cakvjtcoy = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_2cakvjtcoy();
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+cov_2cakvjtcoy().s[0]++;
+var EditShowScreen = function EditShowScreen(_ref) {
+  var route = _ref.route,
+    navigation = _ref.navigation;
+  cov_2cakvjtcoy().f[0]++;
+  var _ref2 = (cov_2cakvjtcoy().s[1]++, route.params),
+    showId = _ref2.showId;
+  cov_2cakvjtcoy().s[2]++;
+  React.useEffect(function () {
+    cov_2cakvjtcoy().f[1]++;
+    cov_2cakvjtcoy().s[3]++;
+    navigation.setOptions({
+      title: 'Edit Show'
+    });
+  }, [navigation]);
+  cov_2cakvjtcoy().s[4]++;
+  return _jsxs(View, {
+    style: styles.container,
+    children: [_jsx(Ionicons, {
+      name: "construct",
+      size: 48,
+      color: "#FF6A00"
+    }), _jsx(Text, {
+      style: styles.title,
+      children: "Show Editing Coming Soon"
+    }), _jsx(Text, {
+      style: styles.description,
+      children: "This feature is currently under development. Soon you'll be able to edit show details, update information, and manage all aspects of your show."
+    }), _jsxs(Text, {
+      style: styles.showId,
+      children: ["Show ID: ", showId]
+    })]
+  });
+};
+var styles = (cov_2cakvjtcoy().s[5]++, StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff'
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+    color: '#333'
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 20,
+    lineHeight: 22
+  },
+  showId: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 20
+  }
+}));
+export default EditShowScreen;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIlZpZXciLCJUZXh0IiwiU3R5bGVTaGVldCIsIklvbmljb25zIiwianN4IiwiX2pzeCIsImpzeHMiLCJfanN4cyIsImNvdl8yY2Frdmp0Y295IiwicyIsIkVkaXRTaG93U2NyZWVuIiwiX3JlZiIsInJvdXRlIiwibmF2aWdhdGlvbiIsImYiLCJfcmVmMiIsInBhcmFtcyIsInNob3dJZCIsInVzZUVmZmVjdCIsInNldE9wdGlvbnMiLCJ0aXRsZSIsInN0eWxlIiwic3R5bGVzIiwiY29udGFpbmVyIiwiY2hpbGRyZW4iLCJuYW1lIiwic2l6ZSIsImNvbG9yIiwiZGVzY3JpcHRpb24iLCJjcmVhdGUiLCJmbGV4IiwianVzdGlmeUNvbnRlbnQiLCJhbGlnbkl0ZW1zIiwicGFkZGluZyIsImJhY2tncm91bmRDb2xvciIsImZvbnRTaXplIiwiZm9udFdlaWdodCIsIm1hcmdpblRvcCIsIm1hcmdpbkJvdHRvbSIsInRleHRBbGlnbiIsImxpbmVIZWlnaHQiXSwic291cmNlcyI6WyJFZGl0U2hvd1NjcmVlbi50c3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IFJlYWN0IGZyb20gJ3JlYWN0JztcbmltcG9ydCB7IFZpZXcsIFRleHQsIFN0eWxlU2hlZXQsIEFjdGl2aXR5SW5kaWNhdG9yIH0gZnJvbSAncmVhY3QtbmF0aXZlJztcbmltcG9ydCB7IElvbmljb25zIH0gZnJvbSAnQGV4cG8vdmVjdG9yLWljb25zJztcblxuaW50ZXJmYWNlIEVkaXRTaG93U2NyZWVuUHJvcHMge1xuICByb3V0ZTogYW55O1xuICBuYXZpZ2F0aW9uOiBhbnk7XG59XG5cbmNvbnN0IEVkaXRTaG93U2NyZWVuOiBSZWFjdC5GQzxFZGl0U2hvd1NjcmVlblByb3BzPiA9ICh7IHJvdXRlLCBuYXZpZ2F0aW9uIH0pID0+IHtcbiAgY29uc3QgeyBzaG93SWQgfSA9IHJvdXRlLnBhcmFtcztcblxuICAvLyBBZGQgdGl0bGUgdG8gbmF2aWdhdGlvblxuICBSZWFjdC51c2VFZmZlY3QoKCkgPT4ge1xuICAgIG5hdmlnYXRpb24uc2V0T3B0aW9ucyh7XG4gICAgICB0aXRsZTogJ0VkaXQgU2hvdycsXG4gICAgfSk7XG4gIH0sIFtuYXZpZ2F0aW9uXSk7XG5cbiAgcmV0dXJuIChcbiAgICA8VmlldyBzdHlsZT17c3R5bGVzLmNvbnRhaW5lcn0+XG4gICAgICA8SW9uaWNvbnMgbmFtZT1cImNvbnN0cnVjdFwiIHNpemU9ezQ4fSBjb2xvcj1cIiNGRjZBMDBcIiAvPlxuICAgICAgPFRleHQgc3R5bGU9e3N0eWxlcy50aXRsZX0+U2hvdyBFZGl0aW5nIENvbWluZyBTb29uPC9UZXh0PlxuICAgICAgPFRleHQgc3R5bGU9e3N0eWxlcy5kZXNjcmlwdGlvbn0+XG4gICAgICAgIFRoaXMgZmVhdHVyZSBpcyBjdXJyZW50bHkgdW5kZXIgZGV2ZWxvcG1lbnQuIFNvb24geW91J2xsIGJlIGFibGUgdG8gZWRpdCBzaG93IGRldGFpbHMsXG4gICAgICAgIHVwZGF0ZSBpbmZvcm1hdGlvbiwgYW5kIG1hbmFnZSBhbGwgYXNwZWN0cyBvZiB5b3VyIHNob3cuXG4gICAgICA8L1RleHQ+XG4gICAgICA8VGV4dCBzdHlsZT17c3R5bGVzLnNob3dJZH0+U2hvdyBJRDoge3Nob3dJZH08L1RleHQ+XG4gICAgPC9WaWV3PlxuICApO1xufTtcblxuY29uc3Qgc3R5bGVzID0gU3R5bGVTaGVldC5jcmVhdGUoe1xuICBjb250YWluZXI6IHtcbiAgICBmbGV4OiAxLFxuICAgIGp1c3RpZnlDb250ZW50OiAnY2VudGVyJyxcbiAgICBhbGlnbkl0ZW1zOiAnY2VudGVyJyxcbiAgICBwYWRkaW5nOiAyMCxcbiAgICBiYWNrZ3JvdW5kQ29sb3I6ICcjZmZmJyxcbiAgfSxcbiAgdGl0bGU6IHtcbiAgICBmb250U2l6ZTogMjIsXG4gICAgZm9udFdlaWdodDogJ2JvbGQnLFxuICAgIG1hcmdpblRvcDogMTYsXG4gICAgbWFyZ2luQm90dG9tOiA4LFxuICAgIGNvbG9yOiAnIzMzMycsXG4gIH0sXG4gIGRlc2NyaXB0aW9uOiB7XG4gICAgZm9udFNpemU6IDE2LFxuICAgIHRleHRBbGlnbjogJ2NlbnRlcicsXG4gICAgY29sb3I6ICcjNjY2JyxcbiAgICBtYXJnaW5Cb3R0b206IDIwLFxuICAgIGxpbmVIZWlnaHQ6IDIyLFxuICB9LFxuICBzaG93SWQ6IHtcbiAgICBmb250U2l6ZTogMTQsXG4gICAgY29sb3I6ICcjOTk5JyxcbiAgICBtYXJnaW5Ub3A6IDIwLFxuICB9LFxufSk7XG5cbmV4cG9ydCBkZWZhdWx0IEVkaXRTaG93U2NyZWVuO1xuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLE9BQU9BLEtBQUssTUFBTSxPQUFPO0FBQ3pCLFNBQVNDLElBQUksRUFBRUMsSUFBSSxFQUFFQyxVQUFVLFFBQTJCLGNBQWM7QUFDeEUsU0FBU0MsUUFBUSxRQUFRLG9CQUFvQjtBQUFDLFNBQUFDLEdBQUEsSUFBQUMsSUFBQSxFQUFBQyxJQUFBLElBQUFDLEtBQUE7QUFBQUMsY0FBQSxHQUFBQyxDQUFBO0FBTzlDLElBQU1DLGNBQTZDLEdBQUcsU0FBaERBLGNBQTZDQSxDQUFBQyxJQUFBLEVBQThCO0VBQUEsSUFBeEJDLEtBQUssR0FBQUQsSUFBQSxDQUFMQyxLQUFLO0lBQUVDLFVBQVUsR0FBQUYsSUFBQSxDQUFWRSxVQUFVO0VBQUFMLGNBQUEsR0FBQU0sQ0FBQTtFQUN4RSxJQUFBQyxLQUFBLElBQUFQLGNBQUEsR0FBQUMsQ0FBQSxPQUFtQkcsS0FBSyxDQUFDSSxNQUFNO0lBQXZCQyxNQUFNLEdBQUFGLEtBQUEsQ0FBTkUsTUFBTTtFQUFrQlQsY0FBQSxHQUFBQyxDQUFBO0VBR2hDVixLQUFLLENBQUNtQixTQUFTLENBQUMsWUFBTTtJQUFBVixjQUFBLEdBQUFNLENBQUE7SUFBQU4sY0FBQSxHQUFBQyxDQUFBO0lBQ3BCSSxVQUFVLENBQUNNLFVBQVUsQ0FBQztNQUNwQkMsS0FBSyxFQUFFO0lBQ1QsQ0FBQyxDQUFDO0VBQ0osQ0FBQyxFQUFFLENBQUNQLFVBQVUsQ0FBQyxDQUFDO0VBQUNMLGNBQUEsR0FBQUMsQ0FBQTtFQUVqQixPQUNFRixLQUFBLENBQUNQLElBQUk7SUFBQ3FCLEtBQUssRUFBRUMsTUFBTSxDQUFDQyxTQUFVO0lBQUFDLFFBQUEsR0FDNUJuQixJQUFBLENBQUNGLFFBQVE7TUFBQ3NCLElBQUksRUFBQyxXQUFXO01BQUNDLElBQUksRUFBRSxFQUFHO01BQUNDLEtBQUssRUFBQztJQUFTLENBQUUsQ0FBQyxFQUN2RHRCLElBQUEsQ0FBQ0osSUFBSTtNQUFDb0IsS0FBSyxFQUFFQyxNQUFNLENBQUNGLEtBQU07TUFBQUksUUFBQSxFQUFDO0lBQXdCLENBQU0sQ0FBQyxFQUMxRG5CLElBQUEsQ0FBQ0osSUFBSTtNQUFDb0IsS0FBSyxFQUFFQyxNQUFNLENBQUNNLFdBQVk7TUFBQUosUUFBQSxFQUFDO0lBR2pDLENBQU0sQ0FBQyxFQUNQakIsS0FBQSxDQUFDTixJQUFJO01BQUNvQixLQUFLLEVBQUVDLE1BQU0sQ0FBQ0wsTUFBTztNQUFBTyxRQUFBLEdBQUMsV0FBUyxFQUFDUCxNQUFNO0lBQUEsQ0FBTyxDQUFDO0VBQUEsQ0FDaEQsQ0FBQztBQUVYLENBQUM7QUFFRCxJQUFNSyxNQUFNLElBQUFkLGNBQUEsR0FBQUMsQ0FBQSxPQUFHUCxVQUFVLENBQUMyQixNQUFNLENBQUM7RUFDL0JOLFNBQVMsRUFBRTtJQUNUTyxJQUFJLEVBQUUsQ0FBQztJQUNQQyxjQUFjLEVBQUUsUUFBUTtJQUN4QkMsVUFBVSxFQUFFLFFBQVE7SUFDcEJDLE9BQU8sRUFBRSxFQUFFO0lBQ1hDLGVBQWUsRUFBRTtFQUNuQixDQUFDO0VBQ0RkLEtBQUssRUFBRTtJQUNMZSxRQUFRLEVBQUUsRUFBRTtJQUNaQyxVQUFVLEVBQUUsTUFBTTtJQUNsQkMsU0FBUyxFQUFFLEVBQUU7SUFDYkMsWUFBWSxFQUFFLENBQUM7SUFDZlgsS0FBSyxFQUFFO0VBQ1QsQ0FBQztFQUNEQyxXQUFXLEVBQUU7SUFDWE8sUUFBUSxFQUFFLEVBQUU7SUFDWkksU0FBUyxFQUFFLFFBQVE7SUFDbkJaLEtBQUssRUFBRSxNQUFNO0lBQ2JXLFlBQVksRUFBRSxFQUFFO0lBQ2hCRSxVQUFVLEVBQUU7RUFDZCxDQUFDO0VBQ0R2QixNQUFNLEVBQUU7SUFDTmtCLFFBQVEsRUFBRSxFQUFFO0lBQ1pSLEtBQUssRUFBRSxNQUFNO0lBQ2JVLFNBQVMsRUFBRTtFQUNiO0FBQ0YsQ0FBQyxDQUFDO0FBRUYsZUFBZTNCLGNBQWMiLCJpZ25vcmVMaXN0IjpbXX0=

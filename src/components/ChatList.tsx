@@ -65,27 +65,27 @@ const ChatList: React.FC<ChatListProps> = ({
   // Render each chat item
   const renderItem = ({ item }: { item: Conversation }) => {
     // Get the other user's profile from the conversation
-    const otherUser = item.participants?.find(p => 
-      p.profile_id !== 'current_user_id'
-    )?.profile;
+    const otherUser = item.participants?.find(
+      (p) => p.user_id !== 'current_user_id'
+    );
     
-    const displayName = otherUser?.username || 'Anonymous';
-    const avatarUrl = otherUser?.avatar_url;
+    const displayName = otherUser?.display_name || 'Anonymous';
+    const avatarUrl = otherUser?.photo_url;
     
     // Decide if there are unread messages
     const hasUnread = item.unread_count && item.unread_count > 0;
     
     // Get the most recent message
-    const lastMessage = item.last_message?.content || 'No messages';
-    const lastActiveTime = item.last_message?.created_at 
-      ? formatLastActive(item.last_message.created_at)
+    const lastMessage = item.last_message_text || 'No messages';
+    const lastActiveTime = item.last_message_timestamp
+      ? formatLastActive(item.last_message_timestamp)
       : '';
 
     return (
       <TouchableOpacity
         style={[
           styles.chatItem,
-          hasUnread && styles.unreadChatItem
+          ...(hasUnread ? [styles.unreadChatItem] : [])
         ]}
         onPress={() => onSelectConversation(item)}
       >
@@ -108,7 +108,7 @@ const ChatList: React.FC<ChatListProps> = ({
           <View style={styles.chatHeader}>
             <Text style={[
               styles.chatName,
-              hasUnread && styles.unreadChatName
+              ...(hasUnread ? [styles.unreadChatName] : [])
             ]} numberOfLines={1}>
               {displayName}
             </Text>
@@ -121,7 +121,7 @@ const ChatList: React.FC<ChatListProps> = ({
             <Text 
               style={[
                 styles.messagePreview,
-                hasUnread && styles.unreadMessagePreview
+                ...(hasUnread ? [styles.unreadMessagePreview] : [])
               ]}
               numberOfLines={1}
             >
