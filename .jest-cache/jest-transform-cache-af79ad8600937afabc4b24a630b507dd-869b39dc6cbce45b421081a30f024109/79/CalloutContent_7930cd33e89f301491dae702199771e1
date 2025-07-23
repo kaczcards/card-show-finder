@@ -1,0 +1,249 @@
+560eb3e20d274a43f9b50fcd74c96ffe
+"use strict";
+
+/* istanbul ignore next */
+function cov_njsmng584() {
+  var path = "/Users/kevin/card-show-finder/src/components/MapShowCluster/components/CalloutContent.tsx";
+  var hash = "3e67c9ccfe592840bf1833701eba95997abe395f";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/components/MapShowCluster/components/CalloutContent.tsx",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 0
+        },
+        end: {
+          line: 2,
+          column: 62
+        }
+      },
+      "1": {
+        start: {
+          line: 4,
+          column: 19
+        },
+        end: {
+          line: 16,
+          column: 1
+        }
+      },
+      "2": {
+        start: {
+          line: 5,
+          column: 4
+        },
+        end: {
+          line: 15,
+          column: 5
+        }
+      },
+      "3": {
+        start: {
+          line: 6,
+          column: 21
+        },
+        end: {
+          line: 6,
+          column: 40
+        }
+      },
+      "4": {
+        start: {
+          line: 7,
+          column: 8
+        },
+        end: {
+          line: 9,
+          column: 9
+        }
+      },
+      "5": {
+        start: {
+          line: 8,
+          column: 12
+        },
+        end: {
+          line: 8,
+          column: 34
+        }
+      },
+      "6": {
+        start: {
+          line: 10,
+          column: 24
+        },
+        end: {
+          line: 10,
+          column: 87
+        }
+      },
+      "7": {
+        start: {
+          line: 11,
+          column: 8
+        },
+        end: {
+          line: 11,
+          column: 87
+        }
+      },
+      "8": {
+        start: {
+          line: 14,
+          column: 8
+        },
+        end: {
+          line: 14,
+          column: 30
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 4,
+            column: 19
+          },
+          end: {
+            line: 4,
+            column: 20
+          }
+        },
+        loc: {
+          start: {
+            line: 4,
+            column: 34
+          },
+          end: {
+            line: 16,
+            column: 1
+          }
+        },
+        line: 4
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 7,
+            column: 8
+          },
+          end: {
+            line: 9,
+            column: 9
+          }
+        },
+        type: "if",
+        locations: [{
+          start: {
+            line: 7,
+            column: 8
+          },
+          end: {
+            line: 9,
+            column: 9
+          }
+        }, {
+          start: {
+            line: undefined,
+            column: undefined
+          },
+          end: {
+            line: undefined,
+            column: undefined
+          }
+        }],
+        line: 7
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {
+      "0": [0, 0]
+    },
+    inputSourceMap: {
+      file: "/Users/kevin/card-show-finder/src/components/MapShowCluster/components/CalloutContent.tsx",
+      mappings: ";;AAoCA,oBAAoB;AACpB,MAAM,UAAU,GAAG,CAAC,SAAwB,EAAE,EAAE;IAC9C,IAAI,CAAC;QACH,MAAM,IAAI,GAAG,IAAI,IAAI,CAAC,SAAS,CAAC,CAAC;QACjC,IAAI,KAAK,CAAC,IAAI,CAAC,OAAO,EAAE,CAAC,EAAE,CAAC;YAC1B,OAAO,cAAc,CAAC;QACxB,CAAC;QACD,MAAM,OAAO,GAAG,IAAI,IAAI,CAAC,IAAI,CAAC,OAAO,EAAE,GAAG,IAAI,CAAC,iBAAiB,EAAE,GAAG,EAAE,GAAG,IAAI,CAAC,CAAC;QAChF,OAAO,OAAO,CAAC,kBAAkB,CAAC,OAAO,EAAE,EAAE,KAAK,EAAE,OAAO,EAAE,GAAG,EAAE,SAAS,EAAE,CAAC,CAAC;IACjF,CAAC;IAAC,OAAO,GAAG,EAAE,CAAC;QACb,OAAO,cAAc,CAAC;IACxB,CAAC;AACH,CAAC,CAAC",
+      names: [],
+      sources: ["/Users/kevin/card-show-finder/src/components/MapShowCluster/components/CalloutContent.tsx"],
+      sourcesContent: ["import React, { useState } from 'react';\nimport {\n  View,\n  Text,\n  StyleSheet,\n  TouchableOpacity,\n  Linking,\n  Alert,\n  Platform,\n} from 'react-native';\nimport { Ionicons } from '@expo/vector-icons';\nimport { useNavigation } from '@react-navigation/native';\n\n// Define types\ninterface OrganizerProfile {\n  id?: string;\n  firstName?: string;\n  lastName?: string;\n  facebookUrl?: string;\n  instagramUrl?: string;\n  twitterUrl?: string;\n  whatnotUrl?: string;\n  ebayStoreUrl?: string;\n}\n\ninterface CalloutContentProps {\n  showId: string;\n  title: string;\n  startDate: string | Date;\n  endDate: string | Date;\n  address: string;\n  entryFee: number | string | null;\n  organizer?: OrganizerProfile | null;\n  onPressViewDetails?: (showId: string) => void;\n}\n\n// Utility functions\nconst formatDate = (dateValue: Date | string) => {\n  try {\n    const date = new Date(dateValue);\n    if (isNaN(date.getTime())) {\n      return 'Unknown date';\n    }\n    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);\n    return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });\n  } catch (err) {\n    return 'Unknown date';\n  }\n};\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "3e67c9ccfe592840bf1833701eba95997abe395f"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_njsmng584 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_njsmng584();
+cov_njsmng584().s[0]++;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+// Utility functions
+/* istanbul ignore next */
+cov_njsmng584().s[1]++;
+const formatDate = dateValue => {
+  /* istanbul ignore next */
+  cov_njsmng584().f[0]++;
+  cov_njsmng584().s[2]++;
+  try {
+    const date =
+    /* istanbul ignore next */
+    (cov_njsmng584().s[3]++, new Date(dateValue));
+    /* istanbul ignore next */
+    cov_njsmng584().s[4]++;
+    if (isNaN(date.getTime())) {
+      /* istanbul ignore next */
+      cov_njsmng584().b[0][0]++;
+      cov_njsmng584().s[5]++;
+      return 'Unknown date';
+    } else
+    /* istanbul ignore next */
+    {
+      cov_njsmng584().b[0][1]++;
+    }
+    const utcDate =
+    /* istanbul ignore next */
+    (cov_njsmng584().s[6]++, new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000));
+    /* istanbul ignore next */
+    cov_njsmng584().s[7]++;
+    return utcDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch (err) {
+    /* istanbul ignore next */
+    cov_njsmng584().s[8]++;
+    return 'Unknown date';
+  }
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjb3ZfbmpzbW5nNTg0IiwiYWN0dWFsQ292ZXJhZ2UiLCJzIiwiZm9ybWF0RGF0ZSIsImRhdGVWYWx1ZSIsImYiLCJkYXRlIiwiRGF0ZSIsImlzTmFOIiwiZ2V0VGltZSIsImIiLCJ1dGNEYXRlIiwiZ2V0VGltZXpvbmVPZmZzZXQiLCJ0b0xvY2FsZURhdGVTdHJpbmciLCJtb250aCIsImRheSIsImVyciJdLCJzb3VyY2VzIjpbIi9Vc2Vycy9rZXZpbi9jYXJkLXNob3ctZmluZGVyL3NyYy9jb21wb25lbnRzL01hcFNob3dDbHVzdGVyL2NvbXBvbmVudHMvQ2FsbG91dENvbnRlbnQudHN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBSZWFjdCwgeyB1c2VTdGF0ZSB9IGZyb20gJ3JlYWN0JztcbmltcG9ydCB7XG4gIFZpZXcsXG4gIFRleHQsXG4gIFN0eWxlU2hlZXQsXG4gIFRvdWNoYWJsZU9wYWNpdHksXG4gIExpbmtpbmcsXG4gIEFsZXJ0LFxuICBQbGF0Zm9ybSxcbn0gZnJvbSAncmVhY3QtbmF0aXZlJztcbmltcG9ydCB7IElvbmljb25zIH0gZnJvbSAnQGV4cG8vdmVjdG9yLWljb25zJztcbmltcG9ydCB7IHVzZU5hdmlnYXRpb24gfSBmcm9tICdAcmVhY3QtbmF2aWdhdGlvbi9uYXRpdmUnO1xuXG4vLyBEZWZpbmUgdHlwZXNcbmludGVyZmFjZSBPcmdhbml6ZXJQcm9maWxlIHtcbiAgaWQ/OiBzdHJpbmc7XG4gIGZpcnN0TmFtZT86IHN0cmluZztcbiAgbGFzdE5hbWU/OiBzdHJpbmc7XG4gIGZhY2Vib29rVXJsPzogc3RyaW5nO1xuICBpbnN0YWdyYW1Vcmw/OiBzdHJpbmc7XG4gIHR3aXR0ZXJVcmw/OiBzdHJpbmc7XG4gIHdoYXRub3RVcmw/OiBzdHJpbmc7XG4gIGViYXlTdG9yZVVybD86IHN0cmluZztcbn1cblxuaW50ZXJmYWNlIENhbGxvdXRDb250ZW50UHJvcHMge1xuICBzaG93SWQ6IHN0cmluZztcbiAgdGl0bGU6IHN0cmluZztcbiAgc3RhcnREYXRlOiBzdHJpbmcgfCBEYXRlO1xuICBlbmREYXRlOiBzdHJpbmcgfCBEYXRlO1xuICBhZGRyZXNzOiBzdHJpbmc7XG4gIGVudHJ5RmVlOiBudW1iZXIgfCBzdHJpbmcgfCBudWxsO1xuICBvcmdhbml6ZXI/OiBPcmdhbml6ZXJQcm9maWxlIHwgbnVsbDtcbiAgb25QcmVzc1ZpZXdEZXRhaWxzPzogKHNob3dJZDogc3RyaW5nKSA9PiB2b2lkO1xufVxuXG4vLyBVdGlsaXR5IGZ1bmN0aW9uc1xuY29uc3QgZm9ybWF0RGF0ZSA9IChkYXRlVmFsdWU6IERhdGUgfCBzdHJpbmcpID0+IHtcbiAgdHJ5IHtcbiAgICBjb25zdCBkYXRlID0gbmV3IERhdGUoZGF0ZVZhbHVlKTtcbiAgICBpZiAoaXNOYU4oZGF0ZS5nZXRUaW1lKCkpKSB7XG4gICAgICByZXR1cm4gJ1Vua25vd24gZGF0ZSc7XG4gICAgfVxuICAgIGNvbnN0IHV0Y0RhdGUgPSBuZXcgRGF0ZShkYXRlLmdldFRpbWUoKSArIGRhdGUuZ2V0VGltZXpvbmVPZmZzZXQoKSAqIDYwICogMTAwMCk7XG4gICAgcmV0dXJuIHV0Y0RhdGUudG9Mb2NhbGVEYXRlU3RyaW5nKCdlbi1VUycsIHsgbW9udGg6ICdzaG9ydCcsIGRheTogJ251bWVyaWMnIH0pO1xuICB9IGNhdGNoIChlcnIpIHtcbiAgICByZXR1cm4gJ1Vua25vd24gZGF0ZSc7XG4gIH1cbn07XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0lBZ0RFO0lBQUFBLGFBQUEsWUFBQUEsQ0FBQTtNQUFBLE9BQUFDLGNBQUE7SUFBQTtFQUFBO0VBQUEsT0FBQUEsY0FBQTtBQUFBO0FBQUFELGFBQUE7QUFBQUEsYUFBQSxHQUFBRSxDQUFBOzs7O0FBWkY7QUFBQTtBQUFBRixhQUFBLEdBQUFFLENBQUE7QUFDQSxNQUFNQyxVQUFVLEdBQUlDLFNBQXdCLElBQUk7RUFBQTtFQUFBSixhQUFBLEdBQUFLLENBQUE7RUFBQUwsYUFBQSxHQUFBRSxDQUFBO0VBQzlDLElBQUk7SUFDRixNQUFNSSxJQUFJO0lBQUE7SUFBQSxDQUFBTixhQUFBLEdBQUFFLENBQUEsT0FBRyxJQUFJSyxJQUFJLENBQUNILFNBQVMsQ0FBQztJQUFDO0lBQUFKLGFBQUEsR0FBQUUsQ0FBQTtJQUNqQyxJQUFJTSxLQUFLLENBQUNGLElBQUksQ0FBQ0csT0FBTyxFQUFFLENBQUMsRUFBRTtNQUFBO01BQUFULGFBQUEsR0FBQVUsQ0FBQTtNQUFBVixhQUFBLEdBQUFFLENBQUE7TUFDekIsT0FBTyxjQUFjO0lBQ3ZCLENBQUM7SUFBQTtJQUFBO01BQUFGLGFBQUEsR0FBQVUsQ0FBQTtJQUFBO0lBQ0QsTUFBTUMsT0FBTztJQUFBO0lBQUEsQ0FBQVgsYUFBQSxHQUFBRSxDQUFBLE9BQUcsSUFBSUssSUFBSSxDQUFDRCxJQUFJLENBQUNHLE9BQU8sRUFBRSxHQUFHSCxJQUFJLENBQUNNLGlCQUFpQixFQUFFLEdBQUcsRUFBRSxHQUFHLElBQUksQ0FBQztJQUFDO0lBQUFaLGFBQUEsR0FBQUUsQ0FBQTtJQUNoRixPQUFPUyxPQUFPLENBQUNFLGtCQUFrQixDQUFDLE9BQU8sRUFBRTtNQUFFQyxLQUFLLEVBQUUsT0FBTztNQUFFQyxHQUFHLEVBQUU7SUFBUyxDQUFFLENBQUM7RUFDaEYsQ0FBQyxDQUFDLE9BQU9DLEdBQUcsRUFBRTtJQUFBO0lBQUFoQixhQUFBLEdBQUFFLENBQUE7SUFDWixPQUFPLGNBQWM7RUFDdkI7QUFDRixDQUFDIiwiaWdub3JlTGlzdCI6W119

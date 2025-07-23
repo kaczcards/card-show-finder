@@ -1,0 +1,33 @@
+44151b475244d3f173410f10ec00b1d4
+function cov_oeqcpk678() {
+  var path = "/Users/kevin/card-show-finder/src/components/Chat/index.ts";
+  var hash = "27415b8b15aab32a61be41e9cee0b67d14cf1687";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/components/Chat/index.ts",
+    statementMap: {},
+    fnMap: {},
+    branchMap: {},
+    s: {},
+    f: {},
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "27415b8b15aab32a61be41e9cee0b67d14cf1687"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_oeqcpk678 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_oeqcpk678();
+export { default } from './ChatList';
+export { default as ChatList } from './ChatList';
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJkZWZhdWx0IiwiQ2hhdExpc3QiXSwic291cmNlcyI6WyJpbmRleC50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgeyBkZWZhdWx0IH0gZnJvbSAnLi9DaGF0TGlzdCc7XG5leHBvcnQgeyBkZWZhdWx0IGFzIENoYXRMaXN0IH0gZnJvbSAnLi9DaGF0TGlzdCc7XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUEsU0FBU0EsT0FBTyxRQUFRLFlBQVk7QUFDcEMsU0FBU0EsT0FBTyxJQUFJQyxRQUFRLFFBQVEsWUFBWSIsImlnbm9yZUxpc3QiOltdfQ==

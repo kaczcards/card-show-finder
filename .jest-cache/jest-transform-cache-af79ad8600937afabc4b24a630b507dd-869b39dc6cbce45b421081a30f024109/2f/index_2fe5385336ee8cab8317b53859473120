@@ -1,0 +1,117 @@
+337d713c384500fd348775c0369e3016
+function cov_1srqcjjfb5() {
+  var path = "/Users/kevin/card-show-finder/src/screens/Messages/index.tsx";
+  var hash = "9d6b3d367eff4823fb2195a62b93af01319201ac";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/screens/Messages/index.tsx",
+    statementMap: {
+      "0": {
+        start: {
+          line: 7,
+          column: 14
+        },
+        end: {
+          line: 7,
+          column: 36
+        }
+      },
+      "1": {
+        start: {
+          line: 9,
+          column: 26
+        },
+        end: {
+          line: 16,
+          column: 1
+        }
+      },
+      "2": {
+        start: {
+          line: 10,
+          column: 2
+        },
+        end: {
+          line: 15,
+          column: 4
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 9,
+            column: 26
+          },
+          end: {
+            line: 9,
+            column: 27
+          }
+        },
+        loc: {
+          start: {
+            line: 9,
+            column: 32
+          },
+          end: {
+            line: 16,
+            column: 1
+          }
+        },
+        line: 9
+      }
+    },
+    branchMap: {},
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "9d6b3d367eff4823fb2195a62b93af01319201ac"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_1srqcjjfb5 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_1srqcjjfb5();
+import React from 'react';
+import { createStackNavigator } from '@react-navigation/stack';
+import MessagesScreen from './MessagesScreen';
+import DirectMessagesScreen from './DirectMessagesScreen';
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+var Stack = (cov_1srqcjjfb5().s[0]++, createStackNavigator());
+cov_1srqcjjfb5().s[1]++;
+var MessagesNavigator = function MessagesNavigator() {
+  cov_1srqcjjfb5().f[0]++;
+  cov_1srqcjjfb5().s[2]++;
+  return _jsxs(Stack.Navigator, {
+    screenOptions: {
+      headerShown: false
+    },
+    children: [_jsx(Stack.Screen, {
+      name: "MessagesScreen",
+      component: MessagesScreen
+    }), _jsx(Stack.Screen, {
+      name: "DirectMessages",
+      component: DirectMessagesScreen
+    })]
+  });
+};
+export default MessagesNavigator;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsImNyZWF0ZVN0YWNrTmF2aWdhdG9yIiwiTWVzc2FnZXNTY3JlZW4iLCJEaXJlY3RNZXNzYWdlc1NjcmVlbiIsImpzeCIsIl9qc3giLCJqc3hzIiwiX2pzeHMiLCJTdGFjayIsImNvdl8xc3JxY2pqZmI1IiwicyIsIk1lc3NhZ2VzTmF2aWdhdG9yIiwiZiIsIk5hdmlnYXRvciIsInNjcmVlbk9wdGlvbnMiLCJoZWFkZXJTaG93biIsImNoaWxkcmVuIiwiU2NyZWVuIiwibmFtZSIsImNvbXBvbmVudCJdLCJzb3VyY2VzIjpbImluZGV4LnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgUmVhY3QgZnJvbSAncmVhY3QnO1xuaW1wb3J0IHsgY3JlYXRlU3RhY2tOYXZpZ2F0b3IgfSBmcm9tICdAcmVhY3QtbmF2aWdhdGlvbi9zdGFjayc7XG5cbmltcG9ydCBNZXNzYWdlc1NjcmVlbiBmcm9tICcuL01lc3NhZ2VzU2NyZWVuJztcbmltcG9ydCBEaXJlY3RNZXNzYWdlc1NjcmVlbiBmcm9tICcuL0RpcmVjdE1lc3NhZ2VzU2NyZWVuJztcblxuY29uc3QgU3RhY2sgPSBjcmVhdGVTdGFja05hdmlnYXRvcigpO1xuXG5jb25zdCBNZXNzYWdlc05hdmlnYXRvciA9ICgpID0+IHtcbiAgcmV0dXJuIChcbiAgICA8U3RhY2suTmF2aWdhdG9yIHNjcmVlbk9wdGlvbnM9e3sgaGVhZGVyU2hvd246IGZhbHNlIH19PlxuICAgICAgPFN0YWNrLlNjcmVlbiBuYW1lPVwiTWVzc2FnZXNTY3JlZW5cIiBjb21wb25lbnQ9e01lc3NhZ2VzU2NyZWVufSAvPlxuICAgICAgPFN0YWNrLlNjcmVlbiBuYW1lPVwiRGlyZWN0TWVzc2FnZXNcIiBjb21wb25lbnQ9e0RpcmVjdE1lc3NhZ2VzU2NyZWVufSAvPlxuICAgIDwvU3RhY2suTmF2aWdhdG9yPlxuICApO1xufTtcblxuZXhwb3J0IGRlZmF1bHQgTWVzc2FnZXNOYXZpZ2F0b3I7XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSxPQUFPQSxLQUFLLE1BQU0sT0FBTztBQUN6QixTQUFTQyxvQkFBb0IsUUFBUSx5QkFBeUI7QUFFOUQsT0FBT0MsY0FBYyxNQUFNLGtCQUFrQjtBQUM3QyxPQUFPQyxvQkFBb0IsTUFBTSx3QkFBd0I7QUFBQyxTQUFBQyxHQUFBLElBQUFDLElBQUEsRUFBQUMsSUFBQSxJQUFBQyxLQUFBO0FBRTFELElBQU1DLEtBQUssSUFBQUMsY0FBQSxHQUFBQyxDQUFBLE9BQUdULG9CQUFvQixDQUFDLENBQUM7QUFBQ1EsY0FBQSxHQUFBQyxDQUFBO0FBRXJDLElBQU1DLGlCQUFpQixHQUFHLFNBQXBCQSxpQkFBaUJBLENBQUEsRUFBUztFQUFBRixjQUFBLEdBQUFHLENBQUE7RUFBQUgsY0FBQSxHQUFBQyxDQUFBO0VBQzlCLE9BQ0VILEtBQUEsQ0FBQ0MsS0FBSyxDQUFDSyxTQUFTO0lBQUNDLGFBQWEsRUFBRTtNQUFFQyxXQUFXLEVBQUU7SUFBTSxDQUFFO0lBQUFDLFFBQUEsR0FDckRYLElBQUEsQ0FBQ0csS0FBSyxDQUFDUyxNQUFNO01BQUNDLElBQUksRUFBQyxnQkFBZ0I7TUFBQ0MsU0FBUyxFQUFFakI7SUFBZSxDQUFFLENBQUMsRUFDakVHLElBQUEsQ0FBQ0csS0FBSyxDQUFDUyxNQUFNO01BQUNDLElBQUksRUFBQyxnQkFBZ0I7TUFBQ0MsU0FBUyxFQUFFaEI7SUFBcUIsQ0FBRSxDQUFDO0VBQUEsQ0FDeEQsQ0FBQztBQUV0QixDQUFDO0FBRUQsZUFBZVEsaUJBQWlCIiwiaWdub3JlTGlzdCI6W119

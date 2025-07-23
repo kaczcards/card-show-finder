@@ -1,0 +1,331 @@
+42c7f6e27826cf09912dfc590a87e66c
+"use strict";
+
+/* istanbul ignore next */
+function cov_1xt02mdqrb() {
+  var path = "/Users/kevin/card-show-finder/src/screens/Dealer/src_screens_Dealer_index.ts";
+  var hash = "e6e63aefdb07028b9601d43e88c7a17b72b4271a";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/screens/Dealer/src_screens_Dealer_index.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 22
+        },
+        end: {
+          line: 4,
+          column: 1
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 4
+        },
+        end: {
+          line: 3,
+          column: 62
+        }
+      },
+      "2": {
+        start: {
+          line: 5,
+          column: 0
+        },
+        end: {
+          line: 5,
+          column: 62
+        }
+      },
+      "3": {
+        start: {
+          line: 6,
+          column: 0
+        },
+        end: {
+          line: 6,
+          column: 37
+        }
+      },
+      "4": {
+        start: {
+          line: 7,
+          column: 28
+        },
+        end: {
+          line: 7,
+          column: 60
+        }
+      },
+      "5": {
+        start: {
+          line: 8,
+          column: 0
+        },
+        end: {
+          line: 8,
+          column: 153
+        }
+      },
+      "6": {
+        start: {
+          line: 8,
+          column: 93
+        },
+        end: {
+          line: 8,
+          column: 147
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 2,
+            column: 56
+          },
+          end: {
+            line: 2,
+            column: 57
+          }
+        },
+        loc: {
+          start: {
+            line: 2,
+            column: 71
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        },
+        line: 2
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 8,
+            column: 79
+          },
+          end: {
+            line: 8,
+            column: 80
+          }
+        },
+        loc: {
+          start: {
+            line: 8,
+            column: 91
+          },
+          end: {
+            line: 8,
+            column: 149
+          }
+        },
+        line: 8
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 2,
+            column: 22
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 2,
+            column: 23
+          },
+          end: {
+            line: 2,
+            column: 27
+          }
+        }, {
+          start: {
+            line: 2,
+            column: 31
+          },
+          end: {
+            line: 2,
+            column: 51
+          }
+        }, {
+          start: {
+            line: 2,
+            column: 56
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        }],
+        line: 2
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 3,
+            column: 11
+          },
+          end: {
+            line: 3,
+            column: 61
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 37
+          },
+          end: {
+            line: 3,
+            column: 40
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 43
+          },
+          end: {
+            line: 3,
+            column: 61
+          }
+        }],
+        line: 3
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 3,
+            column: 12
+          },
+          end: {
+            line: 3,
+            column: 33
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 12
+          },
+          end: {
+            line: 3,
+            column: 15
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 19
+          },
+          end: {
+            line: 3,
+            column: 33
+          }
+        }],
+        line: 3
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0
+    },
+    b: {
+      "0": [0, 0, 0],
+      "1": [0, 0],
+      "2": [0, 0]
+    },
+    inputSourceMap: {
+      file: "/Users/kevin/card-show-finder/src/screens/Dealer/src_screens_Dealer_index.ts",
+      mappings: ";;;;;;AAAA,6DAAuE;AAA9D,2IAAA,OAAO,OAAuB",
+      names: [],
+      sources: ["/Users/kevin/card-show-finder/src/screens/Dealer/src_screens_Dealer_index.ts"],
+      sourcesContent: ["export { default as DealerProfileScreen } from './DealerProfileScreen';\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "e6e63aefdb07028b9601d43e88c7a17b72b4271a"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_1xt02mdqrb = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_1xt02mdqrb();
+var __importDefault =
+/* istanbul ignore next */
+(cov_1xt02mdqrb().s[0]++,
+/* istanbul ignore next */
+(cov_1xt02mdqrb().b[0][0]++, this) &&
+/* istanbul ignore next */
+(cov_1xt02mdqrb().b[0][1]++, this.__importDefault) ||
+/* istanbul ignore next */
+(cov_1xt02mdqrb().b[0][2]++, function (mod) {
+  /* istanbul ignore next */
+  cov_1xt02mdqrb().f[0]++;
+  cov_1xt02mdqrb().s[1]++;
+  return /* istanbul ignore next */(cov_1xt02mdqrb().b[2][0]++, mod) &&
+  /* istanbul ignore next */
+  (cov_1xt02mdqrb().b[2][1]++, mod.__esModule) ?
+  /* istanbul ignore next */
+  (cov_1xt02mdqrb().b[1][0]++, mod) :
+  /* istanbul ignore next */
+  (cov_1xt02mdqrb().b[1][1]++, {
+    "default": mod
+  });
+}));
+/* istanbul ignore next */
+cov_1xt02mdqrb().s[2]++;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/* istanbul ignore next */
+cov_1xt02mdqrb().s[3]++;
+exports.DealerProfileScreen = void 0;
+var DealerProfileScreen_1 =
+/* istanbul ignore next */
+(cov_1xt02mdqrb().s[4]++, require("./DealerProfileScreen"));
+/* istanbul ignore next */
+cov_1xt02mdqrb().s[5]++;
+Object.defineProperty(exports, "DealerProfileScreen", {
+  enumerable: true,
+  get: function () {
+    /* istanbul ignore next */
+    cov_1xt02mdqrb().f[1]++;
+    cov_1xt02mdqrb().s[6]++;
+    return __importDefault(DealerProfileScreen_1).default;
+  }
+});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJEZWFsZXJQcm9maWxlU2NyZWVuXzEiLCJjb3ZfMXh0MDJtZHFyYiIsInMiLCJyZXF1aXJlIiwiT2JqZWN0IiwiZGVmaW5lUHJvcGVydHkiLCJleHBvcnRzIiwiZW51bWVyYWJsZSIsImdldCIsImYiLCJfX2ltcG9ydERlZmF1bHQiLCJkZWZhdWx0Il0sInNvdXJjZXMiOlsiL1VzZXJzL2tldmluL2NhcmQtc2hvdy1maW5kZXIvc3JjL3NjcmVlbnMvRGVhbGVyL3NyY19zY3JlZW5zX0RlYWxlcl9pbmRleC50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgeyBkZWZhdWx0IGFzIERlYWxlclByb2ZpbGVTY3JlZW4gfSBmcm9tICcuL0RlYWxlclByb2ZpbGVTY3JlZW4nO1xuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSxJQUFBQSxxQkFBQTtBQUFBO0FBQUEsQ0FBQUMsY0FBQSxHQUFBQyxDQUFBLE9BQUFDLE9BQUE7QUFBdUU7QUFBQUYsY0FBQSxHQUFBQyxDQUFBO0FBQTlERSxNQUFBLENBQUFDLGNBQUEsQ0FBQUMsT0FBQTtFQUFBQyxVQUFBO0VBQUFDLEdBQUEsV0FBQUEsQ0FBQTtJQUFBO0lBQUFQLGNBQUEsR0FBQVEsQ0FBQTtJQUFBUixjQUFBLEdBQUFDLENBQUE7SUFBQSxPQUFBUSxlQUFBLENBQUFWLHFCQUFBLEVBQUFXLE9BQU87RUFBQTtBQUFBIiwiaWdub3JlTGlzdCI6W119
