@@ -575,7 +575,7 @@ export const getPaginatedShows = async (
     /* ---------------------- RPC invocation ----------------------- */
     const { data, error } = await supabase.rpc('get_paginated_shows', {
       lat: latitude,
-      long: longitude,
+      lng: longitude,
       radius_miles: typeof radius === 'number' && !isNaN(radius) ? radius : 25,
       start_date: toIso(startDate),
       end_date: toIso(endDate),
