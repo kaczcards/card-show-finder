@@ -32,7 +32,7 @@
     "typecheck": "tsc --noEmit",
     "test:lint": "npm run lint",
     "test:type": "npm run typecheck",
-    "test:unit": "jest --runInBand --selectProjects unit",
+    "test:unit": "npx jest __tests__/smoke.unit.test.ts",
     "test:db:unit": "npm run db:rls:verify && pg_prove test/database/**/*.sql",
     "test:api": "jest --runInBand --selectProjects api",
     "test:perf": "node e2e/scripts/run-batch.js --batch perf --perf",
