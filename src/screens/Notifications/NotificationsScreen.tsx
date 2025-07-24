@@ -184,7 +184,8 @@ const MyShowsScreen: React.FC = () => {
       const newReview: Review = {
         id: Date.now().toString(),
         showId: selectedShow.id,
-        seriesId: selectedShow.seriesId ?? undefined, // use undefined if not present
+        // Review.seriesId expects a string, so default to empty string when absent
+        seriesId: selectedShow.seriesId ?? '',
         userId: 'currentUser',
         userName: 'You',
         rating,
@@ -316,7 +317,8 @@ const MyShowsScreen: React.FC = () => {
       {reviewFormVisible && selectedShow && (
         <ReviewForm
           showId={selectedShow.id}
-          seriesId={selectedShow.seriesId ?? undefined}
+          /* ReviewForm prop also expects a non-undefined string */
+          seriesId={selectedShow.seriesId ?? ''}
           onSubmit={submitReview}
           onCancel={() => {
             setReviewFormVisible(false);

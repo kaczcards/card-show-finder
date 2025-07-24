@@ -72,8 +72,9 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
   
   // Safe getters for show properties with fallbacks
   const getTitle = () => {
-    if (typeof safeShow.title === 'string') return safeShow.title;
-    if (typeof safeShow.title === 'number') return safeShow.title.toString();
+    const title = safeShow.title;
+    if (typeof title === 'string') return title;
+    if (typeof title === 'number') return String(title);
     return 'Untitled Show';
   };
   
