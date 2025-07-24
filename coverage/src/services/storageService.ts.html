@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/124</span>
+                <span class='fraction'>0/125</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/121</span>
+                <span class='fraction'>0/122</span>
             </div>
         
             
@@ -509,7 +509,22 @@
 <a name='L444'></a><a href='#L444'>444</a>
 <a name='L445'></a><a href='#L445'>445</a>
 <a name='L446'></a><a href='#L446'>446</a>
-<a name='L447'></a><a href='#L447'>447</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L447'></a><a href='#L447'>447</a>
+<a name='L448'></a><a href='#L448'>448</a>
+<a name='L449'></a><a href='#L449'>449</a>
+<a name='L450'></a><a href='#L450'>450</a>
+<a name='L451'></a><a href='#L451'>451</a>
+<a name='L452'></a><a href='#L452'>452</a>
+<a name='L453'></a><a href='#L453'>453</a>
+<a name='L454'></a><a href='#L454'>454</a>
+<a name='L455'></a><a href='#L455'>455</a>
+<a name='L456'></a><a href='#L456'>456</a>
+<a name='L457'></a><a href='#L457'>457</a>
+<a name='L458'></a><a href='#L458'>458</a>
+<a name='L459'></a><a href='#L459'>459</a>
+<a name='L460'></a><a href='#L460'>460</a>
+<a name='L461'></a><a href='#L461'>461</a>
+<a name='L462'></a><a href='#L462'>462</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -592,6 +607,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -642,6 +665,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1030,12 +1060,20 @@ class StorageService {
       // Set default options
       const expiresIn = <span class="cstat-no" title="statement not covered" >options.expiresIn || this.defaultExpiresIn;</span>
       
+      // Create a transform object without the format property
+      const transform = <span class="cstat-no" title="statement not covered" >options.transform ? {</span>
+        width: options.transform.width,
+        height: options.transform.height,
+        quality: options.transform.quality
+        // format is omitted as it's not compatible with TransformOptions
+      } : undefined;
+      
       // Generate signed URL
       const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase.storage</span>
         .from(this.defaultBucket)
         .createSignedUrl(path, expiresIn, {
           download: options.download || false,
-          transform: options.transform
+          transform
         });
       
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
@@ -1089,7 +1127,14 @@ class StorageService {
 <span class="cstat-no" title="statement not covered" >        if (!contentType) {</span>
 <span class="cstat-no" title="statement not covered" >          contentType = file.split(';')[0].split(':')[1];</span>
         }
-      } else <span class="cstat-no" title="statement not covered" >if (file instanceof Blob || file instanceof File) {</span>
+      // In React Native (and therefore in Expo) the global `File`
+      // constructor does **not** exist.  Checking for it causes a
+      // TypeScript error (`TS2358: The left-hand side of an 'instanceof'
+      // expression must be of type 'any', an object type or a type
+      // parameter`).  A `Blob` check is sufficient for RN/Expo because
+      // any binary payload (e.g. from `expo-image-picker`) is represented
+      // as a `Blob`.
+      } else <span class="cstat-no" title="statement not covered" >if (file instanceof Blob) {</span>
 <span class="cstat-no" title="statement not covered" >        fileData = file;</span>
       } else <span class="cstat-no" title="statement not covered" >if (typeof file === 'string') {</span>
         // Assume it's already base64 encoded without data URL prefix
@@ -1366,7 +1411,7 @@ class StorageService {
     // Use atob when available (modern React-Native &amp; Expo provide it).
     // For environments without atob (very old RN versions), perform
     // a manual base-64 decoding.
-    const binaryString = <span class="cstat-no" title="statement not covered" >globalThis.atob</span>
+    const binaryString = <span class="cstat-no" title="statement not covered" >typeof globalThis.atob === 'function'</span>
       ? globalThis.atob(base64)
       : (<span class="fstat-no" title="function not covered" >()</span> =&gt; {
           const chars =
@@ -1408,7 +1453,7 @@ export const storageService = <span class="cstat-no" title="statement not covere
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-23T13:10:49.804Z
+                at 2025-07-24T15:07:43.077Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

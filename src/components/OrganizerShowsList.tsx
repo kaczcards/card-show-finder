@@ -9,10 +9,11 @@ import {
   Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { ShowSeries, Show } from '../types';
 import { showSeriesService } from '../services/showSeriesService';
 import { supabase } from '../supabase';
+import type { OrganizerStackParamList } from '../navigation/OrganizerNavigator';
 
 // Default placeholder shown when a show has no custom image
 const placeholderShowImage = require('../../assets/images/placeholder-show.png');
@@ -39,7 +40,8 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
   onRefresh,
   isRefreshing = false
 }, ref) => {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NavigationProp<OrganizerStackParamList>>();
   
   // State variables
   const [loading, setLoading] = useState<boolean>(true);
@@ -560,7 +562,7 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
         </Text>
         <TouchableOpacity 
           style={styles.createShowButton}
-          onPress={() => navigation.navigate('AddShow')}
+          onPress={() => navigation.navigate('AddShow', {})}
         >
           <Text style={styles.createShowText}>Create Your First Show</Text>
         </TouchableOpacity>

@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/359</span>
+                <span class='fraction'>0/365</span>
             </div>
         
             
@@ -2135,6 +2135,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -2382,7 +2386,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2408,9 +2411,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2559,8 +2559,8 @@ export const getShows = <span class="cstat-no" title="statement not covered" ><s
      * Derive **normalized** filter values so every query path
      * (RPCs &amp; basic SELECT) uses the exact same parameters.
      * --------------------------------------------------------- */
-    const toIso = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>: Date | string): string =&gt;</span>
-<span class="cstat-no" title="statement not covered" >      d instanceof Date ? d.toISOString() : d;</span>
+    const toIso = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>: Date | string | null): string =&gt;</span>
+<span class="cstat-no" title="statement not covered" >      d instanceof Date ? d.toISOString() : d || '';</span>
 &nbsp;
     // Default date range: today → +30 days (ISO strings)
     const startDate = <span class="cstat-no" title="statement not covered" >toIso(</span>
@@ -3007,8 +3007,8 @@ export const getPaginatedShows = <span class="cstat-no" title="statement not cov
       page = <span class="branch-0 cbranch-no" title="branch not covered" >1,</span>
     } = <span class="cstat-no" title="statement not covered" >params;</span>
 &nbsp;
-    const toIso = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>: Date | string): string =&gt;</span>
-<span class="cstat-no" title="statement not covered" >      d instanceof Date ? d.toISOString() : d;</span>
+    const toIso = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>: Date | string | null): string =&gt;</span>
+<span class="cstat-no" title="statement not covered" >      d instanceof Date ? d.toISOString() : d || '';</span>
     
 <span class="cstat-no" title="statement not covered" >    console.debug('[showService] getPaginatedShows called with params:', {</span>
       latitude, longitude, radius, startDate, endDate, maxEntryFee, 
@@ -3144,8 +3144,8 @@ const getFallbackPaginatedShows = <span class="cstat-no" title="statement not co
       page = <span class="branch-0 cbranch-no" title="branch not covered" >1,</span>
     } = <span class="cstat-no" title="statement not covered" >params;</span>
 &nbsp;
-    const toIso = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>: Date | string): string =&gt;</span>
-<span class="cstat-no" title="statement not covered" >      d instanceof Date ? d.toISOString() : d;</span>
+    const toIso = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>: Date | string | null): string =&gt;</span>
+<span class="cstat-no" title="statement not covered" >      d instanceof Date ? d.toISOString() : d || '';</span>
     
 <span class="cstat-no" title="statement not covered" >    console.debug('[showService] getFallbackPaginatedShows executing with params:', {</span>
       latitude, longitude, radius, 
@@ -3304,8 +3304,8 @@ const getAllActiveShowsFallback = <span class="cstat-no" title="statement not co
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    console.warn('[showService] Using emergency getAllActiveShowsFallback without coordinate filtering');</span>
     
-    const toIso = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>: Date | string): string =&gt;</span>
-<span class="cstat-no" title="statement not covered" >      d instanceof Date ? d.toISOString() : d;</span>
+    const toIso = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>: Date | string | null): string =&gt;</span>
+<span class="cstat-no" title="statement not covered" >      d instanceof Date ? d.toISOString() : d || '';</span>
     
     // Simple query - just get active shows
     let dataQuery = <span class="cstat-no" title="statement not covered" >supabase</span>
@@ -3321,8 +3321,12 @@ const getAllActiveShowsFallback = <span class="cstat-no" title="statement not co
 <span class="cstat-no" title="statement not covered" >    dataQuery = dataQuery.gte('start_date', toIso(startDate) as any);</span>
 <span class="cstat-no" title="statement not covered" >    dataQuery = dataQuery.lte('start_date', toIso(endDate) as any);</span>
     
-    // Get total count first
-    const { count, error: countError } = <span class="cstat-no" title="statement not covered" >await dataQuery.count();</span>
+    // Get total count first using the recommended Supabase pattern
+    const { count, error: countError } = <span class="cstat-no" title="statement not covered" >await supabase</span>
+      .from('shows')
+      .select('*', { count: 'exact', head: true })
+      .gte('start_date', toIso(startDate) as any)
+      .lte('end_date', toIso(endDate) as any);
     
 <span class="cstat-no" title="statement not covered" >    if (countError) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error('[showService] Error getting count in emergency fallback:', countError);</span>
@@ -3571,8 +3575,7 @@ export const claimShow = <span class="cstat-no" title="statement not covered" ><
      * 1. Atomically flag the show as claimed IF not yet claimed
      *    — PostgREST will return 0 rows if the condition fails.
      * ------------------------------------------------------ */
-    const { data: updatedShow, error: updateError, count } =
-<span class="cstat-no" title="statement not covered" >      await supabase</span>
+    const { data: updatedShow, error: updateError, count } = <span class="cstat-no" title="statement not covered" >await supabase</span>
         .from('shows')
         .update({
           claimed: true,
@@ -3581,12 +3584,12 @@ export const claimShow = <span class="cstat-no" title="statement not covered" ><
         })
         .eq('id', showId)
         .or('claimed.is.null,claimed.eq.false') // only update unclaimed
-        .select('*', { count: 'exact' })
+        .select('*')
         .single();
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (updateError) <span class="cstat-no" title="statement not covered" >throw updateError;</span></span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    if (!updatedShow || count === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    if (!updatedShow) {</span>
 <span class="cstat-no" title="statement not covered" >      return {</span>
         success: false,
         message: 'Show has already been claimed by another organiser.',
@@ -3596,17 +3599,14 @@ export const claimShow = <span class="cstat-no" title="statement not covered" ><
     /* --------------------------------------------------------
      * 2. Insert organiser ↔ show relation (ignore duplicates)
      * ------------------------------------------------------ */
-    const { error: orgError } = <span class="cstat-no" title="statement not covered" >await supabase</span>
-      .from('show_organizers')
-      .insert(
-        {
-          show_id: showId,
-          user_id: userId,
-          role: 'owner',
-          created_at: new Date().toISOString(),
-        },
-        { ignoreDuplicates: true }
-      );
+    const { error: orgError } = <span class="cstat-no" title="statement not covered" >await supabase.from('show_organizers').insert([</span>
+      {
+        show_id: showId,
+        user_id: userId,
+        role: 'owner',
+        created_at: new Date().toISOString(),
+      },
+    ]);
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (orgError) <span class="cstat-no" title="statement not covered" >throw orgError;</span></span>
 &nbsp;
@@ -3637,7 +3637,7 @@ export const deleteShow = <span class="cstat-no" title="statement not covered" >
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-23T13:10:49.565Z
+                at 2025-07-24T15:07:42.463Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

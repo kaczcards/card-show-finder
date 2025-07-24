@@ -99,7 +99,7 @@ export const saveFilterPresetsToAsyncStorage = async (
   presets: FilterPreset[]
 ): Promise<void> => {
   try {
-    const presetsToStore = presets.map(preset => ({
+    const presetsToStore = presets.map((preset: FilterPreset) => ({
       ...preset,
       filters: {
         ...preset.filters,
@@ -134,7 +134,7 @@ export const loadFilterPresetsFromAsyncStorage = async (
     const parsedPresets = JSON.parse(storedPresets);
     
     // Convert ISO date strings back to Date objects in filters
-    return parsedPresets.map(preset => ({
+    return parsedPresets.map((preset: FilterPreset) => ({
       ...preset,
       filters: {
         ...preset.filters,
@@ -258,7 +258,7 @@ export const loadFilterPresetsFromSupabase = async (userId: string): Promise<Fil
     console.error('Error loading filter presets from Supabase:', error);
     
     // Fall back to local cache if server request fails
-    return await loadFilterPresetsFromAsyncStorage();
+    return await loadFilterPresetsFromAsyncStorage(userId);
   }
 };
 
@@ -352,7 +352,7 @@ export const deleteFilterPreset = async (presetId: string): Promise<boolean> => 
     }
     
     /**
-     * We don’t know the userId from the caller, so we do a best-effort:
+     * We don't know the userId from the caller, so we do a best-effort:
      * 1. Try to find the preset in *any* cached preset list
      * 2. Use that userId for cache update
      */
@@ -460,7 +460,7 @@ export const syncFilters = async (userId: string): Promise<void> => {
     }
     
     // Get local presets
-    const localPresets = await loadFilterPresetsFromAsyncStorage();
+    const localPresets = await loadFilterPresetsFromAsyncStorage(userId);
     
     // Map server presets to our format
     const mappedServerPresets: FilterPreset[] = serverPresets.map(item => ({

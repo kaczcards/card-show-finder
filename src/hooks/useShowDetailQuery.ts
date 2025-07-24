@@ -3,15 +3,16 @@ import { Alert, Share, Linking } from 'react-native';
 import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { handleSupabaseError } from '../services/errorService';
+import { UserRole } from '../types';
 
-// Define types for better type safety
-type UserRole = 'SHOW_ORGANIZER' | 'MVP_DEALER' | 'DEALER' | 'USER';
+// Define types for better type safety (specific to dealers within this hook)
+type DealerRole = 'SHOW_ORGANIZER' | 'MVP_DEALER' | 'DEALER' | 'USER';
 
 interface Dealer {
   id: string;
   name: string;
   profileImageUrl?: string;
-  role: UserRole;
+  role: DealerRole;
   accountType?: string;
   boothLocation?: string;
   // --- Social Media & Marketplace links (added for Task 8) ------------------
@@ -161,7 +162,7 @@ export const useShowDetailQuery = (showId: string) => {
   const isCurrentUserOrganizer = user?.id === data?.show?.organizer_id;
   
   // Check if the user has a show organizer role
-  const isShowOrganizer = user?.role === 'SHOW_ORGANIZER';
+  const isShowOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
   
   // Check if the show is a favorite
   const checkIfFavorite = async () => {

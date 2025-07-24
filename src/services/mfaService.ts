@@ -60,8 +60,9 @@ export class MFAService {
    * Constructor
    */
   constructor() {
-    // Get the Supabase URL from the client
-    const supabaseUrl = supabase.auth.url() || "";
+    // Get the base Supabase URL from the client (public property).
+    // We cast to `any` to avoid TypeScript complaining about protected members.
+    const supabaseUrl: string = (supabase as any).url ?? "";
     // Replace the auth part with functions
     this.baseUrl = supabaseUrl.replace("/auth/v1", "/functions/v1/mfa");
   }

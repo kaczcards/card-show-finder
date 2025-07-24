@@ -160,6 +160,11 @@ export interface ShowSeries {
    * Total number of reviews the series has received.
    */
   reviewCount?: number;
+  /**
+   * Date of the next scheduled show in this series.
+   * Used for sorting and display purposes when listing unclaimed series.
+   */
+  nextShowDate?: Date | string;
   createdAt: Date | string;
   updatedAt?: Date | string;
 }
@@ -187,6 +192,11 @@ export enum CardCategory {
 // Review-related types
 export interface Review {
   id: string;
+  /**
+   * Foreign key to the individual show being reviewed.
+   * Required by multiple screens (e.g., MyShows, Notifications).
+   */
+  showId: string;
   /**
    * Foreign key to the parent show series being reviewed.
    */
@@ -330,3 +340,28 @@ export type ZipCodeData = {
   state: string;
   coordinates: Coordinates;
 };
+
+/* ------------------------------------------------------------------
+ * Subscription / Billing types
+ * ------------------------------------------------------------------ */
+/**
+ * Definition of a subscription plan available for purchase within the app.
+ * These plans can be dealer-focused or organizer-focused and are surfaced
+ * in the paywall / upgrade screens as well as in {@link SUBSCRIPTION_PLANS}.
+ */
+export interface SubscriptionPlan {
+  /** Unique identifier used by Stripe / billing provider */
+  id: string;
+  /** Display name – shown in UI (e.g. “MVP Dealer”) */
+  name: string;
+  /** Target audience of the plan (‘dealer’ | ‘organizer’) */
+  type: string;
+  /** Billing period (‘monthly’ | ‘annual’) */
+  duration: string;
+  /** Price in USD (e.g. 9.99) */
+  price: number;
+  /** Bullet-point list of features shown in the paywall */
+  features: string[];
+  /** Length of the free-trial period in days */
+  trialDays: number;
+}

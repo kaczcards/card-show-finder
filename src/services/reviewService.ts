@@ -23,6 +23,9 @@ export interface Review {
   comment: string;
   favoriteDealer?: string;
   favoriteDealerReason?: string;
+  /** Optional helper fields populated when a join on the shows table is performed */
+  showTitle?: string;
+  showDate?: string | Date;
   organizerResponse?: {
     comment: string;
     date: Date | string;

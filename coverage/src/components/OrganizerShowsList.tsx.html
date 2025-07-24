@@ -949,25 +949,9 @@
 <a name='L884'></a><a href='#L884'>884</a>
 <a name='L885'></a><a href='#L885'>885</a>
 <a name='L886'></a><a href='#L886'>886</a>
-<a name='L887'></a><a href='#L887'>887</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L887'></a><a href='#L887'>887</a>
+<a name='L888'></a><a href='#L888'>888</a>
+<a name='L889'></a><a href='#L889'>889</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -986,6 +970,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1846,10 +1850,11 @@ import {
   Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { ShowSeries, Show } from '../types';
 import { showSeriesService } from '../services/showSeriesService';
 import { supabase } from '../supabase';
+import type { OrganizerStackParamList } from '../navigation/OrganizerNavigator';
 &nbsp;
 // Default placeholder shown when a show has no custom image
 const placeholderShowImage = <span class="cstat-no" title="statement not covered" >require('../../assets/images/placeholder-show.png');</span>
@@ -1876,7 +1881,8 @@ const OrganizerShowsList = <span class="cstat-no" title="statement not covered" 
   onRefresh,
   isRefreshing = <span class="branch-0 cbranch-no" title="branch not covered" >false</span>
 }, ref) =&gt; {
-  const navigation = <span class="cstat-no" title="statement not covered" >useNavigation();</span>
+  const navigation =
+<span class="cstat-no" title="statement not covered" >    useNavigation&lt;NavigationProp&lt;OrganizerStackParamList&gt;&gt;();</span>
   
   // State variables
   const [loading, setLoading] = <span class="cstat-no" title="statement not covered" >useState&lt;boolean&gt;(true);</span>
@@ -2397,7 +2403,7 @@ const OrganizerShowsList = <span class="cstat-no" title="statement not covered" 
         &lt;/Text&gt;
         &lt;TouchableOpacity 
           style={styles.createShowButton}
-          onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >navigation.navigate('AddShow')}</span>
+          onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >navigation.navigate('AddShow', {})}</span>
         &gt;
           &lt;Text style={styles.createShowText}&gt;Create Your First Show&lt;/Text&gt;
         &lt;/TouchableOpacity&gt;
@@ -2728,7 +2734,7 @@ export default OrganizerShowsList;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-23T13:10:49.804Z
+                at 2025-07-24T15:07:43.077Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

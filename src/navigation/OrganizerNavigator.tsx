@@ -18,6 +18,11 @@ export type OrganizerStackParamList = {
   SeriesDetail: { seriesId: string };
   AddShow: { seriesId?: string };
   EditShow: { showId: string };
+  /**
+   * Screen for sending a pre- or post-show broadcast message.
+   * Optional seriesId when triggered from a Show Series context.
+   */
+  SendBroadcast: { showId: string; seriesId?: string };
 };
 
 const OrganizerStack = createNativeStackNavigator<OrganizerStackParamList>();
@@ -32,14 +37,13 @@ const OrganizerNavigator: React.FC = () => {
       screenOptions={{
         headerStyle: {
           backgroundColor: '#0057B8',
-          elevation: 0,
-          shadowOpacity: 0,
         },
         headerTintColor: '#FFFFFF',
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-        cardStyle: {
+        // Use `contentStyle` for the default background of screens
+        contentStyle: {
           backgroundColor: '#F5F5F5',
         },
       }}

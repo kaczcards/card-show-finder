@@ -295,6 +295,8 @@ export const showSeriesService = {
 
     return data.map(review => ({
       id: review.id,
+      // Ensure the mandatory showId is supplied (empty string fallback)
+      showId: review.show_id || '',
       seriesId: review.series_id,
       userId: review.user_id,
       userName: `${review.profiles.first_name} ${review.profiles.last_name?.charAt(0) || ''}`.trim(),
@@ -453,6 +455,8 @@ export const showSeriesService = {
 
     return {
       id: data.id,
+      // Provide showId for newly-created review (empty string fallback)
+      showId: data.show_id || '',
       seriesId: data.series_id,
       userId: data.user_id,
       userName: `${data.profiles.first_name} ${data.profiles.last_name?.charAt(0) || ''}`.trim(),

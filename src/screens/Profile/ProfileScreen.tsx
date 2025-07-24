@@ -441,7 +441,8 @@ const ProfileScreen: React.FC = () => {
 
   // Navigate to Admin Map screen
   const navigateToAdminMap = () => {
-    navigation.navigate('Admin' as never, { screen: 'AdminMap' } as never);
+    // Navigate directly to the Admin stack; deep linking param removed
+    navigation.navigate('Admin' as never);
   };
   
   // If user is not loaded yet
