@@ -193,6 +193,11 @@ export enum CardCategory {
 export interface Review {
   id: string;
   /**
+   * Foreign key to the individual show being reviewed.
+   * Required by multiple screens (e.g., MyShows, Notifications).
+   */
+  showId: string;
+  /**
    * Foreign key to the parent show series being reviewed.
    */
   seriesId: string;
