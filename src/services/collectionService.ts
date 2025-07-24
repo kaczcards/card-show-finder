@@ -7,6 +7,31 @@ import { storageService } from './storageService'; // Signed-URL helper
  * Handles operations related to user card collections and want lists
  */
 
+/**
+ * Helper – maps a raw Supabase `user_cards` record to our `UserCard`
+ * interface.  If `imageurl` is missing (undefined/null) we return `null`
+ * so the caller can decide how to handle invalid rows.
+ */
+const mapSupabaseRecordToUserCard = async (record: any): Promise<UserCard | null> => {
+  // Ensure we have an image path; without it, the card is considered invalid
+  if (!record?.imageurl) return null;
+
+  // Generate a signed URL; fall back to raw path if something goes wrong
+  const { data: signedUrl } = await storageService.getSignedUrl(record.imageurl);
+
+  return {
+    id: record.id,
+    userId: record.userid,
+    imageUrl: signedUrl || record.imageurl,
+    title: record.title,
+    description: record.description,
+    category: record.category,
+    isCompressed: record.iscompressed,
+    createdAt: record.createdat,
+    updatedAt: record.updatedat,
+  };
+};
+
 // ======== User Card Collection Functions ========
 
 /**
@@ -26,23 +51,9 @@ export const getUserCards = async (userId: string): Promise<{ data: UserCard[] |
     
     // Transform lowercase column names to camelCase & replace image paths with signed URLs
     const transformedData = data
-      ? await Promise.all(
-          data.map(async (card) => {
-            // Generate a signed URL; fall back to raw path if something goes wrong
-            const { data: signedUrl } = await storageService.getSignedUrl(card.imageurl || '');
-            return {
-              id: card.id,
-              userId: card.userid,
-              imageUrl: signedUrl || card.imageurl,
-              title: card.title,
-              description: card.description,
-              category: card.category,
-              isCompressed: card.iscompressed,
-              createdAt: card.createdat,
-              updatedAt: card.updatedat,
-            };
-          })
-        )
+      ? (
+          await Promise.all(data.map((card) => mapSupabaseRecordToUserCard(card)))
+        ).filter(Boolean) as UserCard[] // filter out nulls
       : null;
     
     return { data: transformedData, error: null };

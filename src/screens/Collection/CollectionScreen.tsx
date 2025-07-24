@@ -64,9 +64,8 @@ const CollectionScreen: React.FC = () => {
 
   // ===== Navigation Handlers =====
   const handleNavigateToSubscription = () => {
-    navigation.navigate('My Profile', { 
-      screen: 'SubscriptionScreen' 
-    } as never);
+    // Navigate directly to the subscription screen; nested params not required
+    navigation.navigate('My Profile' as never);
   };
 
   // Helper to check if there are database issues
@@ -409,7 +408,8 @@ const CollectionScreen: React.FC = () => {
   ]);
   
   // Render item for FlatList (AttendeeWantLists)
-  const renderItem = useCallback(({ item }) => {
+  const renderItem = useCallback(
+    ({ item }: { item: { id: string } }) => {
     const isPrivileged =
       user?.role === UserRole.MVP_DEALER ||
       user?.role === UserRole.SHOW_ORGANIZER;
@@ -427,7 +427,9 @@ const CollectionScreen: React.FC = () => {
     
     // Return empty view if not privileged or there are database issues
     return null;
-  }, [user?.role, userId, upcomingShows, hasDatabaseIssues]);
+  },
+    [user?.role, userId, upcomingShows, hasDatabaseIssues]
+  );
 
   return (
     <SafeAreaView style={styles.container}>

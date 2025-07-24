@@ -184,6 +184,7 @@ const MyShowsScreen: React.FC = () => {
       const newReview: Review = {
         id: Date.now().toString(),
         showId: selectedShow.id,
+        seriesId: selectedShow.seriesId ?? undefined, // use undefined if not present
         userId: 'currentUser',
         userName: 'You',
         rating,
@@ -315,6 +316,7 @@ const MyShowsScreen: React.FC = () => {
       {reviewFormVisible && selectedShow && (
         <ReviewForm
           showId={selectedShow.id}
+          seriesId={selectedShow.seriesId ?? undefined}
           onSubmit={submitReview}
           onCancel={() => {
             setReviewFormVisible(false);

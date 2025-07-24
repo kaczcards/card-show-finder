@@ -1128,8 +1128,7 @@ export const claimShow = async (
      * 1. Atomically flag the show as claimed IF not yet claimed
      *    — PostgREST will return 0 rows if the condition fails.
      * ------------------------------------------------------ */
-    const { data: updatedShow, error: updateError, count } =
-      await supabase
+    const { data: updatedShow, error: updateError, count } = await supabase
         .from('shows')
         .update({
           claimed: true,
@@ -1153,17 +1152,14 @@ export const claimShow = async (
     /* --------------------------------------------------------
      * 2. Insert organiser ↔ show relation (ignore duplicates)
      * ------------------------------------------------------ */
-    const { error: orgError } = await supabase
-      .from('show_organizers')
-      .insert(
-        {
-          show_id: showId,
-          user_id: userId,
-          role: 'owner',
-          created_at: new Date().toISOString(),
-        },
-        { ignoreDuplicates: true }
-      );
+    const { error: orgError } = await supabase.from('show_organizers').insert([
+      {
+        show_id: showId,
+        user_id: userId,
+        role: 'owner',
+        created_at: new Date().toISOString(),
+      },
+    ]);
 
     if (orgError) throw orgError;
 

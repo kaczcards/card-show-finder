@@ -73,12 +73,20 @@ class StorageService {
       // Set default options
       const expiresIn = options.expiresIn || this.defaultExpiresIn;
       
+      // Create a transform object without the format property
+      const transform = options.transform ? {
+        width: options.transform.width,
+        height: options.transform.height,
+        quality: options.transform.quality
+        // format is omitted as it's not compatible with TransformOptions
+      } : undefined;
+      
       // Generate signed URL
       const { data, error } = await supabase.storage
         .from(this.defaultBucket)
         .createSignedUrl(path, expiresIn, {
           download: options.download || false,
-          transform: options.transform
+          transform
         });
       
       if (error) {
@@ -409,7 +417,7 @@ class StorageService {
     // Use atob when available (modern React-Native & Expo provide it).
     // For environments without atob (very old RN versions), perform
     // a manual base-64 decoding.
-    const binaryString = globalThis.atob
+    const binaryString = typeof globalThis.atob === 'function'
       ? globalThis.atob(base64)
       : (() => {
           const chars =

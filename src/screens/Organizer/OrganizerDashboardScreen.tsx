@@ -94,7 +94,8 @@ const OrganizerDashboardScreen: React.FC = () => {
       });
       
       // Get all shows in these series
-      let allShows = [];
+      // Explicitly type to satisfy TS
+      let allShows: any[] = [];
       let upcomingCount = 0;
       const now = new Date();
       
@@ -502,11 +503,11 @@ const OrganizerDashboardScreen: React.FC = () => {
         contentContainerStyle={styles.sectionListContent}
       />
 
-      {/* Floating “Add Show” button – visible only on the My Shows tab */}
+      {/* Floating "Add Show" button – visible only on the My Shows tab */}
       {activeTab === 'shows' && (
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => navigation.navigate('AddShow')}
+          onPress={() => navigation.navigate('AddShow' as never)}
         >
           <Ionicons name="add" size={20} color="#FFFFFF" style={styles.fabIcon} />
           <Text style={styles.fabText}>Add Show</Text>

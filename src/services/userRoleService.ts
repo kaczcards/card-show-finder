@@ -48,6 +48,15 @@ export enum Action {
   SEND_DM = 'SEND_DM',
   RECEIVE_DM = 'RECEIVE_DM',
   REPLY_DM = 'REPLY_DM',
+  /**
+   * Generic, non-UI message actions used elsewhere in the codebase.
+   * These are aliases for the more specific DM actions above but are
+   * referenced by helper utilities (e.g. `canUserSendMessage`).
+   * Keeping both spellings prevents brittle runtime errors when new
+   * modules are introduced that rely on the generic names.
+   */
+  SEND_MESSAGE = 'SEND_MESSAGE',
+  RECEIVE_MESSAGE = 'RECEIVE_MESSAGE',
   SEND_BROADCAST = 'SEND_BROADCAST',
   MANAGE_SHOWS = 'MANAGE_SHOWS', // create / edit show listings
   DEALER_PARTICIPATION = 'DEALER_PARTICIPATION',
