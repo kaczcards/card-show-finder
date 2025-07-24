@@ -128,7 +128,8 @@ export const addUserCard = async (
     const transformedData = data ? {
       id: data.id,
       userId: data.userid,
-      imageUrl: signedUrl,
+      // Ensure we always return a string for imageUrl to satisfy `UserCard`
+      imageUrl: signedUrl || '',
       title: data.title,
       description: data.description,
       category: data.category,
@@ -265,7 +266,8 @@ export const updateUserCard = async (
     const transformedData = data ? {
       id: data.id,
       userId: data.userid,
-      imageUrl: signedUrl,
+      // Ensure a non-undefined string is always returned
+      imageUrl: signedUrl || '',
       title: data.title,
       description: data.description,
       category: data.category,
