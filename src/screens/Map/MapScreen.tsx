@@ -231,7 +231,7 @@ const MapScreen = () => {
       .map((show) => (
         <Marker
           key={show.id}
-          coordinate={show.coordinates}
+          coordinate={show.coordinates!} // non-null assertion is safe due to prior filter
           title={show.title}
           description={`${formatDate(show.startDate)} • ${
             isEntryFree(show.entryFee) ? 'Free' : `$${show.entryFee}`

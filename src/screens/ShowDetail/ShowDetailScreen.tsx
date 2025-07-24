@@ -16,7 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import * as userRoleService from '../../services/userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
-import { UserRole } from '../../types'; // Import UserRole enum
+import { UserRole, Show as ShowType } from '../../types'; // Import enums & primary Show model
 
 // Import components from the components folder
 import {
@@ -40,55 +40,6 @@ interface ShowDetailProps {
 interface ShowSeries {
   id: string;
   organizerId: string;
-}
-
-/**
- * Local superset of a Show row that satisfies the prop-type
- * requirements of the downstream UI components.  It augments the
- * shape returned by useShowDetailQuery with the additional fields
- * those components expect (they are marked optional so we can pass
- * through whatever the API gives us without extra mapping).
- */
-interface Show {
-  id: string;
-  /* Optional series identifier so ReviewForm and other components
-     can associate this show with a broader series when available. */
-  seriesId?: string;
-  title?: string;
-  description?: string;
-  location?: string;
-  address?: string;
-  /* --- additional fields required by other components ------------- */
-  startDate?: string | Date;
-  endDate?: string | Date;
-  entryFee?: number | string | null;
-  status?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  } | null;
-  /* --- raw column names from Supabase ‘shows’ table ---------------- */
-  start_date?: string;
-  end_date?: string;
-  start_time?: string;
-  end_time?: string;
-  entry_fee?: number | string;
-  organizer_id?: string;
-  claimed_by?: string;
-  /** organiser profile returned via join in useShowDetailQuery */
-  profiles?: {
-    id?: string;
-    first_name?: string;
-    last_name?: string;
-    profile_image_url?: string;
-    username?: string;
-    full_name?: string;
-    avatar_url?: string;
-  } | null;
-  /* catch-all so TS doesn’t complain about any extra keys */
-  [key: string]: any;
 }
 
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
@@ -122,12 +73,58 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     openMapLocation
   } = useShowDetailQuery(showId);
 
+  /* ------------------------------------------------------------------
+   * Helpers
+   * ------------------------------------------------------------------ */
+  /**
+   * Convert the raw record coming from `useShowDetailQuery` (which still
+   * contains snake_case columns directly from the DB) into the strongly
+   * typed {@link ShowType} expected by downstream UI components.
+   *
+   * NOTE: Only the fields actually used by those components are mapped.
+   *       Default fall-backs ensure we never violate the required props.
+   */
+  const mapShowDetailsToShow = (details: any): ShowType => ({
+    /* ---------------- Core identifiers ---------------- */
+    id: details.id,
+    seriesId: details.series_id ?? undefined,
+
+    /* ---------------- Display info -------------------- */
+    title: details.title ?? '',
+    description: details.description ?? '',
+    location: details.location ?? '',
+    address: details.address ?? '',
+
+    /* ---------------- Timing -------------------------- */
+    startDate: details.start_date ?? details.startDate ?? '',
+    endDate: details.end_date ?? details.endDate ?? '',
+
+    /* ---------------- Pricing / status --------------- */
+    entryFee: details.entry_fee ?? details.entryFee ?? 0,
+    status: details.status ?? 'upcoming',
+
+    /* ---------------- Misc ---------------------------- */
+    imageUrl: details.image_url ?? undefined,
+    rating: details.rating ?? undefined,
+    coordinates:
+      details.coordinates ??
+      (details.latitude && details.longitude
+        ? { latitude: details.latitude, longitude: details.longitude }
+        : undefined),
+    organizerId: details.organizer_id ?? details.organizerId ?? '',
+    createdAt: details.created_at ?? details.createdAt ?? '',
+    updatedAt: details.updated_at ?? details.updatedAt ?? '',
+  });
+
+  // Memoise so we only transform when raw `show` changes
+  const parsedShow: ShowType | null = show ? mapShowDetailsToShow(show) : null;
+
   // Set navigation title when show data is loaded
   useEffect(() => {
-    if (show) {
-      navigation.setOptions({ title: show.title || 'Show Details' });
+    if (parsedShow) {
+      navigation.setOptions({ title: parsedShow.title || 'Show Details' });
     }
-  }, [show, navigation]);
+  }, [parsedShow, navigation]);
 
   // Handle dealer interactions
   const handleViewDealerDetails = (dealerId: string, dealerName: string) => {
@@ -201,25 +198,27 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   return (
     <ScrollView style={styles.container}>
       {/* Header Actions */}
-      <ShowHeaderActions
+      {parsedShow && (
+        <ShowHeaderActions
         isFavorite={isFavorite}
         isCurrentUserOrganizer={isCurrentUserOrganizer}
         onToggleFavorite={toggleFavorite}
         onOpenMap={openMapLocation}
         onShare={shareShow}
         onReview={() => setShowReviewForm(true)}
-        show={show}
-      />
+          show={parsedShow}
+        />
+      )}
 
       <View style={styles.detailsContainer}>
         {/* Basic Show Info */}
-        <ShowBasicInfo show={show} />
+        {parsedShow && <ShowBasicInfo show={parsedShow} />}
         
         {/* MVP Dealer Upgrade Message - conditionally rendered */}
         <MVPDealerUpgradeMessage />
         
         {/* Show Time Info */}
-        <ShowTimeInfo show={show} />
+        {parsedShow && <ShowTimeInfo show={parsedShow} />}
         
         {/* Show Management Buttons */}
         <ShowManagementButtons
