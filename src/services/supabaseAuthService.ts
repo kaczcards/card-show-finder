@@ -158,7 +158,7 @@ export const signUp = async (
       accountType: 'collector',
       subscriptionStatus: 'none',
       subscriptionExpiry: null,
-      paymentStatus: 'unpaid',
+      paymentStatus: 'none',
     };
 
     return user;
@@ -251,7 +251,7 @@ export const registerUser = async (
       subscriptionExpiry: null,
       favoriteShows: [],
       attendedShows: [],
-      paymentStatus: 'unpaid',
+      paymentStatus: 'none',
     };
 
     return user;
