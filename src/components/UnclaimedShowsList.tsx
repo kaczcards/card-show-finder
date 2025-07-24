@@ -16,6 +16,13 @@ import { showSeriesService } from '../services/showSeriesService';
 import { claimShow } from '../services/organizerService';
 import { useUnclaimedShows, UnclaimedItem } from '../hooks/useUnclaimedShows';
 
+// Define the extended ShowSeries type with additional properties
+interface ShowSeriesExtended extends ShowSeries {
+  nextShowDate?: string | Date;
+  showCount?: number;
+  upcomingCount: number;
+}
+
 // Default placeholder image
 const placeholderShowImage = require('../../assets/images/placeholder-show.png');
 
@@ -85,7 +92,15 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         result = await claimShow(itemId, organizerId);
       }
       
-      if ((result.success === true) || (result.error === null)) {
+      // Type guard to check if the result has an error property
+      if ('error' in result && result.error !== null) {
+        // Error
+        Alert.alert(
+          'Claim Failed',
+          result.error || `Failed to claim this ${item.type === 'series' ? 'series' : 'show'}.`,
+          [{ text: 'OK' }]
+        );
+      } else {
         // Success - refresh the list to remove the claimed item
         refreshUnclaimedShows();
         
@@ -100,13 +115,6 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         if (onClaimSuccess) {
           onClaimSuccess();
         }
-      } else {
-        // Error
-        Alert.alert(
-          'Claim Failed',
-          result.error || `Failed to claim this ${item.type === 'series' ? 'series' : 'show'}.`,
-          [{ text: 'OK' }]
-        );
       }
     } catch (err: any) {
       console.error('Error claiming item:', err);
@@ -133,7 +141,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   };
   
   // Render a series item
-  const renderSeriesItem = (series: ShowSeries) => {
+  const renderSeriesItem = (series: ShowSeriesExtended) => {
     if (!series) return null; // Safety-net: avoid rendering invalid data
     const isClaimingInProgress = claimingInProgress[series.id] || false;
     
@@ -259,7 +267,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
     if (!item || !item.data) return null;
     
     if (item.type === 'series') {
-      return renderSeriesItem(item.data as ShowSeries);
+      return renderSeriesItem(item.data as ShowSeriesExtended);
     }
     
     if (item.type === 'show') {

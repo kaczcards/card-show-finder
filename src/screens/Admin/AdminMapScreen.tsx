@@ -262,7 +262,7 @@ const AdminMapScreen: React.FC = () => {
         <MapShowCluster
           ref={mapRef}
           shows={shows}
-          onShowPress={handleShowPress}
+          onCalloutPress={handleShowPress}
           region={mapRegion}
           showsUserLocation={false}
           loadingEnabled={true}

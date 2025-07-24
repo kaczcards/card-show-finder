@@ -125,7 +125,6 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
           {(props) => (
             <HomeScreen
               {...props}
-              customFilters={filters}
               onFilterChange={handleFilterChange}
               onShowPress={handleShowPress}
               userLocation={userLocation}
@@ -133,15 +132,7 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
           )}
         </Tab.Screen>
         <Tab.Screen name="Map">
-          {(props) => (
-            <MapScreen
-              {...props}
-              customFilters={filters}
-              onFilterChange={handleFilterChange}
-              onShowPress={handleShowPress}
-              initialUserLocation={userLocation}
-            />
-          )}
+          {() => <MapScreen />}
         </Tab.Screen>
       </Tab.Navigator>
     </View>

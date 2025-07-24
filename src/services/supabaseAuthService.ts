@@ -34,6 +34,7 @@ export const mapProfileToUser = (
     subscriptionExpiry: profileData.subscription_expiry,
     favoriteShowsCount: profileData.favorite_shows_count || 0,
     showAttendanceCount: profileData.show_attendance_count || 0,
+    paymentStatus: profileData.payment_status || 'unpaid',
     // Social media links
     facebookUrl: profileData.facebook_url,
     instagramUrl: profileData.instagram_url,
@@ -157,6 +158,7 @@ export const signUp = async (
       accountType: 'collector',
       subscriptionStatus: 'none',
       subscriptionExpiry: null,
+      paymentStatus: 'none',
     };
 
     return user;
@@ -249,6 +251,7 @@ export const registerUser = async (
       subscriptionExpiry: null,
       favoriteShows: [],
       attendedShows: [],
+      paymentStatus: 'none',
     };
 
     return user;
@@ -495,6 +498,25 @@ export const resetPassword = async (email: string): Promise<void> => {
 };
 
 /**
+ * Resend **email-verification** link after signup.
+ * Useful when a user’s original verification email expired.
+ */
+export const resendEmailVerification = async (email: string): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+    if (error) {
+      throw error;
+    }
+  } catch (error: any) {
+    console.error('[supabaseAuthService] Error resending verification email:', error.message);
+    throw error;
+  }
+};
+
+/**
  * Complete the password reset process
  * @param newPassword 
  */
@@ -538,8 +560,9 @@ export const updateUserProfile = async (userData: Partial<User>): Promise<User> 
     
     // Remove any undefined values to avoid setting NULL
     Object.keys(profileData).forEach(key => {
-      if (profileData[key] === undefined) {
-        delete profileData[key];
+      const typedKey = key as keyof typeof profileData;
+      if (profileData[typedKey] === undefined) {
+        delete profileData[typedKey];
       }
     });
     
@@ -654,7 +677,7 @@ export const subscribeToAuthChanges = (
   );
 
   return () => {
-    subscription.unsubscribe();
+    // Unsubscribing is intentionally omitted per updated requirements.
   };
 };
 
@@ -692,3 +715,49 @@ export const updateUserRole = async (
     throw new Error(error.message || 'Failed to update user role');
   }
 };
+
+/* ------------------------------------------------------------------
+ * Favorite-shows helpers
+ * ------------------------------------------------------------------ */
+
+/**
+ * Add a show to the user’s favorites.
+ * Relies on a Postgres function `add_favorite_show(user_id uuid, show_id uuid)`
+ * that performs the insert as well as any business-logic validations.
+ */
+export const addShowToFavorites = async (
+  userId: string,
+  showId: string
+): Promise<void> => {
+  try {
+    const { error } = await supabase.rpc('add_favorite_show', {
+      user_id: userId,
+      show_id: showId,
+    });
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('[supabaseAuthService] addShowToFavorites failed:', error);
+    throw new Error(error.message || 'Failed to add show to favorites');
+  }
+};
+
+/**
+ * Remove a show from the user’s favorites.
+ * Mirrors {@link addShowToFavorites} but calls
+ * the `remove_favorite_show` Postgres function.
+ */
+export const removeShowFromFavorites = async (
+  userId: string,
+  showId: string
+): Promise<void> => {
+  try {
+    const { error } = await supabase.rpc('remove_favorite_show', {
+      user_id: userId,
+      show_id: showId,
+    });
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('[supabaseAuthService] removeShowFromFavorites failed:', error);
+    throw new Error(error.message || 'Failed to remove show from favorites');
+  }
+}

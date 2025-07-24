@@ -1,5 +1,9 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { getPaginatedShows, PaginatedShowsParams } from '../services/showService';
+import {
+  getPaginatedShows,
+  PaginatedShowsParams,
+  PaginatedShowsResult,
+} from '../services/showService';
 import { Show, ShowFilters, Coordinates } from '../types';
 
 /**
@@ -140,7 +144,7 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
     isError,
     error: queryError,
     refetch,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<PaginatedShowsResult, Error>({
     queryKey: ['shows', 'infinite', { 
       coordinates: effectiveCoordinates, 
       radius, 
@@ -151,8 +155,11 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
       categories, 
       pageSize 
     }],
+    // Start pagination at page 1
+    initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
       // Prepare parameters for the paginated shows query
+      const page = Number(pageParam) || 1;
       const queryParams: PaginatedShowsParams = {
         latitude: effectiveCoordinates.latitude,
         longitude: effectiveCoordinates.longitude,
@@ -163,7 +170,7 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
         features,
         categories,
         pageSize,
-        page: pageParam,
+        page,
       };
       
       // Call the service function to get paginated shows
@@ -176,7 +183,7 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
       
       return result;
     },
-    getNextPageParam: (lastPage) => {
+    getNextPageParam: (lastPage: PaginatedShowsResult) => {
       // If we've reached the last page, return undefined (stops infinite loading)
       if (lastPage.pagination.currentPage >= lastPage.pagination.totalPages) {
         return undefined;
@@ -196,7 +203,8 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
   };
   
   // Flatten the pages of shows into a single array
-  const flattenedShows = data?.pages.flatMap(page => page.data) || [];
+  const flattenedShows =
+    data?.pages.flatMap((page: PaginatedShowsResult) => page.data) || [];
   
   // Get the total count from the first page (or 0 if no data)
   const totalCount = data?.pages[0]?.pagination.totalCount || 0;

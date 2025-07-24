@@ -73,12 +73,20 @@ class StorageService {
       // Set default options
       const expiresIn = options.expiresIn || this.defaultExpiresIn;
       
+      // Create a transform object without the format property
+      const transform = options.transform ? {
+        width: options.transform.width,
+        height: options.transform.height,
+        quality: options.transform.quality
+        // format is omitted as it's not compatible with TransformOptions
+      } : undefined;
+      
       // Generate signed URL
       const { data, error } = await supabase.storage
         .from(this.defaultBucket)
         .createSignedUrl(path, expiresIn, {
           download: options.download || false,
-          transform: options.transform
+          transform
         });
       
       if (error) {
@@ -132,7 +140,14 @@ class StorageService {
         if (!contentType) {
           contentType = file.split(';')[0].split(':')[1];
         }
-      } else if (file instanceof Blob || file instanceof File) {
+      // In React Native (and therefore in Expo) the global `File`
+      // constructor does **not** exist.  Checking for it causes a
+      // TypeScript error (`TS2358: The left-hand side of an 'instanceof'
+      // expression must be of type 'any', an object type or a type
+      // parameter`).  A `Blob` check is sufficient for RN/Expo because
+      // any binary payload (e.g. from `expo-image-picker`) is represented
+      // as a `Blob`.
+      } else if (file instanceof Blob) {
         fileData = file;
       } else if (typeof file === 'string') {
         // Assume it's already base64 encoded without data URL prefix
@@ -409,7 +424,7 @@ class StorageService {
     // Use atob when available (modern React-Native & Expo provide it).
     // For environments without atob (very old RN versions), perform
     // a manual base-64 decoding.
-    const binaryString = globalThis.atob
+    const binaryString = typeof globalThis.atob === 'function'
       ? globalThis.atob(base64)
       : (() => {
           const chars =

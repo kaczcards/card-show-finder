@@ -38,7 +38,9 @@ export const useUnclaimedShows = (organizerId: string) => {
       try {
         console.log('[useUnclaimedShows] Attempting to fetch series…');
         unclaimedSeries = await showSeriesService.getAllShowSeries({
-          organizerId: null
+          // Explicitly pass `undefined` so the RPC receives a SQL NULL,
+          // avoiding the `string | undefined` type error.
+          organizerId: undefined
         });
         console.log('[useUnclaimedShows] Successfully fetched series:', unclaimedSeries);
       } catch (seriesErr) {
@@ -60,8 +62,10 @@ export const useUnclaimedShows = (organizerId: string) => {
 
       // Combine and map the two lists
       const combinedItems = [
-        ...unclaimedSeries.map(series => ({ type: 'series', data: series })),
-        ...unclaimedStandaloneShows.map(show => ({ type: 'show', data: show }))
+        // Explicit type assertions ensure the literal unions are preserved,
+        // preventing the `'string' is not assignable to '\"series\" | \"show\"'` error.
+        ...unclaimedSeries.map(series => ({ type: 'series' as const, data: series })),
+        ...unclaimedStandaloneShows.map(show => ({ type: 'show' as const, data: show }))
       ];
       
       // Sort by date (most recent first)

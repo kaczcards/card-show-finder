@@ -85,11 +85,22 @@ export const createPaymentSheetForSubscription = async (
 
   try {
     // 1. Create a payment intent on the server (via Supabase Edge Function)
+
+    // -----------------------------------------------------------
+    // Retrieve the current access-token from Supabase auth session
+    // -----------------------------------------------------------
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const accessToken = session?.access_token;
+
     const response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.auth.getSession()?.data.session?.access_token}`,
+        // Pass the access token only if we actually have one
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
       body: JSON.stringify({
         amount: plan.price * 100, // Stripe expects amount in cents

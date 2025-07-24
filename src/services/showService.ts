@@ -116,8 +116,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
      * Derive **normalized** filter values so every query path
      * (RPCs & basic SELECT) uses the exact same parameters.
      * --------------------------------------------------------- */
-    const toIso = (d: Date | string): string =>
-      d instanceof Date ? d.toISOString() : d;
+    const toIso = (d: Date | string | null): string =>
+      d instanceof Date ? d.toISOString() : d || '';
 
     // Default date range: today → +30 days (ISO strings)
     const startDate = toIso(
@@ -564,8 +564,8 @@ export const getPaginatedShows = async (
       page = 1,
     } = params;
 
-    const toIso = (d: Date | string): string =>
-      d instanceof Date ? d.toISOString() : d;
+    const toIso = (d: Date | string | null): string =>
+      d instanceof Date ? d.toISOString() : d || '';
     
     console.debug('[showService] getPaginatedShows called with params:', {
       latitude, longitude, radius, startDate, endDate, maxEntryFee, 
@@ -701,8 +701,8 @@ const getFallbackPaginatedShows = async (
       page = 1,
     } = params;
 
-    const toIso = (d: Date | string): string =>
-      d instanceof Date ? d.toISOString() : d;
+    const toIso = (d: Date | string | null): string =>
+      d instanceof Date ? d.toISOString() : d || '';
     
     console.debug('[showService] getFallbackPaginatedShows executing with params:', {
       latitude, longitude, radius, 
@@ -861,8 +861,8 @@ const getAllActiveShowsFallback = async (
 
     console.warn('[showService] Using emergency getAllActiveShowsFallback without coordinate filtering');
     
-    const toIso = (d: Date | string): string =>
-      d instanceof Date ? d.toISOString() : d;
+    const toIso = (d: Date | string | null): string =>
+      d instanceof Date ? d.toISOString() : d || '';
     
     // Simple query - just get active shows
     let dataQuery = supabase
@@ -878,8 +878,12 @@ const getAllActiveShowsFallback = async (
     dataQuery = dataQuery.gte('start_date', toIso(startDate) as any);
     dataQuery = dataQuery.lte('start_date', toIso(endDate) as any);
     
-    // Get total count first
-    const { count, error: countError } = await dataQuery.count();
+    // Get total count first using the recommended Supabase pattern
+    const { count, error: countError } = await supabase
+      .from('shows')
+      .select('*', { count: 'exact', head: true })
+      .gte('start_date', toIso(startDate) as any)
+      .lte('end_date', toIso(endDate) as any);
     
     if (countError) {
       console.error('[showService] Error getting count in emergency fallback:', countError);
@@ -1128,8 +1132,7 @@ export const claimShow = async (
      * 1. Atomically flag the show as claimed IF not yet claimed
      *    — PostgREST will return 0 rows if the condition fails.
      * ------------------------------------------------------ */
-    const { data: updatedShow, error: updateError, count } =
-      await supabase
+    const { data: updatedShow, error: updateError, count } = await supabase
         .from('shows')
         .update({
           claimed: true,
@@ -1138,12 +1141,12 @@ export const claimShow = async (
         })
         .eq('id', showId)
         .or('claimed.is.null,claimed.eq.false') // only update unclaimed
-        .select('*', { count: 'exact' })
+        .select('*')
         .single();
 
     if (updateError) throw updateError;
 
-    if (!updatedShow || count === 0) {
+    if (!updatedShow) {
       return {
         success: false,
         message: 'Show has already been claimed by another organiser.',
@@ -1153,17 +1156,14 @@ export const claimShow = async (
     /* --------------------------------------------------------
      * 2. Insert organiser ↔ show relation (ignore duplicates)
      * ------------------------------------------------------ */
-    const { error: orgError } = await supabase
-      .from('show_organizers')
-      .insert(
-        {
-          show_id: showId,
-          user_id: userId,
-          role: 'owner',
-          created_at: new Date().toISOString(),
-        },
-        { ignoreDuplicates: true }
-      );
+    const { error: orgError } = await supabase.from('show_organizers').insert([
+      {
+        show_id: showId,
+        user_id: userId,
+        role: 'owner',
+        created_at: new Date().toISOString(),
+      },
+    ]);
 
     if (orgError) throw orgError;
 

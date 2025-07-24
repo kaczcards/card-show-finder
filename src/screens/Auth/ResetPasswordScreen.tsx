@@ -27,7 +27,8 @@ type AuthStackParamList = {
   ResetPassword: { token?: string };
 };
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
+// Exporting Props so that navigators and other components can import it
+export type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
 const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   // State for form fields
@@ -131,7 +132,11 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
     setDebugInfo('Component mounted');
     
     // Get token from route params if available
-    const routeToken = route.params?.token;
+    let routeToken: string | undefined;
+    if (route.params) {
+      routeToken = route.params.token;
+    }
+
     if (routeToken) {
       console.log('[ResetPasswordScreen] Token found in route params');
       setToken(routeToken);
@@ -225,7 +230,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
       console.log('[ResetPasswordScreen] Attempting to update password with token');
 
       // Update the user's password using the helper in supabaseAuthService
-      await updatePassword(password, token);
+      await updatePassword(password);
 
       console.log('[ResetPasswordScreen] Password updated successfully');
       

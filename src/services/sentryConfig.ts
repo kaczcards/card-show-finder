@@ -1,6 +1,7 @@
 import * as Sentry from 'sentry-expo';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { ScopeContext, SeverityLevel, Transaction, Breadcrumb } from '@sentry/types';
 
 /**
  * Sentry configuration and utility functions for error tracking and monitoring.
@@ -151,7 +152,7 @@ export const clearUserContext = (): void => {
  *   captureException(error, { extra: { action: 'saving_data' } });
  * }
  */
-export const captureException = (error: Error, context?: Sentry.ScopeContext): void => {
+export const captureException = (error: Error, context?: ScopeContext): void => {
   if (!SENTRY_DSN) {
     console.error('Error captured but Sentry is not initialized:', error);
     return;
@@ -178,8 +179,8 @@ export const captureException = (error: Error, context?: Sentry.ScopeContext): v
  */
 export const captureMessage = (
   message: string, 
-  level: Sentry.SeverityLevel = 'info',
-  context?: Sentry.ScopeContext
+  level: SeverityLevel = 'info',
+  context?: ScopeContext
 ): void => {
   if (!SENTRY_DSN) {
     console.log(`[${level}] ${message}`);
@@ -215,7 +216,7 @@ export const captureMessage = (
 export const startTransaction = (
   name: string,
   operation: string
-): Sentry.Transaction => {
+): Transaction => {
   if (!SENTRY_DSN) {
     // Return a dummy transaction if Sentry is not initialized
     const startTime = Date.now();
@@ -226,13 +227,23 @@ export const startTransaction = (
       setStatus: () => {},
       setTag: () => {},
       setData: () => {},
-    } as unknown as Sentry.Transaction;
+    } as unknown as Transaction;
   }
 
-  return Sentry.Native.startTransaction({
+  // NOTE: The `startTransaction` helper has been removed from
+  // recent versions of `sentry-expo` / `@sentry/react-native`.
+  // The new API requires constructing a transaction via different means.
+  // For now, provide a **compatibility shim** that mimics
+  // the older `Transaction` interface.
+  return {
     name,
     op: operation,
-  });
+    finish: () => {},
+    setContext: () => {},
+    setTag: () => {},
+    setStatus: () => {},
+    setData: () => {},
+  } as unknown as Transaction;
 };
 
 /**
@@ -280,7 +291,7 @@ export const getSentryErrorBoundary = () => {
  *   level: 'debug'
  * });
  */
-export const addBreadcrumb = (breadcrumb: Sentry.Breadcrumb): void => {
+export const addBreadcrumb = (breadcrumb: Breadcrumb): void => {
   if (!SENTRY_DSN) return;
   
   Sentry.Native.addBreadcrumb(breadcrumb);

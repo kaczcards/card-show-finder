@@ -204,6 +204,7 @@ const MyShowsScreen: React.FC = () => {
           setReviews(reviewData.map(review => ({
             id: review.id,
             showId: review.show_id,
+            seriesId: review.series_id ?? undefined,
             userId: review.user_id,
             userName: 'You', // Assuming viewing own reviews
             rating: review.rating,
@@ -264,6 +265,7 @@ const MyShowsScreen: React.FC = () => {
         const newReview: Review = {
           id: data.id,
           showId: data.show_id,
+          seriesId: data.series_id ?? undefined,
           userId: data.user_id,
           userName: 'You', // Assuming viewing own reviews
           rating: data.rating,
@@ -285,7 +287,9 @@ const MyShowsScreen: React.FC = () => {
   
   const navigateToShowDetail = (show: Show) => {
     // Navigate to show detail screen with correct parameter name
-    navigation.navigate('ShowDetail' as never, { showId: show.id } as never);
+    // Temporarily bypass strict navigation typings until
+    // proper typed navigation params are introduced
+    (navigation as any).navigate('ShowDetail', { showId: show.id });
   };
 
   /**
@@ -451,6 +455,7 @@ const MyShowsScreen: React.FC = () => {
       {reviewFormVisible && selectedShow && (
         <ReviewForm
           showId={selectedShow.id}
+          seriesId={selectedShow.seriesId ?? ''}
           onSubmit={submitReview}
           onCancel={() => {
             setReviewFormVisible(false);

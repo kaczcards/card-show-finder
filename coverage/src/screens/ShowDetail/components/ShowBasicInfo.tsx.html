@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/48</span>
+                <span class='fraction'>0/42</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/45</span>
+                <span class='fraction'>0/39</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/46</span>
+                <span class='fraction'>0/40</span>
             </div>
         
             
@@ -245,16 +245,7 @@
 <a name='L180'></a><a href='#L180'>180</a>
 <a name='L181'></a><a href='#L181'>181</a>
 <a name='L182'></a><a href='#L182'>182</a>
-<a name='L183'></a><a href='#L183'>183</a>
-<a name='L184'></a><a href='#L184'>184</a>
-<a name='L185'></a><a href='#L185'>185</a>
-<a name='L186'></a><a href='#L186'>186</a>
-<a name='L187'></a><a href='#L187'>187</a>
-<a name='L188'></a><a href='#L188'>188</a>
-<a name='L189'></a><a href='#L189'>189</a>
-<a name='L190'></a><a href='#L190'>190</a>
-<a name='L191'></a><a href='#L191'>191</a>
-<a name='L192'></a><a href='#L192'>192</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L183'></a><a href='#L183'>183</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -286,22 +277,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -337,6 +318,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -476,28 +458,18 @@ const InfoRow: React.FC&lt;InfoRowProps&gt; = <span class="cstat-no" title="stat
   const renderContent = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     // If children are provided, handle them based on type
 <span class="cstat-no" title="statement not covered" >    if (children !== undefined &amp;&amp; children !== null) {</span>
-      // If children is a string or number, wrap in a Text component
-<span class="cstat-no" title="statement not covered" >      if (typeof children === 'string' || typeof children === 'number') {</span>
-<span class="cstat-no" title="statement not covered" >        return &lt;Text style={styles.infoText}&gt;{children.toString()}&lt;/Text&gt;;</span>
-      }
-      
-      // If children is a valid React element, return it directly
-<span class="cstat-no" title="statement not covered" >      if (React.isValidElement(children)) {</span>
-<span class="cstat-no" title="statement not covered" >        return children;</span>
-      }
-      
-      // For any other case, wrap in a fragment and ensure it's safe
-<span class="cstat-no" title="statement not covered" >      try {</span>
-<span class="cstat-no" title="statement not covered" >        return &lt;&gt;{children}&lt;/&gt;;</span>
-      } catch (e) {
-<span class="cstat-no" title="statement not covered" >        console.error('Error rendering children:', e);</span>
-<span class="cstat-no" title="statement not covered" >        return &lt;Text style={styles.infoText}&gt;Error displaying content&lt;/Text&gt;;</span>
-      }
+      /* ------------------------------------------------------------------
+       * Always ensure `children` is wrapped in a fragment so the return
+       * value is guaranteed to be a valid React node regardless of the
+       * type passed in. This covers strings, numbers, elements, arrays,
+       * and other renderable primitives without additional branching.
+       * ----------------------------------------------------------------*/
+<span class="cstat-no" title="statement not covered" >      return &lt;&gt;{children}&lt;/&gt;;</span>
     }
     
     // If no children but text is provided, render it safely
 <span class="cstat-no" title="statement not covered" >    if (text !== undefined &amp;&amp; text !== null) {</span>
-<span class="cstat-no" title="statement not covered" >      return &lt;Text style={styles.infoText}&gt;{text.toString()}&lt;/Text&gt;;</span>
+<span class="cstat-no" title="statement not covered" >      return &lt;Text style={styles.infoText}&gt;{text}&lt;/Text&gt;;</span>
     }
     
     // Fallback for no content
@@ -529,8 +501,9 @@ const ShowBasicInfo: React.FC&lt;ShowBasicInfoProps&gt; = <span class="cstat-no"
   
   // Safe getters for show properties with fallbacks
   const getTitle = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (typeof safeShow.title === 'string') <span class="cstat-no" title="statement not covered" >return safeShow.title;</span></span>
-<span class="cstat-no" title="statement not covered" >    if (typeof safeShow.title === 'number') <span class="cstat-no" title="statement not covered" >return safeShow.title.toString();</span></span>
+    const title = <span class="cstat-no" title="statement not covered" >safeShow.title;</span>
+<span class="cstat-no" title="statement not covered" >    if (typeof title === 'string') <span class="cstat-no" title="statement not covered" >return title;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (typeof title === 'number') <span class="cstat-no" title="statement not covered" >return String(title);</span></span>
 <span class="cstat-no" title="statement not covered" >    return 'Untitled Show';</span>
   };
   
@@ -643,7 +616,7 @@ export default ShowBasicInfo;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-23T13:10:49.804Z
+                at 2025-07-24T15:07:43.077Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

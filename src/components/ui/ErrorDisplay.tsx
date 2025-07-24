@@ -52,47 +52,61 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
 }) => {
   // Get theme from context
   const { theme } = useTheme();
-  
-  // Get error styles based on type
-  const errorStyle = type === 'fullScreen'
-    ? theme.components.errorStates.fullScreen
-    : theme.components.errorStates.inline;
-  
-  // For inline errors
-  if (type === 'inline') {
+
+  /***************************************************
+   * Split rendering into two separate components so
+   * that TypeScript can correctly infer the shape of
+   * the theme styles we are accessing.
+   **************************************************/
+
+  /**
+   * Inline (compact) error component
+   */
+  const InlineError: React.FC = () => {
+    const inlineStyle = theme.components.errorStates.inline;
+
     return (
-      <View style={[errorStyle.container, style]}>
-        <Ionicons 
-          name="alert-circle" 
-          size={20} 
-          style={errorStyle.icon} 
+      <View style={[inlineStyle.container, style]}>
+        <Ionicons
+          name="alert-circle"
+          size={20}
+          style={inlineStyle.icon}
         />
-        <Text style={errorStyle.text}>{message}</Text>
+        <Text style={inlineStyle.text}>{message}</Text>
       </View>
     );
-  }
-  
-  // For full screen errors
-  return (
-    <View style={[errorStyle.container, style]}>
-      <Ionicons 
-        name="alert-circle-outline" 
-        size={60} 
-        style={errorStyle.icon} 
-      />
-      <Text style={errorStyle.title}>{title}</Text>
-      <Text style={errorStyle.message}>{message}</Text>
-      
-      {onRetry && (
-        <TouchableOpacity
-          style={errorStyle.button.container}
-          onPress={onRetry}
-        >
-          <Text style={errorStyle.button.text}>{retryText}</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+  };
+
+  /**
+   * Full-screen error component
+   */
+  const FullScreenError: React.FC = () => {
+    const fullScreenStyle = theme.components.errorStates.fullScreen;
+
+    return (
+      <View style={[fullScreenStyle.container, style]}>
+        <Ionicons
+          name="alert-circle-outline"
+          size={60}
+          style={fullScreenStyle.icon}
+        />
+        <Text style={fullScreenStyle.title}>{title}</Text>
+        <Text style={fullScreenStyle.message}>{message}</Text>
+
+        {onRetry && (
+          <TouchableOpacity
+            style={fullScreenStyle.button.container}
+            onPress={onRetry}
+          >
+            <Text style={fullScreenStyle.button.text}>{retryText}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
+  // Delegate to the correct component
+  return type === 'fullScreen' ? <FullScreenError /> : <InlineError />;
 };
 
 export default ErrorDisplay;

@@ -29,28 +29,18 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
   const renderContent = () => {
     // If children are provided, handle them based on type
     if (children !== undefined && children !== null) {
-      // If children is a string or number, wrap in a Text component
-      if (typeof children === 'string' || typeof children === 'number') {
-        return <Text style={styles.infoText}>{children.toString()}</Text>;
-      }
-      
-      // If children is a valid React element, return it directly
-      if (React.isValidElement(children)) {
-        return children;
-      }
-      
-      // For any other case, wrap in a fragment and ensure it's safe
-      try {
-        return <>{children}</>;
-      } catch (e) {
-        console.error('Error rendering children:', e);
-        return <Text style={styles.infoText}>Error displaying content</Text>;
-      }
+      /* ------------------------------------------------------------------
+       * Always ensure `children` is wrapped in a fragment so the return
+       * value is guaranteed to be a valid React node regardless of the
+       * type passed in. This covers strings, numbers, elements, arrays,
+       * and other renderable primitives without additional branching.
+       * ----------------------------------------------------------------*/
+      return <>{children}</>;
     }
     
     // If no children but text is provided, render it safely
     if (text !== undefined && text !== null) {
-      return <Text style={styles.infoText}>{text.toString()}</Text>;
+      return <Text style={styles.infoText}>{text}</Text>;
     }
     
     // Fallback for no content
@@ -82,8 +72,9 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
   
   // Safe getters for show properties with fallbacks
   const getTitle = () => {
-    if (typeof safeShow.title === 'string') return safeShow.title;
-    if (typeof safeShow.title === 'number') return safeShow.title.toString();
+    const title = safeShow.title;
+    if (typeof title === 'string') return title;
+    if (typeof title === 'number') return String(title);
     return 'Untitled Show';
   };
   

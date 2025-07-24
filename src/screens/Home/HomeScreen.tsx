@@ -53,6 +53,27 @@ interface HomeScreenProps {
   userLocation?: Coordinates | null;
 }
 
+// Define Show interface for type safety
+interface Show {
+  id: string;
+  title: string;
+  location: string;
+  address: string;
+  startDate: string | Date;
+  endDate: string | Date;
+  entryFee: number;
+  description?: string;
+  imageUrl?: string;
+  status: string;
+  organizerId: string;
+  features?: any;
+  categories?: string[];
+  seriesId?: string;
+  startTime?: string;
+  endTime?: string;
+  coordinates?: Coordinates;
+}
+
 const HomeScreen = ({ 
   customFilters, 
   onFilterChange, 
@@ -66,7 +87,7 @@ const HomeScreen = ({
   const appState = useRef(AppState.currentState);
   const flatListRef = useRef(null);
   // Emergency fallback state
-  const [emergencyShowList, setEmergencyShowList] = useState<any[]>([]);
+  const [emergencyShowList, setEmergencyShowList] = useState<Show[]>([]);
   const [useEmergencyList, setUseEmergencyList] = useState(false);
   
   // Default filter values
@@ -333,11 +354,11 @@ const HomeScreen = ({
   };
 
   // Navigate to show detail screen or use provided callback
-  const handleShowPress = (showId) => {
+  const handleShowPress = (showId: string) => {
     if (onShowPress) {
       onShowPress(showId);
     } else {
-      navigation.navigate('ShowDetail', { showId });
+      navigation.navigate('ShowDetail' as never);
     }
   };
 
@@ -411,11 +432,11 @@ const HomeScreen = ({
     if (filters.radius !== defaultFilters.radius) count++;
     if (
       (filters.startDate &&
-        new Date(filters.startDate).toDateString() !==
-          new Date(defaultFilters.startDate!).toDateString()) ||
+        new Date(filters.startDate as string | Date).toDateString() !==
+          new Date(defaultFilters.startDate as string | Date).toDateString()) ||
       (filters.endDate &&
-        new Date(filters.endDate).toDateString() !==
-          new Date(defaultFilters.endDate!).toDateString())
+        new Date(filters.endDate as string | Date).toDateString() !==
+          new Date(defaultFilters.endDate as string | Date).toDateString())
     )
       count++;
     if (filters.maxEntryFee !== undefined) count++;
@@ -425,7 +446,7 @@ const HomeScreen = ({
   };
 
   // Format date for display
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return '';
     // Parse the date string and adjust for timezone issues
     // This ensures the correct date is shown regardless of local timezone
@@ -440,7 +461,7 @@ const HomeScreen = ({
   };
 
   // Render show item
-  const renderShowItem = ({ item, index }) => (
+  const renderShowItem = ({ item, index }: { item: Show; index: number }) => (
     <TouchableOpacity
       style={styles.showCard}
       onPress={() => handleShowPress(item.id)}
@@ -457,8 +478,8 @@ const HomeScreen = ({
       <View style={styles.showInfo}>
         <Text style={styles.showTitle}>{item.title}</Text>
         <Text style={styles.showDate}>
-          {formatDate(item.startDate)}
-          {item.startDate !== item.endDate ? ` - ${formatDate(item.endDate)}` : ''}
+          {formatDate(String(item.startDate))}
+          {item.startDate !== item.endDate ? ` - ${formatDate(String(item.endDate))}` : ''}
         </Text>
         <View style={styles.showLocation}>
           <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
@@ -535,7 +556,7 @@ const HomeScreen = ({
             <View style={styles.activeFilterPill}>
               <Ionicons name="calendar" size={14} color={SECONDARY_COLOR} />
               <Text style={styles.activeFilterText}>
-                Next {Math.round((new Date(filters.endDate).getTime() - new Date(filters.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                Next {Math.round((new Date(filters.endDate as string | Date).getTime() - new Date(filters.startDate as string | Date).getTime()) / (1000 * 60 * 60 * 24))} days
               </Text>
             </View>
           </View>

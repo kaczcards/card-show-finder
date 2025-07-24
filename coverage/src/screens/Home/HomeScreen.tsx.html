@@ -930,7 +930,28 @@
 <a name='L865'></a><a href='#L865'>865</a>
 <a name='L866'></a><a href='#L866'>866</a>
 <a name='L867'></a><a href='#L867'>867</a>
-<a name='L868'></a><a href='#L868'>868</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L868'></a><a href='#L868'>868</a>
+<a name='L869'></a><a href='#L869'>869</a>
+<a name='L870'></a><a href='#L870'>870</a>
+<a name='L871'></a><a href='#L871'>871</a>
+<a name='L872'></a><a href='#L872'>872</a>
+<a name='L873'></a><a href='#L873'>873</a>
+<a name='L874'></a><a href='#L874'>874</a>
+<a name='L875'></a><a href='#L875'>875</a>
+<a name='L876'></a><a href='#L876'>876</a>
+<a name='L877'></a><a href='#L877'>877</a>
+<a name='L878'></a><a href='#L878'>878</a>
+<a name='L879'></a><a href='#L879'>879</a>
+<a name='L880'></a><a href='#L880'>880</a>
+<a name='L881'></a><a href='#L881'>881</a>
+<a name='L882'></a><a href='#L882'>882</a>
+<a name='L883'></a><a href='#L883'>883</a>
+<a name='L884'></a><a href='#L884'>884</a>
+<a name='L885'></a><a href='#L885'>885</a>
+<a name='L886'></a><a href='#L886'>886</a>
+<a name='L887'></a><a href='#L887'>887</a>
+<a name='L888'></a><a href='#L888'>888</a>
+<a name='L889'></a><a href='#L889'>889</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -976,6 +997,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1852,6 +1894,27 @@ interface HomeScreenProps {
   userLocation?: Coordinates | null;
 }
 &nbsp;
+// Define Show interface for type safety
+interface Show {
+  id: string;
+  title: string;
+  location: string;
+  address: string;
+  startDate: string | Date;
+  endDate: string | Date;
+  entryFee: number;
+  description?: string;
+  imageUrl?: string;
+  status: string;
+  organizerId: string;
+  features?: any;
+  categories?: string[];
+  seriesId?: string;
+  startTime?: string;
+  endTime?: string;
+  coordinates?: Coordinates;
+}
+&nbsp;
 const HomeScreen = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({ </span></span>
   customFilters, 
   onFilterChange, 
@@ -1865,7 +1928,7 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
   const appState = <span class="cstat-no" title="statement not covered" >useRef(AppState.currentState);</span>
   const flatListRef = <span class="cstat-no" title="statement not covered" >useRef(null);</span>
   // Emergency fallback state
-  const [emergencyShowList, setEmergencyShowList] = <span class="cstat-no" title="statement not covered" >useState&lt;any[]&gt;([]);</span>
+  const [emergencyShowList, setEmergencyShowList] = <span class="cstat-no" title="statement not covered" >useState&lt;Show[]&gt;([]);</span>
   const [useEmergencyList, setUseEmergencyList] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
   
   // Default filter values
@@ -2132,11 +2195,11 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
   };
 &nbsp;
   // Navigate to show detail screen or use provided callback
-  const handleShowPress = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>howId) =&gt; {</span>
+  const handleShowPress = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>howId: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (onShowPress) {</span>
 <span class="cstat-no" title="statement not covered" >      onShowPress(showId);</span>
     } else {
-<span class="cstat-no" title="statement not covered" >      navigation.navigate('ShowDetail', { showId });</span>
+<span class="cstat-no" title="statement not covered" >      navigation.navigate('ShowDetail' as never);</span>
     }
   };
 &nbsp;
@@ -2210,11 +2273,11 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
 <span class="cstat-no" title="statement not covered" >    if (filters.radius !== defaultFilters.radius) <span class="cstat-no" title="statement not covered" >count++;</span></span>
 <span class="cstat-no" title="statement not covered" >    if (</span>
       (filters.startDate &amp;&amp;
-        new Date(filters.startDate).toDateString() !==
-          new Date(defaultFilters.startDate!).toDateString()) ||
+        new Date(filters.startDate as string | Date).toDateString() !==
+          new Date(defaultFilters.startDate as string | Date).toDateString()) ||
       (filters.endDate &amp;&amp;
-        new Date(filters.endDate).toDateString() !==
-          new Date(defaultFilters.endDate!).toDateString())
+        new Date(filters.endDate as string | Date).toDateString() !==
+          new Date(defaultFilters.endDate as string | Date).toDateString())
     )
 <span class="cstat-no" title="statement not covered" >      count++;</span>
 <span class="cstat-no" title="statement not covered" >    if (filters.maxEntryFee !== undefined) <span class="cstat-no" title="statement not covered" >count++;</span></span>
@@ -2224,7 +2287,7 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
   };
 &nbsp;
   // Format date for display
-  const formatDate = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>ateString) =&gt; {</span>
+  const formatDate = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>ateString: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!dateString) <span class="cstat-no" title="statement not covered" >return '';</span></span>
     // Parse the date string and adjust for timezone issues
     // This ensures the correct date is shown regardless of local timezone
@@ -2239,7 +2302,7 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
   };
 &nbsp;
   // Render show item
-  const renderShowItem = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> item, index }) =&gt; (</span>
+  const renderShowItem = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> item, index }: { item: Show; index: number }) =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >    &lt;TouchableOpacity</span>
       style={styles.showCard}
       onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >handleShowPress(item.id)}</span>
@@ -2256,8 +2319,8 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
       &lt;View style={styles.showInfo}&gt;
         &lt;Text style={styles.showTitle}&gt;{item.title}&lt;/Text&gt;
         &lt;Text style={styles.showDate}&gt;
-          {formatDate(item.startDate)}
-          {item.startDate !== item.endDate ? ` - ${formatDate(item.endDate)}` : ''}
+          {formatDate(String(item.startDate))}
+          {item.startDate !== item.endDate ? ` - ${formatDate(String(item.endDate))}` : ''}
         &lt;/Text&gt;
         &lt;View style={styles.showLocation}&gt;
           &lt;Ionicons name="location" size={14} color={SECONDARY_COLOR} /&gt;
@@ -2334,7 +2397,7 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
             &lt;View style={styles.activeFilterPill}&gt;
               &lt;Ionicons name="calendar" size={14} color={SECONDARY_COLOR} /&gt;
               &lt;Text style={styles.activeFilterText}&gt;
-                Next {Math.round((new Date(filters.endDate).getTime() - new Date(filters.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                Next {Math.round((new Date(filters.endDate as string | Date).getTime() - new Date(filters.startDate as string | Date).getTime()) / (1000 * 60 * 60 * 24))} days
               &lt;/Text&gt;
             &lt;/View&gt;
           &lt;/View&gt;
@@ -2671,7 +2734,7 @@ export default HomeScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-23T13:10:49.804Z
+                at 2025-07-24T15:07:43.077Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

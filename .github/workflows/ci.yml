@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -48,10 +48,10 @@ jobs:
     needs: lint-and-typecheck
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -63,7 +63,7 @@ jobs:
         run: npm test -- --coverage
 
       - name: Upload test coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-coverage
           path: coverage/
@@ -89,10 +89,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -127,10 +127,10 @@ jobs:
     needs: [unit-tests, database-tests]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -142,7 +142,7 @@ jobs:
         run: npm install -g expo-cli@${{ env.EXPO_CLI_VERSION }}
 
       - name: Cache Detox build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ios/build
@@ -166,7 +166,7 @@ jobs:
         run: npm run test:e2e:auth
 
       - name: Upload E2E test artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-artifacts
@@ -179,10 +179,10 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -246,7 +246,7 @@ jobs:
 
       - name: Send Slack notification
         if: env.SLACK_WEBHOOK_URL != ''
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@v4
         with:
           status: ${{ env.STATUS }}
           fields: repo,message,commit,author,action,eventName,ref,workflow
@@ -256,7 +256,7 @@ jobs:
 
       - name: Send email notification
         if: env.STATUS == 'failure' && env.NOTIFICATION_EMAIL != ''
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v4
         with:
           server_address: ${{ secrets.MAIL_SERVER }}
           server_port: ${{ secrets.MAIL_PORT }}

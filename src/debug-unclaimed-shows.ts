@@ -8,7 +8,7 @@ async function testUnclaimedShowsDataHandling() {
     // Test getAllShowSeries function
     console.log('[TEST] Testing getAllShowSeries...');
     const unclaimedSeries = await showSeriesService.getAllShowSeries({
-      organizerId: null
+      organizerId: undefined
     });
     console.log('[DEBUG] Value of unclaimedSeries:', unclaimedSeries);
     console.log('[DEBUG] Type of unclaimedSeries:', Array.isArray(unclaimedSeries) ? 'array' : typeof unclaimedSeries);

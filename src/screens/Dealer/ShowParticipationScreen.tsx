@@ -237,7 +237,7 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Open edit modal
-  const handleOpenEdit = (show: Show & { participation: any }) => {
+  const handleOpenEdit = (show: Show & { participation?: any }) => {
     setSelectedShow(show);
     setSelectedParticipation(show.participation);
     setFormData({
