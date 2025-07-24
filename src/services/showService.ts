@@ -1137,12 +1137,12 @@ export const claimShow = async (
         })
         .eq('id', showId)
         .or('claimed.is.null,claimed.eq.false') // only update unclaimed
-        .select('*', { count: 'exact' })
+        .select('*')
         .single();
 
     if (updateError) throw updateError;
 
-    if (!updatedShow || count === 0) {
+    if (!updatedShow) {
       return {
         success: false,
         message: 'Show has already been claimed by another organiser.',

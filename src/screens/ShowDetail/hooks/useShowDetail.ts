@@ -87,7 +87,7 @@ export const useShowDetail = (
   useEffect(() => {
     if (user) {
       const userRole = user.role as UserRole;
-      const hasOrganizerRole = userRole === 'SHOW_ORGANIZER';
+      const hasOrganizerRole = userRole === UserRole.SHOW_ORGANIZER;
       setIsShowOrganizer(hasOrganizerRole);
     } else {
       setIsShowOrganizer(false);
