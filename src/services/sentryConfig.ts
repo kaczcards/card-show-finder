@@ -230,10 +230,20 @@ export const startTransaction = (
     } as unknown as Transaction;
   }
 
-  return Sentry.Native.startTransaction({
+  // NOTE: The `startTransaction` helper has been removed from
+  // recent versions of `sentry-expo` / `@sentry/react-native`.
+  // The new API requires constructing a transaction via different means.
+  // For now, provide a **compatibility shim** that mimics
+  // the older `Transaction` interface.
+  return {
     name,
     op: operation,
-  });
+    finish: () => {},
+    setContext: () => {},
+    setTag: () => {},
+    setStatus: () => {},
+    setData: () => {},
+  } as unknown as Transaction;
 };
 
 /**

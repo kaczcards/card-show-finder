@@ -7,7 +7,14 @@ import { getSentryErrorBoundary, captureException } from '../services/sentryConf
 const ErrorBoundary = getSentryErrorBoundary();
 
 interface ErrorFallbackProps {
-  error: Error;
+  /**
+   * The error value provided by the latest `@sentry/react-native`
+   * error boundary is typed as `unknown` (it can be anything that
+   * was thrown).  We therefore accept `unknown` here and perform a
+   * runtime type-guard inside the component before accessing
+   * `.name` / `.message`.
+   */
+  error: unknown; // was Error — updated for new Sentry API
   resetError: () => void;
   componentStack?: string;
   eventId?: string;
@@ -17,11 +24,21 @@ interface ErrorFallbackProps {
  * Default fallback UI component displayed when an error occurs
  */
 const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({ 
-  error, 
+  error,   // may be unknown
   resetError, 
   componentStack,
   eventId 
 }) => {
+  /**
+   * Sentry 7.x passes `unknown` for the error value.  Safely coerce
+   * it to an `Error` instance so the existing UI can display
+   * meaningful information without runtime crashes.
+   */
+  const safeError: Error =
+    error instanceof Error
+      ? error
+      : new Error(typeof error === 'string' ? error : 'Unknown Error');
+
   const [isReporting, setIsReporting] = useState(false);
   const [reported, setReported] = useState(false);
 
@@ -32,7 +49,8 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
       // If we have an eventId, the error was already captured by Sentry
       // Otherwise, we need to capture it manually
       if (!eventId) {
-        await captureException(error);
+        // use the coerced Error instance for type-safety
+        await captureException(safeError);
       }
       
       // Here you could also implement additional reporting logic
@@ -57,8 +75,8 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
           </Text>
           
           <View style={styles.errorDetails}>
-            <Text style={styles.errorTitle}>{error.name}</Text>
-            <Text style={styles.errorMessage}>{error.message}</Text>
+            <Text style={styles.errorTitle}>{safeError.name}</Text>
+            <Text style={styles.errorMessage}>{safeError.message}</Text>
           </View>
 
           {__DEV__ && componentStack && (
@@ -106,7 +124,7 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
 interface SentryErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ComponentType<ErrorFallbackProps>;
-  onError?: (error: Error, componentStack: string, eventId: string) => void;
+  onError?: (error: unknown, componentStack: string, eventId: string) => void;
 }
 
 /**
@@ -133,7 +151,7 @@ const SentryErrorBoundary: React.FC<SentryErrorBoundaryProps> = ({
   fallback: CustomFallback,
   onError 
 }) => {
-  const handleError = (error: Error, componentStack: string, eventId: string) => {
+  const handleError = (error: unknown, componentStack: string, eventId: string) => {
     // Log error in development
     if (__DEV__) {
       console.error('Error caught by SentryErrorBoundary:', error);
