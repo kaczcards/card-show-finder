@@ -140,7 +140,14 @@ class StorageService {
         if (!contentType) {
           contentType = file.split(';')[0].split(':')[1];
         }
-      } else if (file instanceof Blob || file instanceof File) {
+      // In React Native (and therefore in Expo) the global `File`
+      // constructor does **not** exist.  Checking for it causes a
+      // TypeScript error (`TS2358: The left-hand side of an 'instanceof'
+      // expression must be of type 'any', an object type or a type
+      // parameter`).  A `Blob` check is sufficient for RN/Expo because
+      // any binary payload (e.g. from `expo-image-picker`) is represented
+      // as a `Blob`.
+      } else if (file instanceof Blob) {
         fileData = file;
       } else if (typeof file === 'string') {
         // Assume it's already base64 encoded without data URL prefix
