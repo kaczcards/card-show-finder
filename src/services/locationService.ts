@@ -320,7 +320,14 @@ export const getNearbyZipCodes = async (
     
     if (error) throw error;
     
-    return (data || []).map(item => item.zip_code);
+    // The Postgres function `nearby_zip_codes` returns rows with a `zip_code`
+    // column.  Provide a lightweight interface so the callback parameter is
+    // strongly-typed instead of implicitly `any`.
+    interface NearbyZipRow {
+      zip_code: string;
+    }
+
+    return (data || []).map((item: NearbyZipRow) => item.zip_code);
   } catch (error: any) {
     console.error('Error getting nearby ZIP codes:', error);
     throw new Error(error.message || 'Failed to get nearby ZIP codes');

@@ -149,6 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isEmailVerified: session.user.email_confirmed_at !== null,
             accountType: profileData.account_type,
             subscriptionStatus: profileData.subscription_status,
+            paymentStatus: profileData.payment_status ?? 'none',
             subscriptionExpiry: profileData.subscription_expiry,
             favoriteShows: profileData.favorite_shows || [],
             attendedShows: profileData.attended_shows || [],
@@ -215,6 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               isEmailVerified: session.user.email_confirmed_at !== null,
               accountType: profileData.account_type,
               subscriptionStatus: profileData.subscription_status,
+            paymentStatus: profileData.payment_status ?? 'none',
               subscriptionExpiry: profileData.subscription_expiry,
               favoriteShows: profileData.favorite_shows || [],
               attendedShows: profileData.attended_shows || [],
@@ -312,6 +314,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isEmailVerified: true, // Always verified in dev mode
           accountType: 'collector',
           subscriptionStatus: 'active', // Active subscription in dev mode
+          paymentStatus: 'none',
           subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
           favoriteShows: [],
           attendedShows: [],
@@ -681,6 +684,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isEmailVerified: !!profile.is_email_verified,
         accountType: profile.account_type ?? 'collector',
         subscriptionStatus: profile.subscription_status ?? 'none',
+        paymentStatus: profile.payment_status ?? 'none',
         subscriptionExpiry: profile.subscription_expiry,
         favoriteShows: profile.favorite_shows || [],
         attendedShows: profile.attended_shows || [],

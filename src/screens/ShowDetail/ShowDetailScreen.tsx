@@ -42,6 +42,55 @@ interface ShowSeries {
   organizerId: string;
 }
 
+/**
+ * Local superset of a Show row that satisfies the prop-type
+ * requirements of the downstream UI components.  It augments the
+ * shape returned by useShowDetailQuery with the additional fields
+ * those components expect (they are marked optional so we can pass
+ * through whatever the API gives us without extra mapping).
+ */
+interface Show {
+  id: string;
+  /* Optional series identifier so ReviewForm and other components
+     can associate this show with a broader series when available. */
+  seriesId?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  address?: string;
+  /* --- additional fields required by other components ------------- */
+  startDate?: string | Date;
+  endDate?: string | Date;
+  entryFee?: number | string | null;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  } | null;
+  /* --- raw column names from Supabase ‘shows’ table ---------------- */
+  start_date?: string;
+  end_date?: string;
+  start_time?: string;
+  end_time?: string;
+  entry_fee?: number | string;
+  organizer_id?: string;
+  claimed_by?: string;
+  /** organiser profile returned via join in useShowDetailQuery */
+  profiles?: {
+    id?: string;
+    first_name?: string;
+    last_name?: string;
+    profile_image_url?: string;
+    username?: string;
+    full_name?: string;
+    avatar_url?: string;
+  } | null;
+  /* catch-all so TS doesn’t complain about any extra keys */
+  [key: string]: any;
+}
+
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const { showId } = route.params;
   const authContext = useAuth();
@@ -138,7 +187,11 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       <View style={styles.errorContainer}>
         <Ionicons name="alert-circle-outline" size={60} color="#FF6A00" />
         <Text style={styles.errorText}>{error || 'Show not found'}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchShowDetails}>
+        {/* wrap the call so we pass a function, not the promise */}
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => fetchShowDetails()}
+        >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>

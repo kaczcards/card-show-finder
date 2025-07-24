@@ -3,9 +3,7 @@ import { Alert } from 'react-native';
 import { supabase } from '../../../supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { handleSupabaseError } from '../../../services/errorService';
-
-// Define types for better type safety
-type UserRole = 'SHOW_ORGANIZER' | 'MVP_DEALER' | 'DEALER' | 'USER';
+import { UserRole } from '../../../types';  // shared UserRole definition
 
 interface Dealer {
   id: string;
@@ -269,7 +267,8 @@ export const useShowDetail = (
   const shareShow = async () => {
     if (!show) return;
     try {
-      await onShare(show);
+      // Cast `show` explicitly to `ShowDetails` to satisfy the expected type
+      await onShare(show as ShowDetails);
     } catch (error) {
       console.error('Error sharing:', error);
     }

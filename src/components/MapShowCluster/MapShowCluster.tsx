@@ -1,4 +1,10 @@
-import React, { useState, forwardRef, useEffect } from 'react';
+import React, {
+  useState,
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 import {
   View,
   StyleSheet,
@@ -59,19 +65,12 @@ interface MapShowClusterProps {
   organizerProfiles?: Record<string, any>;
 }
 
-// Type for organizer profile with social media links
-interface OrganizerProfile {
-  id: string;
-  firstName: string;
-  lastName?: string;
-  facebookUrl?: string;
-  instagramUrl?: string;
-  twitterUrl?: string;
-  whatnotUrl?: string;
-  ebayStoreUrl?: string;
+// Methods exposed to parent components via ref
+export interface MapShowClusterHandle {
+  getMapRef: () => any | null;
 }
 
-const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
+const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
   shows,
   region,
   onRegionChangeComplete,
@@ -86,6 +85,14 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
   const [pressedShowId, setPressedShowId] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const navigation = useNavigation<any>();
+
+  // Ref for the underlying FixedClusteredMapView instance
+  const mapRef = useRef<any>(null);
+
+  // Expose imperative methods to parent components
+  useImperativeHandle(ref, () => ({
+    getMapRef: () => mapRef.current?.getMapRef?.() ?? null,
+  }));
   
   // Check if target show is in the shows array
   useEffect(() => {
@@ -466,14 +473,9 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
 
   // Add zoom controls
   const handleZoom = (zoomIn = true) => {
-    if (
-      ref &&
-      // @ts-ignore – ref comes from forwardRef<any>
-      ref.current &&
-      typeof ref.current.getMapRef === 'function'
-    ) {
+    if (mapRef.current && typeof mapRef.current.getMapRef === 'function') {
       // FixedClusteredMapView exposes getMapRef() which returns the underlying MapView
-      const mapView = ref.current.getMapRef();
+      const mapView = mapRef.current.getMapRef();
       if (mapView) {
         // Determine zoom factor
         const factor = zoomIn ? 0.5 : 2; // smaller delta ⇒ zoom-in
@@ -495,7 +497,7 @@ const MapShowCluster = forwardRef<any, MapShowClusterProps>(({
   return (
     <View style={styles.container}>
       <FixedClusteredMapView
-        ref={ref}
+        ref={mapRef}
         style={styles.map}
         data={validShows}
         initialRegion={region}

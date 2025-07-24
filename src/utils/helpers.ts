@@ -21,9 +21,11 @@ export const debounce = <T extends (...args: any[]) => any>(
       clearTimeout(timeoutId);
     }
     
+    // Cast the `setTimeout` return value to `any` to satisfy the Node/browser
+    // disparity (`number` in browsers vs `NodeJS.Timeout` in Node).
     timeoutId = setTimeout(() => {
       func(...args);
       timeoutId = null;
-    }, delay);
+    }, delay) as any;
   };
 };

@@ -6,7 +6,13 @@
  * type safety, and reduced network traffic.
  */
 
-import { useQuery, UseQueryOptions, useInfiniteQuery, UseInfiniteQueryOptions } from 'react-query';
+import {
+  useQuery,
+  UseQueryOptions,
+  useInfiniteQuery,
+  UseInfiniteQueryOptions,
+  InfiniteData,
+} from '@tanstack/react-query';
 import * as showServiceRPC from '../services/showService.rpc';
 import * as showServiceLegacy from '../services/showService';
 import { Show, ShowStatus } from '../types';
@@ -124,15 +130,15 @@ export const useShowsAdvancedQuery = (
     keyword: params.keyword,
     page_size: params.pageSize || 20,
     page: params.page || 1,
-    status: params.status || 'ACTIVE'
+    status: params.status
   };
 
   // Define query key that includes all search parameters
   const queryKey = ['shows', 'advanced', rpcParams];
 
-  return useQuery<ShowsAdvancedQueryResult, Error>(
+  return useQuery<ShowsAdvancedQueryResult, Error>({
     queryKey,
-    async () => {
+    queryFn: async () => {
       try {
         // Try to use the RPC service first
         const response = await showServiceRPC.searchShowsAdvanced(rpcParams);
@@ -153,7 +159,19 @@ export const useShowsAdvancedQuery = (
         if (params.useLegacyFallback !== false) {
           console.warn('RPC search failed, falling back to legacy service:', error);
           
+          // Check if we have the required coordinates for the legacy service
+          if (typeof params.lat !== 'number' || typeof params.lng !== 'number') {
+            throw new Error('Latitude and longitude are required for legacy fallback');
+          }
+          
           // Convert parameters to legacy format
+          const legacyFeatures =
+            params.features &&
+            typeof params.features === 'object'
+              ? Object.keys(params.features).filter(
+                  key => params.features?.[key] === true
+                )
+              : undefined;
           const legacyParams = {
             latitude: params.lat,
             longitude: params.lng,
@@ -162,25 +180,25 @@ export const useShowsAdvancedQuery = (
             endDate: params.endDate,
             maxEntryFee: params.maxEntryFee,
             categories: params.categories,
-            features: params.features,
+            features: legacyFeatures,
             keyword: params.keyword,
             page: params.page || 1,
             pageSize: params.pageSize || 20,
-            status: params.status || 'ACTIVE'
+            status: params.status
           };
           
           // Call legacy service
-          const legacyResponse = await showServiceLegacy.searchShows(legacyParams);
+          const legacyResponse = await showServiceLegacy.getPaginatedShows(legacyParams);
           
           // Map legacy response to the expected format
           return {
-            shows: legacyResponse.shows,
+            shows: legacyResponse.data,
             pagination: {
-              totalCount: legacyResponse.totalCount || 0,
-              pageSize: legacyParams.pageSize,
-              currentPage: legacyParams.page,
-              totalPages: Math.ceil((legacyResponse.totalCount || 0) / legacyParams.pageSize),
-              hasMore: legacyResponse.hasMore || false
+              totalCount: legacyResponse.pagination.totalCount,
+              pageSize: legacyResponse.pagination.pageSize,
+              currentPage: legacyResponse.pagination.currentPage,
+              totalPages: legacyResponse.pagination.totalPages,
+              hasMore: legacyResponse.pagination.currentPage < legacyResponse.pagination.totalPages
             },
             usedLegacyService: true
           };
@@ -190,15 +208,14 @@ export const useShowsAdvancedQuery = (
         throw error;
       }
     },
-    {
+    // options object continuation
       // Default stale time: 5 minutes for show data
       staleTime: 5 * 60 * 1000,
-      // Default cache time: 10 minutes
-      cacheTime: 10 * 60 * 1000,
+      // Default cache time: 10 minutes (renamed to gcTime in v5)
+      gcTime: 10 * 60 * 1000,
       // Merge with user-provided options
       ...options
-    }
-  );
+  });
 };
 
 /**
@@ -258,20 +275,21 @@ export const useShowsInfiniteQuery = (
     features: params.features,
     keyword: params.keyword,
     page_size: params.pageSize || 20,
-    status: params.status || 'ACTIVE'
+    status: params.status
   };
 
   // Define query key that includes all search parameters except page
-  const queryKey = ['shows', 'infinite', baseParams];
+  const queryKey = ['shows', 'infinite', baseParams] as const;
 
-  return useInfiniteQuery<ShowsAdvancedQueryResult, Error>(
+  return useInfiniteQuery({
     queryKey,
-    async ({ pageParam = 1 }) => {
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
       try {
         // Add the page parameter to the base parameters
         const rpcParams = {
           ...baseParams,
-          page: pageParam
+          page: pageParam as number
         };
         
         // Try to use the RPC service first
@@ -293,7 +311,19 @@ export const useShowsInfiniteQuery = (
         if (params.useLegacyFallback !== false) {
           console.warn('RPC infinite search failed, falling back to legacy service:', error);
           
+          // Check if we have the required coordinates for the legacy service
+          if (typeof params.lat !== 'number' || typeof params.lng !== 'number') {
+            throw new Error('Latitude and longitude are required for legacy fallback');
+          }
+          
           // Convert parameters to legacy format
+          const legacyFeatures =
+            params.features &&
+            typeof params.features === 'object'
+              ? Object.keys(params.features).filter(
+                  key => params.features?.[key] === true
+                )
+              : undefined;
           const legacyParams = {
             latitude: params.lat,
             longitude: params.lng,
@@ -302,25 +332,25 @@ export const useShowsInfiniteQuery = (
             endDate: params.endDate,
             maxEntryFee: params.maxEntryFee,
             categories: params.categories,
-            features: params.features,
+            features: legacyFeatures,
             keyword: params.keyword,
-            page: pageParam,
+            page: pageParam as number,
             pageSize: params.pageSize || 20,
-            status: params.status || 'ACTIVE'
+            status: params.status
           };
           
           // Call legacy service
-          const legacyResponse = await showServiceLegacy.searchShows(legacyParams);
+          const legacyResponse = await showServiceLegacy.getPaginatedShows(legacyParams);
           
           // Map legacy response to the expected format
           return {
-            shows: legacyResponse.shows,
+            shows: legacyResponse.data,
             pagination: {
-              totalCount: legacyResponse.totalCount || 0,
-              pageSize: legacyParams.pageSize,
-              currentPage: legacyParams.page,
-              totalPages: Math.ceil((legacyResponse.totalCount || 0) / legacyParams.pageSize),
-              hasMore: legacyResponse.hasMore || false
+              totalCount: legacyResponse.pagination.totalCount,
+              pageSize: legacyResponse.pagination.pageSize,
+              currentPage: legacyResponse.pagination.currentPage,
+              totalPages: legacyResponse.pagination.totalPages,
+              hasMore: legacyResponse.pagination.currentPage < legacyResponse.pagination.totalPages
             },
             usedLegacyService: true
           };
@@ -330,9 +360,9 @@ export const useShowsInfiniteQuery = (
         throw error;
       }
     },
-    {
+    // options object continuation
       // Get the next page parameter from the current page's data
-      getNextPageParam: (lastPage) => {
+      getNextPageParam: (lastPage: ShowsAdvancedQueryResult) => {
         if (!lastPage.pagination.hasMore) {
           return undefined; // No more pages
         }
@@ -340,12 +370,11 @@ export const useShowsInfiniteQuery = (
       },
       // Default stale time: 5 minutes for show data
       staleTime: 5 * 60 * 1000,
-      // Default cache time: 10 minutes
-      cacheTime: 10 * 60 * 1000,
+      // Default cache time: 10 minutes (renamed to gcTime in v5)
+      gcTime: 10 * 60 * 1000,
       // Merge with user-provided options
       ...options
-    }
-  );
+  });
 };
 
 /**

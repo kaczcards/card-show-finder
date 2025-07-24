@@ -204,6 +204,7 @@ const MyShowsScreen: React.FC = () => {
           setReviews(reviewData.map(review => ({
             id: review.id,
             showId: review.show_id,
+            seriesId: review.series_id ?? undefined,
             userId: review.user_id,
             userName: 'You', // Assuming viewing own reviews
             rating: review.rating,
@@ -264,6 +265,7 @@ const MyShowsScreen: React.FC = () => {
         const newReview: Review = {
           id: data.id,
           showId: data.show_id,
+          seriesId: data.series_id ?? undefined,
           userId: data.user_id,
           userName: 'You', // Assuming viewing own reviews
           rating: data.rating,
@@ -451,6 +453,7 @@ const MyShowsScreen: React.FC = () => {
       {reviewFormVisible && selectedShow && (
         <ReviewForm
           showId={selectedShow.id}
+          seriesId={selectedShow.seriesId ?? undefined}
           onSubmit={submitReview}
           onCancel={() => {
             setReviewFormVisible(false);

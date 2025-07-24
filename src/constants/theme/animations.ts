@@ -127,33 +127,11 @@ export const animation = {
   },
 };
 
-// Layout Animation Presets
-export const layoutAnimation = {
-  // Configure LayoutAnimation with a preset
-  configureNext: (preset: 'spring' | 'easeInEaseOut' | 'linear' = 'easeInEaseOut', config?: LayoutAnimation.Config) => {
-    switch (preset) {
-      case 'spring':
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-        break;
-      case 'linear':
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.linear);
-        break;
-      case 'easeInEaseOut':
-      default:
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        break;
-    }
-  },
-  
-  // Custom layout animation configuration
-  custom: (config: LayoutAnimation.Config) => {
-    LayoutAnimation.configureNext(config);
-  },
-};
-
 export default {
   duration,
   easing,
   animation,
-  layoutAnimation,
+  // Re-exporting the native LayoutAnimation object allows calling modules
+  // to use LayoutAnimation.configureNext and other static members directly.
+  layoutAnimation: LayoutAnimation,
 };

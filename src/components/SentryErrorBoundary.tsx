@@ -152,7 +152,8 @@ const SentryErrorBoundary: React.FC<SentryErrorBoundaryProps> = ({
 
   return (
     <ErrorBoundary 
-      fallback={FallbackComponent}
+      /* `fallback` must be a render function that returns the element */
+      fallback={(errorProps) => <FallbackComponent {...errorProps} />}
       onError={handleError}
     >
       {children}

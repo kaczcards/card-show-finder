@@ -14,7 +14,7 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
-  ResetPassword: { token?: string } | undefined;
+  ResetPassword: { token?: string };
 };
 
 // Create navigation stack
@@ -37,10 +37,10 @@ const AuthNavigator: React.FC = () => {
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-      <AuthStack.Screen
-        name="ResetPassword"
-        component={ResetPasswordScreen}
-      />
+      {/* Use a render callback so TypeScript infers the correct prop types */}
+      <AuthStack.Screen name="ResetPassword">
+        {props => <ResetPasswordScreen {...props} />}
+      </AuthStack.Screen>
     </AuthStack.Navigator>
   );
 };

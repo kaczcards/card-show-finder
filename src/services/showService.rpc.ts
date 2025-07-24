@@ -6,7 +6,7 @@
  */
 
 import { supabase } from '../supabase';
-import { Show, ShowStatus, UserProfile } from '../types';
+import { Show, ShowStatus, UserRole } from '../types';
 
 // -----------------------------------------------------------------------------
 // Interfaces
@@ -48,7 +48,12 @@ export interface ShowSearchResponse {
  * User statistics from profile
  */
 export interface UserStats {
-  profile: UserProfile;
+  // basic subset of profile fields we actually need; extendable
+  profile: {
+    id: string;
+    role: UserRole;
+    [key: string]: any;
+  };
   stats: {
     shows_attended: number;
     shows_organized: number;
@@ -116,6 +121,9 @@ const mapDbShowToAppShow = (row: any): Show => ({
   organizerId: row.organizer_id,
   features: row.features ?? {},
   categories: row.categories ?? [],
+  // timestamps
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
 });
 
 /**
