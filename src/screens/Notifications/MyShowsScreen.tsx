@@ -287,7 +287,9 @@ const MyShowsScreen: React.FC = () => {
   
   const navigateToShowDetail = (show: Show) => {
     // Navigate to show detail screen with correct parameter name
-    navigation.navigate('ShowDetail' as never, { showId: show.id } as never);
+    // Temporarily bypass strict navigation typings until
+    // proper typed navigation params are introduced
+    (navigation as any).navigate('ShowDetail', { showId: show.id });
   };
 
   /**
@@ -453,7 +455,7 @@ const MyShowsScreen: React.FC = () => {
       {reviewFormVisible && selectedShow && (
         <ReviewForm
           showId={selectedShow.id}
-          seriesId={selectedShow.seriesId ?? undefined}
+          seriesId={selectedShow.seriesId ?? ''}
           onSubmit={submitReview}
           onCancel={() => {
             setReviewFormVisible(false);

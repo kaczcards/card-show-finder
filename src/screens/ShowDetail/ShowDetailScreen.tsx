@@ -257,6 +257,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       
       {showReviewForm && showSeries && (
         <ReviewForm
+          showId={showId}
           seriesId={showSeries.id}
           onSubmit={() => {}}
           onCancel={() => setShowReviewForm(false)}
