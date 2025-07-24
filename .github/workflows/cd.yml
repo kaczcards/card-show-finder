@@ -119,10 +119,9 @@ jobs:
 
       - name: Install Supabase CLI
         run: |
-          curl -s https://packages.supabase.com/gpg-key.asc | sudo apt-key add -
-          echo "deb https://packages.supabase.com/apt stable main" | sudo tee /etc/apt/sources.list.d/supabase.list
-          sudo apt-get update
-          sudo apt-get install -y supabase
+          # Use the recommended npm installation to avoid deprecated apt-key and
+          # GPG issues in CI runners.
+          npm install -g supabase@latest
 
       - name: Run database security validation
         run: npm run test:security:verbose
