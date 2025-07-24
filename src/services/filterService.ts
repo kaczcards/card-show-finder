@@ -134,7 +134,7 @@ export const loadFilterPresetsFromAsyncStorage = async (
     const parsedPresets = JSON.parse(storedPresets);
     
     // Convert ISO date strings back to Date objects in filters
-    return parsedPresets.map(preset => ({
+    return parsedPresets.map((preset: FilterPreset) => ({
       ...preset,
       filters: {
         ...preset.filters,
