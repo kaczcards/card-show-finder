@@ -560,8 +560,9 @@ export const updateUserProfile = async (userData: Partial<User>): Promise<User> 
     
     // Remove any undefined values to avoid setting NULL
     Object.keys(profileData).forEach(key => {
-      if (profileData[key] === undefined) {
-        delete profileData[key];
+      const typedKey = key as keyof typeof profileData;
+      if (profileData[typedKey] === undefined) {
+        delete profileData[typedKey];
       }
     });
     
