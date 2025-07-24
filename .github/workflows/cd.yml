@@ -119,9 +119,44 @@ jobs:
 
       - name: Install Supabase CLI
         run: |
-          # Use the recommended npm installation to avoid deprecated apt-key and
-          # GPG issues in CI runners.
-          npm install -g supabase@latest
+          #--------------------------------------------------------------------
+          # Robust Supabase CLI installation
+          # 1) Clean npm cache & ensure registry
+          # 2) Retry npm install (3 attempts)
+          # 3) Fallback to direct binary download if npm fails
+          #--------------------------------------------------------------------
+
+          set -e
+
+          npm cache clean --force
+          npm config set registry https://registry.npmjs.org/
+
+          install_via_npm() {
+            echo "Attempting npm installation (attempt $1)…"
+            npm install -g supabase@latest --verbose
+          }
+
+          success=false
+          for i in 1 2 3; do
+            if install_via_npm "$i"; then
+              success=true
+              break
+            else
+              echo "❌ npm installation failed on attempt $i"
+              sleep 5
+            fi
+          done
+
+          if [ "$success" = false ]; then
+            echo "⚡ Falling back to direct binary download…"
+            SUPABASE_VERSION="1.200.3"
+            curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_VERSION}/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
+            tar -xzf supabase.tar.gz
+            sudo mv supabase /usr/local/bin/supabase
+            chmod +x /usr/local/bin/supabase
+          fi
+
+          echo "✅ Supabase CLI version: $(supabase --version)"
 
       - name: Run database security validation
         run: npm run test:security:verbose
