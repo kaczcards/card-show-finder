@@ -42,6 +42,37 @@ async function applyMigration() {
   }
 }
 
-// Execute the migration
+/**
+ * Verifies the database migration by checking for the existence of new functions
+ */
+async function verifyMigration() {
+  try {
+    console.log('Verifying migration...');
+    
+    // 1. Check for the existence of the is_admin() function
+    const { data: isAdmin, error: isAdminError } = await supabase.rpc('is_admin');
+    if (isAdminError) {
+      console.error('Error checking is_admin():', isAdminError);
+    } else {
+      console.log('is_admin() returned:', isAdmin);
+    }
+
+    // 2. Check for the existence of the is_show_organizer() function
+    const { data: isShowOrganizer, error: isShowOrganizerError } = await supabase.rpc('is_show_organizer');
+    if (isShowOrganizerError) {
+      console.error('Error checking is_show_organizer():', isShowOrganizerError);
+    } else {
+      console.log('is_show_organizer() returned:', isShowOrganizer);
+    }
+
+  } catch (error) {
+    console.error('An unexpected error occurred during verification:', error);
+  }
+}
+
+// Execute the migration and verification
 console.log('Starting database migration process...');
-applyMigration();
+(async () => {
+  await applyMigration();
+  await verifyMigration();
+})();
