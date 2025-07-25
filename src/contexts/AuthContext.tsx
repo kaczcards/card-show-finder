@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
 import { signIn } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/sessionService';
+import * as Sentry from 'sentry-expo';
 
 /* ------------------------------------------------------------------
  * Build-time / runtime dev flag to bypass profile fetch
@@ -464,6 +465,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // New user has no favorites yet
       setFavoriteCount(0);
       
+      // ----------------- Sentry Business Metric -------------------
+      // Capture a lightweight “User Signed Up” event so we can track
+      // daily / weekly signup numbers directly in Sentry dashboards.
+      Sentry.captureMessage('User Signed Up', {
+        level: 'info',
+        tags: { event_type: 'business' },
+        extra: { userId: userData.id, email: userData.email },
+      });
+
       return userData;
     } catch (error: any) {
       console.error('Registration error:', error);
