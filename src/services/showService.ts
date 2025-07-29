@@ -624,6 +624,21 @@ export const getPaginatedShows = async (
     );
 
     /* -------------------------------------------------------------
+     * EMERGENCY FALLBACK
+     * -----------------------------------------------------------
+     * If the nearby_shows RPC returns ZERO future shows even though the
+     * database contains future shows (known bug), we immediately fall
+     * back to the direct-query implementation so the user still sees
+     * results.
+     * ----------------------------------------------------------- */
+    if (filteredData.length === 0) {
+      console.warn(
+        '[showService] nearby_shows returned no future shows – switching to getFallbackPaginatedShows'
+      );
+      return await getFallbackPaginatedShows(params);
+    }
+
+    /* -------------------------------------------------------------
      * 3. Apply additional client-side filtering
      * ----------------------------------------------------------- */
     // Filter by max entry fee if specified
