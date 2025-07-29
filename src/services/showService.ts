@@ -551,177 +551,29 @@ export const getPaginatedShows = async (
   params: PaginatedShowsParams
 ): Promise<PaginatedShowsResult> => {
   try {
-    /* ---------------- Normalise & default params ----------------- */
-    const {
-      latitude,
-      longitude,
-      radius = 25,
-      startDate = new Date(),
-      endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      maxEntryFee = null,
-      categories = null,
-      features = null,
-      pageSize = 20,
-      page = 1,
-    } = params;
-
-    const toIso = (d: Date | string | null): string =>
-      d instanceof Date ? d.toISOString() : d || '';
-    
-    console.debug('[showService] getPaginatedShows called with params:', {
-      latitude, longitude, radius, startDate, endDate, maxEntryFee, 
-      categories, features, pageSize, page
-    });
-
-    /* ---------------------- RPC invocation ----------------------- */
-    // First try nearby_shows which is proven to work correctly with distance filtering
-    const { data: showsData, error } = await supabase.rpc('nearby_shows', {
-      lat: latitude,
-      long: longitude,
-      radius_miles: radius,
-      filter_start_date: toIso(startDate),
-      filter_end_date: toIso(endDate),
-    });
-
-    /* -------------------------------------------------------------
-     * 1. Handle RPC-level error (network / SQL exception, etc.)
-     * ----------------------------------------------------------- */
-    if (error) {
-      console.warn('[showService] nearby_shows RPC failed:', error.message);
-      console.warn('[showService] Falling back to direct query...');
-      
-      // Fallback to direct query if RPC fails
-      return await getFallbackPaginatedShows(params);
-    }
-
-    if (!showsData || !Array.isArray(showsData)) {
-      console.warn('[showService] nearby_shows returned invalid data:', showsData);
-      return await getFallbackPaginatedShows(params);
-    }
-
-    /* -------------------------------------------------------------
-     * 2. Apply date filtering because nearby_shows currently
-     *    ignores the start_date / end_date arguments. We keep
-     *    only shows whose:
-     *      • end_date >= today  (not already finished), AND
-     *      • start_date >= supplied startDate (default: today)
-     * ----------------------------------------------------------- */
-    const today = new Date();
-    let filteredData = showsData.filter(show => {
-      const showStart = new Date(show.start_date);
-      const showEnd = new Date(show.end_date);
-
-      return (
-        // has NOT ended yet
-        showEnd >= today &&
-        // starts on/after requested range
-        showStart >= new Date(startDate as any)
-      );
-    });
-
-    console.info(
-      `[showService] After client-side date filtering: ${filteredData.length} show(s) remain`
-    );
-
-    /* -------------------------------------------------------------
-     * EMERGENCY FALLBACK
-     * -----------------------------------------------------------
-     * If the nearby_shows RPC returns ZERO future shows even though the
-     * database contains future shows (known bug), we immediately fall
-     * back to the direct-query implementation so the user still sees
-     * results.
-     * ----------------------------------------------------------- */
-    if (filteredData.length === 0) {
-      console.warn(
-        '[showService] nearby_shows returned no future shows – switching to getFallbackPaginatedShows'
-      );
-      return await getFallbackPaginatedShows(params);
-    }
-
-    /* -------------------------------------------------------------
-     * 3. Apply additional client-side filtering
-     * ----------------------------------------------------------- */
-    // Filter by max entry fee if specified
-    if (typeof maxEntryFee === 'number') {
-      filteredData = filteredData.filter(show => 
-        show.entry_fee <= maxEntryFee
-      );
-    }
-    
-    // Filter by categories if specified
-    if (categories && Array.isArray(categories) && categories.length > 0) {
-      filteredData = filteredData.filter(show => 
-        show.categories && 
-        categories.some(cat => show.categories.includes(cat))
-      );
-    }
-    
-    // Filter by features if specified
-    if (features && Array.isArray(features) && features.length > 0) {
-      filteredData = filteredData.filter(show => 
-        show.features && 
-        features.every(feature => show.features[feature] === true)
-      );
-    }
-    
-    // Apply client-side pagination
-    const totalCount = filteredData.length;
-    const totalPages = Math.ceil(totalCount / pageSize);
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = Math.min(startIndex + pageSize, totalCount);
-    const paginatedData = filteredData.slice(startIndex, endIndex);
-    
-    console.info(`[showService] nearby_shows returned ${totalCount} total shows, showing page ${page} (${paginatedData.length} shows)`);
-
-    // Map to app format
-    const mappedShows = paginatedData.map(mapDbShowToAppShow);
-
-    return {
-      data: mappedShows,
-      pagination: {
-        totalCount,
-        pageSize,
-        currentPage: page,
-        totalPages,
-      },
-      error: null
-    };
+    // 🔄  PRODUCTION APPROACH: use the reliable direct-query helper
+    console.debug('[showService] getPaginatedShows → using direct query (RPC bypass)');
+    return await getDirectPaginatedShows(params);
   } catch (err: any) {
     console.error('[showService] Error in getPaginatedShows:', err);
-    
-    // Try fallback if the main method fails
-    try {
-      console.warn('[showService] Attempting fallback after error...');
-      const fallbackResult = await getFallbackPaginatedShows(params);
-      
-      // If the fallback found no shows, try the emergency fallback
-      if (fallbackResult.data.length === 0 && fallbackResult.pagination.totalCount > 0) {
-        console.warn('[showService] Fallback found 0 shows but totalCount > 0, trying emergency fallback');
-        return await getAllActiveShowsFallback(params);
-      }
-      
-      return fallbackResult;
-    } catch (fallbackErr: any) {
-      console.error('[showService] Fallback also failed:', fallbackErr);
-      return {
-        data: [],
-        pagination: {
-          totalCount: 0,
-          pageSize: params.pageSize ?? 20,
-          currentPage: params.page ?? 1,
-          totalPages: 0,
-        },
-        error: err.message ?? 'Failed to fetch paginated shows',
-      };
-    }
+    return {
+      data: [],
+      pagination: {
+        totalCount: 0,
+        pageSize: params.pageSize ?? 20,
+        currentPage: params.page ?? 1,
+        totalPages: 0,
+      },
+      error: err.message ?? 'Failed to fetch paginated shows',
+    };
   }
 };
 
 /**
- * Fallback implementation for getPaginatedShows that uses direct Supabase queries
- * instead of the RPC. This is used when the RPC fails for any reason.
+ * Direct implementation for getPaginatedShows that uses Supabase queries
+ * (bypasses the broken nearby_shows RPC).
  */
-const getFallbackPaginatedShows = async (
+const getDirectPaginatedShows = async (
   params: PaginatedShowsParams
 ): Promise<PaginatedShowsResult> => {
   try {
