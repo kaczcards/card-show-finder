@@ -22,7 +22,7 @@ import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster from '../../components/MapShowCluster/index';
 import * as locationService from '../../services/locationService';
-import { getShows } from '../../services/showService';
+import { getPaginatedShows } from '../../services/showService';
 // Import toast utilities for location notifications
 import { showErrorToast, showGpsLocationToast, showLocationFailedToast } from '../../utils/toastUtils';
 
@@ -247,10 +247,23 @@ const MapScreen: React.FC<MapScreenProps> = ({
       };
 
       console.log('[MapScreen] Filters being used:', currentFilters);
-      const showsData = await getShows(currentFilters);
 
-      setShows(Array.isArray(showsData) ? showsData : []);
-      console.log(`[MapScreen] Successfully fetched ${showsData.length} shows`);
+      /* ------------------------------------------------------------------
+       * Use production-ready solution that bypasses broken nearby_shows RPC
+       * ------------------------------------------------------------------ */
+      const result = await getPaginatedShows({
+        ...currentFilters,
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        pageSize: 100, // large page to get everything for the map
+        page: 1,
+      });
+
+      const showsData = result.data || [];
+      setShows(showsData);
+      console.log(
+        `[MapScreen] Successfully fetched ${showsData.length} shows (using production solution)`
+      );
 
       if (showsData.length === 0 && retryRef.current < 1) {
         retryRef.current += 1;
