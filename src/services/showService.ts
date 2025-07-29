@@ -594,17 +594,38 @@ export const getPaginatedShows = async (
       return await getFallbackPaginatedShows(params);
     }
 
-    /* -------------------------------------------------------------
-     * 2. Process the results and apply client-side pagination
-     * ----------------------------------------------------------- */
     if (!showsData || !Array.isArray(showsData)) {
       console.warn('[showService] nearby_shows returned invalid data:', showsData);
       return await getFallbackPaginatedShows(params);
     }
 
-    // Apply additional client-side filtering
-    let filteredData = showsData;
-    
+    /* -------------------------------------------------------------
+     * 2. Apply date filtering because nearby_shows currently
+     *    ignores the start_date / end_date arguments. We keep
+     *    only shows whose:
+     *      • end_date >= today  (not already finished), AND
+     *      • start_date >= supplied startDate (default: today)
+     * ----------------------------------------------------------- */
+    const today = new Date();
+    let filteredData = showsData.filter(show => {
+      const showStart = new Date(show.start_date);
+      const showEnd = new Date(show.end_date);
+
+      return (
+        // has NOT ended yet
+        showEnd >= today &&
+        // starts on/after requested range
+        showStart >= new Date(startDate as any)
+      );
+    });
+
+    console.info(
+      `[showService] After client-side date filtering: ${filteredData.length} show(s) remain`
+    );
+
+    /* -------------------------------------------------------------
+     * 3. Apply additional client-side filtering
+     * ----------------------------------------------------------- */
     // Filter by max entry fee if specified
     if (typeof maxEntryFee === 'number') {
       filteredData = filteredData.filter(show => 
