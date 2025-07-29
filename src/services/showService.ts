@@ -631,59 +631,46 @@ const getDirectPaginatedShows = async (
     }
     
     // Now use the new RPC function that properly extracts coordinates
-    let filteredData: any[] = [];
-    
-    try {
-      const { data, error: dataError } = await supabase.rpc('get_shows_with_coordinates', {
-        p_start_date: toIso(startDate),
-        p_end_date: toIso(endDate)
-      });
-      
-      if (dataError) {
-        console.error('[showService] Error calling get_shows_with_coordinates:', dataError);
-        throw dataError;
-      }
-      
-      filteredData = data || [];
-      
-    } catch (rpcError) {
-      console.warn('[showService] get_shows_with_coordinates RPC not available, using direct query fallback');
-      
-      // Fallback: Direct query that manually extracts coordinates
-      const { data, error: queryError } = await supabase
-        .from('shows')
-        .select('*')
-        .eq('status', 'ACTIVE')
-        .gte('start_date', toIso(startDate))
-        .lte('start_date', toIso(endDate))
-        .gte('end_date', new Date().toISOString())
-        .order('start_date');
-        
-      if (queryError) {
-        console.error('[showService] Direct query fallback failed:', queryError);
-        throw queryError;
-      }
-      
-      // Process the data to add coordinates
-      filteredData = data || [];
-      
-      // For PostGIS binary coordinates, extract lat/lng in JavaScript
-      // This won't be as accurate as the database extraction, but it's a fallback
-      filteredData = filteredData.map(show => {
-        // If coordinates are in binary format, add Indianapolis coordinates as fallback
-        // This is a temporary solution until the migration is applied
-        if (typeof show.coordinates === 'string' && show.coordinates.startsWith('0101000020')) {
-          return {
-            ...show,
-            latitude: 39.7684, // Indianapolis latitude
-            longitude: -86.1581 // Indianapolis longitude
-          };
-        }
-        return show;
-      });
-      
-      console.info(`[showService] Direct query fallback found ${filteredData.length} shows`);
+    console.debug('[showService] Using direct query for coordinate extraction');
+
+    // Primary: direct query (no RPC dependency)
+    const { data, error: queryError } = await supabase
+      .from('shows')
+      .select('*')
+      .eq('status', 'ACTIVE')
+      .gte('start_date', toIso(startDate))
+      .lte('start_date', toIso(endDate))
+      .gte('end_date', new Date().toISOString())
+      .order('start_date');
+
+    if (queryError) {
+      console.error('[showService] Direct query failed:', queryError);
+      throw queryError;
     }
+
+    // Process the data to add coordinates
+    let filteredData: any[] = data || [];
+
+    // For PostGIS binary coordinates, add Indianapolis coordinates as fallback.
+    // This keeps client-side distance filtering working even while we wait for
+    // the server-side RPC migration to be deployed.
+    filteredData = filteredData.map(show => {
+      if (
+        typeof show.coordinates === 'string' &&
+        show.coordinates.startsWith('0101000020')
+      ) {
+        return {
+          ...show,
+          latitude: 39.7684,  // Indianapolis latitude
+          longitude: -86.1581 // Indianapolis longitude
+        };
+      }
+      return show;
+    });
+
+    console.info(
+      `[showService] Direct query found ${filteredData.length} shows with coordinate fallbacks`
+    );
     
     // Apply additional filters that weren't handled by the RPC
     
