@@ -93,7 +93,7 @@ const HomeScreen = ({
   // Default filter values
   const defaultFilters: ShowFilters = {
     // Default radius for nearby shows (in miles) – 25 mi from the
-    // user’s home ZIP code.  Users can change this in Filters and the
+    // user's home ZIP code.  Users can change this in Filters and the
     // app will remember their last used settings.
     radius: 25,
     startDate: new Date(),
@@ -361,10 +361,8 @@ const HomeScreen = ({
       onShowPress(showId);
     } else {
       // Pass the required route params so ShowDetailScreen can access `route.params.showId`
-      navigation.navigate(
-        'ShowDetail' as never,
-        { showId } as never // cast to `never` to satisfy the generic signature
-      );
+      // Cast `navigation` to `any` to bypass strict type checks safely
+      (navigation as any).navigate('ShowDetail', { showId });
     }
   };
 
@@ -466,6 +464,47 @@ const HomeScreen = ({
     });
   };
 
+  // Client-side distance filtering as an additional safety measure
+  // This ensures that even if the backend filtering fails, shows outside the radius won't be displayed
+  // Fallback to default radius (25) if the filter is undefined
+  const currentRadius = filters.radius ?? defaultFilters.radius ?? 25;
+
+  const safeShows = shows.filter(show => {
+    // Skip shows without coordinates
+    if (!show.coordinates || !effectiveCoords) return false;
+    
+    const distance = locationService.calculateDistanceBetweenCoordinates(
+      effectiveCoords,
+      show.coordinates
+    );
+    
+    return distance <= currentRadius;
+  });
+
+  // Also apply the same filtering to emergency show list if needed
+  const safeEmergencyShows = emergencyShowList.filter(show => {
+    // Skip shows without coordinates
+    if (!show.coordinates || !effectiveCoords) return false;
+    
+    const distance = locationService.calculateDistanceBetweenCoordinates(
+      effectiveCoords,
+      show.coordinates
+    );
+    
+    return distance <= currentRadius;
+  });
+
+  // Log the filtering results for debugging
+  useEffect(() => {
+    if (shows.length > 0) {
+      console.log(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
+      
+      if (shows.length !== safeShows.length) {
+        console.warn(`[HomeScreen] Filtered out ${shows.length - safeShows.length} shows that were outside the ${currentRadius} mile radius!`);
+      }
+    }
+  }, [shows.length, safeShows.length, currentRadius]);
+
   // Render show item
   const renderShowItem = ({ item, index }: { item: Show; index: number }) => (
     <TouchableOpacity
@@ -489,7 +528,7 @@ const HomeScreen = ({
             /* ----------------------------------------------------------
              * Show end date ONLY when the event spans multiple days.
              * We compare just the calendar day portion (toDateString)
-             * so different times on the same day aren’t treated as
+             * so different times on the same day aren't treated as
              * separate dates.
              * ---------------------------------------------------------*/
             const startDay = new Date(item.startDate).toDateString();
@@ -622,7 +661,7 @@ const HomeScreen = ({
           ) : (
             <FlatList
               ref={flatListRef}
-              data={useEmergencyList ? emergencyShowList : shows}
+              data={useEmergencyList ? safeEmergencyShows : safeShows}
               renderItem={renderShowItem}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.showsList}
