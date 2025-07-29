@@ -12,14 +12,48 @@
 --   1. Haven't ended before our search starts (end_date >= start_date)
 --   2. Start before our search ends (start_date <= end_date)
 
--- Drop the existing function (use full signature to disambiguate)
+/* -------------------------------------------------------------------
+ * 🔄  Ensure **all** legacy variations of `nearby_shows` are removed
+ *     before recreating the canonical version.  PostgreSQL requires
+ *     fully-qualified signatures when multiple overloads exist, so we
+ *     enumerate the common historical signatures and also include a
+ *     catch-all drop as a last resort.
+ * ------------------------------------------------------------------*/
+
+-- Version A: original 5-arg function (no defaults)
 DROP FUNCTION IF EXISTS public.nearby_shows(
   float,
   float,
   float,
   timestamp with time zone,
   timestamp with time zone
-);
+) CASCADE;
+
+-- Version B: 5-arg function with named parameters (old names)
+DROP FUNCTION IF EXISTS public.nearby_shows(
+  lat float,
+  long float,
+  radius_miles float,
+  start_date timestamp with time zone,
+  end_date timestamp with time zone
+) CASCADE;
+
+-- Version C: 3-arg function (radius only, no date filters)
+DROP FUNCTION IF EXISTS public.nearby_shows(
+  float,
+  float,
+  float
+) CASCADE;
+
+-- Version D: zero-arg helper (some early test deployments)
+DROP FUNCTION IF EXISTS public.nearby_shows() CASCADE;
+
+-- Catch-all – drops any remaining overloads that slipped through
+DROP FUNCTION IF EXISTS public.nearby_shows CASCADE;
+
+/* -------------------------------------------------------------------
+ * Re-create the canonical `nearby_shows` (5 args, new param names)
+ * ------------------------------------------------------------------*/
 -- Re-create the function with the **correct** signature
 CREATE OR REPLACE FUNCTION public.nearby_shows(
   lat float,
@@ -55,13 +89,40 @@ AS $$
 $$;
 
 -- Also update the alternative implementation
+/* -------------------------------------------------------------------
+ * Ensure all variations of `nearby_shows_earth_distance` are removed
+ * ------------------------------------------------------------------*/
+
+-- 5-arg original
 DROP FUNCTION IF EXISTS public.nearby_shows_earth_distance(
   float,
   float,
   float,
   timestamp with time zone,
   timestamp with time zone
-);
+) CASCADE;
+
+-- 5-arg with named parameters
+DROP FUNCTION IF EXISTS public.nearby_shows_earth_distance(
+  lat float,
+  long float,
+  radius_miles float,
+  start_date timestamp with time zone,
+  end_date timestamp with time zone
+) CASCADE;
+
+-- 3-arg (no dates)
+DROP FUNCTION IF EXISTS public.nearby_shows_earth_distance(
+  float,
+  float,
+  float
+) CASCADE;
+
+-- zero-arg
+DROP FUNCTION IF EXISTS public.nearby_shows_earth_distance() CASCADE;
+
+-- catch-all
+DROP FUNCTION IF EXISTS public.nearby_shows_earth_distance CASCADE;
 
 CREATE OR REPLACE FUNCTION public.nearby_shows_earth_distance(
   lat float,
