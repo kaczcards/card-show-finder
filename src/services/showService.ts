@@ -544,7 +544,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 /* ------------------------------------------------------------------ */
 
 /**
- * Fetch shows in **paged** chunks using the `get_paginated_shows` RPC.
+ * Fetch shows in **paged** chunks using the `nearby_shows` RPC.
  * Designed for infinite-scroll lists (Home screen, etc.).
  */
 export const getPaginatedShows = async (
@@ -574,25 +574,20 @@ export const getPaginatedShows = async (
     });
 
     /* ---------------------- RPC invocation ----------------------- */
-    const { data, error } = await supabase.rpc('get_paginated_shows', {
+    // First try nearby_shows which is proven to work correctly with distance filtering
+    const { data: showsData, error } = await supabase.rpc('nearby_shows', {
       lat: latitude,
-      lng: longitude,
-      radius_miles: typeof radius === 'number' && !isNaN(radius) ? radius : 25,
+      long: longitude,
+      radius_miles: radius,
       start_date: toIso(startDate),
       end_date: toIso(endDate),
-      max_entry_fee: typeof maxEntryFee === 'number' ? maxEntryFee : null,
-      categories,
-      features,
-      page_size: pageSize,
-      page,
-      status: 'ACTIVE', // Explicitly request only ACTIVE shows
     });
 
     /* -------------------------------------------------------------
      * 1. Handle RPC-level error (network / SQL exception, etc.)
      * ----------------------------------------------------------- */
     if (error) {
-      console.warn('[showService] get_paginated_shows RPC failed:', error.message);
+      console.warn('[showService] nearby_shows RPC failed:', error.message);
       console.warn('[showService] Falling back to direct query...');
       
       // Fallback to direct query if RPC fails
@@ -600,56 +595,61 @@ export const getPaginatedShows = async (
     }
 
     /* -------------------------------------------------------------
-     * 2. Guard against malformed payloads or error wrapper returned
-     *    by the SQL function itself (it returns `{ error: .. }`).
+     * 2. Process the results and apply client-side pagination
      * ----------------------------------------------------------- */
-    if (
-      !data ||
-      (typeof data === 'object' && 'error' in (data as any))
-    ) {
-      const msg =
-        typeof (data as any)?.error === 'string'
-          ? (data as any).error
-          : 'Failed to load shows';
-      console.warn('[showService] get_paginated_shows returned error payload:', msg);
-      return {
-        data: [],
-        pagination: {
-          totalCount: 0,
-          pageSize,
-          currentPage: page,
-          totalPages: 0,
-        },
-        error: msg,
-      };
+    if (!showsData || !Array.isArray(showsData)) {
+      console.warn('[showService] nearby_shows returned invalid data:', showsData);
+      return await getFallbackPaginatedShows(params);
     }
 
-    /* -------------------------------------------------------------
-     * 3. Normalise successful payload to avoid "undefined value
-     *    to object" errors when the function returns unexpected
-     *    shapes.  Always guarantee `rows` is an array and
-     *    `paginationRaw` is an object.
-     * ----------------------------------------------------------- */
-    const safePayload = typeof data === 'object' && data !== null ? data as any : {};
-    const rows: any[] = Array.isArray(safePayload.data) ? safePayload.data : [];
-    const paginationRaw: any = typeof safePayload.pagination === 'object' && safePayload.pagination !== null
-      ? safePayload.pagination
-      : {};
+    // Apply additional client-side filtering
+    let filteredData = showsData;
+    
+    // Filter by max entry fee if specified
+    if (typeof maxEntryFee === 'number') {
+      filteredData = filteredData.filter(show => 
+        show.entry_fee <= maxEntryFee
+      );
+    }
+    
+    // Filter by categories if specified
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      filteredData = filteredData.filter(show => 
+        show.categories && 
+        categories.some(cat => show.categories.includes(cat))
+      );
+    }
+    
+    // Filter by features if specified
+    if (features && Array.isArray(features) && features.length > 0) {
+      filteredData = filteredData.filter(show => 
+        show.features && 
+        features.every(feature => show.features[feature] === true)
+      );
+    }
+    
+    // Apply client-side pagination
+    const totalCount = filteredData.length;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalCount);
+    const paginatedData = filteredData.slice(startIndex, endIndex);
+    
+    console.info(`[showService] nearby_shows returned ${totalCount} total shows, showing page ${page} (${paginatedData.length} shows)`);
 
-    const mappedShows: Show[] = Array.isArray(rows)
-      ? rows.map(mapDbShowToAppShow)
-      : [];
-      
-    console.info(`[showService] get_paginated_shows returned ${mappedShows.length} shows`);
+    // Map to app format
+    const mappedShows = paginatedData.map(mapDbShowToAppShow);
 
-    const pagination: PaginationMeta = {
-      totalCount: Number(paginationRaw.total_count ?? 0),
-      pageSize: Number(paginationRaw.page_size ?? pageSize),
-      currentPage: Number(paginationRaw.current_page ?? page),
-      totalPages: Number(paginationRaw.total_pages ?? 0),
+    return {
+      data: mappedShows,
+      pagination: {
+        totalCount,
+        pageSize,
+        currentPage: page,
+        totalPages,
+      },
+      error: null
     };
-
-    return { data: mappedShows, pagination, error: null };
   } catch (err: any) {
     console.error('[showService] Error in getPaginatedShows:', err);
     
