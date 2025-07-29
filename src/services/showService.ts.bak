@@ -10,6 +10,11 @@ import { Show, ShowStatus } from '../types';
 /**
  * Convert a raw Supabase row into an app `Show` object.
  */
+/* ------------------------------------------------------------------ */
+/* Debug helper – track a single show end-to-end                        */
+/* ------------------------------------------------------------------ */
+const DEBUG_SHOW_ID = 'cd175b33-3144-4ccb-9d85-94490446bf26';
+
 const mapDbShowToAppShow = (row: any): Show => ({
   id: row.id,
   title: row.title,
@@ -111,8 +116,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
      * Derive **normalized** filter values so every query path
      * (RPCs & basic SELECT) uses the exact same parameters.
      * --------------------------------------------------------- */
-    const toIso = (d: Date | string): string =>
-      d instanceof Date ? d.toISOString() : d;
+    const toIso = (d: Date | string | null): string =>
+      d instanceof Date ? d.toISOString() : d || '';
 
     // Default date range: today → +30 days (ISO strings)
     const startDate = toIso(
@@ -153,6 +158,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         radius_miles: radius,
         start_date: startDate,
         end_date: endDate,
+        debugShowId: DEBUG_SHOW_ID, // helpful when grepping logs
       });
 
       // Call the new nearby_shows function as primary method
@@ -176,6 +182,31 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         console.info(
           `[showService] nearby_shows returned ${((nearbyData && Array.isArray(nearbyData)) ? nearbyData.length : 0)} show(s)`
         );
+
+        /* ----- DEBUG: Is target show present in raw nearby_shows data? ---- */
+        if (Array.isArray(nearbyData)) {
+          const found = nearbyData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          console.debug(
+            `[showService][DEBUG_SHOW] Target show ${
+              found ? 'FOUND' : 'NOT found'
+            } in raw nearby_shows payload`
+          );
+
+          // If found, get the show details for further debugging
+          if (found) {
+            const targetShow = nearbyData.find((s: any) => s.id === DEBUG_SHOW_ID);
+            console.debug(
+              `[showService][DEBUG_SHOW] Target show details:`,
+              {
+                id: targetShow.id,
+                title: targetShow.title,
+                start_date: targetShow.start_date,
+                end_date: targetShow.end_date,
+                status: targetShow.status
+              }
+            );
+          }
+        }
         
         // Apply additional filters that weren't handled by the RPC
         let filteredData = nearbyData;
@@ -183,10 +214,33 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         // Ensure we're not showing past shows
         if (Array.isArray(filteredData)) {
           const today = new Date();
+          console.debug(`[showService][DEBUG_SHOW] Today's date for filtering: ${today.toISOString()}`);
+          
+          // Check if target show exists before filtering
+          const targetShowBeforeFilter = filteredData.find((s: any) => s.id === DEBUG_SHOW_ID);
+          
+          if (targetShowBeforeFilter) {
+            const targetEndDate = new Date(targetShowBeforeFilter.end_date);
+            const isPastShow = targetEndDate < today;
+            
+            console.debug(
+              `[showService][DEBUG_SHOW] Target show end_date: ${targetEndDate.toISOString()} | Today: ${today.toISOString()} | Is past show? ${isPastShow ? 'YES' : 'NO'}`
+            );
+          }
+          
           filteredData = filteredData.filter(show => {
             // Parse the end date, ensuring timezone issues don't cause off-by-one errors
             const showEndDate = new Date(show.end_date);
-            return showEndDate >= today;
+            const isValid = showEndDate >= today;
+            
+            // Debug logging specifically for our target show
+            if (show.id === DEBUG_SHOW_ID) {
+              console.debug(
+                `[showService][DEBUG_SHOW] Filtering decision: show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
+              );
+            }
+            
+            return isValid;
           });
           
           console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
@@ -217,6 +271,16 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           );
         }
         
+        /* ----- DEBUG: Is target show present after client-side filters? ---- */
+        if (Array.isArray(filteredData)) {
+          const foundAfter = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          console.debug(
+            `[showService][DEBUG_SHOW] Target show ${
+              foundAfter ? 'REMAINS' : 'WAS FILTERED OUT'
+            } after nearby_shows client-side filters`
+          );
+        }
+
         return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
       }
 
@@ -259,19 +323,77 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           `[showService] find_filtered_shows returned ${((rpcData && Array.isArray(rpcData)) ? rpcData.length : 0)} show(s)`
         );
         
+        /* ----- DEBUG: Target show in raw find_filtered_shows payload? ----- */
+        if (Array.isArray(rpcData)) {
+          const foundRaw = rpcData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          console.debug(
+            `[showService][DEBUG_SHOW] Target show ${
+              foundRaw ? 'FOUND' : 'NOT found'
+            } in raw find_filtered_shows payload`
+          );
+          
+          // If found, get the show details for further debugging
+          if (foundRaw) {
+            const targetShow = rpcData.find((s: any) => s.id === DEBUG_SHOW_ID);
+            console.debug(
+              `[showService][DEBUG_SHOW] Target show details from find_filtered_shows:`,
+              {
+                id: targetShow.id,
+                title: targetShow.title,
+                start_date: targetShow.start_date,
+                end_date: targetShow.end_date,
+                status: targetShow.status
+              }
+            );
+          }
+        }
+
         // Ensure we're not showing past shows
         let filteredData = rpcData;
         if (Array.isArray(filteredData)) {
           const today = new Date();
+          console.debug(`[showService][DEBUG_SHOW] Today's date for filtering (find_filtered): ${today.toISOString()}`);
+          
+          // Check if target show exists before filtering
+          const targetShowBeforeFilter = filteredData.find((s: any) => s.id === DEBUG_SHOW_ID);
+          
+          if (targetShowBeforeFilter) {
+            const targetEndDate = new Date(targetShowBeforeFilter.end_date);
+            const isPastShow = targetEndDate < today;
+            
+            console.debug(
+              `[showService][DEBUG_SHOW] Target show end_date (find_filtered): ${targetEndDate.toISOString()} | Today: ${today.toISOString()} | Is past show? ${isPastShow ? 'YES' : 'NO'}`
+            );
+          }
+          
           filteredData = filteredData.filter(show => {
             // Parse the end date, ensuring timezone issues don't cause off-by-one errors
             const showEndDate = new Date(show.end_date);
-            return showEndDate >= today;
+            const isValid = showEndDate >= today;
+            
+            // Debug logging specifically for our target show
+            if (show.id === DEBUG_SHOW_ID) {
+              console.debug(
+                `[showService][DEBUG_SHOW] Filtering decision (find_filtered): show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
+              );
+            }
+            
+            return isValid;
           });
           
           console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
         }
         
+        /* ----- DEBUG: Target show after filters (find_filtered_shows) ----- */
+        if (Array.isArray(filteredData)) {
+          const foundFiltered = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          console.debug(
+            `[showService][DEBUG_SHOW] Target show ${
+              foundFiltered ? 'REMAINS' : 'WAS FILTERED OUT'
+            } after find_filtered_shows client-side filters`
+          );
+        }
+
         return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
       }
 
@@ -375,10 +497,32 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     let filteredData = data;
     if (Array.isArray(filteredData)) {
       const today = new Date();
+      
+      // Check if target show exists before filtering
+      const targetShowBeforeFilter = filteredData.find((s: any) => s.id === DEBUG_SHOW_ID);
+      
+      if (targetShowBeforeFilter) {
+        const targetEndDate = new Date(targetShowBeforeFilter.end_date);
+        const isPastShow = targetEndDate < today;
+        
+        console.debug(
+          `[showService][DEBUG_SHOW] Target show end_date (basic query): ${targetEndDate.toISOString()} | Today: ${today.toISOString()} | Is past show? ${isPastShow ? 'YES' : 'NO'}`
+        );
+      }
+      
       filteredData = filteredData.filter(show => {
         // Parse the end date, ensuring timezone issues don't cause off-by-one errors
         const showEndDate = new Date(show.end_date);
-        return showEndDate >= today;
+        const isValid = showEndDate >= today;
+        
+        // Debug logging specifically for our target show
+        if (show.id === DEBUG_SHOW_ID) {
+          console.debug(
+            `[showService][DEBUG_SHOW] Filtering decision (basic query): show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
+          );
+        }
+        
+        return isValid;
       });
       
       console.debug(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
@@ -420,8 +564,8 @@ export const getPaginatedShows = async (
       page = 1,
     } = params;
 
-    const toIso = (d: Date | string): string =>
-      d instanceof Date ? d.toISOString() : d;
+    const toIso = (d: Date | string | null): string =>
+      d instanceof Date ? d.toISOString() : d || '';
     
     console.debug('[showService] getPaginatedShows called with params:', {
       latitude, longitude, radius, startDate, endDate, maxEntryFee, 
@@ -431,7 +575,7 @@ export const getPaginatedShows = async (
     /* ---------------------- RPC invocation ----------------------- */
     const { data, error } = await supabase.rpc('get_paginated_shows', {
       lat: latitude,
-      long: longitude,
+      lng: longitude,
       radius_miles: typeof radius === 'number' && !isNaN(radius) ? radius : 25,
       start_date: toIso(startDate),
       end_date: toIso(endDate),
@@ -480,8 +624,8 @@ export const getPaginatedShows = async (
     }
 
     /* -------------------------------------------------------------
-     * 3. Normalise successful payload to avoid “undefined value
-     *    to object” errors when the function returns unexpected
+     * 3. Normalise successful payload to avoid "undefined value
+     *    to object" errors when the function returns unexpected
      *    shapes.  Always guarantee `rows` is an array and
      *    `paginationRaw` is an object.
      * ----------------------------------------------------------- */
@@ -557,8 +701,8 @@ const getFallbackPaginatedShows = async (
       page = 1,
     } = params;
 
-    const toIso = (d: Date | string): string =>
-      d instanceof Date ? d.toISOString() : d;
+    const toIso = (d: Date | string | null): string =>
+      d instanceof Date ? d.toISOString() : d || '';
     
     console.debug('[showService] getFallbackPaginatedShows executing with params:', {
       latitude, longitude, radius, 
@@ -717,8 +861,8 @@ const getAllActiveShowsFallback = async (
 
     console.warn('[showService] Using emergency getAllActiveShowsFallback without coordinate filtering');
     
-    const toIso = (d: Date | string): string =>
-      d instanceof Date ? d.toISOString() : d;
+    const toIso = (d: Date | string | null): string =>
+      d instanceof Date ? d.toISOString() : d || '';
     
     // Simple query - just get active shows
     let dataQuery = supabase
@@ -734,8 +878,12 @@ const getAllActiveShowsFallback = async (
     dataQuery = dataQuery.gte('start_date', toIso(startDate) as any);
     dataQuery = dataQuery.lte('start_date', toIso(endDate) as any);
     
-    // Get total count first
-    const { count, error: countError } = await dataQuery.count();
+    // Get total count first using the recommended Supabase pattern
+    const { count, error: countError } = await supabase
+      .from('shows')
+      .select('*', { count: 'exact', head: true })
+      .gte('start_date', toIso(startDate) as any)
+      .lte('end_date', toIso(endDate) as any);
     
     if (countError) {
       console.error('[showService] Error getting count in emergency fallback:', countError);
@@ -984,8 +1132,7 @@ export const claimShow = async (
      * 1. Atomically flag the show as claimed IF not yet claimed
      *    — PostgREST will return 0 rows if the condition fails.
      * ------------------------------------------------------ */
-    const { data: updatedShow, error: updateError, count } =
-      await supabase
+    const { data: updatedShow, error: updateError, count } = await supabase
         .from('shows')
         .update({
           claimed: true,
@@ -994,12 +1141,12 @@ export const claimShow = async (
         })
         .eq('id', showId)
         .or('claimed.is.null,claimed.eq.false') // only update unclaimed
-        .select('*', { count: 'exact' })
+        .select('*')
         .single();
 
     if (updateError) throw updateError;
 
-    if (!updatedShow || count === 0) {
+    if (!updatedShow) {
       return {
         success: false,
         message: 'Show has already been claimed by another organiser.',
@@ -1009,17 +1156,14 @@ export const claimShow = async (
     /* --------------------------------------------------------
      * 2. Insert organiser ↔ show relation (ignore duplicates)
      * ------------------------------------------------------ */
-    const { error: orgError } = await supabase
-      .from('show_organizers')
-      .insert(
-        {
-          show_id: showId,
-          user_id: userId,
-          role: 'owner',
-          created_at: new Date().toISOString(),
-        },
-        { ignoreDuplicates: true }
-      );
+    const { error: orgError } = await supabase.from('show_organizers').insert([
+      {
+        show_id: showId,
+        user_id: userId,
+        role: 'owner',
+        created_at: new Date().toISOString(),
+      },
+    ]);
 
     if (orgError) throw orgError;
 
