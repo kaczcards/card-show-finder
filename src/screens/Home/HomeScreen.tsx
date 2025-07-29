@@ -358,7 +358,11 @@ const HomeScreen = ({
     if (onShowPress) {
       onShowPress(showId);
     } else {
-      navigation.navigate('ShowDetail' as never);
+      // Pass the required route params so ShowDetailScreen can access `route.params.showId`
+      navigation.navigate(
+        'ShowDetail' as never,
+        { showId } as never // cast to `never` to satisfy the generic signature
+      );
     }
   };
 
