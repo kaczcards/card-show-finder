@@ -593,7 +593,7 @@ const getDirectPaginatedShows = async (
     const toIso = (d: Date | string | null): string =>
       d instanceof Date ? d.toISOString() : d || '';
     
-    console.debug('[showService] getFallbackPaginatedShows executing with params:', {
+    console.debug('[showService] getDirectPaginatedShows executing with params:', {
       latitude, longitude, radius, 
       startDate: toIso(startDate),
       endDate: toIso(endDate)
@@ -630,42 +630,46 @@ const getDirectPaginatedShows = async (
       throw countError;
     }
     
-    // Now get the actual data for this page
-    let dataQuery = supabase
-      .from('shows')
-      .select('*')
-      .eq('status', 'ACTIVE');
-    
-    // Apply the same filters as the count query
-    dataQuery = dataQuery.gte('start_date', toIso(startDate) as any);
-    dataQuery = dataQuery.lte('start_date', toIso(endDate) as any);
-    dataQuery = dataQuery.gte('end_date', today.toISOString() as any);
-    
-    if (typeof maxEntryFee === 'number') {
-      dataQuery = dataQuery.lte('entry_fee', maxEntryFee);
-    }
-    
-    if (categories && Array.isArray(categories) && categories.length > 0) {
-      dataQuery = dataQuery.overlaps('categories', categories);
-    }
-    
-    // Apply pagination
-    dataQuery = dataQuery
-      .order('start_date', { ascending: true })
-      .range((page - 1) * pageSize, page * pageSize - 1);
-    
-    // Execute data query
-    const { data, error: dataError } = await dataQuery;
+    // Now use the new RPC function that properly extracts coordinates
+    const { data, error: dataError } = await supabase.rpc('get_shows_with_coordinates', {
+      p_start_date: toIso(startDate),
+      p_end_date: toIso(endDate)
+    });
     
     if (dataError) {
-      console.error('[showService] Error getting data:', dataError);
+      console.error('[showService] Error calling get_shows_with_coordinates:', dataError);
       throw dataError;
+    }
+    
+    // Apply additional filters that weren't handled by the RPC
+    let filteredData = data || [];
+    
+    // Apply status filter (RPC already filters for ACTIVE, but double-check)
+    filteredData = filteredData.filter(show => show.status === 'ACTIVE');
+    
+    // Apply max entry fee filter if specified
+    if (typeof maxEntryFee === 'number') {
+      filteredData = filteredData.filter(show => show.entry_fee <= maxEntryFee);
+    }
+    
+    // Apply categories filter if specified
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      filteredData = filteredData.filter(show => 
+        show.categories && 
+        categories.some(cat => show.categories.includes(cat))
+      );
+    }
+    
+    // Apply features filter if specified
+    if (features && Array.isArray(features) && features.length > 0) {
+      filteredData = filteredData.filter(show => 
+        show.features && 
+        features.every(feature => show.features[feature] === true)
+      );
     }
     
     // Filter results for shows within the radius
     // (since we can't do this in the query without the RPC)
-    let filteredData = data || [];
-
     /* ------------------------------------------------------------------
      * Skip distance filtering if we're using the default (0,0) placeholder
      * coordinates.  Applying the radius filter in that case removes every
@@ -700,14 +704,6 @@ const getDirectPaginatedShows = async (
             longitude: show.coordinates.coordinates[0]
           };
         }
-        // Method 3: Try parsing PostGIS binary format
-        else if (typeof show.coordinates === 'string' && show.coordinates.startsWith('0101000020')) {
-          // For our Indianapolis shows, we know the coordinates
-          showCoords = {
-            latitude: 39.7025564,
-            longitude: -86.0803286
-          };
-        }
         
         // Skip shows without valid coordinates
         if (!showCoords) return false;
@@ -724,19 +720,24 @@ const getDirectPaginatedShows = async (
       );
     }
     
-    console.info(`[showService] getFallbackPaginatedShows found ${filteredData.length} shows (from ${count} total)`);
+    // Apply pagination to the filtered data
+    const totalFilteredCount = filteredData.length;
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
+    const paginatedData = filteredData.slice(startIndex, endIndex);
+    
+    console.info(`[showService] getDirectPaginatedShows found ${paginatedData.length} shows (from ${totalFilteredCount} filtered, ${count} total)`);
     
     // Map to app format
-    const mappedShows = filteredData.map(mapDbShowToAppShow);
+    const mappedShows = paginatedData.map(mapDbShowToAppShow);
     
     // Calculate pagination info
-    const totalCount = count || 0;
-    const totalPages = Math.ceil(totalCount / pageSize);
+    const totalPages = Math.ceil(totalFilteredCount / pageSize);
     
     return {
       data: mappedShows,
       pagination: {
-        totalCount,
+        totalCount: totalFilteredCount,
         pageSize,
         currentPage: page,
         totalPages,
@@ -744,7 +745,7 @@ const getDirectPaginatedShows = async (
       error: null,
     };
   } catch (err: any) {
-    console.error('[showService] Error in getFallbackPaginatedShows:', err);
+    console.error('[showService] Error in getDirectPaginatedShows:', err);
     return {
       data: [],
       pagination: {
