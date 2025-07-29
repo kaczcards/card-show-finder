@@ -6,6 +6,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Global toast notifications
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+// Sentry for error/performance monitoring
+import * as Sentry from 'sentry-expo';
 
 /**
  * Essential polyfills for the React Native environment
@@ -40,6 +42,31 @@ if (typeof global.structuredClone === 'undefined') {
 // Import context providers
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';
+
+/**
+ * ---------------------------------------------------------
+ *  Sentry Initialisation
+ * ---------------------------------------------------------
+ *  • Error & crash reporting
+ *  • Performance monitoring (tracing)
+ *  • Breadcrumbs for console.log / network calls, etc.
+ * ---------------------------------------------------------
+ */
+
+// React Navigation instrumentation – enables route change tracing
+const routingInstrumentation = new Sentry.Native.ReactNavigationV5Instrumentation();
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+  enableInExpoDevelopment: true,
+  debug: true,
+  tracesSampleRate: 1.0, // capture 100% transactions (adjust in prod)
+  integrations: [
+    new Sentry.Native.ReactNativeTracing({
+      routingInstrumentation,
+    }),
+  ],
+});
 
 // Import theme for initial loading screen
 import { theme } from './src/constants/theme';
