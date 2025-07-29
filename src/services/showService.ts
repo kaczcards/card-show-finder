@@ -157,8 +157,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         lat: filters.latitude,
         long: filters.longitude,
         radius_miles: radius,
-        start_date: startDate,
-        end_date: endDate,
+        filter_start_date: startDate,
+        filter_end_date: endDate,
         debugShowId: DEBUG_SHOW_ID, // helpful when grepping logs
       });
 
@@ -169,8 +169,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           lat: filters.latitude,
           long: filters.longitude,
           radius_miles: radius,
-          start_date: startDate, // Always include a date range
-          end_date: endDate,    // to filter out past shows
+          filter_start_date: startDate, // Always include a date range
+          filter_end_date: endDate,    // to filter out past shows
         }
       );
 
@@ -579,8 +579,8 @@ export const getPaginatedShows = async (
       lat: latitude,
       long: longitude,
       radius_miles: radius,
-      start_date: toIso(startDate),
-      end_date: toIso(endDate),
+      filter_start_date: toIso(startDate),
+      filter_end_date: toIso(endDate),
     });
 
     /* -------------------------------------------------------------
