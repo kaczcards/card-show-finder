@@ -54,6 +54,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
   const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
+  // Indicates that we've completed at least one fetch cycle
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Default filters
@@ -232,6 +234,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
         setLoading(true);
       }
       setError(null);
+      // Reset dataLoaded flag for new fetch cycle
+      setDataLoaded(false);
 
       const today = new Date();
       const thirtyDaysOut = new Date();
@@ -278,6 +282,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
       setShows([]);
       setError(error?.message || 'Failed to load card shows. Please try again.');
     } finally {
+      // Mark fetch completed before clearing loading flag
+      setDataLoaded(true);
       setLoading(false);
       if (isRefreshing) {
         setRefreshing(false);
@@ -505,7 +511,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   // Render empty state when no shows are found
   const renderEmptyState = () => {
-    if (loading || shows.length > 0) return null;
+    if (loading || !dataLoaded || shows.length > 0) return null;
     return (
       <View style={styles.emptyStateContainer}>
         <Ionicons name="map-outline" size={50} color="#007AFF" />
@@ -537,21 +543,22 @@ const MapScreen: React.FC<MapScreenProps> = ({
                 <ActivityIndicator size="large" color="#007AFF" />
                 <Text style={styles.loadingText}>Finding nearby shows...</Text>
             </View>
-        ) : error && !shows.length ? (
+        ) : dataLoaded && error && !shows.length ? (
             <View style={styles.errorContainer}>
                  <Text style={styles.errorText}>{error}</Text>
                  <TouchableOpacity style={styles.retryButton} onPress={() => fetchShows()}>
                      <Text style={styles.retryButtonText}>Retry</Text>
                  </TouchableOpacity>
             </View>
-        ) : (
+        ) : dataLoaded ? (
             <MapShowCluster
                 ref={mapRef}
                 region={currentRegion}
                 shows={shows}
-                onShowPress={handleShowPress}
+                onCalloutPress={handleShowPress}
                 onRegionChangeComplete={handleRegionChangeComplete}
             />
+        ) : null
         )}
 
       <TouchableOpacity
