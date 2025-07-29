@@ -12,10 +12,15 @@
 --   1. Haven't ended before our search starts (end_date >= start_date)
 --   2. Start before our search ends (start_date <= end_date)
 
--- Drop the existing function
-DROP FUNCTION IF EXISTS public.nearby_shows;
-
--- Recreate the function with fixed date filtering logic
+-- Drop the existing function (use full signature to disambiguate)
+DROP FUNCTION IF EXISTS public.nearby_shows(
+  float,
+  float,
+  float,
+  timestamp with time zone,
+  timestamp with time zone
+);
+-- Re-create the function with the **correct** signature
 CREATE OR REPLACE FUNCTION public.nearby_shows(
   lat float,
   long float,
@@ -75,7 +80,13 @@ AS $$
 $$;
 
 -- Also update the alternative implementation
-DROP FUNCTION IF EXISTS public.nearby_shows_earth_distance;
+DROP FUNCTION IF EXISTS public.nearby_shows_earth_distance(
+  float,
+  float,
+  float,
+  timestamp with time zone,
+  timestamp with time zone
+);
 
 CREATE OR REPLACE FUNCTION public.nearby_shows_earth_distance(
   lat float,
