@@ -6,40 +6,16 @@ import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Global toast notifications
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+// ---------------- TEMPORARILY DISABLED ----------------
 // Sentry for error/performance monitoring
-import * as Sentry from 'sentry-expo';
+// (Commented out while debugging Hermes prototype crash)
+// import * as Sentry from 'sentry-expo';
+// Centralised environment polyfills (structuredClone, etc.)
+import './src/utils/polyfills';
 
-/**
- * Essential polyfills for the React Native environment
- *
- * • `structuredClone` – required by Supabase and other modern libraries but
- *   missing from the Hermes runtime (and JSC on older RN versions).  
- *   The fallback below handles the common cases by using
- *   `JSON.parse(JSON.stringify(obj))`.  For complex, non-serialisable
- *   objects (e.g. Date, Map), we return the original reference with a warn.
- */
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore – add property to global if it doesn't already exist
-if (typeof global.structuredClone === 'undefined') {
-  // eslint-disable-next-line no-global-assign
-  global.structuredClone = (obj: any) => {
-    if (obj === null || typeof obj !== 'object') {
-      return obj;
-    }
-    try {
-      return JSON.parse(JSON.stringify(obj));
-    } catch (error) {
-      console.warn(
-        '[Polyfill] structuredClone fallback used for complex object:',
-        error
-      );
-      return obj; // best-effort fallback
-    }
-  };
-}
-
-// Import context providers
+// ------------------------------------------------------------------
+// Context providers
+// ------------------------------------------------------------------
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 
@@ -53,9 +29,13 @@ import { ThemeProvider } from './src/contexts/ThemeContext';
  * ---------------------------------------------------------
  */
 
+// ---------------- TEMPORARILY DISABLED ----------------
 // React Navigation instrumentation – enables route change tracing
-const routingInstrumentation = new Sentry.Native.ReactNavigationV5Instrumentation();
+// const routingInstrumentation = new Sentry.Native.ReactNavigationV5Instrumentation();
 
+// ---------------- TEMPORARILY DISABLED ----------------
+// Sentry initialisation block (disabled while isolating runtime crash)
+/*
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
   enableInExpoDevelopment: true,
@@ -67,6 +47,7 @@ Sentry.init({
     }),
   ],
 });
+*/
 
 // Import theme for initial loading screen
 import { theme } from './src/constants/theme';

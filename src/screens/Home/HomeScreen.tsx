@@ -92,8 +92,10 @@ const HomeScreen = ({
   
   // Default filter values
   const defaultFilters: ShowFilters = {
-    // Increase default radius so users see more nearby shows
-    radius: 50,
+    // Default radius for nearby shows (in miles) – 25 mi from the
+    // user’s home ZIP code.  Users can change this in Filters and the
+    // app will remember their last used settings.
+    radius: 25,
     startDate: new Date(),
     endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     maxEntryFee: undefined,

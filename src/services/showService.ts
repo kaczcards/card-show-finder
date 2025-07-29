@@ -6,6 +6,7 @@
 
 import { supabase } from '../supabase';
 import { Show, ShowStatus } from '../types';
+import { calculateDistanceBetweenCoordinates } from './locationService';
 
 /**
  * Convert a raw Supabase row into an app `Show` object.
@@ -823,11 +824,9 @@ const getFallbackPaginatedShows = async (
         // Skip shows without valid coordinates
         if (!showCoords) return false;
         
-        const distance = calculateDistance(
-          latitude,
-          longitude,
-          showCoords.latitude,
-          showCoords.longitude
+        const distance = calculateDistanceBetweenCoordinates(
+          { latitude, longitude },
+          showCoords
         );
         return distance <= radius;
       });
