@@ -1,5 +1,14 @@
 import React, { forwardRef, useRef, useImperativeHandle } from 'react';
-import { View, Text, StyleSheet, ViewStyle, TextStyle, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ViewStyle,
+  TextStyle,
+  Platform,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 
 /**
  * MapFallback.tsx
@@ -370,8 +379,84 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
         Run with: expo run:ios or expo run:android
       </Text>
       <Text style={[styles.clusterFallbackText, { marginTop: 10 }, fallbackTextStyle]}>
-        {data && Array.isArray(data) ? `${data.length} items would be shown on the map` : 'No data available'}
+        {data && Array.isArray(data) ? `${data.length} item${data.length === 1 ? '' : 's'} would be shown on the map` : 'No data available'}
       </Text>
+
+      {/* ------------------------------------------------------------------
+          NEW: Helpful list for Expo Go fallback
+         ------------------------------------------------------------------ */}
+      {Array.isArray(data) && data.length > 0 && (
+        <ScrollView
+          style={{ maxHeight: 300, alignSelf: 'stretch', marginTop: 12 }}
+          contentContainerStyle={{ paddingBottom: 16 }}
+        >
+          {data.map((item, idx) => {
+            // Attempt to pull a few common fields that show objects use
+            const title =
+              item.title ??
+              item.properties?.title ??
+              `Item #${idx + 1}`;
+
+            const startDate =
+              item.startDate ??
+              item.properties?.startDate ??
+              item.start_date;
+            const endDate =
+              item.endDate ??
+              item.properties?.endDate ??
+              item.end_date;
+
+            const dateLabel = startDate
+              ? `${new Date(startDate).toLocaleDateString()}${
+                  endDate &&
+                  new Date(startDate).toDateString() !==
+                    new Date(endDate).toDateString()
+                    ? ` – ${new Date(endDate).toLocaleDateString()}`
+                    : ''
+                }`
+              : 'Date N/A';
+
+            const handlePress = () => {
+              try {
+                // Allow devs to invoke their marker renderer to inspect data
+                if (renderMarker) {
+                  renderMarker(item);
+                }
+              } catch (e) {
+                console.warn(
+                  '[MapFallback] Error invoking renderMarker from fallback list:',
+                  e
+                );
+              }
+            };
+
+            return (
+              <TouchableOpacity
+                key={idx}
+                onPress={handlePress}
+                style={{
+                  backgroundColor: 'white',
+                  padding: 12,
+                  borderRadius: 8,
+                  marginBottom: 8,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 2,
+                  elevation: 1,
+                }}
+              >
+                <Text style={{ fontWeight: '600', marginBottom: 4 }}>
+                  {title}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#555' }}>
+                  {dateLabel}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 });
