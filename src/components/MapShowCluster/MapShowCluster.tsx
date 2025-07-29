@@ -82,6 +82,43 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
   provider = undefined,
   organizerProfiles = {},
 }, ref) => {
+  /* ------------------------------------------------------------------
+   *  High-level render diagnostics
+   * ------------------------------------------------------------------ */
+  const renderTimestamp = new Date().toISOString();
+  const currentShowCount =
+    Array.isArray(shows) ? shows.length : 0;
+
+  // Log every render with show count & timestamp
+  console.log(
+    `[MapShowCluster] Render @ ${renderTimestamp} – received ${currentShowCount} show(s)`
+  );
+
+  // Track previous show count to detect prop changes
+  const prevShowsCountRef = useRef<number>(currentShowCount);
+
+  // Track the first time we get a non-empty shows array
+  const firstNonEmptyLoggedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (prevShowsCountRef.current !== currentShowCount) {
+      console.log(
+        `[MapShowCluster] shows prop changed: ${prevShowsCountRef.current} → ${currentShowCount} @ ${new Date().toISOString()}`
+      );
+      prevShowsCountRef.current = currentShowCount;
+    }
+
+    if (
+      !firstNonEmptyLoggedRef.current &&
+      currentShowCount > 0
+    ) {
+      console.log(
+        '[MapShowCluster] First non-empty shows array received – initial timing issue should be resolved'
+      );
+      firstNonEmptyLoggedRef.current = true;
+    }
+  }, [currentShowCount]);
+
   const [pressedShowId, setPressedShowId] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const navigation = useNavigation<any>();

@@ -102,8 +102,9 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
 
   // Format date range for display with comprehensive error handling
   const formatDateRange = (): string => {
-    const startDate = safeShow.start_date;
-    const endDate = safeShow.end_date;
+    // Support both DB snake_case fields and mapped camelCase fields
+    const startDate = safeShow.start_date || safeShow.startDate;
+    const endDate   = safeShow.end_date   || safeShow.endDate;
     
     if (!startDate) return 'Date not specified';
     

@@ -44,7 +44,10 @@ interface ShowSeries {
 }
 
 const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
-  const { showId } = route.params;
+  // Guard against missing navigation params to avoid runtime crash
+  // `route.params` can be undefined if the navigate() call forgets to pass extras.
+  // Using a fallback empty object lets the screen render an error state gracefully.
+  const { showId } = route.params || {};
   const authContext = useAuth();
   const user = authContext.authState?.user || null;
   // Hook-based navigation (needed for hyperlink handler)
@@ -56,6 +59,24 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(null);
+
+  // ------------------------------------------------------------------
+  // Guard clause – ensure we have a valid showId *before* running queries
+  // ------------------------------------------------------------------
+  if (!showId) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle-outline" size={60} color="#FF6A00" />
+        <Text style={styles.errorText}>Error: Show ID not provided</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.retryButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Use the new custom hook for show details
   const {
@@ -99,6 +120,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     /* ---------------- Timing -------------------------- */
     startDate: details.start_date ?? details.startDate ?? '',
     endDate: details.end_date ?? details.endDate ?? '',
+    // map time fields so ShowTimeInfo can display them
+    startTime: details.start_time ?? details.startTime ?? undefined,
+    endTime:   details.end_time   ?? details.endTime   ?? undefined,
 
     /* ---------------- Pricing / status --------------- */
     entryFee: details.entry_fee ?? details.entryFee ?? 0,

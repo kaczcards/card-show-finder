@@ -1,18 +1,48 @@
 /**
  * polyfills.ts
- * 
- * This file contains polyfills for modern JavaScript features that might not be
- * available in all environments, particularly React Native.
- * 
- * Usage:
- * Import this file at the entry point of your application (e.g., App.tsx)
- * ```
- * import './src/utils/polyfills';
- * ```
+ *
+ * Centralised polyfills for APIs that are not yet consistently
+ * available in all React-Native runtimes (Hermes / JSC).
+ *
+ * IMPORTANT:  Always *feature-detect* before defining a polyfill to
+ * avoid “duplicate identifier” TypeScript or runtime errors when the
+ * host environment eventually gains native support.
+ *
+ * Usage (entry-point – App.tsx or index.ts):
+ *   import './src/utils/polyfills';
  */
 
-// The structuredClone polyfill has been removed as it's now natively supported
-// in the environment and was causing a "duplicate identifier" TypeScript error.
+/* ------------------------------------------------------------------ */
+/* structuredClone                                                    */
+/* ------------------------------------------------------------------ */
+// Hermes started shipping structuredClone in RN 0.79, but older simulators /
+// devices or JSC-based runtimes may still be missing it.  Supabase’s realtime
+// Postgres client and various React-Query utils rely on this API.
+if (typeof globalThis.structuredClone !== 'function') {
+  // eslint-disable-next-line no-console
+  console.debug(
+    '[polyfills] structuredClone not found – installing lightweight polyfill.'
+  );
 
-// Export nothing - this file is used for its side effects only
+  // A *very* small subset implementation that is sufficient for our usage
+  // (plain objects, arrays, numbers, strings, booleans, null).  It will
+  // throw for functions, class instances, Dates, Maps, Sets, etc., mirroring
+  // the native behaviour of throwing on non-serialisable input.
+  // If we ever need full spec compliance we can replace this with
+  // `@ungap/structured-clone` or another more complete shim.
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore – add to global scope
+  globalThis.structuredClone = <T>(value: T): T => {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (err) {
+      throw new Error(
+        '[polyfills] structuredClone polyfill failed – input may ' +
+          'contain non-serialisable values.',
+      );
+    }
+  };
+}
+
+// Export nothing – this module is imported for its side-effects only.
 export {};
