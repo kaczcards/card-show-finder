@@ -483,7 +483,17 @@ const HomeScreen = ({
         <Text style={styles.showTitle}>{item.title}</Text>
         <Text style={styles.showDate}>
           {formatDate(String(item.startDate))}
-          {item.startDate !== item.endDate ? ` - ${formatDate(String(item.endDate))}` : ''}
+          {(() => {
+            /* ----------------------------------------------------------
+             * Show end date ONLY when the event spans multiple days.
+             * We compare just the calendar day portion (toDateString)
+             * so different times on the same day aren’t treated as
+             * separate dates.
+             * ---------------------------------------------------------*/
+            const startDay = new Date(item.startDate).toDateString();
+            const endDay   = new Date(item.endDate).toDateString();
+            return startDay !== endDay ? ` - ${formatDate(String(item.endDate))}` : '';
+          })()}
         </Text>
         <View style={styles.showLocation}>
           <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
