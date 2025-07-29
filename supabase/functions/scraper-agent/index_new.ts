@@ -1,20 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
-// Date-filter utility (ensure we only keep shows that are today or future)
-import {
-  isShowDateValid,
-  logDateFilterResult
-} from '../_shared/date-filter.ts'
 
 const AI_MODEL = 'gemini-1.5-flash'
 const BATCH_SIZE = 7 // Process 7 URLs with highest priority each run
 const TIMEOUT_MS = 25000 // 25 second timeout for fetch operations
-
-// --- NEW CONSTANTS for chunk-based AI extraction ---------------------------
-const AI_TIMEOUT_MS = 30000   // 30s per AI request (Gemini)
-const MAX_HTML_SIZE  = 100_000 // 100 KB per chunk sent to AI
-const MAX_CHUNKS     = 3       // fail-safe: never send more than 3 chunks
 
 // Create a Supabase client with the service role key for admin access
 const getSupabaseAdmin = () => createClient(
@@ -60,47 +50,21 @@ async function updateScrapingSourceStats(
     if (success) {
       updates.last_success_at = new Date().toISOString();
       updates.error_streak = 0;
-
-      /* ------------------------------------------------------------------
-         NOTE: supabase.rpc(...) returns a promise -> { data, error }.
-         We must await it BEFORE we construct the updates object,
-         otherwise Postgres receives JSON like { priority_score: [object Promise] }
-         which triggers “invalid input syntax for type integer”.
-      ------------------------------------------------------------------ */
+      // Increase priority score for successful scrapes with shows
       if (showCount > 0) {
-        const { data: incScore, error: incErr } = await supabase.rpc(
-          'increment_priority',
-          { url_param: url, increment_amount: Math.min(showCount, 5) }
-        );
-        if (incErr) {
-          console.error(`[${url}] – RPC increment_priority failed: ${incErr.message}`);
-        } else if (typeof incScore === 'number') {
-          updates.priority_score = incScore;
-        }
+        updates.priority_score = supabase.rpc('increment_priority', { 
+          url_param: url, 
+          increment_amount: Math.min(showCount, 5) // Max +5 per run
+        });
       }
     } else {
       updates.last_error_at = new Date().toISOString();
-      // Increment error streak
-      const { data: newStreak, error: streakErr } = await supabase.rpc(
-        'increment_error_streak',
-        { url_param: url }
-      );
-      if (streakErr) {
-        console.error(`[${url}] – RPC increment_error_streak failed: ${streakErr.message}`);
-      } else if (typeof newStreak === 'number') {
-        updates.error_streak = newStreak;
-      }
-
+      updates.error_streak = supabase.rpc('increment_error_streak', { url_param: url });
       // Decrease priority for errors
-      const { data: decScore, error: decErr } = await supabase.rpc(
-        'decrement_priority',
-        { url_param: url, decrement_amount: 1 }
-      );
-      if (decErr) {
-        console.error(`[${url}] – RPC decrement_priority failed: ${decErr.message}`);
-      } else if (typeof decScore === 'number') {
-        updates.priority_score = decScore;
-      }
+      updates.priority_score = supabase.rpc('decrement_priority', { 
+        url_param: url, 
+        decrement_amount: 1
+      });
     }
     
     const { error } = await supabase
@@ -150,31 +114,6 @@ ${html}
 `;
 }
 
-// ---------------------------------------------------------------------------
-// Specialised prompt for Sports Collectors Digest (state-organised listings)
-// ---------------------------------------------------------------------------
-function buildSCDPrompt(html: string, stateNote = ''): string {
-  return `
-You are a specialized card-show event extractor. The HTML is from Sports Collectors Digest.
-The calendar is organised by STATE headings in UPPERCASE (e.g. ALABAMA, ARIZONA).
-Extract EVERY show listing beneath those headings.
-${stateNote ? `NOTE: This chunk mostly contains states: ${stateNote}` : ''}
-
-Output ONLY a JSON array, each object with:
-  name, startDate, endDate, venueName, address, city, state, entryFee,
-  description, url, contactInfo
-
-Important:
-• Use the state heading when populating "state".
-• If a date is a range like "Jan 5-6 2025" set startDate / endDate accordingly.
-• One list/bullet/paragraph = one event.
-• No markdown, no extra text.
-
-HTML:
-${html}
-`;
-}
-
 // Process a single URL
 async function processUrl(supabase: any, url: string): Promise<{ success: boolean; showCount: number }> {
   console.log(`[${url}] - Processing...`);
@@ -198,99 +137,86 @@ async function processUrl(supabase: any, url: string): Promise<{ success: boolea
       console.error(`[${url}] - Empty or too small HTML response`);
       return { success: false, showCount: 0 };
     }
-    console.log(`[${url}] - HTML fetched (${html.length} bytes). Chunking & extracting with AI...`);
-
-    // ---------------- AI chunk logic ------------------
+    
+    console.log(`[${url}] - HTML fetched successfully (${html.length} bytes). Extracting with AI...`);
+    
+    // Extract data using AI
     const geminiApiKey = Deno.env.get('GOOGLE_AI_KEY');
     if (!geminiApiKey) {
       console.error(`[${url}] - Missing Google AI API key`);
       return { success: false, showCount: 0 };
     }
-
+    
     const aiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${geminiApiKey}`;
-
-    // naive chunking: start / middle / end
-    const htmlChunks: {chunk: string; note: string}[] = [];
-    htmlChunks.push({ chunk: html.substring(0, MAX_HTML_SIZE),
-                      note: 'Document start' });
-    if (html.length > MAX_HTML_SIZE * 2) {
-      const midStart = Math.floor(html.length / 2) - Math.floor(MAX_HTML_SIZE / 2);
-      htmlChunks.push({ chunk: html.substring(midStart, midStart + MAX_HTML_SIZE),
-                        note: 'Document middle' });
-    }
-    if (html.length > MAX_HTML_SIZE * 3) {
-      htmlChunks.push({ chunk: html.substring(html.length - MAX_HTML_SIZE),
-                        note: 'Document end' });
-    }
-
-    // limit
-    const chunksToProcess = htmlChunks.slice(0, MAX_CHUNKS);
-
-    const allShows: any[] = [];
-    const isSCD = url.includes('sportscollectorsdigest');
-
-    for (let i = 0; i < chunksToProcess.length; i++) {
-      const { chunk, note } = chunksToProcess[i];
-      const prompt = isSCD ? buildSCDPrompt(chunk, note) : buildAIPrompt(chunk, url);
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-      let aiRespOk = false;
-      let rawText = '';
-      try {
-        const aiResp = await fetch(aiApiUrl, {
-          method: 'POST',
-          signal: controller.signal,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.2, topP: 0.8, topK: 40 }
-          })
-        });
-        clearTimeout(timeoutId);
-        if (!aiResp.ok) {
-          console.warn(`[${url}] - AI error on chunk ${i+1}: ${aiResp.status}`);
-          continue;
+    const prompt = buildAIPrompt(html, url);
+    
+    const aiResponse = await fetch(aiApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          topP: 0.8,
+          topK: 40
         }
-        const aiJson = await aiResp.json();
-        rawText = aiJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-        aiRespOk = rawText.length > 0;
-      } catch (err) {
-        console.warn(`[${url}] - AI timeout on chunk ${i+1}`);
-      }
-      if (!aiRespOk) continue;
-
-      // strip markdown fences
-      if (rawText.startsWith('```')) rawText = rawText.replace(/```[a-z]*\n?|```/g, '');
-
-      // braces fix
-      if (!rawText.startsWith('[')) {
-        const fb = rawText.indexOf('[');
-        const lb = rawText.lastIndexOf(']');
-        if (fb !== -1 && lb !== -1) rawText = rawText.slice(fb, lb + 1);
-      }
-      let showsChunk: any[] = [];
-      try {
-        showsChunk = JSON.parse(rawText);
-        if (Array.isArray(showsChunk)) {
-          allShows.push(...showsChunk);
-          console.log(`[${url}] - chunk ${i+1} ⇒ ${showsChunk.length} shows`);
-        }
-      } catch (_) { /* ignore parse issues */ }
+      }),
+    });
+    
+    if (!aiResponse.ok) {
+      console.error(`[${url}] - AI API Error: ${aiResponse.status} ${aiResponse.statusText}`);
+      return { success: false, showCount: 0 };
     }
-
-    if (allShows.length === 0) {
-      console.log(`[${url}] - No shows parsed from any chunk`);
+    
+    const aiResult = await aiResponse.json();
+    if (!aiResult.candidates || !aiResult.candidates[0]?.content?.parts?.[0]?.text) {
+      console.error(`[${url}] - AI returned no usable content`);
+      return { success: false, showCount: 0 };
+    }
+    
+    // Extract and clean up the JSON
+    let jsonText = aiResult.candidates[0].content.parts[0].text.trim();
+    
+    // Handle common JSON extraction issues
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n|\n```/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n|\n```/g, '');
+    }
+    
+    // Ensure it's a valid JSON array
+    if (!jsonText.startsWith('[') || !jsonText.endsWith(']')) {
+      console.error(`[${url}] - AI didn't return a valid JSON array: ${jsonText.substring(0, 100)}...`);
+      
+      // Try to find JSON array in the response
+      const jsonMatch = jsonText.match(/\[\s*\{.*\}\s*\]/s);
+      if (jsonMatch) {
+        jsonText = jsonMatch[0];
+      } else {
+        return { success: false, showCount: 0 };
+      }
+    }
+    
+    // Parse the JSON
+    let shows;
+    try {
+      shows = JSON.parse(jsonText);
+    } catch (e) {
+      console.error(`[${url}] - Failed to parse JSON: ${e.message}`);
+      return { success: false, showCount: 0 };
+    }
+    
+    if (!Array.isArray(shows) || shows.length === 0) {
+      console.log(`[${url}] - No shows found in the response`);
+      // This is still a successful scrape, just no shows found
       return { success: true, showCount: 0 };
     }
     
-    console.log(`[${url}] - Extracted total ${allShows.length} shows. Inserting...`);
+    console.log(`[${url}] - Extracted ${shows.length} shows. Inserting to pending table...`);
     
     // Insert each show into the pending table
     let insertedCount = 0;
-    let filteredCount = 0; // shows ignored due to past/invalid dates
-
-    for (const show of allShows) {
+    for (const show of shows) {
       // Create a standardized raw_payload
       const rawPayload = {
         name: show.name || null,
@@ -312,25 +238,6 @@ async function processUrl(supabase: any, url: string): Promise<{ success: boolea
         continue;
       }
       
-      // ------------------------------------------------------------------
-      // Skip shows where the date is in the past or un-parseable
-      // ------------------------------------------------------------------
-      const dateValidation = isShowDateValid(
-        rawPayload.startDate as string | null,
-        rawPayload.endDate as string | null
-      );
-
-      if (!dateValidation.valid) {
-        // Log why we're ignoring this show for easier debugging
-        logDateFilterResult(
-          dateValidation,
-          rawPayload.startDate || 'no date',
-          url
-        );
-        filteredCount++;
-        continue;
-      }
-
       try {
         const { error } = await supabase
           .from('scraped_shows_pending')
@@ -349,10 +256,8 @@ async function processUrl(supabase: any, url: string): Promise<{ success: boolea
         console.error(`[${url}] - Exception inserting show: ${e.message}`);
       }
     }
-
-    console.log(
-      `[${url}] - Successfully inserted ${insertedCount} of ${allShows.length} shows (filtered ${filteredCount} past/invalid)`
-    );
+    
+    console.log(`[${url}] - Successfully inserted ${insertedCount} of ${shows.length} shows`);
     return { success: true, showCount: insertedCount };
     
   } catch (e) {

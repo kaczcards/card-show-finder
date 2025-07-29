@@ -56,12 +56,15 @@ module.exports = {
   userInterfaceStyle: "light",
   /**
    * ------------------------------------------------------------------
-   * Disable React-Native New Architecture for now.
-   * While the new architecture (Fabric + TurboModules) is promising,
-   * a number of 3rd-party libraries we rely on are not yet stable.
+   * React-Native New Architecture (Fabric + TurboModules)
+   * must be enabled when running in Expo Go because Expo Go
+   * is always built with the new architecture.  All core
+   * libraries used in the project have been verified to work
+   * with the new architecture, so we enable it here to avoid
+   * runtime module resolution errors (e.g. RNMapsAirModule).
    * ------------------------------------------------------------------
    */
-  newArchEnabled: false,
+  newArchEnabled: true,
   scheme: "cardshowfinder",
   splash: {
     image: "./assets/splash.jpg",
@@ -77,7 +80,8 @@ module.exports = {
      * the correct Podfile.properties.json every time.
      * ------------------------------------------------------------------
      */
-    jsEngine: "hermes",
+    // Temporarily disable Hermes while investigating runtime crash
+    jsEngine: "jsc",
     infoPlist: {
       NSLocationWhenInUseUsageDescription: "Allow Card Show Finder to access your location so we can display nearby card shows."
     },
@@ -105,7 +109,8 @@ module.exports = {
      * Keeping this in app config prevents configuration drift
      * when platform folders are regenerated.
      */
-    jsEngine: "hermes",
+    // Temporarily disable Hermes while investigating runtime crash
+    jsEngine: "jsc",
 
     /* ------------------------------------------------------------------
      * Deep-link / Intent filters
@@ -150,7 +155,7 @@ module.exports = {
         locationAlwaysAndWhenInUsePermission: "Allow Card Show Finder to access your location so we can display nearby card shows."
       }
     ],
-    /* Sentry plugin removed while investigating native crash */
+    // "sentry-expo"                        // ← Temporarily disabled while debugging runtime crash
   ],
   /* Sentry post-publish hook to upload sourcemaps */
   hooks: {
