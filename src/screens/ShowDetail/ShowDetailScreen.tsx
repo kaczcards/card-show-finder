@@ -120,6 +120,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     /* ---------------- Timing -------------------------- */
     startDate: details.start_date ?? details.startDate ?? '',
     endDate: details.end_date ?? details.endDate ?? '',
+    // map time fields so ShowTimeInfo can display them
+    startTime: details.start_time ?? details.startTime ?? undefined,
+    endTime:   details.end_time   ?? details.endTime   ?? undefined,
 
     /* ---------------- Pricing / status --------------- */
     entryFee: details.entry_fee ?? details.entryFee ?? 0,
