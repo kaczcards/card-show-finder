@@ -28,37 +28,12 @@ CREATE OR REPLACE FUNCTION public.nearby_shows(
   filter_start_date timestamp with time zone DEFAULT current_date,
   filter_end_date timestamp with time zone DEFAULT (current_date + interval '30 days')
 )
-RETURNS TABLE (
-  -- Return all columns from shows table
-  id uuid,
-  series_id uuid,
-  title text,
-  description text,
-  location text,
-  address text,
-  start_date timestamp with time zone,
-  end_date timestamp with time zone,
-  entry_fee numeric,
-  image_url text,
-  rating numeric,
-  coordinates geometry(Point, 4326),
-  status text,
-  organizer_id uuid,
-  features jsonb,
-  categories text[],
-  created_at timestamp with time zone,
-  updated_at timestamp with time zone,
-  -- Add the extracted latitude and longitude columns
-  latitude float,
-  longitude float
-)
+RETURNS SETOF public.shows
 LANGUAGE sql
 SECURITY DEFINER
 AS $$
   SELECT 
-    s.*,
-    ST_Y(s.coordinates::geometry) as latitude,
-    ST_X(s.coordinates::geometry) as longitude
+    s.*
   FROM public.shows s
   WHERE
     -- FIXED: Proper date range filtering to include all shows active during the period
@@ -95,37 +70,12 @@ CREATE OR REPLACE FUNCTION public.nearby_shows_earth_distance(
   filter_start_date timestamp with time zone DEFAULT current_date,
   filter_end_date timestamp with time zone DEFAULT (current_date + interval '30 days')
 )
-RETURNS TABLE (
-  -- Return all columns from shows table
-  id uuid,
-  series_id uuid,
-  title text,
-  description text,
-  location text,
-  address text,
-  start_date timestamp with time zone,
-  end_date timestamp with time zone,
-  entry_fee numeric,
-  image_url text,
-  rating numeric,
-  coordinates geometry(Point, 4326),
-  status text,
-  organizer_id uuid,
-  features jsonb,
-  categories text[],
-  created_at timestamp with time zone,
-  updated_at timestamp with time zone,
-  -- Add the extracted latitude and longitude columns
-  latitude float,
-  longitude float
-)
+RETURNS SETOF public.shows
 LANGUAGE sql
 SECURITY DEFINER
 AS $$
   SELECT 
-    s.*,
-    ST_Y(s.coordinates::geometry) as latitude,
-    ST_X(s.coordinates::geometry) as longitude
+    s.*
   FROM public.shows s
   WHERE
     -- FIXED: Proper date range filtering to include all shows active during the period
@@ -161,8 +111,8 @@ COMMENT ON FUNCTION public.nearby_shows IS
 Shows are included if they are active during any part of the date range.
 
 Date filtering logic:
-- Shows that end on or after start_date (haven''t ended before search starts)
-- Shows that start on or before end_date (start before search ends)
+- Shows that end on or after filter_start_date (haven''t ended before search starts)
+- Shows that start on or before filter_end_date (start before search ends)
 This captures all shows that are active during any part of the date range.
 
 Parameters:
@@ -173,8 +123,8 @@ Parameters:
   filter_end_date   - End date for filtering shows (default: current date + 30 days)
 
 Returns:
-  All columns from the shows table plus extracted latitude and longitude,
-  for shows within the specified radius, ordered by distance (closest first).';
+  All columns from the shows table for shows within the specified radius, 
+  ordered by distance (closest first).';
 
 COMMENT ON FUNCTION public.nearby_shows_earth_distance IS 
 'Alternative implementation using cube/earthdistance extensions.
@@ -194,5 +144,5 @@ Parameters:
   filter_end_date   - End date for filtering shows (default: current date + 30 days)
 
 Returns:
-  All columns from the shows table plus extracted latitude and longitude,
-  for shows within the specified radius, ordered by distance (closest first).';
+  All columns from the shows table for shows within the specified radius, 
+  ordered by distance (closest first).';
