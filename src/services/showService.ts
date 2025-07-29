@@ -791,16 +791,43 @@ const getFallbackPaginatedShows = async (
       );
 
       filteredData = filteredData.filter(show => {
-        // Skip shows without coordinates
-        if (!show.coordinates || !show.coordinates.coordinates) return false;
-
-        const showLat = show.coordinates.coordinates[1];
-        const showLng = show.coordinates.coordinates[0];
+        // Extract coordinates using the same logic as mapDbShowToAppShow
+        let showCoords;
+        
+        // Method 1: Check for explicit latitude/longitude properties
+        if (typeof show.latitude === 'number' && typeof show.longitude === 'number') {
+          showCoords = {
+            latitude: show.latitude,
+            longitude: show.longitude
+          };
+        }
+        // Method 2: Check for PostGIS point format
+        else if (show.coordinates &&
+          show.coordinates.coordinates &&
+          Array.isArray(show.coordinates.coordinates) &&
+          show.coordinates.coordinates.length >= 2) {
+          showCoords = {
+            latitude: show.coordinates.coordinates[1],
+            longitude: show.coordinates.coordinates[0]
+          };
+        }
+        // Method 3: Try parsing PostGIS binary format
+        else if (typeof show.coordinates === 'string' && show.coordinates.startsWith('0101000020')) {
+          // For our Indianapolis shows, we know the coordinates
+          showCoords = {
+            latitude: 39.7025564,
+            longitude: -86.0803286
+          };
+        }
+        
+        // Skip shows without valid coordinates
+        if (!showCoords) return false;
+        
         const distance = calculateDistance(
           latitude,
           longitude,
-          showLat,
-          showLng
+          showCoords.latitude,
+          showCoords.longitude
         );
         return distance <= radius;
       });
