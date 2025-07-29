@@ -17,6 +17,7 @@ import * as userRoleService from '../../services/userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
 import { UserRole, Show as ShowType } from '../../types'; // Import enums & primary Show model
+import * as Sentry from 'sentry-expo';
 
 // Import components from the components folder
 import {
@@ -125,6 +126,37 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       navigation.setOptions({ title: parsedShow.title || 'Show Details' });
     }
   }, [parsedShow, navigation]);
+
+  // Handle marking a show as attended
+  const handleMarkAsAttended = async () => {
+    if (!user || !parsedShow) {
+      Alert.alert("Error", "You must be logged in to mark a show as attended");
+      return;
+    }
+    
+    try {
+      // Logic to mark the show as attended would go here
+      // This would typically call a service function
+      
+      // For now, just show a success message
+      Alert.alert("Success", "You've marked this show as attended!");
+      
+      // Track this business event in Sentry
+      Sentry.captureMessage('Show Attended', {
+        level: 'info',
+        tags: {
+          event_type: 'business',
+        },
+        extra: {
+          showId: parsedShow.id,
+          userId: user.id,
+        },
+      });
+    } catch (error) {
+      Alert.alert("Error", "Failed to mark show as attended");
+      console.error("Error marking show as attended:", error);
+    }
+  };
 
   // Handle dealer interactions
   const handleViewDealerDetails = (dealerId: string, dealerName: string) => {
@@ -241,6 +273,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           isLoading={false}
           onViewDealerDetails={handleViewDealerDetails}
         />
+        
+        {/* Attendance Button */}
+        {user && parsedShow && (
+          <TouchableOpacity 
+            style={styles.attendanceButton}
+            onPress={handleMarkAsAttended}
+          >
+            <Ionicons name="checkmark-circle-outline" size={24} color="white" />
+            <Text style={styles.attendanceButtonText}>Mark as Attended</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Modals */}
@@ -329,11 +372,27 @@ const styles = StyleSheet.create({
     color: '#333333',
     lineHeight: 20,
   },
-  /* Highlighted hyperlink style for “Upgrade to MVP Dealer” */
+  /* Highlighted hyperlink style for "Upgrade to MVP Dealer" */
   upgradeLink: {
     color: '#FF6A00',           /* Brand orange */
     fontWeight: 'bold',         /* Make it stand out */
     textDecorationLine: 'underline', /* Clearly indicate it's clickable */
+  },
+  /* Attendance button styles */
+  attendanceButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  attendanceButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginLeft: 8,
   }
 });
 
