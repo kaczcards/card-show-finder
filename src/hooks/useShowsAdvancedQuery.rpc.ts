@@ -11,7 +11,7 @@ import {
   UseQueryOptions,
   useInfiniteQuery,
   UseInfiniteQueryOptions,
-  _InfiniteData,
+  InfiniteData,
 } from '@tanstack/react-query';
 import * as showServiceRPC from '../services/showService.rpc';
 import * as showServiceLegacy from '../services/showService';
@@ -99,8 +99,8 @@ export interface ShowsAdvancedQueryResult {
  *   keyword: 'national'
  * });
  * 
- * if (_isLoading) return <LoadingSpinner />;
- * if (_error) return <ErrorMessage error={_error} />;
+ * if (isLoading) return <LoadingSpinner />;
+ * if (error) return <ErrorMessage error={error} />;
  * 
  * return (
  *   <>
@@ -113,7 +113,7 @@ export interface ShowsAdvancedQueryResult {
  * );
  * ```
  */
-export const _useShowsAdvancedQuery = (
+export const useShowsAdvancedQuery = (
   params: ShowsAdvancedQueryParams,
   options?: UseQueryOptions<ShowsAdvancedQueryResult, Error>
 ) => {
@@ -134,14 +134,14 @@ export const _useShowsAdvancedQuery = (
   };
 
   // Define query key that includes all search parameters
-  const _queryKey = ['shows', 'advanced', rpcParams];
+  const queryKey = ['shows', 'advanced', rpcParams];
 
   return useQuery<ShowsAdvancedQueryResult, Error>({
     queryKey,
     queryFn: async () => {
       try {
         // Try to use the RPC service first
-        const _response = await showServiceRPC.searchShowsAdvanced(rpcParams);
+        const response = await showServiceRPC.searchShowsAdvanced(rpcParams);
         
         // Map the response to the expected format
         return {
@@ -154,7 +154,7 @@ export const _useShowsAdvancedQuery = (
             hasMore: response.pagination.has_more
           }
         };
-      } catch (_error) {
+      } catch (error) {
         // If RPC fails and fallback is enabled, try legacy service
         if (params.useLegacyFallback !== false) {
           console.warn('RPC search failed, falling back to legacy service:', error);
@@ -165,14 +165,14 @@ export const _useShowsAdvancedQuery = (
           }
           
           // Convert parameters to legacy format
-          const _legacyFeatures =
+          const legacyFeatures =
             params.features &&
             typeof params.features === 'object'
               ? Object.keys(params.features).filter(
-                  _key => params.features?.[_key] === true
+                  key => params.features?.[key] === true
                 )
               : undefined;
-          const _legacyParams = {
+          const legacyParams = {
             latitude: params.lat,
             longitude: params.lng,
             radius: params.radius || 25,
@@ -188,7 +188,7 @@ export const _useShowsAdvancedQuery = (
           };
           
           // Call legacy service
-          const _legacyResponse = await showServiceLegacy.getPaginatedShows(legacyParams);
+          const legacyResponse = await showServiceLegacy.getPaginatedShows(legacyParams);
           
           // Map legacy response to the expected format
           return {
@@ -244,13 +244,13 @@ export const _useShowsAdvancedQuery = (
  * return (
  *   <>
  *     {data?.pages.map(page => (
- *       page.shows.map(show => <ShowCard key={show.id} show={_show} />)
+ *       page.shows.map(show => <ShowCard key={show.id} show={show} />)
  *     ))}
  *     
  *     {hasNextPage && (
  *       <Button 
- *         onPress={_fetchNextPage} 
- *         disabled={_isFetchingNextPage}
+ *         onPress={fetchNextPage} 
+ *         disabled={isFetchingNextPage}
  *       >
  *         {isFetchingNextPage ? 'Loading more...' : 'Load more'}
  *       </Button>
@@ -259,7 +259,7 @@ export const _useShowsAdvancedQuery = (
  * );
  * ```
  */
-export const _useShowsInfiniteQuery = (
+export const useShowsInfiniteQuery = (
   params: Omit<ShowsAdvancedQueryParams, 'page'>,
   options?: UseInfiniteQueryOptions<ShowsAdvancedQueryResult, Error>
 ) => {
@@ -279,21 +279,21 @@ export const _useShowsInfiniteQuery = (
   };
 
   // Define query key that includes all search parameters except page
-  const _queryKey = ['shows', 'infinite', baseParams] as const;
+  const queryKey = ['shows', 'infinite', baseParams] as const;
 
   return useInfiniteQuery({
     queryKey,
     initialPageParam: 1,
-    queryFn: async ({ _pageParam }) => {
+    queryFn: async ({ pageParam }) => {
       try {
         // Add the page parameter to the base parameters
-        const _rpcParams = {
+        const rpcParams = {
           ...baseParams,
           page: pageParam as number
         };
         
         // Try to use the RPC service first
-        const _response = await showServiceRPC.searchShowsAdvanced(rpcParams);
+        const response = await showServiceRPC.searchShowsAdvanced(rpcParams);
         
         // Map the response to the expected format
         return {
@@ -306,7 +306,7 @@ export const _useShowsInfiniteQuery = (
             hasMore: response.pagination.has_more
           }
         };
-      } catch (_error) {
+      } catch (error) {
         // If RPC fails and fallback is enabled, try legacy service
         if (params.useLegacyFallback !== false) {
           console.warn('RPC infinite search failed, falling back to legacy service:', error);
@@ -317,14 +317,14 @@ export const _useShowsInfiniteQuery = (
           }
           
           // Convert parameters to legacy format
-          const _legacyFeatures =
+          const legacyFeatures =
             params.features &&
             typeof params.features === 'object'
               ? Object.keys(params.features).filter(
-                  _key => params.features?.[_key] === true
+                  key => params.features?.[key] === true
                 )
               : undefined;
-          const _legacyParams = {
+          const legacyParams = {
             latitude: params.lat,
             longitude: params.lng,
             radius: params.radius || 25,
@@ -340,7 +340,7 @@ export const _useShowsInfiniteQuery = (
           };
           
           // Call legacy service
-          const _legacyResponse = await showServiceLegacy.getPaginatedShows(legacyParams);
+          const legacyResponse = await showServiceLegacy.getPaginatedShows(legacyParams);
           
           // Map legacy response to the expected format
           return {
