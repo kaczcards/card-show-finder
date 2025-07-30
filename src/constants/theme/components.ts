@@ -321,7 +321,7 @@ export const _errorStates = {
       textAlign: 'center' as const,
       marginBottom: spacing.spacing.large,
     } as TextStyle,
-    button: buttons.primary,
+    button: _buttons.primary,
   },
   
   // Inline error state
