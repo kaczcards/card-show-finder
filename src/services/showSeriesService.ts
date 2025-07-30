@@ -523,8 +523,7 @@ export const showSeriesService = {
           '[debugShowsTableColumns] Table returned zero rows.  ' +
           'Column keys may be incomplete if the cache is stale.',
         );
-        // eslint-disable-next-line no-console
-console.warn('[debugShowsTableColumns] Raw response keys:', Object.keys(data ?? {}););
+        console.log('[debugShowsTableColumns] Raw response keys:', Object.keys(data ?? {}));
       } else {
         console.log(
           '[debugShowsTableColumns] Column keys detected:',

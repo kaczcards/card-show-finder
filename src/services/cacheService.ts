@@ -29,8 +29,7 @@ export const cacheShows = async (shows: Show[], filters: ShowFilters): Promise<v
     // Store the timestamp
     await AsyncStorage.setItem(CACHE_KEYS.SHOW_TIMESTAMP, timestamp.toString());
     
-    // eslint-disable-next-line no-console
-console.warn(`Cached ${shows.length} shows at ${new Date(timestamp);.toLocaleString()}`);
+    console.log(`Cached ${shows.length} shows at ${new Date(timestamp).toLocaleString()}`);
   } catch (error) {
     console.error('Error caching shows:', error);
   }
@@ -54,8 +53,7 @@ export const getCachedShows = async (): Promise<{ shows: Show[]; filters: ShowFi
     
     // Check if cache has expired
     if (now - timestamp > CACHE_EXPIRATION) {
-      // eslint-disable-next-line no-console
-console.warn('Show cache expired, fetching fresh data');
+      console.log('Show cache expired, fetching fresh data');
       return null;
     }
     
@@ -70,8 +68,7 @@ console.warn('Show cache expired, fetching fresh data');
     const shows = JSON.parse(showsJson) as Show[];
     const filters = JSON.parse(filtersJson) as ShowFilters;
     
-    // eslint-disable-next-line no-console
-console.warn(`Retrieved ${shows.length} shows from cache (${Math.round((now - timestamp); / 1000 / 60)} minutes old)`);
+    console.log(`Retrieved ${shows.length} shows from cache (${Math.round((now - timestamp) / 1000 / 60)} minutes old)`);
     
     return { shows, filters };
   } catch (error) {
@@ -88,8 +85,7 @@ export const clearShowsCache = async (): Promise<void> => {
     await AsyncStorage.removeItem(CACHE_KEYS.SHOWS);
     await AsyncStorage.removeItem(CACHE_KEYS.SHOW_FILTERS);
     await AsyncStorage.removeItem(CACHE_KEYS.SHOW_TIMESTAMP);
-    // eslint-disable-next-line no-console
-console.warn('Shows cache cleared');
+    console.log('Shows cache cleared');
   } catch (error) {
     console.error('Error clearing shows cache:', error);
   }

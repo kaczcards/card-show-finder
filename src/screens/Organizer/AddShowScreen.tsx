@@ -282,12 +282,10 @@ const AddShowScreen: React.FC = () => {
 
   // Handle form submission
   const handleSubmit = async () => {
-    // eslint-disable-next-line no-console
-console.warn('[AddShowScreen] Submit button pressed');
+    console.log('[AddShowScreen] Submit button pressed');
     
     if (!validateForm()) {
-      // eslint-disable-next-line no-console
-console.warn('[AddShowScreen] Form validation failed');
+      console.log('[AddShowScreen] Form validation failed');
       return;
     }
 
@@ -303,12 +301,9 @@ console.warn('[AddShowScreen] Form validation failed');
       const fullStartDate = getFullDateForPostgres(startDate, startHour, startMinute, startPeriod);
       const fullEndDate = getFullDateForPostgres(endDate, endHour, endMinute, endPeriod);
       
-      // eslint-disable-next-line no-console
-console.warn('[AddShowScreen] Date values being sent:');
-      // eslint-disable-next-line no-console
-console.warn('  - Start Date:', fullStartDate);
-      // eslint-disable-next-line no-console
-console.warn('  - End Date:', fullEndDate);
+      console.log('[AddShowScreen] Date values being sent:');
+      console.log('  - Start Date:', fullStartDate);
+      console.log('  - End Date:', fullEndDate);
 
       /* -----------------------------------------------------------
        * 1. Validate address format before geocoding
@@ -325,8 +320,7 @@ console.warn('  - End Date:', fullEndDate);
        * 2. Geocode the full street address → coordinates
        * --------------------------------------------------------- */
       const fullAddress = `${street}, ${city}, ${stateProv} ${zipCode}`;
-      // eslint-disable-next-line no-console
-console.warn('[AddShowScreen] Attempting to geocode address:', fullAddress);
+      console.log('[AddShowScreen] Attempting to geocode address:', fullAddress);
 
       let coords = null;
       try {
@@ -371,8 +365,7 @@ console.warn('[AddShowScreen] Attempting to geocode address:', fullAddress);
         }
       }
 
-      // eslint-disable-next-line no-console
-console.warn('[AddShowScreen] Geocoding success:', coords);
+      console.log('[AddShowScreen] Geocoding success:', coords);
       
       // ------------------------------------------------------------------
       //  Build parameters for RPC (create_show_with_coordinates)
@@ -424,8 +417,7 @@ console.warn('[AddShowScreen] Geocoding success:', coords);
         }
       }
 
-      // eslint-disable-next-line no-console
-console.warn('[AddShowScreen] Show created successfully:', data);
+      console.log('[AddShowScreen] Show created successfully:', data);
       
       Alert.alert(
         'Success',
@@ -477,14 +469,10 @@ console.warn('[AddShowScreen] Show created successfully:', data);
 
   // Debug function to log date picker selection
   const logDateSelection = (type: 'start' | 'end', date: Date | undefined) => {
-    // eslint-disable-next-line no-console
-console.warn(`[DatePicker] ${type} date selected:`, date);
-    // eslint-disable-next-line no-console
-console.warn(`[DatePicker] Current startDate:`, startDate);
-    // eslint-disable-next-line no-console
-console.warn(`[DatePicker] Current endDate:`, endDate);
-    // eslint-disable-next-line no-console
-console.warn(`[DatePicker] Are dates equal:`, date && startDate && areSameDay(date, startDate););
+    console.log(`[DatePicker] ${type} date selected:`, date);
+    console.log(`[DatePicker] Current startDate:`, startDate);
+    console.log(`[DatePicker] Current endDate:`, endDate);
+    console.log(`[DatePicker] Are dates equal:`, date && startDate && areSameDay(date, startDate));
   };
 
   return (
