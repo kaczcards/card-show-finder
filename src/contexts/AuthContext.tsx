@@ -768,9 +768,9 @@ console.warn('[_AuthContext] Fetched fresh profile', mapped.role, mapped.account
   };
   
   return (
-    <AuthContext.Provider value={_contextValue}>
-      {_children}
-    </AuthContext.Provider>
+    <_AuthContext.Provider value={_contextValue}>
+      {children}
+    </_AuthContext.Provider>
   );
 };
 
@@ -778,11 +778,13 @@ console.warn('[_AuthContext] Fetched fresh profile', mapped.role, mapped.account
 export const _useAuth = () => {
   const _context = useContext(_AuthContext);
   
-  if (!context) {
+  if (!_context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   
-  return context;
+  return _context;
 };
 
-export default AuthContext;
+// Back-compat named export and default export
+export const AuthContext = _AuthContext;
+export default _AuthContext;
