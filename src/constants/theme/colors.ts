@@ -57,42 +57,52 @@ const _feedback = {
 
 // Background Colors
 const _background = {
-  default: neutral.white,
-  paper: neutral.white,
-  light: neutral.background,
-  contrast: neutral.text,
+  default: _neutral.white,
+  paper: _neutral.white,
+  light: _neutral.background,
+  contrast: _neutral.text,
 };
 
 // Text Colors
 const _text = {
-  primary: neutral.text,
-  secondary: neutral.darkGray,
-  disabled: neutral.mediumGray,
-  hint: neutral.mediumGray,
+  primary: _neutral.text,
+  secondary: _neutral.darkGray,
+  disabled: _neutral.mediumGray,
+  hint: _neutral.mediumGray,
 };
 
 // Action Colors
 const _action = {
-  active: primary.main,
-  hover: primary.light,
-  disabled: neutral.lightGray,
-  disabledText: neutral.mediumGray,
-  focus: primary.light,
+  active: _primary.main,
+  hover: _primary.light,
+  disabled: _neutral.lightGray,
+  disabledText: _neutral.mediumGray,
+  focus: _primary.light,
 };
 
 // Export the color palette
 export const _colors = {
-  primary,
-  secondary,
-  neutral,
-  feedback,
-  background,
-  text,
-  action,
+  primary: _primary,
+  secondary: _secondary,
+  neutral: _neutral,
+  feedback: _feedback,
+  background: _background,
+  text: _text,
+  action: _action,
   // Legacy iOS colors - kept for backward compatibility during transition
   ios: {
     blue: '#007AFF',
   },
 };
 
-export default colors;
+export default _colors;
+
+// Backward-compatible exports
+export const colors = _colors;
+export const primary = _primary;
+export const secondary = _secondary;
+export const neutral = _neutral;
+export const feedback = _feedback;
+export const background = _background;
+export const text = _text;
+export const action = _action;
