@@ -11,7 +11,7 @@ import {
   Animated,
   ViewToken,
 } from 'react-native';
-import { _LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Constants
 const { _width } = Dimensions.get('window');

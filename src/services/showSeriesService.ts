@@ -1,4 +1,4 @@
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { ShowSeries, Review, Show } from '../types';
 
 /**

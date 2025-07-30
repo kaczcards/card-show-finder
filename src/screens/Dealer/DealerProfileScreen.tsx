@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, _Alert } from 'react-native';
-import { _supabase } from '../../supabase';
-import { _Ionicons } from '@expo/vector-icons';
-import { _useAuth } from '../../contexts/AuthContext';
-import { _UserRole } from '../../types'; // Import UserRole from types
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { supabase } from '../../supabase';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types'; // Import UserRole from types
 
 /* ------------------------------------------------------------------
  * Local type helpers

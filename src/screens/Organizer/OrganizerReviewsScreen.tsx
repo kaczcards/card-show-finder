@@ -11,9 +11,9 @@ import {
   RefreshControl,
   Alert
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _useAuth } from '../../contexts/AuthContext';
-import { _showSeriesService } from '../../services/showSeriesService';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { showSeriesService } from '../../services/showSeriesService';
 import { Review, ShowSeries } from '../../types';
 
 // Interface for grouped reviews

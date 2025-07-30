@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { _useColorScheme } from 'react-native';
+import { useColorScheme } from 'react-native';
 import theme from '../../constants/theme';
 
 // Define the theme context type

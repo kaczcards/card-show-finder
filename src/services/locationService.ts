@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { Coordinates, ZipCodeData } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

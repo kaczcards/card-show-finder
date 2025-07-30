@@ -1,4 +1,4 @@
-import { _useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   getPaginatedShows,
   PaginatedShowsParams,

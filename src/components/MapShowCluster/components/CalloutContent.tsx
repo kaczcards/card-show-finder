@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, _Platform,  } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, Platform,  } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 // Define types
 interface OrganizerProfile {

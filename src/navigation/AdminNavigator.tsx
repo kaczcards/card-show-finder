@@ -1,9 +1,9 @@
 import React from 'react';
-import { _createNativeStackNavigator } from '@react-navigation/native-stack';
-import { _AdminMapScreen } from '../screens/Admin';
-import { _useAuth } from '../contexts/AuthContext';
-import { View, Text, StyleSheet, _TouchableOpacity } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { AdminMapScreen } from '../screens/Admin';
+import { useAuth } from '../contexts/AuthContext';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 // Define the param list for the Admin stack navigator
 export type AdminStackParamList = {

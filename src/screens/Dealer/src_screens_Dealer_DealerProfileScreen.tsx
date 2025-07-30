@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, _Switch, _Platform, Linking,  } from 'react-native';
-import { _SafeAreaView } from 'react-native-safe-area-context';
-import { _Ionicons } from '@expo/vector-icons';
-import { _useAuth } from '../../contexts/AuthContext';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, _Switch, Platform, Linking,  } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
 import { CardCategory, UserRole } from '../../types';
-import { _supabase } from '../../supabase';
-import { _useNavigation } from '@react-navigation/native';
+import { supabase } from '../../supabase';
+import { useNavigation } from '@react-navigation/native';
 
 // Define the dealer profile data structure
 interface DealerProfile {

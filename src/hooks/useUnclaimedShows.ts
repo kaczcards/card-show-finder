@@ -1,7 +1,7 @@
 // src/hooks/useUnclaimedShows.ts
 import { useState, useEffect } from 'react';
 import { ShowSeries, Show } from '../types';
-import { _showSeriesService } from '../services/showSeriesService';
+import { showSeriesService } from '../services/showSeriesService';
 
 // Interface for combined unclaimed items (shows or series)
 export interface UnclaimedItem {

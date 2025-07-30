@@ -1,5 +1,5 @@
-import { _supabase } from '../supabase';
-import { _refreshUserSession } from './sessionService';
+import { supabase } from '../supabase';
+import { refreshUserSession } from './sessionService';
 
 // User role constants
 export enum UserRole {

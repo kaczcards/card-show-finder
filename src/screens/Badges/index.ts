@@ -1,1 +1,1 @@
-export { _default } from "./BadgesScreen";
+export { default }; from "./BadgesScreen";

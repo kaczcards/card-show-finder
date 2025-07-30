@@ -5,7 +5,7 @@
  * Platform-specific shadow implementations help maintain a consistent look across iOS and Android.
  */
 
-import { _Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 // Define platform-specific shadow implementations
 export const _createElevation = (elevation: number) => {

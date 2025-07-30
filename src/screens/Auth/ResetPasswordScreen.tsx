@@ -13,11 +13,11 @@ import {
   Image,
   Linking,
 } from 'react-native';
-import { _SafeAreaView } from 'react-native-safe-area-context';
-import { _NativeStackScreenProps } from '@react-navigation/native-stack';
-import { _Ionicons } from '@expo/vector-icons';
-import { _supabase } from '../../supabase';
-import { _updatePassword } from '../../services/supabaseAuthService';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../supabase';
+import { updatePassword } from '../../services/supabaseAuthService';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {

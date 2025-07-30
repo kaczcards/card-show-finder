@@ -1,15 +1,15 @@
 import React from 'react';
-import { _createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import screens
-import _OrganizerDashboardScreen from '../screens/Organizer/_OrganizerDashboardScreen';
-import _OrganizerReviewsScreen from '../screens/Organizer/_OrganizerReviewsScreen';
-import _AddShowScreen from '../screens/Organizer/_AddShowScreen';
+import OrganizerDashboardScreen from '../screens/Organizer/OrganizerDashboardScreen';
+import OrganizerReviewsScreen from '../screens/Organizer/OrganizerReviewsScreen';
+import AddShowScreen from '../screens/Organizer/AddShowScreen';
 
 // These screens will be implemented later
 // Declaring them as placeholders for navigation
-const _SeriesDetailScreen = () => null;
-const _EditShowScreen = () => null;
+const SeriesDetailScreen = () => null;
+const EditShowScreen = () => null;
 
 // Define navigation types for organizer stack
 export type OrganizerStackParamList = {
@@ -25,7 +25,7 @@ export type OrganizerStackParamList = {
   SendBroadcast: { showId: string; seriesId?: string };
 };
 
-const _OrganizerStack = createNativeStackNavigator<OrganizerStackParamList>();
+const OrganizerStack = createNativeStackNavigator<OrganizerStackParamList>();
 
 /**
  * OrganizerNavigator - Handles navigation between organizer screens
@@ -50,7 +50,7 @@ const OrganizerNavigator: React.FC = () => {
     >
       <OrganizerStack.Screen
         name="Dashboard"
-        component={_OrganizerDashboardScreen}
+        component={OrganizerDashboardScreen}
         options={{
           title: 'Organizer Dashboard',
           headerShown: false, // Hide header as the screen has its own header
@@ -58,28 +58,28 @@ const OrganizerNavigator: React.FC = () => {
       />
       <OrganizerStack.Screen
         name="Reviews"
-        component={_OrganizerReviewsScreen}
+        component={OrganizerReviewsScreen}
         options={{
           title: 'Manage Reviews',
         }}
       />
       <OrganizerStack.Screen
         name="SeriesDetail"
-        component={_SeriesDetailScreen}
+        component={SeriesDetailScreen}
         options={{
           title: 'Series Details',
         }}
       />
       <OrganizerStack.Screen
         name="AddShow"
-        component={_AddShowScreen}
+        component={AddShowScreen}
         options={{
           title: 'Add New Show',
         }}
       />
       <OrganizerStack.Screen
         name="EditShow"
-        component={_EditShowScreen}
+        component={EditShowScreen}
         options={{
           title: 'Edit Show',
         }}

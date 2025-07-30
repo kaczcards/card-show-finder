@@ -1,10 +1,10 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
-import { _signIn } from '../services/supabaseAuthService';
-import { _refreshUserSession } from '../services/sessionService';
+import { signIn } from '../services/supabaseAuthService';
+import { refreshUserSession } from '../services/sessionService';
 // import * as Sentry from 'sentry-expo'; // ↳ Temporarily disabled while debugging
 
 /* ------------------------------------------------------------------

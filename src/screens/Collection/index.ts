@@ -1,1 +1,1 @@
-export { _default } from "./CollectionScreen";
+export { default }; from "./CollectionScreen";

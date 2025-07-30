@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _useTheme } from '../../contexts/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ErrorDisplayProps {
   /**

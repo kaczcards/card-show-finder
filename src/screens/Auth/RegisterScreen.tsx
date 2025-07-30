@@ -12,11 +12,11 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { _SafeAreaView } from 'react-native-safe-area-context';
-import { _NativeStackScreenProps } from '@react-navigation/native-stack';
-import { _Ionicons } from '@expo/vector-icons';
-import { _useAuth } from '../../contexts/AuthContext';
-import { _UserRole } from '../../types';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {

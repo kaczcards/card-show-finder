@@ -9,8 +9,8 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { _Picker } from '@react-native-picker/picker';
-import { _Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import {
   getWantListsForMvpDealer,
   getWantListsForShowOrganizer,
@@ -18,8 +18,8 @@ import {
   WantListWithUser,
 } from '../services/showWantListService';
 import { UserRole, Show } from '../types';
-import { _formatDate } from '../utils/dateUtils';
-import { _debounce } from 'lodash';
+import { formatDate } from '../utils/dateUtils';
+import { debounce } from 'lodash';
 
 interface AttendeeWantListsProps {
   userId: string;

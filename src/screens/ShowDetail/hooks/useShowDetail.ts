@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { _Alert } from 'react-native';
-import { _supabase } from '../../../supabase';
-import { _useAuth } from '../../../contexts/AuthContext';
-import { _handleSupabaseError } from '../../../services/errorService';
-import { _UserRole } from '../../../types';  // shared UserRole definition
+import { Alert } from 'react-native';
+import { supabase } from '../../../supabase';
+import { useAuth } from '../../../contexts/AuthContext';
+import { handleSupabaseError } from '../../../services/errorService';
+import { UserRole } from '../../../types';  // shared UserRole definition
 
 interface Dealer {
   id: string;
