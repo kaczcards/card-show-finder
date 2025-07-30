@@ -384,7 +384,8 @@ export async function handleFileUpload<T>(
  *     {
  *       maxRetries: 3,
  *       retryableErrors: [ErrorCategory.NETWORK],
- *       onRetry: (attempt) => console.log(`Retrying... Attempt ${attempt}`)
+ *       onRetry: (attempt) => // eslint-disable-next-line no-console
+console.warn(`Retrying... Attempt ${attempt}`);
  *     }
  *   );
  *   

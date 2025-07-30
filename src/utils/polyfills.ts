@@ -30,7 +30,7 @@ if (typeof globalThis.structuredClone !== 'function') {
   // the native behaviour of throwing on non-serialisable input.
   // If we ever need full spec compliance we can replace this with
   // `@ungap/structured-clone` or another more complete shim.
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+   
   // @ts-ignore – add to global scope
   globalThis.structuredClone = <T>(value: T): T => {
     try {

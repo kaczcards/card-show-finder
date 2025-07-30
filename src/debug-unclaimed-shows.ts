@@ -2,43 +2,57 @@
 import { showSeriesService } from './services/showSeriesService';
 
 async function testUnclaimedShowsDataHandling() {
-  console.log('---- STARTING DEBUG TEST ----');
+  // eslint-disable-next-line no-console
+console.warn('---- STARTING DEBUG TEST ----');
   
   try {
     // Test getAllShowSeries function
-    console.log('[TEST] Testing getAllShowSeries...');
+    // eslint-disable-next-line no-console
+console.warn('[TEST] Testing getAllShowSeries...');
     const unclaimedSeries = await showSeriesService.getAllShowSeries({
       organizerId: undefined
     });
-    console.log('[DEBUG] Value of unclaimedSeries:', unclaimedSeries);
-    console.log('[DEBUG] Type of unclaimedSeries:', Array.isArray(unclaimedSeries) ? 'array' : typeof unclaimedSeries);
-    console.log('[DEBUG] Length of unclaimedSeries:', Array.isArray(unclaimedSeries) ? unclaimedSeries.length : 'N/A');
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Value of unclaimedSeries:', unclaimedSeries);
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Type of unclaimedSeries:', Array.isArray(unclaimedSeries); ? 'array' : typeof unclaimedSeries);
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Length of unclaimedSeries:', Array.isArray(unclaimedSeries); ? unclaimedSeries.length : 'N/A');
     
     // Ensure it's an array even if empty
     const safeSeries = unclaimedSeries || [];
-    console.log('[DEBUG] Safe series is array:', Array.isArray(safeSeries));
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Safe series is array:', Array.isArray(safeSeries););
     
     // Test getUnclaimedShows function
-    console.log('[TEST] Testing getUnclaimedShows...');
+    // eslint-disable-next-line no-console
+console.warn('[TEST] Testing getUnclaimedShows...');
     const unclaimedShows = await showSeriesService.getUnclaimedShows();
-    console.log('[DEBUG] Value of unclaimedShows:', unclaimedShows);
-    console.log('[DEBUG] Type of unclaimedShows:', Array.isArray(unclaimedShows) ? 'array' : typeof unclaimedShows);
-    console.log('[DEBUG] Length of unclaimedShows:', Array.isArray(unclaimedShows) ? unclaimedShows.length : 'N/A');
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Value of unclaimedShows:', unclaimedShows);
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Type of unclaimedShows:', Array.isArray(unclaimedShows); ? 'array' : typeof unclaimedShows);
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Length of unclaimedShows:', Array.isArray(unclaimedShows); ? unclaimedShows.length : 'N/A');
     
     // Ensure it's an array even if empty
     const safeShows = unclaimedShows || [];
-    console.log('[DEBUG] Safe shows is array:', Array.isArray(safeShows));
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Safe shows is array:', Array.isArray(safeShows););
     
     // Test the combined data
-    console.log('[TEST] Testing combined data...');
+    // eslint-disable-next-line no-console
+console.warn('[TEST] Testing combined data...');
     // This would crash if either unclaimedSeries or unclaimedShows is undefined
     const combinedItems = [
       ...safeSeries,
       ...safeShows
     ];
-    console.log('[DEBUG] Combined items length:', combinedItems.length);
+    // eslint-disable-next-line no-console
+console.warn('[DEBUG] Combined items length:', combinedItems.length);
     
-    console.log('---- DEBUG TEST SUCCESSFUL ----');
+    // eslint-disable-next-line no-console
+console.warn('---- DEBUG TEST SUCCESSFUL ----');
   } catch (error) {
     console.error('[ERROR] Debug test failed:', error);
   }

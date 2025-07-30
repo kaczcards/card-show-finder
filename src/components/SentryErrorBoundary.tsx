@@ -141,7 +141,8 @@ interface SentryErrorBoundaryProps {
  * // With custom fallback and error handler
  * <SentryErrorBoundary 
  *   fallback={CustomErrorFallback}
- *   onError={(error) => console.log('Captured error:', error)}
+ *   onError={(error) => // eslint-disable-next-line no-console
+console.warn('Captured error:', error);}
  * >
  *   <YourComponent />
  * </SentryErrorBoundary>
@@ -155,8 +156,10 @@ const SentryErrorBoundary: React.FC<SentryErrorBoundaryProps> = ({
     // Log error in development
     if (__DEV__) {
       console.error('Error caught by SentryErrorBoundary:', error);
-      console.log('Component stack:', componentStack);
-      console.log('Sentry event ID:', eventId);
+      // eslint-disable-next-line no-console
+console.warn('Component stack:', componentStack);
+      // eslint-disable-next-line no-console
+console.warn('Sentry event ID:', eventId);
     }
 
     // Call custom error handler if provided

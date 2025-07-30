@@ -106,7 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Set the count from the profile data
       const count = data?.favorite_shows_count || 0;
-      console.log('[AuthContext] Fetched favorite_shows_count:', count);
+      // eslint-disable-next-line no-console
+console.warn('[AuthContext] Fetched favorite_shows_count:', count);
       setFavoriteCount(count);
     } catch (error) {
       console.error('[AuthContext] Unexpected error in fetchFavoriteCount:', error);
@@ -267,7 +268,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
     // 1. Immediately set the app to a "loading" state and clear old errors.
-    console.log('[AuthContext] Login attempt started for email:', credentials.email);
+    // eslint-disable-next-line no-console
+console.warn('[AuthContext] Login attempt started for email:', credentials.email);
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
     // 2. Call the Supabase service to attempt the login.
@@ -293,7 +295,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return Promise.reject(new Error(result.error.message));
     } else if (result.user) {
       // SUCCESS: If the service returns a user, get their profile and update state.
-      console.log('[AuthContext] Auth login succeeded – id:', result.user.id);
+      // eslint-disable-next-line no-console
+console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
 
       // ---- Optional bypass for dev -------------------------------------------------
       if (BYPASS_PROFILE_FETCH) {
@@ -343,7 +346,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // ---- Normal profile fetch ----------------------------------------------------
-      console.log('[AuthContext] Fetching user profile from database...');
+      // eslint-disable-next-line no-console
+console.warn('[AuthContext] Fetching user profile from database...');
       let userData = await supabaseAuthService.getCurrentUser(result.user.id);
       
       if (userData) {
@@ -583,7 +587,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
       
-      console.log('[AuthContext] Adding show to favorites:', showId);
+      // eslint-disable-next-line no-console
+console.warn('[AuthContext] Adding show to favorites:', showId);
       
       // Call the service to add the show to favorites
       // The database trigger will automatically update the favorite_shows_count
@@ -592,7 +597,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Refresh the favorite count from the database
       fetchFavoriteCount(authState.user.id);
       
-      console.log('[AuthContext] Show added to favorites successfully');
+      // eslint-disable-next-line no-console
+console.warn('[AuthContext] Show added to favorites successfully');
     } catch (error: any) {
       console.error('[AuthContext] Error adding show to favorites:', error);
       setAuthState(prev => ({
@@ -610,7 +616,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
       
-      console.log('[AuthContext] Removing show from favorites:', showId);
+      // eslint-disable-next-line no-console
+console.warn('[AuthContext] Removing show from favorites:', showId);
       
       // Call the service to remove the show from favorites
       // The database trigger will automatically update the favorite_shows_count
@@ -619,7 +626,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Refresh the favorite count from the database
       fetchFavoriteCount(authState.user.id);
       
-      console.log('[AuthContext] Show removed from favorites successfully');
+      // eslint-disable-next-line no-console
+console.warn('[AuthContext] Show removed from favorites successfully');
     } catch (error: any) {
       console.error('[AuthContext] Error removing show from favorites:', error);
       setAuthState(prev => ({
@@ -657,7 +665,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (supabaseKeys.length) {
           await AsyncStorage.multiRemove(supabaseKeys);
           /* eslint-disable no-console */
-          console.log('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
+          // eslint-disable-next-line no-console
+console.warn('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
         }
       } catch (clearErr) {
         console.warn('[AuthContext] Failed to clear cached tokens', clearErr);
@@ -702,7 +711,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profileImageUrl: profile.profile_image_url ?? undefined,
         favoriteShowsCount: profile.favorite_shows_count || 0,
       };
-      console.log('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
+      // eslint-disable-next-line no-console
+console.warn('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
 
       return mapped;
     } catch (err) {

@@ -100,7 +100,8 @@ const hasInvalidCoordinates = (show: Show): boolean => {
  * Fetch all shows from the database
  */
 const fetchAllShows = async (): Promise<Show[]> => {
-  console.log(chalk.cyan('Fetching all shows from the database...'));
+  // eslint-disable-next-line no-console
+console.warn(chalk.cyan('Fetching all shows from the database...'););
   
   try {
     const { data, error } = await supabase
@@ -113,17 +114,20 @@ const fetchAllShows = async (): Promise<Show[]> => {
     }
     
     if (!data || !Array.isArray(data)) {
-      console.log(chalk.yellow('No shows found in the database.'));
+      // eslint-disable-next-line no-console
+console.warn(chalk.yellow('No shows found in the database.'););
       return [];
     }
     
-    console.log(chalk.green(`Successfully fetched ${data.length} shows`));
+    // eslint-disable-next-line no-console
+console.warn(chalk.green(`Successfully fetched ${data.length} shows`););
     return data as Show[];
   } catch (error) {
     console.error(chalk.red('Failed to fetch shows:'), error);
     
     // Retry once after a short delay
-    console.log(chalk.yellow('Retrying fetch after 5 seconds...'));
+    // eslint-disable-next-line no-console
+console.warn(chalk.yellow('Retrying fetch after 5 seconds...'););
     await new Promise(resolve => setTimeout(resolve, 5000));
     
     try {
@@ -140,7 +144,8 @@ const fetchAllShows = async (): Promise<Show[]> => {
         return [];
       }
       
-      console.log(chalk.green(`Successfully fetched ${data.length} shows on retry`));
+      // eslint-disable-next-line no-console
+console.warn(chalk.green(`Successfully fetched ${data.length} shows on retry`););
       return data as Show[];
     } catch (retryError) {
       console.error(chalk.red('Failed to fetch shows on retry:'), retryError);
@@ -173,7 +178,8 @@ const updateShowCoordinates = async (
       
       // Retry logic
       if (retryCount < MAX_RETRIES) {
-        console.log(chalk.yellow(`Retrying update (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));
+        // eslint-disable-next-line no-console
+console.warn(chalk.yellow(`Retrying update (attempt ${retryCount + 1} of ${MAX_RETRIES});...`));
         await new Promise(resolve => setTimeout(resolve, 2000));
         return updateShowCoordinates(showId, latitude, longitude, retryCount + 1);
       }
@@ -187,7 +193,8 @@ const updateShowCoordinates = async (
     
     // Retry logic
     if (retryCount < MAX_RETRIES) {
-      console.log(chalk.yellow(`Retrying update (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));
+      // eslint-disable-next-line no-console
+console.warn(chalk.yellow(`Retrying update (attempt ${retryCount + 1} of ${MAX_RETRIES});...`));
       await new Promise(resolve => setTimeout(resolve, 2000));
       return updateShowCoordinates(showId, latitude, longitude, retryCount + 1);
     }
@@ -201,12 +208,14 @@ const updateShowCoordinates = async (
  */
 const processShow = async (show: Show, retryCount: number = 0): Promise<boolean> => {
   if (!show.address) {
-    console.log(chalk.yellow(`Skipping show "${show.title}" (ID: ${show.id}) - No address provided`));
+    // eslint-disable-next-line no-console
+console.warn(chalk.yellow(`Skipping show "${show.title}" (ID: ${show.id}); - No address provided`));
     return false;
   }
   
   try {
-    console.log(chalk.cyan(`Geocoding address for "${show.title}" (ID: ${show.id}): ${show.address}`));
+    // eslint-disable-next-line no-console
+console.warn(chalk.cyan(`Geocoding address for "${show.title}" (ID: ${show.id});: ${show.address}`));
     
     const coordinates = await geocodeAddress(show.address);
     
@@ -215,7 +224,8 @@ const processShow = async (show: Show, retryCount: number = 0): Promise<boolean>
       
       // Retry logic
       if (retryCount < MAX_RETRIES) {
-        console.log(chalk.yellow(`Retrying geocoding (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));
+        // eslint-disable-next-line no-console
+console.warn(chalk.yellow(`Retrying geocoding (attempt ${retryCount + 1} of ${MAX_RETRIES});...`));
         await new Promise(resolve => setTimeout(resolve, 2000));
         return processShow(show, retryCount + 1);
       }
@@ -223,7 +233,8 @@ const processShow = async (show: Show, retryCount: number = 0): Promise<boolean>
       return false;
     }
     
-    console.log(chalk.green(`Successfully geocoded "${show.title}" - Coordinates:`), coordinates);
+    // eslint-disable-next-line no-console
+console.warn(chalk.green(`Successfully geocoded "${show.title}" - Coordinates:`);, coordinates);
     
     // Update the show with new coordinates
     const updated = await updateShowCoordinates(
@@ -233,7 +244,8 @@ const processShow = async (show: Show, retryCount: number = 0): Promise<boolean>
     );
     
     if (updated) {
-      console.log(chalk.green(`Updated coordinates for show "${show.title}" (ID: ${show.id})`));
+      // eslint-disable-next-line no-console
+console.warn(chalk.green(`Updated coordinates for show "${show.title}" (ID: ${show.id});`));
       return true;
     } else {
       console.error(chalk.red(`Failed to update coordinates for show "${show.title}" (ID: ${show.id})`));
@@ -244,7 +256,8 @@ const processShow = async (show: Show, retryCount: number = 0): Promise<boolean>
     
     // Retry logic
     if (retryCount < MAX_RETRIES) {
-      console.log(chalk.yellow(`Retrying due to error (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));
+      // eslint-disable-next-line no-console
+console.warn(chalk.yellow(`Retrying due to error (attempt ${retryCount + 1} of ${MAX_RETRIES});...`));
       await new Promise(resolve => setTimeout(resolve, 2000));
       return processShow(show, retryCount + 1);
     }
@@ -277,12 +290,14 @@ const processShowsInBatches = async (
     const batch = shows.slice(i, i + batchSize);
     const currentBatch = Math.floor(i / batchSize) + 1;
     
-    console.log(chalk.bold.blue(`\n--- Processing batch ${currentBatch} of ${totalBatches} ---`));
+    // eslint-disable-next-line no-console
+console.warn(chalk.bold.blue(`\n--- Processing batch ${currentBatch} of ${totalBatches} ---`););
     
     // Process each show in the batch
     for (const show of batch) {
       if (!show.address) {
-        console.log(chalk.yellow(`Skipping show "${show.title}" - No address provided`));
+        // eslint-disable-next-line no-console
+console.warn(chalk.yellow(`Skipping show "${show.title}" - No address provided`););
         stats.skipped++;
         continue;
       }
@@ -301,13 +316,17 @@ const processShowsInBatches = async (
       const elapsedTime = formatElapsedTime(new Date().getTime() - stats.startTime.getTime());
       const eta = calculateEta(stats);
       
-      console.log(chalk.bold(`\nProgress: ${stats.processed}/${stats.total} shows (${percentComplete}%)`));
-      console.log(`Elapsed: ${elapsedTime} | Estimated remaining: ${eta}`);
-      console.log(`Success: ${chalk.green(stats.succeeded.toString())}, Failed: ${chalk.red(stats.failed.toString())}, Skipped: ${chalk.yellow(stats.skipped.toString())}`);
+      // eslint-disable-next-line no-console
+console.warn(chalk.bold(`\nProgress: ${stats.processed}/${stats.total} shows (${percentComplete}%);`));
+      // eslint-disable-next-line no-console
+console.warn(`Elapsed: ${elapsedTime} | Estimated remaining: ${eta}`);
+      // eslint-disable-next-line no-console
+console.warn(`Success: ${chalk.green(stats.succeeded.toString();)}, Failed: ${chalk.red(stats.failed.toString())}, Skipped: ${chalk.yellow(stats.skipped.toString())}`);
       
       // Add delay between requests to avoid rate limits
       if (batch.indexOf(show) < batch.length - 1) {
-        console.log(chalk.dim(`Waiting ${delayBetweenRequestsMs}ms before next request...`));
+        // eslint-disable-next-line no-console
+console.warn(chalk.dim(`Waiting ${delayBetweenRequestsMs}ms before next request...`););
         await new Promise(resolve => setTimeout(resolve, delayBetweenRequestsMs));
       }
     }
@@ -315,7 +334,8 @@ const processShowsInBatches = async (
     // Add delay between batches
     if (i + batchSize < shows.length) {
       const batchDelayMs = 3000;
-      console.log(chalk.dim(`\nWaiting ${batchDelayMs}ms before next batch...`));
+      // eslint-disable-next-line no-console
+console.warn(chalk.dim(`\nWaiting ${batchDelayMs}ms before next batch...`););
       await new Promise(resolve => setTimeout(resolve, batchDelayMs));
     }
   }
@@ -331,14 +351,17 @@ const geocodeExistingShows = async (
   delayBetweenRequestsMs: number = 1000
 ): Promise<GeocodingStats> => {
   try {
-    console.log(chalk.bold.green('\n=== Starting geocoding process for existing shows ==='));
-    console.log(chalk.cyan(`Batch size: ${batchSize}, Delay between requests: ${delayBetweenRequestsMs}ms`));
+    // eslint-disable-next-line no-console
+console.warn(chalk.bold.green('\n=== Starting geocoding process for existing shows ==='););
+    // eslint-disable-next-line no-console
+console.warn(chalk.cyan(`Batch size: ${batchSize}, Delay between requests: ${delayBetweenRequestsMs}ms`););
     
     // Fetch all shows
     const allShows = await fetchAllShows();
     
     if (allShows.length === 0) {
-      console.log(chalk.yellow('No shows found in the database.'));
+      // eslint-disable-next-line no-console
+console.warn(chalk.yellow('No shows found in the database.'););
       return {
         total: 0,
         processed: 0,
@@ -356,11 +379,14 @@ const geocodeExistingShows = async (
       hasInvalidCoordinates(show)
     );
     
-    console.log(chalk.bold(`\nFound ${chalk.cyan(showsToProcess.length.toString())} shows with addresses but missing or invalid coordinates`));
-    console.log(chalk.dim(`(out of ${allShows.length} total shows in the database)`));
+    // eslint-disable-next-line no-console
+console.warn(chalk.bold(`\nFound ${chalk.cyan(showsToProcess.length.toString();)} shows with addresses but missing or invalid coordinates`));
+    // eslint-disable-next-line no-console
+console.warn(chalk.dim(`(out of ${allShows.length} total shows in the database);`));
     
     if (showsToProcess.length === 0) {
-      console.log(chalk.green('\nNo shows need geocoding. All done!'));
+      // eslint-disable-next-line no-console
+console.warn(chalk.green('\nNo shows need geocoding. All done!'););
       return {
         total: allShows.length,
         processed: 0,
@@ -380,13 +406,20 @@ const geocodeExistingShows = async (
     
     const elapsedTime = formatElapsedTime(new Date().getTime() - stats.startTime.getTime());
     
-    console.log(chalk.bold.green('\n=== Geocoding process completed ==='));
-    console.log(chalk.bold(`Total time: ${elapsedTime}`));
-    console.log(chalk.bold(`Total shows: ${stats.total}`));
-    console.log(`Processed: ${stats.processed}`);
-    console.log(`Succeeded: ${chalk.green(stats.succeeded.toString())}`);
-    console.log(`Failed: ${chalk.red(stats.failed.toString())}`);
-    console.log(`Skipped: ${chalk.yellow(stats.skipped.toString())}`);
+    // eslint-disable-next-line no-console
+console.warn(chalk.bold.green('\n=== Geocoding process completed ==='););
+    // eslint-disable-next-line no-console
+console.warn(chalk.bold(`Total time: ${elapsedTime}`););
+    // eslint-disable-next-line no-console
+console.warn(chalk.bold(`Total shows: ${stats.total}`););
+    // eslint-disable-next-line no-console
+console.warn(`Processed: ${stats.processed}`);
+    // eslint-disable-next-line no-console
+console.warn(`Succeeded: ${chalk.green(stats.succeeded.toString();)}`);
+    // eslint-disable-next-line no-console
+console.warn(`Failed: ${chalk.red(stats.failed.toString();)}`);
+    // eslint-disable-next-line no-console
+console.warn(`Skipped: ${chalk.yellow(stats.skipped.toString();)}`);
     
     return stats;
   } catch (error) {
@@ -433,7 +466,8 @@ const parseCommandLineArgs = (): { batchSize: number; delay: number } => {
 if (require.main === module) {
   (async () => {
     try {
-      console.log(chalk.bold.magenta('\n=== GEOCODING EXISTING SHOWS ==='));
+      // eslint-disable-next-line no-console
+console.warn(chalk.bold.magenta('\n=== GEOCODING EXISTING SHOWS ==='););
       
       // Parse command line arguments
       const { batchSize, delay } = parseCommandLineArgs();
@@ -441,7 +475,8 @@ if (require.main === module) {
       // Run the geocoding process
       await geocodeExistingShows(batchSize, delay);
       
-      console.log(chalk.bold.magenta('\n=== SCRIPT COMPLETED SUCCESSFULLY ==='));
+      // eslint-disable-next-line no-console
+console.warn(chalk.bold.magenta('\n=== SCRIPT COMPLETED SUCCESSFULLY ==='););
       process.exit(0);
     } catch (error) {
       console.error(chalk.bold.red('\nScript failed:'), error);

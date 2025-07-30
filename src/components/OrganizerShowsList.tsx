@@ -57,7 +57,8 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
     try {
       setLoading(true);
       setError(null);
-      console.log('[OrganizerShowsList] ➡️  Fetching organizer shows...');
+      // eslint-disable-next-line no-console
+console.warn('[OrganizerShowsList] ➡️  Fetching organizer shows...');
 
       // 1️⃣  Get all series owned by this organizer
       const mySeries = await showSeriesService.getAllShowSeries({
@@ -224,7 +225,8 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
         };
       }) || [];
       
-      console.log(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${organizerId}`);
+      // eslint-disable-next-line no-console
+console.warn(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${organizerId}`);
       setStandaloneShows(mappedStandaloneShows);
       
       // Initialize expanded state for all series
@@ -322,7 +324,8 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
       return;
     }
     // To be implemented - show confirmation dialog and call API
-    console.log('Cancel show:', show.id);
+    // eslint-disable-next-line no-console
+console.warn('Cancel show:', show.id);
   };
   
   // Navigate to series details

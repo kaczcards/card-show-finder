@@ -97,7 +97,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
       if (!hasPermission) {
         const granted = await locationService.requestLocationPermissions();
         if (!granted) {
-          console.log('Location permission denied');
+          // eslint-disable-next-line no-console
+console.warn('Location permission denied');
           // Show toast notification if falling back to ZIP code
           if (user?.homeZipCode) {
             showLocationFailedToast(user.homeZipCode);
@@ -114,10 +115,12 @@ const MapScreen: React.FC<MapScreenProps> = ({
       const location = await locationService.getCurrentLocation();
 
       if (location) {
-        console.log('Got user location:', location);
+        // eslint-disable-next-line no-console
+console.warn('Got user location:', location);
         return location;
       } else if (user && user.homeZipCode) {
-        console.log('Falling back to user ZIP code:', user.homeZipCode);
+        // eslint-disable-next-line no-console
+console.warn('Falling back to user ZIP code:', user.homeZipCode);
         showLocationFailedToast(user.homeZipCode);
         
         const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
@@ -254,7 +257,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
           longitude: userLocation.longitude,
       };
 
-      console.log('[MapScreen] Filters being used:', currentFilters);
+      // eslint-disable-next-line no-console
+console.warn('[MapScreen] Filters being used:', currentFilters);
 
       /* ------------------------------------------------------------------
        * Use production-ready solution that bypasses broken nearby_shows RPC
