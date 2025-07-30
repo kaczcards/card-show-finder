@@ -160,7 +160,7 @@ const HomeScreen = ({
     try {
       // First priority: Use coordinates from props if available
       if (propUserLocation) {
-        // eslint-disable-next-line no-console
+         
 console.warn('Using coordinates from props');
         setCoordinates(propUserLocation);
         return propUserLocation;
@@ -171,7 +171,7 @@ console.warn('Using coordinates from props');
       }
       // Third priority: Get coordinates from user's home zip code
       else if (authState.user && authState.user.homeZipCode) {
-        // eslint-disable-next-line no-console
+         
 console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         
         const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
@@ -198,7 +198,7 @@ console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         appState.current.match(/inactive|background/) && 
         nextAppState === 'active'
       ) {
-        // eslint-disable-next-line no-console
+         
 console.warn('App has come to the foreground - refreshing data');
         refresh();
       }
@@ -488,7 +488,7 @@ console.warn('App has come to the foreground - refreshing data');
   // Log the filtering results for debugging
   useEffect(() => {
     if (shows.length > 0) {
-      // eslint-disable-next-line no-console
+       
 console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
       
       if (shows.length !== safeShows.length) {

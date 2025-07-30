@@ -101,7 +101,7 @@ export const initSentry = (options: SentryConfigOptions = {}): void => {
     appVersion: Constants.expoConfig?.version || 'unknown',
   });
 
-  // eslint-disable-next-line no-console
+   
 console.warn(`Sentry initialized in ${environment} environment`);
 };
 
@@ -189,7 +189,7 @@ export const captureMessage = (
   context?: Partial<ScopeContext>
 ): void => {
   if (!SENTRY_DSN) {
-    // eslint-disable-next-line no-console
+     
 console.warn(`[${level}] ${message}`);
     return;
   }
@@ -229,7 +229,7 @@ export const startTransaction = (
     const startTime = Date.now();
     return {
       finish: () => {
-        // eslint-disable-next-line no-console
+         
 console.warn(`Transaction "${name}" (${operation}); finished in ${Date.now() - startTime}ms`);
       },
       setStatus: () => {},

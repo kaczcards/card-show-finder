@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import {
   TouchableOpacity,
   Text,
-  StyleSheet,
   StyleProp,
   ViewStyle,
   TextStyle,

@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Set the count from the profile data
       const count = data?.favorite_shows_count || 0;
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Fetched favorite_shows_count:', count);
       setFavoriteCount(count);
     } catch (error) {
@@ -268,7 +268,7 @@ console.warn('[AuthContext] Fetched favorite_shows_count:', count);
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
     // 1. Immediately set the app to a "loading" state and clear old errors.
-    // eslint-disable-next-line no-console
+     
 console.warn('[AuthContext] Login attempt started for email:', credentials.email);
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
@@ -295,7 +295,7 @@ console.warn('[AuthContext] Login attempt started for email:', credentials.email
       return Promise.reject(new Error(result.error.message));
     } else if (result.user) {
       // SUCCESS: If the service returns a user, get their profile and update state.
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
 
       // ---- Optional bypass for dev -------------------------------------------------
@@ -346,7 +346,7 @@ console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
       }
 
       // ---- Normal profile fetch ----------------------------------------------------
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Fetching user profile from database...');
       let userData = await supabaseAuthService.getCurrentUser(result.user.id);
       
@@ -587,7 +587,7 @@ console.warn('[AuthContext] Fetching user profile from database...');
         throw new Error('User not authenticated');
       }
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Adding show to favorites:', showId);
       
       // Call the service to add the show to favorites
@@ -597,7 +597,7 @@ console.warn('[AuthContext] Adding show to favorites:', showId);
       // Refresh the favorite count from the database
       fetchFavoriteCount(authState.user.id);
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Show added to favorites successfully');
     } catch (error: any) {
       console.error('[AuthContext] Error adding show to favorites:', error);
@@ -616,7 +616,7 @@ console.warn('[AuthContext] Show added to favorites successfully');
         throw new Error('User not authenticated');
       }
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Removing show from favorites:', showId);
       
       // Call the service to remove the show from favorites
@@ -626,7 +626,7 @@ console.warn('[AuthContext] Removing show from favorites:', showId);
       // Refresh the favorite count from the database
       fetchFavoriteCount(authState.user.id);
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Show removed from favorites successfully');
     } catch (error: any) {
       console.error('[AuthContext] Error removing show from favorites:', error);
@@ -664,8 +664,8 @@ console.warn('[AuthContext] Show removed from favorites successfully');
         const supabaseKeys = keys.filter(k => k.includes('supabase'));
         if (supabaseKeys.length) {
           await AsyncStorage.multiRemove(supabaseKeys);
-          /* eslint-disable no-console */
-          // eslint-disable-next-line no-console
+           
+           
 console.warn('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
         }
       } catch (clearErr) {
@@ -711,7 +711,7 @@ console.warn('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
         profileImageUrl: profile.profile_image_url ?? undefined,
         favoriteShowsCount: profile.favorite_shows_count || 0,
       };
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
 
       return mapped;

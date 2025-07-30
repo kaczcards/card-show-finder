@@ -8,8 +8,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Dimensions,
-  Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +16,6 @@ import {
   getWantListsForShowOrganizer,
   getWantListsForShow,
   WantListWithUser,
-  PaginatedWantLists,
 } from '../services/showWantListService';
 import { UserRole, Show } from '../types';
 import { formatDate } from '../utils/dateUtils';
@@ -346,7 +343,7 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
   );
 };
 
-const { width } = Dimensions.get('window');
+// Styles --------------------------------------------------------------------
 
 const styles = StyleSheet.create({
   container: {
