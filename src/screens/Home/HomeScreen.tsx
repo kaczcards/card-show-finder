@@ -70,13 +70,13 @@ const _HomeScreen = ({
 }: HomeScreenProps = {}) => {
   const _navigation = useNavigation();
   const { _authState } = useAuth();
-  const [_refreshing, setRefreshing] = useState(_false);
+  const [_refreshing, setRefreshing] = useState(false);
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const _appState = useRef(AppState.currentState);
-  const _flatListRef = useRef(_null);
+  const _flatListRef = useRef(null);
   // Emergency fallback state
   const [emergencyShowList, setEmergencyShowList] = useState<Show[]>([]);
-  const [useEmergencyList, setUseEmergencyList] = useState(_false);
+  const [useEmergencyList, setUseEmergencyList] = useState(false);
   
   // Default filter values
   const defaultFilters: ShowFilters = {
@@ -97,8 +97,8 @@ const _HomeScreen = ({
   // Derive actual filters to use - prefer customFilters if provided
   const _filters = customFilters || localFilters;
   
-  const [_filterSheetVisible, setFilterSheetVisible] = useState(_false);
-  const [_presetModalVisible, setPresetModalVisible] = useState(_false);
+  const [_filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [_presetModalVisible, setPresetModalVisible] = useState(false);
 
   /**
    * ------------------------------------------------------------------
@@ -306,7 +306,7 @@ console.warn('App has come to the foreground - refreshing data');
             }));
 
             setEmergencyShowList(_mappedShows);
-            setUseEmergencyList(_true);
+      setUseEmergencyList(true);
           }
         } catch (_e) {
           console.error('[_HomeScreen] Failed to fetch emergency shows:', _e);
@@ -316,7 +316,7 @@ console.warn('App has come to the foreground - refreshing data');
       fetchAllActiveShows();
     } else if (shows.length > 0 && useEmergencyList) {
       // Reset if main query has data again
-      setUseEmergencyList(_false);
+      setUseEmergencyList(false);
       setEmergencyShowList([]);
     }
   }, [isLoading, shows.length, totalCount, useEmergencyList]);
@@ -341,9 +341,9 @@ console.warn('App has come to the foreground - refreshing data');
 
   // Handle pull-to-refresh
   const _onRefresh = async () => {
-    setRefreshing(_true);
+    setRefreshing(true);
     await refresh();
-    setRefreshing(_false);
+    setRefreshing(false);
   };
 
   // Navigate to show detail screen or use provided callback
@@ -585,7 +585,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
                 styles.filterButton,
                 { backgroundColor: _PRIMARY_COLOR, marginLeft: 10 },
               ]}
-              onPress={() => setPresetModalVisible(_true)}
+      onPress={() => setPresetModalVisible(true)}
             >
               <Ionicons name="star" size={_18} color="white" />
               <Text style={styles.filterButtonText}>Presets</Text>
@@ -674,7 +674,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
       {/* Filter Sheet */}
       <FilterSheet
         visible={_filterSheetVisible}
-        onClose={() => setFilterSheetVisible(_false)}
+        onClose={() => setFilterSheetVisible(false)}
         filters={_filters}
         onApplyFilters={_handleApplyFilters}
       />
@@ -682,7 +682,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
       {/* Preset Modal */}
       <FilterPresetModal
         visible={_presetModalVisible}
-        onClose={() => setPresetModalVisible(_false)}
+        onClose={() => setPresetModalVisible(false)}
         currentFilters={_filters}
         onApplyPreset={(_presetFilters) => {
           if (_onFilterChange) {

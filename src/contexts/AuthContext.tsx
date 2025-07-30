@@ -82,12 +82,12 @@ const _AuthContext = createContext<AuthContextType>({
 // Provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ _children }) => {
   const [authState, setAuthState] = useState<AuthState>(defaultAuthState);
-  const [favoriteCount, setFavoriteCount] = useState(_0);
+  const [favoriteCount, setFavoriteCount] = useState(0);
 
   // Function to fetch the count of user's favorite shows
   const _fetchFavoriteCount = async (userId: string) => {
     if (!userId) {
-      setFavoriteCount(_0);
+      setFavoriteCount(0);
       return;
     }
 
@@ -251,7 +251,7 @@ console.warn('[_AuthContext] Fetched favorite_shows_count:', _count);
             error: null,
             isAuthenticated: false,
           });
-          setFavoriteCount(_0);
+          setFavoriteCount(0);
         }
       }
     );
@@ -340,7 +340,7 @@ console.warn('[_AuthContext] Auth login succeeded – id:', result.user.id);
           { isAuthenticated: newState.isAuthenticated, userId: mockUser.id, role: mockUser.role });
         
         // Set favorite count to 0 for mock user
-        setFavoriteCount(_0);
+        setFavoriteCount(0);
         
         return mockUser;
       }
@@ -510,7 +510,7 @@ console.warn('[_AuthContext] Fetching user profile from database...');
         { isAuthenticated: newState.isAuthenticated });
       
       // Reset favorite count on logout
-      setFavoriteCount(_0);
+      setFavoriteCount(0);
     } catch (error: any) {
       console.error('Logout error:', error);
       setAuthState(prev => ({
