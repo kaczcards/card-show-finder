@@ -1,5 +1,5 @@
 // src/services/subscriptionTypes.ts
-import { _UserRole } from './userRoleService';
+import { UserRole } from './userRoleService';
 
 /**
  * Subscription plan types available in the app

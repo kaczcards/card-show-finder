@@ -1,7 +1,7 @@
 // src/hooks/useUserSubscriptions.ts
 import { useState, useEffect } from 'react';
-import { _supabase } from '../supabase';
-import { _useAuth } from '../contexts/AuthContext';
+import { supabase } from '../supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Custom hook to fetch user subscription data with proper loading and error handling

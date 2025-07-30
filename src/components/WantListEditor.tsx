@@ -10,7 +10,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { WantList, Show } from '../types';
 import { createWantList, updateWantList, shareWantList } from '../services/collectionService';
 

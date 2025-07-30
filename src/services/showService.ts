@@ -4,9 +4,9 @@
  * This file contains helpers for fetching shows from Supabase.
  */
 
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { Show, ShowStatus } from '../types';
-import { _calculateDistanceBetweenCoordinates } from './locationService';
+import { calculateDistanceBetweenCoordinates } from './locationService';
 
 /**
  * Convert a raw Supabase row into an app `Show` object.
@@ -67,7 +67,7 @@ const _mapDbShowToAppShow = (row: any): Show => ({
  * throws on error – this aligns with `HomeScreen.tsx`, which expects a plain
  * array.
  */
-import { _ShowFilters } from '../types';
+import { ShowFilters } from '../types';
 
 /* ------------------------------------------------------------------ */
 /* Pagination helper types                                             */

@@ -7,8 +7,8 @@
  * - Handling organizer responses to reviews
  */
 
-import { _supabase } from '../supabase';
-import { _User } from '../types';
+import { supabase } from '../supabase';
+import { User } from '../types';
 
 /**
  * Review type definition based on the database schema

@@ -11,13 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { _showSeriesService } from '../../services/showSeriesService';
-import { _OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
-import { _useAuth } from '../../contexts/AuthContext';
+import { showSeriesService } from '../../services/showSeriesService';
+import { OrganizerStackParamList } from '../../navigation/OrganizerNavigator';
+import { useAuth } from '../../contexts/AuthContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { _supabase } from '../../supabase';
+import { supabase } from '../../supabase';
 /**
  * Lightweight geocoding helper (OpenStreetMap Nominatim).
  * NOTE: Replace with a robust geocoder or your own backend in production.

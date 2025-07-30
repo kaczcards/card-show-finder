@@ -9,11 +9,11 @@ import {
   Animated,
   Dimensions,
   PanResponder,
-  _Platform,
+  Platform,
   Switch,
   TextInput,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { ShowFilters, ShowFeature, CardCategory } from '../types';
 // Temporarily commenting out DatePicker import to fix the crash
 // import DatePicker from 'react-native-date-picker';

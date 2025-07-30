@@ -14,7 +14,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import SocialIcon from '../ui/SocialIcon';
 // Fallback map components that gracefully degrade when the native
 // react-native-maps module isn’t available (e.g. running in Expo Go).
@@ -23,12 +23,12 @@ import {
   Callout,
   FixedClusteredMapView,
 } from '../MapFallback';
-import { _Show } from '../../types';
+import { Show } from '../../types';
 import { formatDate, formatEntryFee } from '../../utils/formatters';
-import { _sanitizeCoordinates } from '../../utils/coordinateUtils'; 
-import { _debounce } from '../../utils/helpers';
-import { _useNavigation } from '@react-navigation/native';
-import { _supabase } from '../../supabase';
+import { sanitizeCoordinates } from '../../utils/coordinateUtils'; 
+import { debounce } from '../../utils/helpers';
+import { useNavigation } from '@react-navigation/native';
+import { supabase } from '../../supabase';
 
 /* ------------------------------------------------------------------
  * Debugging aid – track a single show end-to-end

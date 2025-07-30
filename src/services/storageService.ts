@@ -1,4 +1,4 @@
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 
 /**
  * Interface for URL cache entries

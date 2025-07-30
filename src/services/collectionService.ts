@@ -1,6 +1,6 @@
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { UserCard, WantList, UserRole } from '../types';
-import { _storageService } from './storageService'; // Signed-URL helper
+import { storageService } from './storageService'; // Signed-URL helper
 
 /**
  * Collection Service

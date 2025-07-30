@@ -8,7 +8,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ReviewFormProps {
   /** Foreign-key to the individual show being reviewed */

@@ -11,8 +11,8 @@
  *    - delayMs: Delay in milliseconds between requests (default: 1000)
  */
 
-import { _supabase } from '../supabase';
-import { _geocodeAddress } from '../services/locationService';
+import { supabase } from '../supabase';
+import { geocodeAddress } from '../services/locationService';
 import chalk from 'chalk';
 
 // Type definitions
@@ -451,4 +451,4 @@ if (require.main === module) {
 }
 
 // Export for use in other scripts
-export { _geocodeExistingShows };
+export { geocodeExistingShows };

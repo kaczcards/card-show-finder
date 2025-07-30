@@ -1,10 +1,10 @@
 import React from 'react';
-import { _createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import screens
-import { _ProfileScreen } from '../screens/Profile';
-import _SubscriptionScreen from '../screens/Profile/_SubscriptionScreen';
-import _ShowParticipationScreen from '../screens/Dealer/_ShowParticipationScreen';
+import { ProfileScreen } from '../screens/Profile';
+import SubscriptionScreen from '../screens/Profile/SubscriptionScreen';
+import ShowParticipationScreen from '../screens/Dealer/ShowParticipationScreen';
 
 // Define navigation types for profile stack
 export type ProfileStackParamList = {

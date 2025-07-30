@@ -1,4 +1,4 @@
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { UserRole, _WantList } from '../types';
 
 const _INVENTORY_PREFIX = "[_INVENTORY]";

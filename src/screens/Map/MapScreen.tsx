@@ -9,20 +9,20 @@ import {
   Alert,
   Platform,
   Linking,
-  _RefreshControl,
+  RefreshControl,
   ScrollView,
 } from 'react-native';
-import { _SafeAreaView } from 'react-native-safe-area-context';
-import { _useFocusEffect } from '@react-navigation/native';
-import { _NativeStackScreenProps } from '@react-navigation/native-stack';
-import { _Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import _MapView, { Marker, Callout, _PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import { _useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Show, _ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster, { _MapShowClusterHandle } from '../../components/MapShowCluster/index';
 import * as locationService from '../../services/locationService';
-import { _getPaginatedShows } from '../../services/showService';
+import { getPaginatedShows } from '../../services/showService';
 // Import toast utilities for location notifications
 import { showErrorToast, showGpsLocationToast, showLocationFailedToast } from '../../utils/toastUtils';
 

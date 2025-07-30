@@ -4,7 +4,7 @@
  * This file contains helpers for dealer-specific operations related to show participation.
  */
 
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { Show, UserRole } from '../types';
 
 /**

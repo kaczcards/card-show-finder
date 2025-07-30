@@ -14,10 +14,10 @@ import {
   Modal,
   Platform,
 } from 'react-native';
-import { _SafeAreaView } from 'react-native-safe-area-context';
-import { _Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { _useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   getDealerShows, 
   getAvailableShowsForDealer, 

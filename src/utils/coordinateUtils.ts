@@ -1,7 +1,7 @@
 /**
  * Utility functions for working with geographic coordinates
  */
-import { _Coordinates } from '../types';
+import { Coordinates } from '../types';
 
 /**
  * Sanitizes coordinates to ensure they are valid

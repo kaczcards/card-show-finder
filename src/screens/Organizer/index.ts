@@ -6,4 +6,4 @@
  */
 
 export { default as OrganizerDashboardScreen } from './OrganizerDashboardScreen';
-export { _default } from './OrganizerDashboardScreen';
+export { default }; from './OrganizerDashboardScreen';

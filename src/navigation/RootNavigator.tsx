@@ -1,20 +1,20 @@
 import React from 'react';
-import { _NavigationContainer } from '@react-navigation/native';
-import { _createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import navigators
 import AuthNavigator from './AuthNavigator';
-import _MainNavigator from './_MainNavigator';
-import _AdminNavigator from './_AdminNavigator';
+import MainNavigator from './MainNavigator';
+import AdminNavigator from './AdminNavigator';
 
 // Import auth context
-import { _useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 // Import theme context
-import { _useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Import UI components
-import { _Loading } from '../components/ui';
+import { Loading } from '../components/ui';
 
 /**
  * RootNavigator - Handles top-level navigation based on auth state

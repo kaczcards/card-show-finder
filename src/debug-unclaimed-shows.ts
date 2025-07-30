@@ -1,5 +1,5 @@
 // Temporary debug file to test the useUnclaimedShows hook
-import { _showSeriesService } from './services/showSeriesService';
+import { showSeriesService } from './services/showSeriesService';
 
 async function _testUnclaimedShowsDataHandling() {
   console.warn('---- STARTING DEBUG TEST ----');
@@ -45,4 +45,4 @@ async function _testUnclaimedShowsDataHandling() {
 }
 
 // Export for use in other modules if needed
-export { _testUnclaimedShowsDataHandling };
+export { testUnclaimedShowsDataHandling };

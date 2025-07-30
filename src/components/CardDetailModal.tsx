@@ -13,9 +13,9 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { _Picker } from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import { UserCard, CardCategory } from '../types';
 
 interface CardDetailModalProps {

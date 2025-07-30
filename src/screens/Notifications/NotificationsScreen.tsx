@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Show, Review } from '../../types';
 import ReviewForm from '../../components/ReviewForm';
 import ReviewsList from '../../components/ReviewsList';

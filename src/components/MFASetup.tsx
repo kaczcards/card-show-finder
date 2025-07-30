@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { mfaService, MFAEnrollmentResponse } from '../services/mfaService';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 // Setup steps enum
 enum SetupStep {

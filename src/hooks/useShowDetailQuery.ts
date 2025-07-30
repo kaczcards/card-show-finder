@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Alert, Share, Linking } from 'react-native';
-import { _supabase } from '../supabase';
-import { _useAuth } from '../contexts/AuthContext';
-import { _handleSupabaseError } from '../services/errorService';
-import { _UserRole } from '../types';
+import { supabase } from '../supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { handleSupabaseError } from '../services/errorService';
+import { UserRole } from '../types';
 
 // Define types for better type safety (specific to dealers within this hook)
 type DealerRole = 'SHOW_ORGANIZER' | 'MVP_DEALER' | 'DEALER' | 'USER';
