@@ -25,7 +25,7 @@ interface ThemeProviderProps {
  * This component wraps the application and provides access to theme settings
  * and color scheme information. It also handles dark/light mode detection.
  */
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ _children }) => {
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Get device color scheme (light/dark)
   const _colorScheme = useColorScheme() || 'light';
   
@@ -34,9 +34,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ _children }) => {
   
   // Provide the theme context to the component tree
   return (
-    <ThemeContext.Provider value={{ theme, colorScheme }}>
-      {_children}
-    </ThemeContext.Provider>
+    <_ThemeContext.Provider value={{ theme, colorScheme: _colorScheme }}>
+      {children}
+    </_ThemeContext.Provider>
   );
 };
 
@@ -49,3 +49,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ _children }) => {
 export const _useTheme = () => useContext(_ThemeContext);
 
 export default ThemeProvider;
+
+// Backward-compatible exports
+export const ThemeContext = _ThemeContext;
+export const useTheme = _useTheme;
