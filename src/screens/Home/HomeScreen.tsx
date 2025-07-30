@@ -68,12 +68,12 @@ const HomeScreen = ({
   onShowPress,
   userLocation: propUserLocation 
 }: HomeScreenProps = {}) => {
-  const _navigation = useNavigation();
-  const { _authState } = useAuth();
-  const [_refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
+  const { authState } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
-  const _appState = useRef(AppState.currentState);
-  const _flatListRef = useRef(null);
+  const appState = useRef(AppState.currentState);
+  const flatListRef = useRef(null);
   // Emergency fallback state
   const [emergencyShowList, setEmergencyShowList] = useState<Show[]>([]);
   const [useEmergencyList, setUseEmergencyList] = useState(false);
@@ -95,9 +95,9 @@ const HomeScreen = ({
   const [localFilters, setLocalFilters] = useState<ShowFilters>(defaultFilters);
   
   // Derive actual filters to use - prefer customFilters if provided
-  const _filters = customFilters || localFilters;
+  const filters = customFilters || localFilters;
   
-  const [_filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const [_presetModalVisible, setPresetModalVisible] = useState(false);
 
   /**
@@ -529,7 +529,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
           })()}
         </Text>
         <View style={styles.showLocation}>
-          <Ionicons name="location" size={_14} color={SECONDARY_COLOR} />
+          <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
           <Text style={styles.showLocationText}>{item.location}</Text>
         </View>
         {item.entryFee > 0 && (
@@ -570,7 +570,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
               style={[styles.filterButton, { backgroundColor: SECONDARY_COLOR }]}
               onPress={_handleFilterPress}
             >
-              <Ionicons name="options" size={_18} color="white" />
+              <Ionicons name="options" size={18} color="white" />
               <Text style={styles.filterButtonText}>Filters</Text>
               {activeFilterCount() > 0 && (
                 <View style={styles.filterBadge}>
@@ -587,13 +587,13 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
               ]}
       onPress={() => setPresetModalVisible(true)}
             >
-              <Ionicons name="star" size={_18} color="white" />
+              <Ionicons name="star" size={18} color="white" />
               <Text style={styles.filterButtonText}>Presets</Text>
             </TouchableOpacity>
             
             {/* Display distance filter */}
             <View style={styles.activeFilterPill}>
-              <Ionicons name="location" size={_14} color={SECONDARY_COLOR} />
+              <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
               <Text style={styles.activeFilterText}>
                 {filters.radius} miles
               </Text>
@@ -601,7 +601,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
             
             {/* Display date range filter */}
             <View style={styles.activeFilterPill}>
-              <Ionicons name="calendar" size={_14} color={SECONDARY_COLOR} />
+              <Ionicons name="calendar" size={14} color={SECONDARY_COLOR} />
               <Text style={styles.activeFilterText}>
                 Next {Math.round((new Date(filters.endDate as string | Date).getTime() - new Date(filters.startDate as string | Date).getTime()) / (1000 * 60 * 60 * 24))} days
               </Text>
@@ -610,7 +610,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
 
           {/* Active Filter Chips */}
           <FilterChips
-            filters={_filters}
+            filters={filters}
             onRemoveFilter={_handleRemoveFilter}
             style={{ marginTop: 10 }}
           />
@@ -619,7 +619,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
         {/* Error Message */}
         {error && (
           <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={_20} color="#D32F2F" />
+            <Ionicons name="alert-circle" size={20} color="#D32F2F" />
             <Text style={styles.errorText}>{_error}</Text>
           </View>
         )}
@@ -640,7 +640,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
             </View>
           ) : shows.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={_50} color={SECONDARY_COLOR} />
+              <Ionicons name="calendar-outline" size={50} color={SECONDARY_COLOR} />
               <Text style={styles.emptyStateText}>No upcoming shows found</Text>
               <Text style={styles.emptyStateSubtext}>Try adjusting your filters or expanding your search radius</Text>
               <TouchableOpacity 
@@ -652,13 +652,13 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
             </View>
           ) : (
             <FlatList
-              ref={_flatListRef}
+              ref={flatListRef}
               data={useEmergencyList ? safeEmergencyShows : safeShows}
               renderItem={_renderShowItem}
               keyExtractor={(_item) => item.id}
               contentContainerStyle={styles.showsList}
               refreshControl={
-                <RefreshControl refreshing={_refreshing} onRefresh={_onRefresh} />
+                <RefreshControl refreshing={refreshing} onRefresh={_onRefresh} />
               }
               onEndReached={_handleEndReached}
               onEndReachedThreshold={0.5}
@@ -673,9 +673,9 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
 
       {/* Filter Sheet */}
       <FilterSheet
-        visible={_filterSheetVisible}
+        visible={filterSheetVisible}
         onClose={() => setFilterSheetVisible(false)}
-        filters={_filters}
+        filters={filters}
         onApplyFilters={_handleApplyFilters}
       />
       
@@ -683,7 +683,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
       <FilterPresetModal
         visible={_presetModalVisible}
         onClose={() => setPresetModalVisible(false)}
-        currentFilters={_filters}
+        currentFilters={filters}
         onApplyPreset={(_presetFilters) => {
           if (_onFilterChange) {
             onFilterChange(_presetFilters);
