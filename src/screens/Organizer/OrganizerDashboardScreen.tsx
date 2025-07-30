@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import { showSeriesService } from '../../services/showSeriesService';
 import { supabase } from '../../supabase';
-import OrganizerShowsList, { _OrganizerShowsListRef } from '../../components/OrganizerShowsList';
+import OrganizerShowsList, { OrganizerShowsListRef } from '../../components/OrganizerShowsList';
 import UnclaimedShowsList from '../../components/UnclaimedShowsList';
 
 // Define interface for UnclaimedShowsList ref
@@ -55,19 +55,19 @@ interface DashboardSection {
 }
 
 const OrganizerDashboardScreen: React.FC = () => {
-  const _navigation = useNavigation();
-  const { _authState } = useAuth();
-  const _user = authState?.user;
+  const navigation = useNavigation();
+  const { authState } = useAuth();
+  const user = authState?.user;
   
   // Refs for list components
-  const _organizerShowsListRef = useRef<OrganizerShowsListRef>(null);
-  const _unclaimedShowsListRef = useRef<UnclaimedShowsListRef>(null);
+  const organizerShowsListRef = useRef<OrganizerShowsListRef>(null);
+  const unclaimedShowsListRef = useRef<UnclaimedShowsListRef>(null);
   
   // State variables
   const [activeTab, setActiveTab] = useState<TabName>('shows');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [_isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [_error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalShows: 0,
     upcomingShows: 0,
@@ -78,29 +78,29 @@ const OrganizerDashboardScreen: React.FC = () => {
   });
   
   // Check if user is a show organizer
-  const _isShowOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
+  const isShowOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
   
   // Fetch dashboard metrics
-  const _fetchDashboardMetrics = async () => {
+  const fetchDashboardMetrics = async () => {
     if (!user?.id) return;
     
     try {
-      setIsLoading(_true);
-      setError(_null);
+      setIsLoading(true);
+      setError(null);
       
       // Get series owned by this organizer
-      const _mySeries = await showSeriesService.getAllShowSeries({ 
+      const mySeries = await showSeriesService.getAllShowSeries({ 
         organizerId: user.id 
       });
       
       // Get all shows in these series
       // Explicitly type to satisfy TS
       let allShows: any[] = [];
-      let _upcomingCount = 0;
-      const _now = new Date();
+      let upcomingCount = 0;
+      const now = new Date();
       
       for (const series of mySeries) {
-        const _showsInSeries = await showSeriesService.getShowsInSeries(series.id);
+        const showsInSeries = await showSeriesService.getShowsInSeries(series.id);
         allShows = [...allShows, ...showsInSeries];
         
         // Count upcoming shows (start date is in the future)
@@ -110,8 +110,8 @@ const OrganizerDashboardScreen: React.FC = () => {
       }
       
       // Get reviews for all series
-      let _totalReviews = 0;
-      let _ratingSum = 0;
+      let totalReviews = 0;
+      let ratingSum = 0;
       
       for (const series of mySeries) {
         if (series.reviewCount) {
@@ -124,17 +124,17 @@ const OrganizerDashboardScreen: React.FC = () => {
       }
       
       // Calculate overall average rating
-      const _averageRating = totalReviews > 0 ? ratingSum / totalReviews : null;
+      const averageRating = totalReviews > 0 ? ratingSum / totalReviews : null;
       
       // Get broadcast quotas from user profile
-      const { data: profile, error: _profileError } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('pre_show_broadcasts_remaining, post_show_broadcasts_remaining')
         .eq('id', user.id)
         .single();
       
-      if (_profileError) {
-        console.error('Error fetching profile:', _profileError);
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
       }
       
       // Update metrics
@@ -147,26 +147,26 @@ const OrganizerDashboardScreen: React.FC = () => {
         postShowBroadcastsRemaining: profile?.post_show_broadcasts_remaining ?? 1
       });
       
-    } catch (_err) {
-      console.error('Error fetching dashboard metrics:', _err);
+    } catch (err) {
+      console.error('Error fetching dashboard metrics:', err);
       setError('Failed to load dashboard metrics. Please try again.');
     } finally {
-      setIsLoading(_false);
+      setIsLoading(false);
     }
   };
   
   // Initial data fetch
   useEffect(() => {
-    if (_isShowOrganizer) {
+    if (isShowOrganizer) {
       fetchDashboardMetrics();
     } else {
-      setIsLoading(_false);
+      setIsLoading(false);
     }
   }, [isShowOrganizer, user?.id]);
   
   // Unified refresh for metrics and child lists
-  const _fullRefresh = () => {
-    setIsRefreshing(_true);
+  const fullRefresh = () => {
+    setIsRefreshing(true);
     
     // Fetch dashboard metrics
     fetchDashboardMetrics();
@@ -182,21 +182,21 @@ const OrganizerDashboardScreen: React.FC = () => {
     
     // Set isRefreshing to false after a timeout to ensure smooth UX
     setTimeout(() => {
-      setIsRefreshing(_false);
+      setIsRefreshing(false);
     }, 1000);
   };
 
   // Refresh metrics every time the screen gains focus
   useFocusEffect(
     React.useCallback(() => {
-      if (_isShowOrganizer) {
+      if (isShowOrganizer) {
         fetchDashboardMetrics();
       }
     }, [isShowOrganizer, user?.id])
   );
   
   // Render metrics card
-  const _renderMetricsCard = () => {
+  const renderMetricsCard = () => {
     return (
       <View style={styles.metricsCard}>
         <Text style={styles.metricsTitle}>Dashboard Overview</Text>
@@ -227,14 +227,14 @@ const OrganizerDashboardScreen: React.FC = () => {
         
         <View style={styles.quotaContainer}>
           <View style={styles.quotaItem}>
-            <Ionicons name="megaphone-outline" size={_16} color="#0057B8" style={styles.quotaIcon} />
+            <Ionicons name="megaphone-outline" size={16} color="#0057B8" style={styles.quotaIcon} />
             <Text style={styles.quotaText}>
               Pre-show broadcasts: <Text style={styles.quotaValue}>{metrics.preShowBroadcastsRemaining}</Text> remaining
             </Text>
           </View>
           
           <View style={styles.quotaItem}>
-            <Ionicons name="chatbubble-outline" size={_16} color="#0057B8" style={styles.quotaIcon} />
+            <Ionicons name="chatbubble-outline" size={16} color="#0057B8" style={styles.quotaIcon} />
             <Text style={styles.quotaText}>
               Post-show broadcasts: <Text style={styles.quotaValue}>{metrics.postShowBroadcastsRemaining}</Text> remaining
             </Text>
@@ -245,14 +245,14 @@ const OrganizerDashboardScreen: React.FC = () => {
   };
 
   // Render tabs navigation
-  const _renderTabsNavigation = () => {
+  const renderTabsNavigation = () => {
     return (
       <View style={styles.tabsContainer}>
         {(['shows', 'claim', 'recurring', 'reviews', 'broadcast'] as TabName[]).map(tab => (
           <TouchableOpacity
-            key={_tab}
+            key={tab}
             style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(_tab)}
+            onPress={() => setActiveTab(tab)}
           >
             <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
               {tab === 'shows' && 'My Shows'}
@@ -268,26 +268,26 @@ const OrganizerDashboardScreen: React.FC = () => {
   };
   
   // Render tab content
-  const _renderTabContent = () => {
-    switch (_activeTab) {
+  const renderTabContent = () => {
+    switch (activeTab) {
       case 'shows':
         return (
           <OrganizerShowsList
-            ref={_organizerShowsListRef}
+            ref={organizerShowsListRef}
             organizerId={user?.id || ''}
-            onRefresh={_fullRefresh}
-            isRefreshing={_isRefreshing}
+            onRefresh={fullRefresh}
+            isRefreshing={isRefreshing}
           />
         );
         
       case 'claim':
         return (
           <UnclaimedShowsList
-            ref={_unclaimedShowsListRef}
+            ref={unclaimedShowsListRef}
             organizerId={user?.id || ''}
-            onRefresh={_fullRefresh}
-            isRefreshing={_isRefreshing}
-            onClaimSuccess={_fullRefresh}
+            onRefresh={fullRefresh}
+            isRefreshing={isRefreshing}
+            onClaimSuccess={fullRefresh}
           />
         );
         
@@ -309,7 +309,7 @@ const OrganizerDashboardScreen: React.FC = () => {
               style={styles.actionButton}
               onPress={() => Alert.alert('Coming Soon', 'This feature is under development.')}
             >
-              <Ionicons name="calendar" size={_20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Ionicons name="calendar" size={20} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>Manage Recurring Shows</Text>
             </TouchableOpacity>
           </View>
@@ -332,7 +332,7 @@ const OrganizerDashboardScreen: React.FC = () => {
               style={styles.actionButton}
               onPress={() => Alert.alert('Coming Soon', 'This feature is under development.')}
             >
-              <Ionicons name="star" size={_20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Ionicons name="star" size={20} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>View All Reviews</Text>
             </TouchableOpacity>
           </View>
@@ -349,14 +349,14 @@ const OrganizerDashboardScreen: React.FC = () => {
               <Text style={styles.featureItem}>• Send announcements before your show</Text>
               <Text style={styles.featureItem}>• Follow up with attendees after the show</Text>
               <Text style={styles.featureItem}>• View message history and engagement</Text>
-              <Text style={styles.featureItem}>• Target specific groups (_attendees, _dealers, etc.)</Text>
+              <Text style={styles.featureItem}>• Target specific groups (attendees, dealers, etc.)</Text>
             </View>
             
             <TouchableOpacity 
               style={styles.actionButton}
               onPress={() => Alert.alert('Coming Soon', 'This feature is under development.')}
             >
-              <Ionicons name="megaphone" size={_20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Ionicons name="megaphone" size={20} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>Compose Broadcast</Text>
             </TouchableOpacity>
           </View>
@@ -368,7 +368,7 @@ const OrganizerDashboardScreen: React.FC = () => {
   };
 
   // Generate sections for SectionList
-  const _sections = useMemo(() => {
+  const sections = useMemo(() => {
     if (!isShowOrganizer && !isLoading) {
       return [];
     }
@@ -402,7 +402,7 @@ const OrganizerDashboardScreen: React.FC = () => {
       {
         type: 'content',
         data: [{ 
-          id: `content-item-${Date.now()}-${_activeTab}`, 
+          id: `content-item-${Date.now()}-${activeTab}`, 
           sectionType: 'content', 
           index: 0 
         }]
@@ -413,34 +413,34 @@ const OrganizerDashboardScreen: React.FC = () => {
   }, [isShowOrganizer, isLoading, activeTab]);
 
   // Render section items
-  const _renderSectionItem = ({ _item, section }: { _item: SectionItem, section: SectionListData<SectionItem> }) => {
-    const _sectionType = section.type as SectionType;
+  const renderSectionItem = ({ item, section }: { item: SectionItem, section: SectionListData<SectionItem> }) => {
+    const sectionType = section.type as SectionType;
 
-    switch (_sectionType) {
+    switch (sectionType) {
       case 'header':
         return (
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Organizer Dashboard</Text>
             <Text style={styles.headerSubtitle}>
-              Manage your shows, _reviews, and messages
+              Manage your shows, reviews, and messages
             </Text>
           </View>
         );
 
       case 'metrics':
-        if (_isLoading) {
+        if (isLoading) {
           return (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#FF6A00" />
               <Text style={styles.loadingText}>Loading dashboard...</Text>
             </View>
           );
-        } else if (_error) {
+        } else if (error) {
           return (
             <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle-outline" size={_40} color="#FF6A00" />
-              <Text style={styles.errorText}>{_error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={_fetchDashboardMetrics}>
+              <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={fetchDashboardMetrics}>
                 <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>
             </View>
@@ -472,7 +472,7 @@ const OrganizerDashboardScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.upgradeContainer}>
-          <Ionicons name="alert-circle-outline" size={_60} color="#FF6A00" />
+          <Ionicons name="alert-circle-outline" size={60} color="#FF6A00" />
           <Text style={styles.upgradeTitle}>Show Organizer Access Required</Text>
           <Text style={styles.upgradeText}>
             This dashboard is only available to users with a Show Organizer account.
@@ -492,13 +492,13 @@ const OrganizerDashboardScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <SectionList
-        sections={_sections}
-        renderItem={_renderSectionItem}
+        sections={sections}
+        renderItem={renderSectionItem}
         renderSectionHeader={() => null}
-        keyExtractor={(_item) => item.id}
-        stickySectionHeadersEnabled={_false}
+        keyExtractor={(item) => item.id}
+        stickySectionHeadersEnabled={false}
         refreshControl={
-          <RefreshControl refreshing={_isRefreshing} onRefresh={_fullRefresh} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={fullRefresh} />
         }
         contentContainerStyle={styles.sectionListContent}
       />
@@ -509,7 +509,7 @@ const OrganizerDashboardScreen: React.FC = () => {
           style={styles.fab}
           onPress={() => navigation.navigate('AddShow' as never)}
         >
-          <Ionicons name="add" size={_20} color="#FFFFFF" style={styles.fabIcon} />
+          <Ionicons name="add" size={20} color="#FFFFFF" style={styles.fabIcon} />
           <Text style={styles.fabText}>Add Show</Text>
         </TouchableOpacity>
       )}
@@ -517,7 +517,7 @@ const OrganizerDashboardScreen: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
