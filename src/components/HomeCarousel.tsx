@@ -18,8 +18,8 @@ const { _width } = Dimensions.get('window');
 const _ITEM_WIDTH = width - 40; // 20px padding on each side
 const _ITEM_HEIGHT = (ITEM_WIDTH * 9) / 16; // 16:9 aspect ratio
 const _AUTO_SCROLL_INTERVAL = 5000; // 5 seconds
-const _PRIMARY_COLOR = '#FF6A00'; // Orange
-const _SECONDARY_COLOR = '#0057B8'; // Blue
+const PRIMARY_COLOR = '#FF6A00'; // Orange
+const SECONDARY_COLOR = '#0057B8'; // Blue
 
 // Image data (static imports – Metro bundler cannot resolve dynamic template literals)
 const _carouselImages = [

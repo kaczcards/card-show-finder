@@ -62,11 +62,11 @@ const FilterChips: React.FC<FilterChipsProps> = ({
         new Date(filters.endDate).toDateString() !==
           new Date(defaultFilters.endDate!).toDateString())
     ) {
-      const _startDateStr = filters.startDate ? formatDate(filters.startDate) : 'Any';
-      const _endDateStr = filters.endDate ? formatDate(filters.endDate) : 'Any';
+      const startDateStr = filters.startDate ? formatDate(filters.startDate) : 'Any';
+      const endDateStr = filters.endDate ? formatDate(filters.endDate) : 'Any';
       chips.push({
         key: 'dateRange',
-        label: `${_startDateStr} - ${_endDateStr}`,
+        label: `${startDateStr} - ${endDateStr}`,
       });
     }
 
@@ -114,19 +114,19 @@ const FilterChips: React.FC<FilterChipsProps> = ({
     <View style={[styles.container, style]}>
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={_false}
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {filterChips.map((_chip, _index) => (
+        {filterChips.map((chip, index) => (
           <TouchableOpacity
-            key={`${chip.key}-${_index}`}
+            key={`${chip.key}-${index}`}
             style={styles.chip}
             onPress={() => onRemoveFilter(chip.key)}
             activeOpacity={0.7}
           >
             <Text style={styles.chipText}>{chip.label}</Text>
             <View style={styles.removeIcon}>
-              <Ionicons name="close" size={_14} color="white" />
+              <Ionicons name="close" size={14} color="white" />
             </View>
           </TouchableOpacity>
         ))}
@@ -135,7 +135,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     marginVertical: 8,
   },
@@ -165,7 +165,7 @@ const _styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 24,
-    backgroundColor: 'rgba(0,_0,0,0.15)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
     borderTopRightRadius: 20,
     borderBottomRightRadius: 20,
     alignItems: 'center',
