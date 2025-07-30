@@ -1,19 +1,19 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { _createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { _Ionicons } from '@expo/vector-icons';
 
 // Import screen components
-import { HomeScreen } from '../screens/Home';
-import { MapScreen } from '../screens/Map';
-import CollectionScreen from '../screens/Collection';
-import NotificationsScreen from '../screens/Notifications';
-import ProfileNavigator from './ProfileNavigator';
-import OrganizerNavigator from './OrganizerNavigator';
-import { useAuth } from '../contexts/AuthContext';
-import { UserRole } from '../types';
+import { _HomeScreen } from '../screens/Home';
+import { _MapScreen } from '../screens/Map';
+import _CollectionScreen from '../screens/Collection';
+import _NotificationsScreen from '../screens/Notifications';
+import _ProfileNavigator from './_ProfileNavigator';
+import _OrganizerNavigator from './_OrganizerNavigator';
+import { _useAuth } from '../contexts/AuthContext';
+import { _UserRole } from '../types';
 
 // --- Define your brand colors for consistency ---
-const BRAND_COLORS = {
+const _BRAND_COLORS = {
   primaryBlue: '#007AFF',
   primaryOrange: '#FF6A00',
   activeTab: '#007AFF', // Using blue for the active tab
@@ -31,7 +31,7 @@ export type MainTabParamList = {
   "My Profile": undefined; // Renamed from Profile
 };
 
-const MainTab = createBottomTabNavigator<MainTabParamList>();
+const _MainTab = createBottomTabNavigator<MainTabParamList>();
 
 /**
  * MainTabNavigator - Handles navigation between main app tabs
@@ -39,16 +39,16 @@ const MainTab = createBottomTabNavigator<MainTabParamList>();
 const MainTabNavigator: React.FC = () => {
   // ---- Auth / Role ----
   const {
-    authState: { user },
+    authState: { _user },
   } = useAuth();
-  const isOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
+  const _isOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
 
   return (
     <MainTab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+      screenOptions={({ _route }) => ({
+        tabBarIcon: ({ focused, _color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'home'; // Default icon
-          size = focused ? 28 : 24; // Make focused icon slightly larger
+          _size = focused ? 28 : 24; // Make focused icon slightly larger
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
@@ -61,10 +61,10 @@ const MainTabNavigator: React.FC = () => {
           } else if (route.name === 'My Profile') {
             iconName = focused ? 'person-circle' : 'person-circle-outline';
           } else if (route.name === 'Organizer') {
-            iconName = focused ? 'briefcase' : 'briefcase-outline';
+            _iconName = focused ? 'briefcase' : 'briefcase-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons name={_iconName} size={_size} color={_color} />;
         },
         // --- Updated Styling ---
         tabBarActiveTintColor: BRAND_COLORS.activeTab,
@@ -92,21 +92,21 @@ const MainTabNavigator: React.FC = () => {
       {/* --- Screens in the Correct Order --- */}
       <MainTab.Screen
         name="Home"
-        component={HomeScreen}
+        component={_HomeScreen}
       />
       <MainTab.Screen
         name="Map"
-        component={MapScreen}
+        component={_MapScreen}
       />
       {/* My Shows tab (re-added) */}
       <MainTab.Screen
         name="My Shows"
-        component={NotificationsScreen} // This component handles "My Shows"
+        component={_NotificationsScreen} // This component handles "My Shows"
       />
       {isOrganizer && (
         <MainTab.Screen
           name="Organizer"
-          component={OrganizerNavigator}
+          component={_OrganizerNavigator}
           options={{
             headerShown: false, // OrganizerNavigator manages its own headers
           }}
@@ -114,11 +114,11 @@ const MainTabNavigator: React.FC = () => {
       )}
       <MainTab.Screen
         name="My Collection"
-        component={CollectionScreen} // This component handles "My Collection"
+        component={_CollectionScreen} // This component handles "My Collection"
       />
       <MainTab.Screen
         name="My Profile"
-        component={ProfileNavigator}
+        component={_ProfileNavigator}
         options={{
           headerShown: false, // ProfileNavigator manages its own headers
         }}

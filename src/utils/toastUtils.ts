@@ -8,7 +8,7 @@
 import Toast from 'react-native-toast-message';
 
 // Default durations in milliseconds
-const DURATIONS = {
+const _DURATIONS = {
   SHORT: 2000,
   NORMAL: 3500,
   LONG: 5000
@@ -21,7 +21,7 @@ const DURATIONS = {
  * @param subText Optional secondary text
  * @param duration Time in ms to show the toast
  */
-export const showSuccessToast = (
+export const _showSuccessToast = (
   message: string, 
   subText?: string, 
   duration: number = DURATIONS.NORMAL
@@ -42,7 +42,7 @@ export const showSuccessToast = (
  * @param subText Optional secondary text
  * @param duration Time in ms to show the toast
  */
-export const showInfoToast = (
+export const _showInfoToast = (
   message: string, 
   subText?: string, 
   duration: number = DURATIONS.NORMAL
@@ -63,7 +63,7 @@ export const showInfoToast = (
  * @param subText Optional secondary text
  * @param duration Time in ms to show the toast
  */
-export const showErrorToast = (
+export const _showErrorToast = (
   message: string, 
   subText?: string, 
   duration: number = DURATIONS.LONG
@@ -84,7 +84,7 @@ export const showErrorToast = (
  * @param subText Optional secondary text
  * @param duration Time in ms to show the toast
  */
-export const showWarningToast = (
+export const _showWarningToast = (
   message: string, 
   subText?: string, 
   duration: number = DURATIONS.NORMAL
@@ -107,9 +107,9 @@ export const showWarningToast = (
  * 
  * @param zipCode The ZIP code the map has centered on
  */
-export const showLocationChangedToast = (zipCode: string) => {
+export const _showLocationChangedToast = (_zipCode: string) => {
   showInfoToast(
-    `Map centered on ${zipCode}`,
+    `Map centered on ${_zipCode}`,
     'Your location has been updated',
     DURATIONS.SHORT
   );
@@ -118,12 +118,12 @@ export const showLocationChangedToast = (zipCode: string) => {
 /**
  * Show a toast notification when GPS location is used
  * 
- * @param locationName Optional name of the location (city, neighborhood)
+ * @param locationName Optional name of the location (_city, _neighborhood)
  */
-export const showGpsLocationToast = (locationName?: string) => {
+export const _showGpsLocationToast = (locationName?: string) => {
   showInfoToast(
     locationName 
-      ? `Using current location: ${locationName}`
+      ? `Using current location: ${_locationName}`
       : 'Using your current location',
     'Shows within your selected radius will appear',
     DURATIONS.SHORT
@@ -135,11 +135,11 @@ export const showGpsLocationToast = (locationName?: string) => {
  * 
  * @param fallbackZip The ZIP code being used as fallback
  */
-export const showLocationFailedToast = (fallbackZip?: string) => {
-  if (fallbackZip) {
+export const _showLocationFailedToast = (_fallbackZip?: string) => {
+  if (_fallbackZip) {
     showWarningToast(
       'Location services unavailable',
-      `Using your home ZIP code (${fallbackZip}) instead`,
+      `Using your home ZIP code (${_fallbackZip}) instead`,
       DURATIONS.NORMAL
     );
   } else {
@@ -154,7 +154,7 @@ export const showLocationFailedToast = (fallbackZip?: string) => {
 /**
  * Hide any currently displayed toast
  */
-export const hideToast = () => {
+export const _hideToast = () => {
   Toast.hide();
 };
 

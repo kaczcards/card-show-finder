@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { _useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
-import * as Sentry from 'sentry-expo';
+import * as _Sentry from 'sentry-expo';
 import { getSentryErrorBoundary, captureException } from '../services/sentryConfig';
 
 // Get the Sentry ErrorBoundary component
-const ErrorBoundary = getSentryErrorBoundary();
+const _ErrorBoundary = getSentryErrorBoundary();
 
 interface ErrorFallbackProps {
   /**
@@ -25,7 +25,7 @@ interface ErrorFallbackProps {
  */
 const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({ 
   error,   // may be unknown
-  resetError, 
+  _resetError, 
   componentStack,
   eventId 
 }) => {
@@ -39,28 +39,28 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
       ? error
       : new Error(typeof error === 'string' ? error : 'Unknown Error');
 
-  const [isReporting, setIsReporting] = useState(false);
-  const [reported, setReported] = useState(false);
+  const [isReporting, setIsReporting] = useState(_false);
+  const [reported, setReported] = useState(_false);
 
-  const handleReport = async () => {
-    setIsReporting(true);
+  const _handleReport = async () => {
+    setIsReporting(_true);
     
     try {
       // If we have an eventId, the error was already captured by Sentry
       // Otherwise, we need to capture it manually
       if (!eventId) {
         // use the coerced Error instance for type-safety
-        await captureException(safeError);
+        await captureException(_safeError);
       }
       
       // Here you could also implement additional reporting logic
       // such as sending the error to your own API
       
-      setReported(true);
-    } catch (reportError) {
-      console.error('Failed to report error:', reportError);
+      setReported(_true);
+    } catch (_reportError) {
+      console.error('Failed to report error:', _reportError);
     } finally {
-      setIsReporting(false);
+      setIsReporting(_false);
     }
   };
 
@@ -81,14 +81,14 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
 
           {__DEV__ && componentStack && (
             <ScrollView style={styles.stackTrace} nestedScrollEnabled>
-              <Text style={styles.stackTraceText}>{componentStack}</Text>
+              <Text style={styles.stackTraceText}>{_componentStack}</Text>
             </ScrollView>
           )}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={[styles.button, styles.primaryButton]} 
-              onPress={resetError}
+              onPress={_resetError}
             >
               <Text style={styles.buttonText}>Try Again</Text>
             </TouchableOpacity>
@@ -96,8 +96,8 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
             {!reported ? (
               <TouchableOpacity 
                 style={[styles.button, styles.secondaryButton, isReporting && styles.disabledButton]} 
-                onPress={handleReport}
-                disabled={isReporting}
+                onPress={_handleReport}
+                disabled={_isReporting}
               >
                 <Text style={styles.secondaryButtonText}>
                   {isReporting ? 'Reporting...' : 'Report Issue'}
@@ -112,7 +112,7 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
 
           {eventId && (
             <Text style={styles.eventId}>
-              Reference ID: {eventId}
+              Reference ID: {_eventId}
             </Text>
           )}
         </View>
@@ -140,46 +140,49 @@ interface SentryErrorBoundaryProps {
  * @example
  * // With custom fallback and error handler
  * <SentryErrorBoundary 
- *   fallback={CustomErrorFallback}
- *   onError={(error) => console.log('Captured error:', error)}
+ *   fallback={_CustomErrorFallback}
+ *   onError={(_error) => // eslint-disable-next-line no-console
+console.warn('Captured error:', _error);}
  * >
  *   <YourComponent />
  * </SentryErrorBoundary>
  */
 const SentryErrorBoundary: React.FC<SentryErrorBoundaryProps> = ({ 
-  children, 
+  _children, 
   fallback: CustomFallback,
   onError 
 }) => {
-  const handleError = (error: unknown, componentStack: string, eventId: string) => {
+  const _handleError = (error: unknown, componentStack: string, eventId: string) => {
     // Log error in development
     if (__DEV__) {
-      console.error('Error caught by SentryErrorBoundary:', error);
-      console.log('Component stack:', componentStack);
-      console.log('Sentry event ID:', eventId);
+      console.error('Error caught by SentryErrorBoundary:', _error);
+       
+console.warn('Component stack:', _componentStack);
+       
+console.warn('Sentry event ID:', _eventId);
     }
 
     // Call custom error handler if provided
-    if (onError) {
-      onError(error, componentStack, eventId);
+    if (_onError) {
+      onError(_error, _componentStack, eventId);
     }
   };
 
   // Use the custom fallback if provided, otherwise use the default
-  const FallbackComponent = CustomFallback || DefaultErrorFallback;
+  const _FallbackComponent = CustomFallback || DefaultErrorFallback;
 
   return (
     <ErrorBoundary 
       /* `fallback` must be a render function that returns the element */
-      fallback={(errorProps) => <FallbackComponent {...errorProps} />}
-      onError={handleError}
+      fallback={(_errorProps) => <FallbackComponent {...errorProps} />}
+      onError={_handleError}
     >
-      {children}
+      {_children}
     </ErrorBoundary>
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',

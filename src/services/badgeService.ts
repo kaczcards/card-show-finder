@@ -1,17 +1,17 @@
-import { supabase } from '../supabase';
+import { _supabase } from '../supabase';
 import { Badge, BadgeTier } from '../types';
 
 /**
  * Get all badge definitions from the database
  */
-export const getAllBadgeDefinitions = async (): Promise<Badge[]> => {
+export const _getAllBadgeDefinitions = async (): Promise<Badge[]> => {
   try {
     const { data, error } = await supabase
       .from('badges_definitions')
       .select('*')
       .order('requirement_count', { ascending: true });
     
-    if (error) {
+    if (_error) {
       throw error;
     }
     
@@ -28,8 +28,8 @@ export const getAllBadgeDefinitions = async (): Promise<Badge[]> => {
       requirement: badge.requirement,
       tier: badge.tier as BadgeTier,
     }));
-  } catch (error) {
-    console.error('Error fetching badge definitions:', error);
+  } catch (_error) {
+    console.error('Error fetching badge definitions:', _error);
     return []; // Return empty array instead of throwing to prevent UI crashes
   }
 };
@@ -38,15 +38,15 @@ export const getAllBadgeDefinitions = async (): Promise<Badge[]> => {
  * Get a user's earned badges
  * @param userId The ID of the user
  */
-export const getUserBadges = async (userId: string): Promise<Badge[]> => {
+export const _getUserBadges = async (_userId: string): Promise<Badge[]> => {
   try {
     // Step 1: Get the user's badge IDs and earned dates
     const { data: userBadgesData, error: userBadgesError } = await supabase
       .from('user_badges')
       .select('badge_id, earned_at')
-      .eq('user_id', userId);
+      .eq('user_id', _userId);
     
-    if (userBadgesError) {
+    if (_userBadgesError) {
       throw userBadgesError;
     }
     
@@ -55,13 +55,13 @@ export const getUserBadges = async (userId: string): Promise<Badge[]> => {
     }
     
     // Step 2: Get the badge definitions for those badge IDs
-    const badgeIds = userBadgesData.map(badge => badge.badge_id);
+    const _badgeIds = userBadgesData.map(badge => badge.badge_id);
     const { data: badgeDefsData, error: badgeDefsError } = await supabase
       .from('badges_definitions')
       .select('*')
-      .in('id', badgeIds);
+      .in('id', _badgeIds);
     
-    if (badgeDefsError) {
+    if (_badgeDefsError) {
       throw badgeDefsError;
     }
     
@@ -72,7 +72,7 @@ export const getUserBadges = async (userId: string): Promise<Badge[]> => {
     // Step 3: Combine the data
     return userBadgesData.map(userBadge => {
       // Find the corresponding badge definition
-      const badgeDef = badgeDefsData.find(def => def.id === userBadge.badge_id);
+      const _badgeDef = badgeDefsData.find(def => def.id === userBadge.badge_id);
       
       if (!badgeDef) {
         return null; // Skip if no matching definition found
@@ -89,8 +89,8 @@ export const getUserBadges = async (userId: string): Promise<Badge[]> => {
         dateEarned: userBadge.earned_at,
       };
     }).filter(badge => badge !== null) as Badge[]; // Remove any nulls
-  } catch (error) {
-    console.error('Error fetching user badges:', error);
+  } catch (_error) {
+    console.error('Error fetching user badges:', _error);
     return []; // Return empty array instead of throwing to prevent UI crashes
   }
 };
@@ -99,21 +99,21 @@ export const getUserBadges = async (userId: string): Promise<Badge[]> => {
  * Get badges a user has not yet earned
  * @param userId The ID of the user
  */
-export const getUnearnedBadges = async (userId: string): Promise<Badge[]> => {
+export const _getUnearnedBadges = async (_userId: string): Promise<Badge[]> => {
   try {
     // First, get all badge definitions
-    const allBadges = await getAllBadgeDefinitions();
+    const _allBadges = await getAllBadgeDefinitions();
     
     // Then, get the user's earned badges
-    const userBadges = await getUserBadges(userId);
+    const _userBadges = await getUserBadges(_userId);
     
     // Get the IDs of the user's earned badges
-    const earnedBadgeIds = userBadges.map(badge => badge.id);
+    const _earnedBadgeIds = userBadges.map(badge => badge.id);
     
     // Filter out the badges the user has already earned
     return allBadges.filter(badge => !earnedBadgeIds.includes(badge.id));
-  } catch (error) {
-    console.error('Error fetching unearned badges:', error);
+  } catch (_error) {
+    console.error('Error fetching unearned badges:', _error);
     return []; // Return empty array instead of throwing to prevent UI crashes
   }
 };
@@ -123,18 +123,18 @@ export const getUnearnedBadges = async (userId: string): Promise<Badge[]> => {
  * @param userId The ID of the user
  * @param limit The maximum number of badges to return
  */
-export const getUserFeaturedBadges = async (userId: string, limit: number = 3): Promise<Badge[]> => {
+export const _getUserFeaturedBadges = async (userId: string, _limit: number = 3): Promise<Badge[]> => {
   try {
-    const userBadges = await getUserBadges(userId);
+    const _userBadges = await getUserBadges(_userId);
     
     if (userBadges.length === 0) {
       return [];
     }
     
     // Sort badges by tier priority and then by date earned
-    const tieredBadges = userBadges.sort((a, b) => {
+    const _tieredBadges = userBadges.sort((_a, _b) => {
       // Define tier priorities (higher number = higher priority)
-      const tierPriority = {
+      const _tierPriority = {
         [BadgeTier.BRONZE]: 1,
         [BadgeTier.SILVER]: 2,
         [BadgeTier.GOLD]: 3,
@@ -142,21 +142,21 @@ export const getUserFeaturedBadges = async (userId: string, limit: number = 3): 
       };
       
       // First, sort by tier priority (highest first)
-      const tierDiff = tierPriority[b.tier] - tierPriority[a.tier];
+      const _tierDiff = tierPriority[b.tier] - tierPriority[a.tier];
       if (tierDiff !== 0) {
         return tierDiff;
       }
       
       // If tiers are the same, sort by date earned (most recent first)
-      const dateA = new Date(a.dateEarned || 0);
-      const dateB = new Date(b.dateEarned || 0);
+      const _dateA = new Date(a.dateEarned || 0);
+      const _dateB = new Date(b.dateEarned || 0);
       return dateB.getTime() - dateA.getTime();
     });
     
     // Return the top badges based on the limit
-    return tieredBadges.slice(0, limit);
-  } catch (error) {
-    console.error('Error fetching featured badges:', error);
+    return tieredBadges.slice(0, _limit);
+  } catch (_error) {
+    console.error('Error fetching featured badges:', _error);
     return []; // Return empty array instead of throwing to prevent UI crashes
   }
 };
@@ -165,30 +165,30 @@ export const getUserFeaturedBadges = async (userId: string, limit: number = 3): 
  * Get a user's next badge to earn (lowest requirement badge not yet earned)
  * @param userId The ID of the user
  */
-export const getUserNextBadge = async (userId: string): Promise<Badge | null> => {
+export const _getUserNextBadge = async (_userId: string): Promise<Badge | null> => {
   try {
-    const unearnedBadges = await getUnearnedBadges(userId);
+    const _unearnedBadges = await getUnearnedBadges(_userId);
     
     if (unearnedBadges.length === 0) {
       return null;
     }
     
     // Get the user's show attendance count from profile
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: _profileError } = await supabase
       .from('profiles')
       .select('show_attendance_count')
-      .eq('id', userId)
+      .eq('id', _userId)
       .single();
     
-    if (profileError) {
-      console.error('Error fetching profile data:', profileError);
+    if (_profileError) {
+      console.error('Error fetching profile data:', _profileError);
       return null; // Return null instead of throwing
     }
     
-    const attendanceCount = profileData?.show_attendance_count || 0;
+    const _attendanceCount = profileData?.show_attendance_count || 0;
     
     // Filter attendance badges and find the one with the lowest requirement above current count
-    const attendanceBadges = unearnedBadges.filter(
+    const _attendanceBadges = unearnedBadges.filter(
       badge => badge.requirement === 'show_attendance'
     );
     
@@ -197,14 +197,14 @@ export const getUserNextBadge = async (userId: string): Promise<Badge | null> =>
     }
     
     // Get badge definitions to access requirement_count
-    const { data: badgeDefinitions, error: badgeError } = await supabase
+    const { data: badgeDefinitions, error: _badgeError } = await supabase
       .from('badges_definitions')
       .select('*')
       .in('id', attendanceBadges.map(badge => badge.id))
       .order('requirement_count', { ascending: true });
     
-    if (badgeError) {
-      console.error('Error fetching badge definitions:', badgeError);
+    if (_badgeError) {
+      console.error('Error fetching badge definitions:', _badgeError);
       return null; // Return null instead of throwing
     }
     
@@ -213,13 +213,13 @@ export const getUserNextBadge = async (userId: string): Promise<Badge | null> =>
     }
     
     // Find the next badge to earn (lowest requirement_count above current attendance)
-    const nextBadgeDef = badgeDefinitions.find(
+    const _nextBadgeDef = badgeDefinitions.find(
       badge => badge.requirement_count > attendanceCount
     );
     
     if (!nextBadgeDef) {
       // If no badge found above current count, return the highest requirement badge
-      const highestBadgeDef = badgeDefinitions[badgeDefinitions.length - 1];
+      const _highestBadgeDef = badgeDefinitions[badgeDefinitions.length - 1];
       
       // Map to our Badge type
       return {
@@ -241,8 +241,8 @@ export const getUserNextBadge = async (userId: string): Promise<Badge | null> =>
       requirement: nextBadgeDef.requirement,
       tier: nextBadgeDef.tier as BadgeTier,
     };
-  } catch (error) {
-    console.error('Error fetching next badge:', error);
+  } catch (_error) {
+    console.error('Error fetching next badge:', _error);
     return null; // Return null instead of throwing to prevent UI crashes
   }
 };
@@ -252,21 +252,21 @@ export const getUserNextBadge = async (userId: string): Promise<Badge | null> =>
  * @param userId The ID of the user
  * @param badgeId The ID of the badge to check progress for
  */
-export const getBadgeProgress = async (userId: string, badgeId: string): Promise<{
+export const _getBadgeProgress = async (_userId: string, _badgeId: string): Promise<{
   current: number;
   required: number;
   percent: number;
 } | null> => {
   try {
     // Get the badge definition
-    const { data: badgeDef, error: badgeError } = await supabase
+    const { data: badgeDef, error: _badgeError } = await supabase
       .from('badges_definitions')
       .select('*')
-      .eq('id', badgeId)
+      .eq('id', _badgeId)
       .single();
     
-    if (badgeError) {
-      console.error('Error fetching badge definition:', badgeError);
+    if (_badgeError) {
+      console.error('Error fetching badge definition:', _badgeError);
       return null; // Return null instead of throwing
     }
     
@@ -276,30 +276,30 @@ export const getBadgeProgress = async (userId: string, badgeId: string): Promise
     }
     
     // Get the user's profile to check progress
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: _profileError } = await supabase
       .from('profiles')
       .select('show_attendance_count')
-      .eq('id', userId)
+      .eq('id', _userId)
       .single();
     
-    if (profileError) {
-      console.error('Error fetching profile data:', profileError);
+    if (_profileError) {
+      console.error('Error fetching profile data:', _profileError);
       return null; // Return null instead of throwing
     }
     
-    const current = profileData?.show_attendance_count || 0;
-    const required = badgeDef.requirement_count || 0;
+    const _current = profileData?.show_attendance_count || 0;
+    const _required = badgeDef.requirement_count || 0;
     
     // Calculate percentage (cap at 100%)
-    const percent = Math.min((current / required) * 100, 100);
+    const _percent = Math.min((current / required) * 100, 100);
     
     return {
       current,
       required,
       percent,
     };
-  } catch (error) {
-    console.error('Error getting badge progress:', error);
+  } catch (_error) {
+    console.error('Error getting badge progress:', _error);
     return null; // Return null instead of throwing to prevent UI crashes
   }
 };

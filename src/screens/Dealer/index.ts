@@ -1,10 +1,10 @@
-import ShowParticipationScreen from './ShowParticipationScreen';
+import _ShowParticipationScreen from './_ShowParticipationScreen';
 
 export {
-  ShowParticipationScreen
+  _ShowParticipationScreen
 };
 
 // Export default for direct import
 export default {
-  ShowParticipationScreen
+  _ShowParticipationScreen
 };

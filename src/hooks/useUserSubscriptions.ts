@@ -1,33 +1,34 @@
 // src/hooks/useUserSubscriptions.ts
 import { useState, useEffect } from 'react';
-import { supabase } from '../supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { _supabase } from '../supabase';
+import { _useAuth } from '../contexts/AuthContext';
 
 /**
  * Custom hook to fetch user subscription data with proper loading and error handling
  * @returns Object containing subscriptions array, loading state, and error state
  */
-export const useUserSubscriptions = () => {
+export const _useUserSubscriptions = () => {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const { authState } = useAuth();
-  const { user } = authState;
+  const { _authState } = useAuth();
+  const { _user } = authState;
 
   useEffect(() => {
     // Don't attempt to fetch if there's no authenticated user
     if (!user) {
       setSubscriptions([]);
-      setIsLoading(false);
+      setIsLoading(_false);
       return;
     }
 
-    const fetchSubscriptions = async () => {
+    const _fetchSubscriptions = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        setIsLoading(_true);
+        setError(_null);
 
-        console.log('[useUserSubscriptions] Fetching subscriptions for user:', user.id);
+         
+console.warn('[_useUserSubscriptions] Fetching subscriptions for user:', user.id);
 
         /* --------------------------------------------------------------
          * Subscription info lives in the `profiles` table, not a separate
@@ -37,18 +38,18 @@ export const useUserSubscriptions = () => {
          * -------------------------------------------------------------- */
         const { data, error: supabaseError } = await supabase
           .from('profiles')
-          .select('subscription_status, subscription_expiry, account_type')
+          .select('subscription_status, _subscription_expiry, account_type')
           .eq('id', user.id)
           .single();
 
         // Handle Supabase error
-        if (supabaseError) {
-          console.error('[useUserSubscriptions] Error fetching subscriptions:', supabaseError);
+        if (_supabaseError) {
+          console.error('[_useUserSubscriptions] Error fetching subscriptions:', _supabaseError);
           throw new Error(supabaseError.message || 'Failed to fetch subscription data');
         }
 
         // Map the profile row into the shape expected by the UI
-        const mapped = data
+        const _mapped = data
           ? [
               {
                 status: data.subscription_status,
@@ -58,18 +59,19 @@ export const useUserSubscriptions = () => {
             ]
           : [];
 
-        setSubscriptions(mapped);
-        console.log('[useUserSubscriptions] Fetched subscriptions:', mapped.length);
-      } catch (err) {
-        console.error('[useUserSubscriptions] Unexpected error:', err);
+        setSubscriptions(_mapped);
+         
+console.warn('[_useUserSubscriptions] Fetched subscriptions:', mapped.length);
+      } catch (_err) {
+        console.error('[_useUserSubscriptions] Unexpected error:', _err);
         setError(err instanceof Error ? err : new Error('An unknown error occurred'));
       } finally {
-        setIsLoading(false);
+        setIsLoading(_false);
       }
     };
 
     fetchSubscriptions();
-  }, [user]); // Re-fetch when user changes
+  }, [_user]); // Re-fetch when user changes
 
   return { subscriptions, isLoading, error };
 };

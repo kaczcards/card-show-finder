@@ -5,14 +5,14 @@
  */
 
 // Font families
-export const fontFamily = {
+export const _fontFamily = {
   base: undefined, // Use system default
   heading: undefined, // Use system default
   monospace: undefined, // Use system default
 };
 
 // Font weights
-export const fontWeight = {
+export const _fontWeight = {
   thin: '200',      // Thin
   light: '300',     // Light
   regular: '400',   // Regular/Normal
@@ -23,7 +23,7 @@ export const fontWeight = {
 };
 
 // Font sizes (in pixels)
-export const fontSize = {
+export const _fontSize = {
   xs: 10,      // Extra small
   small: 12,   // Small
   body: 14,    // Body/default
@@ -36,7 +36,7 @@ export const fontSize = {
 };
 
 // Line heights (unitless multipliers)
-export const lineHeight = {
+export const _lineHeight = {
   xs: 1.2,       // Tight
   small: 1.4,    // Compact
   normal: 1.5,   // Normal
@@ -45,7 +45,7 @@ export const lineHeight = {
 };
 
 // Letter spacing (in pixels)
-export const letterSpacing = {
+export const _letterSpacing = {
   tight: -0.5,
   normal: 0,
   wide: 0.5,
@@ -53,7 +53,7 @@ export const letterSpacing = {
 };
 
 // Preset typography styles
-export const variant = {
+export const _variant = {
   h1: {
     fontFamily: fontFamily.heading,
     fontWeight: fontWeight.bold,
@@ -129,7 +129,7 @@ export const variant = {
 };
 
 // Export the typography system
-export const typography = {
+export const _typography = {
   fontFamily,
   fontWeight,
   fontSize,

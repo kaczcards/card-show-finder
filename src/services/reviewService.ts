@@ -7,8 +7,8 @@
  * - Handling organizer responses to reviews
  */
 
-import { supabase } from '../supabase';
-import { User } from '../types';
+import { _supabase } from '../supabase';
+import { _User } from '../types';
 
 /**
  * Review type definition based on the database schema
@@ -58,7 +58,7 @@ export interface OrganizerResponseInput {
 /**
  * Create a new review
  */
-export const createReview = async (
+export const _createReview = async (
   reviewInput: ReviewInput
 ): Promise<{ data: Review | null; error: string | null }> => {
   try {
@@ -72,13 +72,13 @@ export const createReview = async (
     }
 
     // Check if the user has already reviewed this show
-    const existingReview = await getUserReviewForShow(reviewInput.userId, reviewInput.showId);
+    const _existingReview = await getUserReviewForShow(reviewInput.userId, reviewInput.showId);
     if (existingReview.data) {
       return { data: null, error: 'You have already reviewed this show' };
     }
 
     // Prepare the data for insertion
-    const reviewData = {
+    const _reviewData = {
       show_id: reviewInput.showId,
       series_id: reviewInput.seriesId || null,
       user_id: reviewInput.userId,
@@ -91,12 +91,12 @@ export const createReview = async (
     // Insert the review
     const { data, error } = await supabase
       .from('reviews')
-      .insert([reviewData])
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .insert([_reviewData])
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .single();
 
-    if (error) {
-      console.error('Error creating review:', error);
+    if (_error) {
+      console.error('Error creating review:', _error);
       return { data: null, error: error.message };
     }
 
@@ -105,10 +105,10 @@ export const createReview = async (
     }
 
     // Map the database response to our Review interface
-    const review: Review = mapDbReviewToAppReview(data);
+    const review: Review = mapDbReviewToAppReview(_data);
     return { data: review, error: null };
   } catch (error: any) {
-    console.error('Unexpected error creating review:', error);
+    console.error('Unexpected error creating review:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -116,18 +116,18 @@ export const createReview = async (
 /**
  * Get a review by ID
  */
-export const getReviewById = async (
-  reviewId: string
+export const _getReviewById = async (
+  _reviewId: string
 ): Promise<{ data: Review | null; error: string | null }> => {
   try {
     const { data, error } = await supabase
       .from('reviews')
-      .select('*, profiles:user_id(username, first_name, last_name)')
-      .eq('id', reviewId)
+      .select('*, profiles:user_id(username, _first_name, last_name)')
+      .eq('id', _reviewId)
       .single();
 
-    if (error) {
-      console.error('Error fetching review:', error);
+    if (_error) {
+      console.error('Error fetching review:', _error);
       return { data: null, error: error.message };
     }
 
@@ -135,10 +135,10 @@ export const getReviewById = async (
       return { data: null, error: 'Review not found' };
     }
 
-    const review: Review = mapDbReviewToAppReview(data);
+    const review: Review = mapDbReviewToAppReview(_data);
     return { data: review, error: null };
   } catch (error: any) {
-    console.error('Unexpected error fetching review:', error);
+    console.error('Unexpected error fetching review:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -146,24 +146,24 @@ export const getReviewById = async (
 /**
  * Get reviews for a specific show
  */
-export const getReviewsByShowId = async (
+export const _getReviewsByShowId = async (
   showId: string,
   options: { limit?: number; offset?: number } = {}
 ): Promise<{ data: Review[] | null; error: string | null; count: number }> => {
   try {
     // First, get the count of reviews for pagination
-    const countResponse = await supabase
+    const _countResponse = await supabase
       .from('reviews')
       .select('id', { count: 'exact', head: true })
-      .eq('show_id', showId);
+      .eq('show_id', _showId);
 
-    const count = countResponse.count || 0;
+    const _count = countResponse.count || 0;
 
     // Then fetch the reviews with pagination
-    let query = supabase
+    let _query = supabase
       .from('reviews')
-      .select('*, profiles:user_id(username, first_name, last_name)')
-      .eq('show_id', showId)
+      .select('*, profiles:user_id(username, _first_name, last_name)')
+      .eq('show_id', _showId)
       .order('created_at', { ascending: false });
 
     // Apply pagination if specified
@@ -176,15 +176,15 @@ export const getReviewsByShowId = async (
 
     const { data, error } = await query;
 
-    if (error) {
-      console.error('Error fetching reviews by show ID:', error);
+    if (_error) {
+      console.error('Error fetching reviews by show ID:', _error);
       return { data: null, error: error.message, count: 0 };
     }
 
     const reviews: Review[] = data.map(mapDbReviewToAppReview);
     return { data: reviews, error: null, count };
   } catch (error: any) {
-    console.error('Unexpected error fetching reviews by show ID:', error);
+    console.error('Unexpected error fetching reviews by show ID:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred', count: 0 };
   }
 };
@@ -192,24 +192,24 @@ export const getReviewsByShowId = async (
 /**
  * Get reviews for a show series
  */
-export const getReviewsBySeriesId = async (
+export const _getReviewsBySeriesId = async (
   seriesId: string,
   options: { limit?: number; offset?: number } = {}
 ): Promise<{ data: Review[] | null; error: string | null; count: number }> => {
   try {
     // First, get the count of reviews for pagination
-    const countResponse = await supabase
+    const _countResponse = await supabase
       .from('reviews')
       .select('id', { count: 'exact', head: true })
-      .eq('series_id', seriesId);
+      .eq('series_id', _seriesId);
 
-    const count = countResponse.count || 0;
+    const _count = countResponse.count || 0;
 
     // Then fetch the reviews with pagination
-    let query = supabase
+    let _query = supabase
       .from('reviews')
-      .select('*, profiles:user_id(username, first_name, last_name), shows:show_id(title, start_date)')
-      .eq('series_id', seriesId)
+      .select('*, profiles:user_id(username, _first_name, last_name), shows:show_id(title, _start_date)')
+      .eq('series_id', _seriesId)
       .order('created_at', { ascending: false });
 
     // Apply pagination if specified
@@ -222,13 +222,13 @@ export const getReviewsBySeriesId = async (
 
     const { data, error } = await query;
 
-    if (error) {
-      console.error('Error fetching reviews by series ID:', error);
+    if (_error) {
+      console.error('Error fetching reviews by series ID:', _error);
       return { data: null, error: error.message, count: 0 };
     }
 
-    const reviews: Review[] = data.map((review) => {
-      const mappedReview = mapDbReviewToAppReview(review);
+    const reviews: Review[] = data.map((_review) => {
+      const _mappedReview = mapDbReviewToAppReview(_review);
       // Add show title and date if available
       if (review.shows) {
         mappedReview.showTitle = review.shows.title;
@@ -239,7 +239,7 @@ export const getReviewsBySeriesId = async (
 
     return { data: reviews, error: null, count };
   } catch (error: any) {
-    console.error('Unexpected error fetching reviews by series ID:', error);
+    console.error('Unexpected error fetching reviews by series ID:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred', count: 0 };
   }
 };
@@ -247,31 +247,31 @@ export const getReviewsBySeriesId = async (
 /**
  * Check if a user has already reviewed a show
  */
-export const getUserReviewForShow = async (
-  userId: string,
-  showId: string
+export const _getUserReviewForShow = async (
+  _userId: string,
+  _showId: string
 ): Promise<{ data: Review | null; error: string | null }> => {
   try {
-    const { data, error } = await supabase
+    const { _data, error } = await supabase
       .from('reviews')
       .select('*')
-      .eq('user_id', userId)
-      .eq('show_id', showId)
+      .eq('user_id', _userId)
+      .eq('show_id', _showId)
       .single();
 
-    if (error) {
+    if (_error) {
       // If the error is "No rows found", it means the user hasn't reviewed the show yet
       if (error.code === 'PGRST116') {
         return { data: null, error: null };
       }
-      console.error('Error checking if user has reviewed show:', error);
+      console.error('Error checking if user has reviewed show:', _error);
       return { data: null, error: error.message };
     }
 
-    const review: Review = mapDbReviewToAppReview(data);
+    const review: Review = mapDbReviewToAppReview(_data);
     return { data: review, error: null };
   } catch (error: any) {
-    console.error('Unexpected error checking if user has reviewed show:', error);
+    console.error('Unexpected error checking if user has reviewed show:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -279,7 +279,7 @@ export const getUserReviewForShow = async (
 /**
  * Update an existing review
  */
-export const updateReview = async (
+export const _updateReview = async (
   reviewId: string,
   updates: Partial<ReviewInput>
 ): Promise<{ data: Review | null; error: string | null }> => {
@@ -304,12 +304,12 @@ export const updateReview = async (
     const { data, error } = await supabase
       .from('reviews')
       .update(updateData)
-      .eq('id', reviewId)
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .eq('id', _reviewId)
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .single();
 
-    if (error) {
-      console.error('Error updating review:', error);
+    if (_error) {
+      console.error('Error updating review:', _error);
       return { data: null, error: error.message };
     }
 
@@ -317,10 +317,10 @@ export const updateReview = async (
       return { data: null, error: 'Failed to update review' };
     }
 
-    const review: Review = mapDbReviewToAppReview(data);
+    const review: Review = mapDbReviewToAppReview(_data);
     return { data: review, error: null };
   } catch (error: any) {
-    console.error('Unexpected error updating review:', error);
+    console.error('Unexpected error updating review:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -328,23 +328,23 @@ export const updateReview = async (
 /**
  * Delete a review
  */
-export const deleteReview = async (
-  reviewId: string
+export const _deleteReview = async (
+  _reviewId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { error } = await supabase
+    const { _error } = await supabase
       .from('reviews')
       .delete()
-      .eq('id', reviewId);
+      .eq('id', _reviewId);
 
-    if (error) {
-      console.error('Error deleting review:', error);
+    if (_error) {
+      console.error('Error deleting review:', _error);
       return { success: false, error: error.message };
     }
 
     return { success: true, error: null };
   } catch (error: any) {
-    console.error('Unexpected error deleting review:', error);
+    console.error('Unexpected error deleting review:', _error);
     return { success: false, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -352,13 +352,13 @@ export const deleteReview = async (
 /**
  * Add an organizer response to a review
  */
-export const addOrganizerResponse = async (
+export const _addOrganizerResponse = async (
   reviewId: string,
   organizerResponse: OrganizerResponseInput
 ): Promise<{ data: Review | null; error: string | null }> => {
   try {
     // Prepare the organizer response data
-    const responseData = {
+    const _responseData = {
       organizer_response: {
         comment: organizerResponse.comment,
         date: new Date().toISOString(),
@@ -369,12 +369,12 @@ export const addOrganizerResponse = async (
     const { data, error } = await supabase
       .from('reviews')
       .update(responseData)
-      .eq('id', reviewId)
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .eq('id', _reviewId)
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .single();
 
-    if (error) {
-      console.error('Error adding organizer response:', error);
+    if (_error) {
+      console.error('Error adding organizer response:', _error);
       return { data: null, error: error.message };
     }
 
@@ -382,10 +382,10 @@ export const addOrganizerResponse = async (
       return { data: null, error: 'Failed to add organizer response' };
     }
 
-    const review: Review = mapDbReviewToAppReview(data);
+    const review: Review = mapDbReviewToAppReview(_data);
     return { data: review, error: null };
   } catch (error: any) {
-    console.error('Unexpected error adding organizer response:', error);
+    console.error('Unexpected error adding organizer response:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -393,7 +393,7 @@ export const addOrganizerResponse = async (
 /**
  * Update an organizer response
  */
-export const updateOrganizerResponse = async (
+export const _updateOrganizerResponse = async (
   reviewId: string,
   comment: string
 ): Promise<{ data: Review | null; error: string | null }> => {
@@ -402,17 +402,17 @@ export const updateOrganizerResponse = async (
     const { data: currentReview, error: fetchError } = await supabase
       .from('reviews')
       .select('organizer_response')
-      .eq('id', reviewId)
+      .eq('id', _reviewId)
       .single();
 
-    if (fetchError) {
-      console.error('Error fetching current review:', fetchError);
+    if (_fetchError) {
+      console.error('Error fetching current review:', _fetchError);
       return { data: null, error: fetchError.message };
     }
 
     // Prepare the updated organizer response
-    const originalDate = currentReview.organizer_response?.date || new Date().toISOString();
-    const responseData = {
+    const _originalDate = currentReview.organizer_response?.date || new Date().toISOString();
+    const _responseData = {
       organizer_response: {
         comment,
         date: originalDate,
@@ -424,12 +424,12 @@ export const updateOrganizerResponse = async (
     const { data, error } = await supabase
       .from('reviews')
       .update(responseData)
-      .eq('id', reviewId)
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .eq('id', _reviewId)
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .single();
 
-    if (error) {
-      console.error('Error updating organizer response:', error);
+    if (_error) {
+      console.error('Error updating organizer response:', _error);
       return { data: null, error: error.message };
     }
 
@@ -437,10 +437,10 @@ export const updateOrganizerResponse = async (
       return { data: null, error: 'Failed to update organizer response' };
     }
 
-    const review: Review = mapDbReviewToAppReview(data);
+    const review: Review = mapDbReviewToAppReview(_data);
     return { data: review, error: null };
   } catch (error: any) {
-    console.error('Unexpected error updating organizer response:', error);
+    console.error('Unexpected error updating organizer response:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -448,23 +448,23 @@ export const updateOrganizerResponse = async (
 /**
  * Remove an organizer response
  */
-export const removeOrganizerResponse = async (
-  reviewId: string
+export const _removeOrganizerResponse = async (
+  _reviewId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { error } = await supabase
+    const { _error } = await supabase
       .from('reviews')
       .update({ organizer_response: null })
-      .eq('id', reviewId);
+      .eq('id', _reviewId);
 
-    if (error) {
-      console.error('Error removing organizer response:', error);
+    if (_error) {
+      console.error('Error removing organizer response:', _error);
       return { success: false, error: error.message };
     }
 
     return { success: true, error: null };
   } catch (error: any) {
-    console.error('Unexpected error removing organizer response:', error);
+    console.error('Unexpected error removing organizer response:', _error);
     return { success: false, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -472,8 +472,8 @@ export const removeOrganizerResponse = async (
 /**
  * Get aggregate statistics for reviews by show ID
  */
-export const getReviewStatsByShowId = async (
-  showId: string
+export const _getReviewStatsByShowId = async (
+  _showId: string
 ): Promise<{ 
   data: { averageRating: number; reviewCount: number; ratingDistribution: Record<string, number> } | null; 
   error: string | null 
@@ -483,11 +483,11 @@ export const getReviewStatsByShowId = async (
     const { data: statsData, error: statsError } = await supabase
       .from('shows')
       .select('rating')
-      .eq('id', showId)
+      .eq('id', _showId)
       .single();
 
-    if (statsError) {
-      console.error('Error fetching review stats:', statsError);
+    if (_statsError) {
+      console.error('Error fetching review stats:', _statsError);
       return { data: null, error: statsError.message };
     }
 
@@ -495,10 +495,10 @@ export const getReviewStatsByShowId = async (
     const { data: distributionData, error: distributionError } = await supabase
       .from('reviews')
       .select('rating')
-      .eq('show_id', showId);
+      .eq('show_id', _showId);
 
-    if (distributionError) {
-      console.error('Error fetching rating distribution:', distributionError);
+    if (_distributionError) {
+      console.error('Error fetching rating distribution:', _distributionError);
       return { data: null, error: distributionError.message };
     }
 
@@ -511,7 +511,7 @@ export const getReviewStatsByShowId = async (
       '5': 0,
     };
 
-    distributionData.forEach((review) => {
+    distributionData.forEach((_review) => {
       distribution[review.rating.toString()]++;
     });
 
@@ -524,7 +524,7 @@ export const getReviewStatsByShowId = async (
       error: null,
     };
   } catch (error: any) {
-    console.error('Unexpected error fetching review stats:', error);
+    console.error('Unexpected error fetching review stats:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -532,8 +532,8 @@ export const getReviewStatsByShowId = async (
 /**
  * Get aggregate statistics for reviews by series ID
  */
-export const getReviewStatsBySeriesId = async (
-  seriesId: string
+export const _getReviewStatsBySeriesId = async (
+  _seriesId: string
 ): Promise<{ 
   data: { averageRating: number; reviewCount: number; ratingDistribution: Record<string, number> } | null; 
   error: string | null 
@@ -543,11 +543,11 @@ export const getReviewStatsBySeriesId = async (
     const { data: statsData, error: statsError } = await supabase
       .from('show_series')
       .select('average_rating, review_count')
-      .eq('id', seriesId)
+      .eq('id', _seriesId)
       .single();
 
-    if (statsError) {
-      console.error('Error fetching series review stats:', statsError);
+    if (_statsError) {
+      console.error('Error fetching series review stats:', _statsError);
       return { data: null, error: statsError.message };
     }
 
@@ -555,10 +555,10 @@ export const getReviewStatsBySeriesId = async (
     const { data: distributionData, error: distributionError } = await supabase
       .from('reviews')
       .select('rating')
-      .eq('series_id', seriesId);
+      .eq('series_id', _seriesId);
 
-    if (distributionError) {
-      console.error('Error fetching series rating distribution:', distributionError);
+    if (_distributionError) {
+      console.error('Error fetching series rating distribution:', _distributionError);
       return { data: null, error: distributionError.message };
     }
 
@@ -571,7 +571,7 @@ export const getReviewStatsBySeriesId = async (
       '5': 0,
     };
 
-    distributionData.forEach((review) => {
+    distributionData.forEach((_review) => {
       distribution[review.rating.toString()]++;
     });
 
@@ -584,7 +584,7 @@ export const getReviewStatsBySeriesId = async (
       error: null,
     };
   } catch (error: any) {
-    console.error('Unexpected error fetching series review stats:', error);
+    console.error('Unexpected error fetching series review stats:', _error);
     return { data: null, error: error.message || 'An unexpected error occurred' };
   }
 };
@@ -592,14 +592,14 @@ export const getReviewStatsBySeriesId = async (
 /**
  * Helper function to map database review object to app Review interface
  */
-const mapDbReviewToAppReview = (dbReview: any): Review => {
+const _mapDbReviewToAppReview = (dbReview: any): Review => {
   // Extract user name from profiles if available
-  let userName = 'Anonymous';
+  let _userName = 'Anonymous';
   if (dbReview.profiles) {
     const { first_name, last_name, username } = dbReview.profiles;
     if (first_name && last_name) {
-      userName = `${first_name} ${last_name}`;
-    } else if (username) {
+      userName = `${_first_name} ${_last_name}`;
+    } else if (_username) {
       userName = username;
     }
   }

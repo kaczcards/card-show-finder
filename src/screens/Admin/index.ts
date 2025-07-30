@@ -7,5 +7,5 @@
 
 import AdminMapScreen from './AdminMapScreen';
 
-export { AdminMapScreen };
+export { _AdminMapScreen };
 export default AdminMapScreen;

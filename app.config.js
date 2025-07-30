@@ -147,7 +147,22 @@ module.exports = {
     supabaseAnonKey: EXPO_PUBLIC_SUPABASE_ANON_KEY,
     googleMapsApiKey: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
     sentryDsn: EXPO_PUBLIC_SENTRY_DSN,
+    /* ---------------------------------------------------------------
+     * EAS project configuration – required for non-interactive builds
+     * ------------------------------------------------------------- */
+    eas: {
+      projectId: "13f5779d-487a-4bfd-b7df-9e925db60a1a",
+    },
   },
+
+  /* ------------------------------------------------------------------
+   * EAS Update configuration (required for OTA updates & channels)
+   * ------------------------------------------------------------------ */
+  updates: {
+    url: "https://u.expo.dev/13f5779d-487a-4bfd-b7df-9e925db60a1a",
+  },
+  runtimeVersion: "1.0.0",
+
   plugins: [
     [
       "expo-location",

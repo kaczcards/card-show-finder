@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { _useState } from 'react';
 import {
   View,
   Text,
@@ -12,11 +12,11 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
-import { resendEmailVerification } from '../../services/supabaseAuthService';
+import { _SafeAreaView } from 'react-native-safe-area-context';
+import { _NativeStackScreenProps } from '@react-navigation/native-stack';
+import { _Ionicons } from '@expo/vector-icons';
+import { _useAuth } from '../../contexts/AuthContext';
+import { _resendEmailVerification } from '../../services/supabaseAuthService';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {
@@ -27,19 +27,19 @@ type AuthStackParamList = {
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-const LoginScreen: React.FC<Props> = ({ navigation }) => {
+const LoginScreen: React.FC<Props> = ({ _navigation }) => {
   // State for form fields
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [verificationRequired, setVerificationRequired] = useState(false);
-  const [isResending, setIsResending] = useState(false);
+  const [email, _setEmail] = useState('');
+  const [password, _setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(_false);
+  const [verificationRequired, setVerificationRequired] = useState(_false);
+  const [isResending, setIsResending] = useState(_false);
 
   // Get auth context
-  const { login, clearError, error, isLoading, isAuthenticated } = useAuth();
+  const { login, clearError, error, isLoading, _isAuthenticated } = useAuth();
 
   // Handle login
-  const handleLogin = async () => {
+  const _handleLogin = async () => {
     // Basic validation
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
@@ -53,14 +53,14 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       await login({ email, password });
     } catch (err: any) {
       // Extract a human-readable message from the caught error
-      const message = err?.message || '';
+      const _message = err?.message || '';
 
       // Special handling when the account exists but email is unverified
       if (
         message.toLowerCase().includes('verify') ||
         message.toLowerCase().includes('confirmed')
       ) {
-        setVerificationRequired(true);
+        setVerificationRequired(_true);
       } else {
         // Display the error message, which is now properly handled
         Alert.alert('Login Failed', message || 'Please check your credentials and try again');
@@ -69,26 +69,26 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   // Resend verification email
-  const handleResendVerification = async () => {
+  const _handleResendVerification = async () => {
     if (!email) {
       Alert.alert('Email Required', 'Enter your email first so we know where to send the verification link.');
       return;
     }
     try {
-      setIsResending(true);
-      await resendEmailVerification(email);
+      setIsResending(_true);
+      await resendEmailVerification(_email);
       Alert.alert('Verification Email Sent', 'Please check your inbox for the confirmation link.');
     } catch (err: any) {
       Alert.alert('Error', err?.message || 'Unable to resend verification email.');
     } finally {
-      setIsResending(false);
+      setIsResending(_false);
     }
   };
 
   // Clear any existing errors when navigating
-  const handleNavigate = (screen: keyof AuthStackParamList) => {
+  const _handleNavigate = (screen: keyof AuthStackParamList) => {
     clearError();
-    setVerificationRequired(false);
+    setVerificationRequired(_false);
     navigation.navigate(screen);
   };
 
@@ -125,8 +125,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                     </Text>
                     <TouchableOpacity
                       style={styles.resendButton}
-                      onPress={handleResendVerification}
-                      disabled={isResending}
+                      onPress={_handleResendVerification}
+                      disabled={_isResending}
                     >
                       {isResending ? (
                         <ActivityIndicator color="#fff" />
@@ -136,37 +136,37 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                     </TouchableOpacity>
                   </>
                 ) : (
-                  <Text style={styles.errorText}>{error}</Text>
+                  <Text style={styles.errorText}>{_error}</Text>
                 )}
               </View>
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={22} color="#888" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={_22} color="#888" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
                 placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
+                value={_email}
+                onChangeText={_setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                autoCorrect={false}
+                autoCorrect={_false}
                 editable={!isLoading}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={22} color="#888" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={_22} color="#888" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
                 placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
+                value={_password}
+                onChangeText={_setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoCorrect={false}
+                autoCorrect={_false}
                 editable={!isLoading}
               />
               <TouchableOpacity
@@ -175,7 +175,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               >
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={22}
+                  size={_22}
                   color="#888"
                 />
               </TouchableOpacity>
@@ -184,15 +184,15 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <TouchableOpacity
               style={styles.forgotPassword}
               onPress={() => handleNavigate('ForgotPassword')}
-              disabled={isLoading}
+              disabled={_isLoading}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={isLoading}
+              onPress={_handleLogin}
+              disabled={_isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
@@ -205,7 +205,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.registerText}>Don't have an account? </Text>
               <TouchableOpacity
                 onPress={() => handleNavigate('Register')}
-                disabled={isLoading}
+                disabled={_isLoading}
               >
                 <Text style={styles.registerLink}>Sign Up</Text>
               </TouchableOpacity>
@@ -217,7 +217,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const BRAND_COLORS = {
+const _BRAND_COLORS = {
   primaryBlue: '#007AFF',
   primaryOrange: '#FF6A00',
   white: '#FFFFFF',
@@ -228,7 +228,7 @@ const BRAND_COLORS = {
   errorRed: '#DC2626',
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: BRAND_COLORS.lightGray,

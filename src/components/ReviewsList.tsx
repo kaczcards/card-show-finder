@@ -1,38 +1,38 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Review } from '../types';
+import { _Ionicons } from '@expo/vector-icons';
+import { _Review } from '../types';
 
 interface ReviewsListProps {
   reviews: Review[];
   emptyMessage: string;
 }
 
-const ReviewsList: React.FC<ReviewsListProps> = ({ reviews, emptyMessage }) => {
-  const renderStarRating = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
+const ReviewsList: React.FC<ReviewsListProps> = ({ reviews, _emptyMessage }) => {
+  const _renderStarRating = (rating: number) => {
+    const _stars = [];
+    for (let _i = 1; i <= 5; i++) {
       stars.push(
         <Ionicons
-          key={i}
+          key={_i}
           name={rating >= i ? 'star' : 'star-outline'}
-          size={16}
+          size={_16}
           color="#FFD700" // Gold color for stars
           style={styles.starIcon}
         />
       );
     }
-    return <View style={styles.starRatingContainer}>{stars}</View>;
+    return <View style={styles.starRatingContainer}>{_stars}</View>;
   };
 
-  const renderReviewItem = ({ item }: { item: Review }) => {
+  const _renderReviewItem = ({ _item }: { item: Review }) => {
     /* ---------------------------------------------------------------
      * Fix timezone-offset issue so the calendar day shown matches
      * the value stored in the DB (assumed UTC).
      * ------------------------------------------------------------- */
-    const date        = new Date(item.date);
-    const utcDate     = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-    const reviewDate  = utcDate.toLocaleDateString('en-US', {
+    const _date        = new Date(item.date);
+    const _utcDate     = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const _reviewDate  = utcDate.toLocaleDateString('en-US', {
       year : 'numeric',
       month: 'long',
       day  : 'numeric',
@@ -45,31 +45,31 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews, emptyMessage }) => {
           {renderStarRating(item.rating)}
         </View>
         <Text style={styles.reviewComment}>{item.comment}</Text>
-        <Text style={styles.reviewDate}>{reviewDate}</Text>
+        <Text style={styles.reviewDate}>{_reviewDate}</Text>
       </View>
     );
   };
 
-  const renderEmptyState = () => (
+  const _renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="chatbubble-outline" size={64} color="#ccc" />
+      <Ionicons name="chatbubble-outline" size={_64} color="#ccc" />
       <Text style={styles.emptyTitle}>No Reviews Yet</Text>
-      <Text style={styles.emptyText}>{emptyMessage}</Text>
+      <Text style={styles.emptyText}>{_emptyMessage}</Text>
     </View>
   );
 
   return (
     <FlatList
-      data={reviews}
-      keyExtractor={(item) => item.id}
-      renderItem={renderReviewItem}
-      ListEmptyComponent={renderEmptyState}
+      data={_reviews}
+      keyExtractor={(_item) => item.id}
+      renderItem={_renderReviewItem}
+      ListEmptyComponent={_renderEmptyState}
       contentContainerStyle={reviews.length === 0 ? styles.listEmptyContent : styles.listContent}
     />
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,

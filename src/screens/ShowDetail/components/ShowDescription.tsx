@@ -6,11 +6,11 @@ interface ShowDescriptionProps {
 }
 
 // Section header helper for consistent typography
-const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Text style={styles.sectionTitle}>{children}</Text>
+const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ _children }) => (
+  <Text style={styles.sectionTitle}>{_children}</Text>
 );
 
-const ShowDescription: React.FC<ShowDescriptionProps> = ({ description }) => {
+const ShowDescription: React.FC<ShowDescriptionProps> = ({ _description }) => {
   return (
     <View style={styles.descriptionContainer}>
       <SectionHeader>About this show</SectionHeader>
@@ -21,7 +21,7 @@ const ShowDescription: React.FC<ShowDescriptionProps> = ({ description }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   descriptionContainer: {
     marginTop: 16,
   },

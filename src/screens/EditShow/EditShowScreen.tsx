@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, _ActivityIndicator } from 'react-native';
+import { _Ionicons } from '@expo/vector-icons';
 
 interface EditShowScreenProps {
   route: any;
@@ -8,29 +8,29 @@ interface EditShowScreenProps {
 }
 
 const EditShowScreen: React.FC<EditShowScreenProps> = ({ route, navigation }) => {
-  const { showId } = route.params;
+  const { _showId } = route.params;
 
   // Add title to navigation
   React.useEffect(() => {
     navigation.setOptions({
       title: 'Edit Show',
     });
-  }, [navigation]);
+  }, [_navigation]);
 
   return (
     <View style={styles.container}>
-      <Ionicons name="construct" size={48} color="#FF6A00" />
+      <Ionicons name="construct" size={_48} color="#FF6A00" />
       <Text style={styles.title}>Show Editing Coming Soon</Text>
       <Text style={styles.description}>
         This feature is currently under development. Soon you'll be able to edit show details,
         update information, and manage all aspects of your show.
       </Text>
-      <Text style={styles.showId}>Show ID: {showId}</Text>
+      <Text style={styles.showId}>Show ID: {_showId}</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

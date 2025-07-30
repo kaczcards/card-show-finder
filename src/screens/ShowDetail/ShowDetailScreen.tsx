@@ -7,17 +7,18 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  Linking,
-  Share
+  _Linking,
+  _Share
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 import { CommonActions, useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../contexts/AuthContext';
-import * as userRoleService from '../../services/userRoleService';
+import { _useAuth } from '../../contexts/AuthContext';
+import * as _userRoleService from '../../services/_userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
 import { UserRole, Show as ShowType } from '../../types'; // Import enums & primary Show model
-import * as Sentry from 'sentry-expo';
+// Use the wrapped Sentry helpers to avoid direct SDK calls that may be treeshaken out
+import { _captureMessage } from '../../services/sentryConfig';
 
 // Import components from the components folder
 import {
@@ -31,7 +32,7 @@ import {
 } from './components';
 
 // Import the new hook
-import { useShowDetailQuery } from '../../hooks/useShowDetailQuery';
+import { _useShowDetailQuery } from '../../hooks/useShowDetailQuery';
 
 interface ShowDetailProps {
   route: any;
@@ -47,17 +48,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   // Guard against missing navigation params to avoid runtime crash
   // `route.params` can be undefined if the navigate() call forgets to pass extras.
   // Using a fallback empty object lets the screen render an error state gracefully.
-  const { showId } = route.params || {};
-  const authContext = useAuth();
-  const user = authContext.authState?.user || null;
+  const { _showId } = route.params || {};
+  const _authContext = useAuth();
+  const _user = authContext.authState?.user || null;
   // Hook-based navigation (needed for hyperlink handler)
-  const nav = useNavigation<any>();
+  const _nav = useNavigation<any>();
 
   // State for modals and UI elements
-  const [showSeries, setShowSeries] = useState<ShowSeries | null>(null);
-  const [loadingSeries, setLoadingSeries] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
+  const [showSeries, _setShowSeries] = useState<ShowSeries | null>(null);
+  const [_loadingSeries, _setLoadingSeries] = useState(_false);
+  const [showReviewForm, setShowReviewForm] = useState(_false);
+  const [_showDealerDetailModal, setShowDealerDetailModal] = useState(_false);
   const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(null);
 
   // ------------------------------------------------------------------
@@ -66,7 +67,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   if (!showId) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={60} color="#FF6A00" />
+        <Ionicons name="alert-circle-outline" size={_60} color="#FF6A00" />
         <Text style={styles.errorText}>Error: Show ID not provided</Text>
         <TouchableOpacity
           style={styles.retryButton}
@@ -82,18 +83,18 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const {
     show,
     organizer,
-    participatingDealers,
-    loading,
+    _participatingDealers,
+    _loading,
     error,
-    isFavorite,
-    isShowOrganizer,
-    isCurrentUserOrganizer,
-    isClaimingShow,
+    _isFavorite,
+    _isShowOrganizer,
+    _isCurrentUserOrganizer,
+    _isClaimingShow,
     fetchShowDetails,
-    toggleFavorite,
-    shareShow,
-    openMapLocation
-  } = useShowDetailQuery(showId);
+    _toggleFavorite,
+    _shareShow,
+    _openMapLocation
+  } = useShowDetailQuery(_showId);
 
   /* ------------------------------------------------------------------
    * Helpers
@@ -106,7 +107,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
    * NOTE: Only the fields actually used by those components are mapped.
    *       Default fall-backs ensure we never violate the required props.
    */
-  const mapShowDetailsToShow = (details: any): ShowType => ({
+  const _mapShowDetailsToShow = (details: any): ShowType => ({
     /* ---------------- Core identifiers ---------------- */
     id: details.id,
     seriesId: details.series_id ?? undefined,
@@ -142,17 +143,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   });
 
   // Memoise so we only transform when raw `show` changes
-  const parsedShow: ShowType | null = show ? mapShowDetailsToShow(show) : null;
+  const parsedShow: ShowType | null = show ? mapShowDetailsToShow(_show) : null;
 
   // Set navigation title when show data is loaded
   useEffect(() => {
-    if (parsedShow) {
+    if (_parsedShow) {
       navigation.setOptions({ title: parsedShow.title || 'Show Details' });
     }
   }, [parsedShow, navigation]);
 
   // Handle marking a show as attended
-  const handleMarkAsAttended = async () => {
+  const _handleMarkAsAttended = async () => {
     if (!user || !parsedShow) {
       Alert.alert("Error", "You must be logged in to mark a show as attended");
       return;
@@ -166,34 +167,35 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       Alert.alert("Success", "You've marked this show as attended!");
       
       // Track this business event in Sentry
-      Sentry.captureMessage('Show Attended', {
-        level: 'info',
-        tags: {
-          event_type: 'business',
-        },
-        extra: {
-          showId: parsedShow.id,
-          userId: user.id,
-        },
-      });
-    } catch (error) {
+      captureMessage(
+        'Show Attended',
+        'info',
+        {
+          tags: { event_type: 'business' },
+          extra: {
+            showId: parsedShow.id,
+            userId: user.id,
+          },
+        }
+      );
+    } catch (_error) {
       Alert.alert("Error", "Failed to mark show as attended");
-      console.error("Error marking show as attended:", error);
+      console.error("Error marking show as attended:", _error);
     }
   };
 
   // Handle dealer interactions
-  const handleViewDealerDetails = (dealerId: string, dealerName: string) => {
+  const _handleViewDealerDetails = (dealerId: string, dealerName: string) => {
     setSelectedDealer({ id: dealerId, name: dealerName });
-    setShowDealerDetailModal(true);
+    setShowDealerDetailModal(_true);
   };
 
   // Handle show management
-  const handleClaimShow = () => Alert.alert("Claim Show", "This feature is coming soon!");
-  const navigateToEditShow = () => navigation.navigate('EditShow', { showId });
+  const _handleClaimShow = () => Alert.alert("Claim Show", "This feature is coming soon!");
+  const _navigateToEditShow = () => navigation.navigate('EditShow', { _showId });
 
   // Navigate dealer to the Subscription upgrade screen inside Profile tab
-  const navigateToSubscription = () => {
+  const _navigateToSubscription = () => {
     nav.dispatch(
       CommonActions.navigate({
         name: 'MainTabs', // parent tab navigator
@@ -208,14 +210,14 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   };
 
   // MVP Dealer upgrade message component
-  const MVPDealerUpgradeMessage = () => {
+  const _MVPDealerUpgradeMessage = () => {
     if (user?.role !== UserRole.DEALER) return null;
     
     return (
       <View style={styles.upgradeMessageContainer}>
-        <Ionicons name="star" size={24} color="#FF6A00" style={styles.upgradeIcon} />
+        <Ionicons name="star" size={_24} color="#FF6A00" style={styles.upgradeIcon} />
         <Text style={styles.upgradeMessageText}>
-          <Text style={styles.upgradeLink} onPress={navigateToSubscription}>
+          <Text style={styles.upgradeLink} onPress={_navigateToSubscription}>
             Upgrade to MVP Dealer
           </Text>{' '}
           to be featured in shows you set up for and find out what people are looking for in advance of the show.
@@ -225,7 +227,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   };
 
   // Loading state
-  if (loading) {
+  if (_loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF6A00" />
@@ -238,7 +240,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   if (error || !show) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={60} color="#FF6A00" />
+        <Ionicons name="alert-circle-outline" size={_60} color="#FF6A00" />
         <Text style={styles.errorText}>{error || 'Show not found'}</Text>
         {/* wrap the call so we pass a function, not the promise */}
         <TouchableOpacity
@@ -256,55 +258,55 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       {/* Header Actions */}
       {parsedShow && (
         <ShowHeaderActions
-        isFavorite={isFavorite}
-        isCurrentUserOrganizer={isCurrentUserOrganizer}
-        onToggleFavorite={toggleFavorite}
-        onOpenMap={openMapLocation}
-        onShare={shareShow}
-        onReview={() => setShowReviewForm(true)}
-          show={parsedShow}
+        isFavorite={_isFavorite}
+        isCurrentUserOrganizer={_isCurrentUserOrganizer}
+        onToggleFavorite={_toggleFavorite}
+        onOpenMap={_openMapLocation}
+        onShare={_shareShow}
+        onReview={() => setShowReviewForm(_true)}
+          show={_parsedShow}
         />
       )}
 
       <View style={styles.detailsContainer}>
         {/* Basic Show Info */}
-        {parsedShow && <ShowBasicInfo show={parsedShow} />}
+        {parsedShow && <ShowBasicInfo show={_parsedShow} />}
         
         {/* MVP Dealer Upgrade Message - conditionally rendered */}
         <MVPDealerUpgradeMessage />
         
         {/* Show Time Info */}
-        {parsedShow && <ShowTimeInfo show={parsedShow} />}
+        {parsedShow && <ShowTimeInfo show={_parsedShow} />}
         
         {/* Show Management Buttons */}
         <ShowManagementButtons
-          isShowOrganizer={isShowOrganizer}
-          isCurrentUserOrganizer={isCurrentUserOrganizer}
-          isClaimingShow={isClaimingShow}
-          onClaimShow={handleClaimShow}
-          onEditShow={navigateToEditShow}
+          isShowOrganizer={_isShowOrganizer}
+          isCurrentUserOrganizer={_isCurrentUserOrganizer}
+          isClaimingShow={_isClaimingShow}
+          onClaimShow={_handleClaimShow}
+          onEditShow={_navigateToEditShow}
         />
         
         {/* Organizer Info */}
-        {organizer && <OrganizerInfo organizer={organizer} />}
+        {organizer && <OrganizerInfo organizer={_organizer} />}
         
         {/* Show Description */}
         <ShowDescription description={show.description} />
         
         {/* Dealers List */}
         <DealersList
-          dealers={participatingDealers}
-          isLoading={false}
-          onViewDealerDetails={handleViewDealerDetails}
+          dealers={_participatingDealers}
+          isLoading={_false}
+          onViewDealerDetails={_handleViewDealerDetails}
         />
         
         {/* Attendance Button */}
         {user && parsedShow && (
           <TouchableOpacity 
             style={styles.attendanceButton}
-            onPress={handleMarkAsAttended}
+            onPress={_handleMarkAsAttended}
           >
-            <Ionicons name="checkmark-circle-outline" size={24} color="white" />
+            <Ionicons name="checkmark-circle-outline" size={_24} color="white" />
             <Text style={styles.attendanceButtonText}>Mark as Attended</Text>
           </TouchableOpacity>
         )}
@@ -313,27 +315,27 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       {/* Modals */}
       {selectedDealer && (
         <DealerDetailModal
-          isVisible={showDealerDetailModal}
-          onClose={() => setShowDealerDetailModal(false)}
+          isVisible={_showDealerDetailModal}
+          onClose={() => setShowDealerDetailModal(_false)}
           dealerId={selectedDealer.id}
-          showId={showId}
+          showId={_showId}
           dealerName={selectedDealer.name}
         />
       )}
       
       {showReviewForm && showSeries && (
         <ReviewForm
-          showId={showId}
+          showId={_showId}
           seriesId={showSeries.id}
           onSubmit={() => {}}
-          onCancel={() => setShowReviewForm(false)}
+          onCancel={() => setShowReviewForm(_false)}
         />
       )}
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',

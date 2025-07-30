@@ -6,11 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
+  _ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { _Ionicons } from '@expo/vector-icons';
+import { _supabase } from '../supabase';
 
 interface DealerDetailModalProps {
   isVisible: boolean;
@@ -22,13 +21,13 @@ interface DealerDetailModalProps {
 
 const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
   isVisible,
-  onClose,
+  _onClose,
   dealerId,
   showId,
-  dealerName,
+  _dealerName,
 }) => {
   const [boothInfo, setBoothInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(_true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,33 +35,33 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
       return;
     }
 
-    const fetchBoothInfo = async () => {
+    const _fetchBoothInfo = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        setLoading(_true);
+        setError(_null);
 
         // Primary query for this dealer / show pair
-        const { data, error: fetchError } = await supabase
+        const { _data, error: _fetchError } = await supabase
           .from('show_participants')
           .select('*')
-          .eq('userid', dealerId)
-          .eq('showid', showId)
+          .eq('userid', _dealerId)
+          .eq('showid', _showId)
           .single();
 
-        if (fetchError) {
-          console.error('Error fetching booth info:', fetchError);
+        if (_fetchError) {
+          console.error('Error fetching booth info:', _fetchError);
           setError('Failed to load booth information.');
-          setBoothInfo(null);
+          setBoothInfo(_null);
           return;
         }
 
-        setBoothInfo(data);
+        setBoothInfo(_data);
       } catch (err: any) {
-        console.error('Unexpected error in fetchBoothInfo:', err);
+        console.error('Unexpected error in fetchBoothInfo:', _err);
         setError(err.message || 'An unexpected error occurred.');
-        setBoothInfo(null);
+        setBoothInfo(_null);
       } finally {
-        setLoading(false);
+        setLoading(_false);
       }
     };
 
@@ -72,26 +71,26 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
   return (
     <Modal
       animationType="slide"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
+      transparent={_true}
+      visible={_isVisible}
+      onRequestClose={_onClose}
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close-circle" size={30} color="#666" />
+          <TouchableOpacity style={styles.closeButton} onPress={_onClose}>
+            <Ionicons name="close-circle" size={_30} color="#666" />
           </TouchableOpacity>
 
-          <Text style={styles.modalTitle}>{`${dealerName}'s Booth Info`}</Text>
+          <Text style={styles.modalTitle}>{`${_dealerName}'s Booth Info`}</Text>
 
           {loading ? (
             <ActivityIndicator size="large" color="#0057B8" style={styles.loadingIndicator} />
           ) : error ? (
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorText}>{_error}</Text>
           ) : boothInfo ? (
             <View style={styles.infoContainer}>
               <View style={styles.infoRow}>
-                <Ionicons name="location" size={20} color="#666" style={styles.infoIcon} />
+                <Ionicons name="location" size={_20} color="#666" style={styles.infoIcon} />
                 <Text style={styles.infoLabel}>Booth Location:</Text>
                 <Text style={styles.infoValue}>
                   {boothInfo.booth_location || 'Not specified'}
@@ -99,7 +98,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
               </View>
               
               <View style={styles.infoRow}>
-                <Ionicons name="star" size={20} color="#666" style={styles.infoIcon} />
+                <Ionicons name="star" size={_20} color="#666" style={styles.infoIcon} />
                 <Text style={styles.infoLabel}>Specialty:</Text>
                 <Text style={styles.infoValue}>
                   {boothInfo.specialty || 'Not specified'}
@@ -107,7 +106,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
               </View>
               
               <View style={styles.infoRow}>
-                <Ionicons name="pricetag" size={20} color="#666" style={styles.infoIcon} />
+                <Ionicons name="pricetag" size={_20} color="#666" style={styles.infoIcon} />
                 <Text style={styles.infoLabel}>Price Range:</Text>
                 <Text style={styles.infoValue}>
                   {boothInfo.price_range || 'Not specified'}
@@ -115,7 +114,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
               </View>
               
               <View style={styles.infoRow}>
-                <Ionicons name="trophy" size={20} color="#666" style={styles.infoIcon} />
+                <Ionicons name="trophy" size={_20} color="#666" style={styles.infoIcon} />
                 <Text style={styles.infoLabel}>Notable Items:</Text>
                 <Text style={styles.infoValue}>
                   {boothInfo.notable_items || 'None specified'}
@@ -124,7 +123,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
 
               {boothInfo.card_types && boothInfo.card_types.length > 0 && (
                 <View style={styles.infoRow}>
-                  <Ionicons name="albums" size={20} color="#666" style={styles.infoIcon} />
+                  <Ionicons name="albums" size={_20} color="#666" style={styles.infoIcon} />
                   <Text style={styles.infoLabel}>Card Types:</Text>
                   <Text style={styles.infoValue}>
                     {Array.isArray(boothInfo.card_types) 
@@ -136,7 +135,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
               
               {boothInfo.payment_methods && boothInfo.payment_methods.length > 0 && (
                 <View style={styles.infoRow}>
-                  <Ionicons name="card" size={20} color="#666" style={styles.infoIcon} />
+                  <Ionicons name="card" size={_20} color="#666" style={styles.infoIcon} />
                   <Text style={styles.infoLabel}>Payment Methods:</Text>
                   <Text style={styles.infoValue}>
                     {Array.isArray(boothInfo.payment_methods) 
@@ -149,7 +148,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
               <View style={styles.infoRowSmaller}>
                 <Ionicons 
                   name={boothInfo.open_to_trades ? "checkmark-circle" : "close-circle"} 
-                  size={20} 
+                  size={_20} 
                   color={boothInfo.open_to_trades ? "#4CAF50" : "#F44336"} 
                   style={styles.infoIcon} 
                 />
@@ -161,7 +160,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
               <View style={styles.infoRowSmaller}>
                 <Ionicons 
                   name={boothInfo.buying_cards ? "checkmark-circle" : "close-circle"} 
-                  size={20} 
+                  size={_20} 
                   color={boothInfo.buying_cards ? "#4CAF50" : "#F44336"} 
                   style={styles.infoIcon} 
                 />
@@ -180,12 +179,12 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,_0,0,0.5)',
   },
   modalView: {
     margin: 20,

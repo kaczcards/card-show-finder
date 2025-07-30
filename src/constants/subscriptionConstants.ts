@@ -1,4 +1,4 @@
-import { SubscriptionPlan } from '../types'; // Import the interface from src/types/index.ts
+import { _SubscriptionPlan } from '../types'; // Import the interface from src/types/index.ts
 
 // Define your subscription plans
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
@@ -13,7 +13,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       'Booth info visible to attendees',
       'Direct messaging with attendees',
       'Show participation management',
-      'Analytics dashboard (basic)',
+      'Analytics dashboard (_basic)',
     ],
     trialDays: 7, // 7-day free trial
   },
@@ -28,7 +28,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       'Booth info visible to attendees',
       'Direct messaging with attendees',
       'Show participation management',
-      'Analytics dashboard (basic)',
+      'Analytics dashboard (_basic)',
       'Save 25% annually',
     ],
     trialDays: 7, // 7-day free trial
@@ -66,13 +66,13 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
 ];
 
-// Define your subscription plan types (enums)
+// Define your subscription plan types (_enums)
 export enum SubscriptionPlanType {
   DEALER = 'dealer',
   ORGANIZER = 'organizer',
 }
 
-// Define your subscription durations (enums)
+// Define your subscription durations (_enums)
 export enum SubscriptionDuration {
   MONTHLY = 'monthly',
   ANNUAL = 'annual',

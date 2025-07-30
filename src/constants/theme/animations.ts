@@ -5,16 +5,10 @@
  * animations throughout the app.
  */
 
-import { 
-  Animated, 
-  Easing, 
-  ViewStyle, 
-  EasingFunction, 
-  LayoutAnimation 
-} from 'react-native';
+import { Animated, Easing, _ViewStyle, EasingFunction, LayoutAnimation } from 'react-native';
 
 // Animation Durations
-export const duration = {
+export const _duration = {
   shortest: 150,
   shorter: 200,
   short: 250,
@@ -24,7 +18,7 @@ export const duration = {
 };
 
 // Easing Presets
-export const easing = {
+export const _easing = {
   easeIn: Easing.in(Easing.ease),
   easeOut: Easing.out(Easing.ease),
   easeInOut: Easing.inOut(Easing.ease),
@@ -34,7 +28,7 @@ export const easing = {
 };
 
 // Animation Presets
-export const animation = {
+export const _animation = {
   // Fade In
   fadeIn: (value: Animated.Value, config?: { duration?: number; easing?: EasingFunction }) => {
     return Animated.timing(value, {
@@ -57,7 +51,7 @@ export const animation = {
   
   // Slide In from Bottom
   slideInFromBottom: (value: Animated.Value, config?: { distance?: number; duration?: number; easing?: EasingFunction }) => {
-    const distance = config?.distance || 100;
+    const _distance = config?.distance || 100;
     return Animated.timing(value, {
       toValue: 0,
       duration: config?.duration || duration.standard,
@@ -68,7 +62,7 @@ export const animation = {
   
   // Slide Out to Bottom
   slideOutToBottom: (value: Animated.Value, config?: { distance?: number; duration?: number; easing?: EasingFunction }) => {
-    const distance = config?.distance || 100;
+    const _distance = config?.distance || 100;
     return Animated.timing(value, {
       toValue: distance,
       duration: config?.duration || duration.standard,
@@ -99,14 +93,14 @@ export const animation = {
 
   // Button Press Animation
   buttonPress: (scaleValue: Animated.Value) => {
-    const downScale = Animated.timing(scaleValue, {
+    const _downScale = Animated.timing(scaleValue, {
       toValue: 0.95,
       duration: duration.shortest,
       easing: easing.easeOut,
       useNativeDriver: true,
     });
     
-    const upScale = Animated.timing(scaleValue, {
+    const _upScale = Animated.timing(scaleValue, {
       toValue: 1,
       duration: duration.shortest,
       easing: easing.easeOut,

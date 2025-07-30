@@ -1,37 +1,37 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { _NavigationContainer } from '@react-navigation/native';
+import { _createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import navigators
 import AuthNavigator from './AuthNavigator';
-import MainNavigator from './MainNavigator';
-import AdminNavigator from './AdminNavigator';
+import _MainNavigator from './_MainNavigator';
+import _AdminNavigator from './_AdminNavigator';
 
 // Import auth context
-import { useAuth } from '../contexts/AuthContext';
+import { _useAuth } from '../contexts/AuthContext';
 
 // Import theme context
-import { useTheme } from '../contexts/ThemeContext';
+import { _useTheme } from '../contexts/ThemeContext';
 
 // Import UI components
-import { Loading } from '../components/ui';
+import { _Loading } from '../components/ui';
 
 /**
  * RootNavigator - Handles top-level navigation based on auth state
  * Shows either the auth flow or main app based on authentication status
  */
 const RootNavigator: React.FC = () => {
-  const { authState } = useAuth();
-  const { isAuthenticated, isLoading } = authState;
+  const { _authState } = useAuth();
+  const { isAuthenticated, _isLoading } = authState;
   
   // Get theme from context
-  const { theme } = useTheme();
+  const { _theme } = useTheme();
 
   // Root stack that will hold the main app and the admin tools
-  const RootStack = createNativeStackNavigator();
+  const _RootStack = createNativeStackNavigator();
 
   // Show loading indicator while auth state is being determined
-  if (isLoading) {
+  if (_isLoading) {
     return (
       <Loading 
         type="fullScreen"
@@ -49,7 +49,7 @@ const RootNavigator: React.FC = () => {
    *  React Navigation will automatically drill into nested navigators
    *  as long as we declare the screen name in the config.
    */
-  const linking = {
+  const _linking = {
     // Accept both the custom-scheme URL and the universal https link
     prefixes: [
       'cardshowfinder://',
@@ -66,13 +66,13 @@ const RootNavigator: React.FC = () => {
   };
 
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer linking={_linking}>
       {isAuthenticated ? (
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {/* Main user‐facing app */}
-          <RootStack.Screen name="Main" component={MainNavigator} />
+          <RootStack.Screen name="Main" component={_MainNavigator} />
           {/* Admin tools – only navigated to manually or via deep links */}
-          <RootStack.Screen name="Admin" component={AdminNavigator} />
+          <RootStack.Screen name="Admin" component={_AdminNavigator} />
         </RootStack.Navigator>
       ) : (
         <AuthNavigator />

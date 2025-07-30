@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { _createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { _NativeStackScreenProps } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeScreen from './HomeScreen';
 import MapScreen from '../Map/MapScreen';
 import { ShowFilters, Coordinates } from '../../types';
-import { getCurrentLocation } from '../../services/locationService';
-import { useAuth } from '../../contexts/AuthContext';
+import { _getCurrentLocation } from '../../services/locationService';
+import { _useAuth } from '../../contexts/AuthContext';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -18,17 +18,17 @@ type MainStackParamList = {
 type Props = NativeStackScreenProps<MainStackParamList>;
 
 // Create top tab navigator
-const Tab = createMaterialTopTabNavigator();
+const _Tab = createMaterialTopTabNavigator();
 
 /**
  * HomeTabsScreen
  * 
  * Container component that provides a tabbed interface between list and map views.
- * Manages shared state (filters, location) between the views and handles persistence.
+ * Manages shared state (_filters, _location) between the views and handles persistence.
  */
-const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
-  const { authState } = useAuth();
-  const { user } = authState;
+const HomeTabsScreen: React.FC<Props> = ({ _navigation }) => {
+  const { _authState } = useAuth();
+  const { _user } = authState;
 
   // Default filters
   const defaultFilters: ShowFilters = {
@@ -39,15 +39,15 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
 
   // Shared state
   const [filters, setFilters] = useState<ShowFilters>(defaultFilters);
-  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
-  const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+  const [_userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [_activeTab, setActiveTab] = useState<'list' | 'map'>('list');
 
   // Load persisted filters on mount
   useEffect(() => {
-    const loadFilters = async () => {
+    const _loadFilters = async () => {
       try {
-        const stored = await AsyncStorage.getItem('homeFilters');
-        if (stored) {
+        const _stored = await AsyncStorage.getItem('homeFilters');
+        if (_stored) {
           const parsed: ShowFilters = JSON.parse(stored);
           // Convert date strings back to Date objects
           if (parsed.startDate) {
@@ -58,8 +58,8 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
           }
           setFilters({ ...defaultFilters, ...parsed });
         }
-      } catch (e) {
-        console.warn('Failed to load stored filters', e);
+      } catch (_e) {
+        console.warn('Failed to load stored filters', _e);
       }
     };
 
@@ -71,18 +71,18 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
     AsyncStorage.setItem('homeFilters', JSON.stringify(filters)).catch(() =>
       console.warn('Failed to persist filters')
     );
-  }, [filters]);
+  }, [_filters]);
 
   // Get user location on mount
   useEffect(() => {
-    const fetchLocation = async () => {
+    const _fetchLocation = async () => {
       try {
-        const location = await getCurrentLocation();
-        if (location) {
-          setUserLocation(location);
+        const _location = await getCurrentLocation();
+        if (_location) {
+          setUserLocation(_location);
         }
-      } catch (error) {
-        console.error('Error getting user location:', error);
+      } catch (_error) {
+        console.error('Error getting user location:', _error);
       }
     };
 
@@ -90,17 +90,17 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
   }, []);
 
   // Handle filter changes
-  const handleFilterChange = useCallback((newFilters: ShowFilters) => {
-    setFilters(newFilters);
+  const _handleFilterChange = useCallback((_newFilters: ShowFilters) => {
+    setFilters(_newFilters);
   }, []);
 
   // Handle show selection
-  const handleShowPress = useCallback((showId: string) => {
-    navigation.navigate('ShowDetail', { showId });
-  }, [navigation]);
+  const _handleShowPress = useCallback((_showId: string) => {
+    navigation.navigate('ShowDetail', { _showId });
+  }, [_navigation]);
 
   // Handle tab change
-  const handleTabChange = (index: number) => {
+  const _handleTabChange = (index: number) => {
     setActiveTab(index === 0 ? 'list' : 'map');
   };
 
@@ -115,31 +115,31 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
           tabBarLabelStyle: styles.tabLabel,
         }}
         screenListeners={{
-          state: (e) => {
-            const index = e.data.state?.index || 0;
-            handleTabChange(index);
+          state: (_e) => {
+            const _index = e.data.state?.index || 0;
+            handleTabChange(_index);
           },
         }}
       >
         <Tab.Screen name="List">
-          {(props) => (
+          {(_props) => (
             <HomeScreen
               {...props}
-              onFilterChange={handleFilterChange}
-              onShowPress={handleShowPress}
-              userLocation={userLocation}
+              onFilterChange={_handleFilterChange}
+              onShowPress={_handleShowPress}
+              userLocation={_userLocation}
             />
           )}
         </Tab.Screen>
         <Tab.Screen name="Map">
-          {() => <MapScreen />}
+          {(_props) => <MapScreen {...props} />}
         </Tab.Screen>
       </Tab.Navigator>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',

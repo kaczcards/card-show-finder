@@ -5,14 +5,14 @@
  */
 
 // Brand Colors
-const primary = {
+const _primary = {
   main: '#FF6A00', // Orange
   light: '#FF8C3D',
   dark: '#CC5500',
   contrast: '#FFFFFF',
 };
 
-const secondary = {
+const _secondary = {
   main: '#0057B8', // Blue
   light: '#3679D0',
   dark: '#004693',
@@ -20,7 +20,7 @@ const secondary = {
 };
 
 // Neutral Colors
-const neutral = {
+const _neutral = {
   white: '#FFFFFF',
   background: '#F8F8F8',
   lightGray: '#EEEEEE',
@@ -32,7 +32,7 @@ const neutral = {
 };
 
 // Feedback Colors
-const feedback = {
+const _feedback = {
   success: {
     light: '#E3F9E5',
     main: '#4CAF50', // Green
@@ -56,7 +56,7 @@ const feedback = {
 };
 
 // Background Colors
-const background = {
+const _background = {
   default: neutral.white,
   paper: neutral.white,
   light: neutral.background,
@@ -64,7 +64,7 @@ const background = {
 };
 
 // Text Colors
-const text = {
+const _text = {
   primary: neutral.text,
   secondary: neutral.darkGray,
   disabled: neutral.mediumGray,
@@ -72,7 +72,7 @@ const text = {
 };
 
 // Action Colors
-const action = {
+const _action = {
   active: primary.main,
   hover: primary.light,
   disabled: neutral.lightGray,
@@ -81,7 +81,7 @@ const action = {
 };
 
 // Export the color palette
-export const colors = {
+export const _colors = {
   primary,
   secondary,
   neutral,

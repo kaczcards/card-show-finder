@@ -1,15 +1,14 @@
-import React, { useRef } from 'react';
-import { 
-  TouchableOpacity, 
-  Text, 
-  StyleSheet, 
-  StyleProp, 
+import React, { _useRef } from 'react';
+import {
+  TouchableOpacity,
+  Text,
+  StyleProp,
   ViewStyle,
   TextStyle,
   Animated,
   ActivityIndicator,
 } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
+import { _useTheme } from '../../contexts/ThemeContext';
 
 interface ButtonProps {
   /**
@@ -60,9 +59,9 @@ interface ButtonProps {
  * with support for different variants, loading states, and animations.
  */
 const Button: React.FC<ButtonProps> = ({
-  variant = 'primary',
-  label,
-  onPress,
+  _variant = 'primary',
+  _label,
+  _onPress,
   disabled = false,
   loading = false,
   style,
@@ -70,28 +69,28 @@ const Button: React.FC<ButtonProps> = ({
   animated = true,
 }) => {
   // Get theme from context
-  const { theme } = useTheme();
+  const { _theme } = useTheme();
   
   // Animation value for scale
-  const scaleValue = useRef(new Animated.Value(1)).current;
+  const _scaleValue = useRef(new Animated.Value(1)).current;
   
   // Get button styles based on variant
-  const buttonStyle = theme.components.buttons[variant];
+  const _buttonStyle = theme.components.buttons[_variant];
   
   // Setup animation handlers if animated is true
   // When animations are disabled, this will remain undefined
-  const animationHandlers = animated 
+  const _animationHandlers = animated 
     ? theme.animations.animation.buttonPress(scaleValue) 
     : undefined;
   
   // Determine final styles based on state
-  const containerStyle = [
+  const _containerStyle = [
     buttonStyle.container,
     disabled && buttonStyle.disabledContainer,
     style,
   ];
   
-  const labelStyle = [
+  const _labelStyle = [
     buttonStyle.text,
     disabled && buttonStyle.disabledText,
     textStyle,
@@ -101,9 +100,9 @@ const Button: React.FC<ButtonProps> = ({
     <Animated.View style={animationHandlers?.style}>
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={onPress}
+        onPress={_onPress}
         disabled={disabled || loading}
-        style={containerStyle}
+        style={_containerStyle}
         {...(animated
           ? {
               onPressIn: animationHandlers?.onPressIn,
@@ -117,7 +116,7 @@ const Button: React.FC<ButtonProps> = ({
             size="small" 
           />
         ) : (
-          <Text style={labelStyle}>{label}</Text>
+          <Text style={_labelStyle}>{_label}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>

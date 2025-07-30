@@ -1,5 +1,5 @@
-import { supabase } from '../supabase';
-import { refreshUserSession } from './sessionService';
+import { _supabase } from '../supabase';
+import { _refreshUserSession } from './sessionService';
 
 // User role constants
 export enum UserRole {
@@ -18,7 +18,7 @@ export enum UserRole {
  * during e2e / unit tests.
  */
 // NOTE: changing this to **const** prevents runtime overrides in production.
-export const IS_TEST_MODE = false;
+export const _IS_TEST_MODE = false;
 
 
 /* ------------------------------------------------------------------
@@ -30,9 +30,9 @@ export const IS_TEST_MODE = false;
  * to the corresponding uppercase `UserRole` enum value.
  * Returns `null` if it cannot be mapped.
  */
-export const normalizeRole = (role?: string | null): UserRole | null => {
+export const _normalizeRole = (role?: string | null): UserRole | null => {
   if (!role) return null;
-  const upper = role.toUpperCase() as UserRole;
+  const _upper = role.toUpperCase() as UserRole;
   return (Object.values(UserRole) as string[]).includes(upper) ? upper : null;
 };
 
@@ -103,9 +103,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<Action>> = {
  * @param userRole   caller’s role
  * @param action     action to check
  */
-export const canPerformAction = (userRole: UserRole, action: Action): boolean => {
-  if (IS_TEST_MODE) return true;
-  const allowed = ROLE_PERMISSIONS[userRole];
+export const _canPerformAction = (userRole: UserRole, action: Action): boolean => {
+  if (_IS_TEST_MODE) return true;
+  const _allowed = ROLE_PERMISSIONS[_userRole];
   return allowed ? allowed.has(action) : false;
 };
 
@@ -117,13 +117,13 @@ export const canPerformAction = (userRole: UserRole, action: Action): boolean =>
  * Checks if a sender can initiate a DM to a recipient
  * (show validation must be handled by caller when needed).
  */
-export const canSendDirectMessage = (
+export const _canSendDirectMessage = (
   senderRole: UserRole,
   recipientRole: UserRole
 ): boolean => {
-  if (IS_TEST_MODE) return true;
+  if (_IS_TEST_MODE) return true;
 
-  switch (senderRole) {
+  switch (_senderRole) {
     case UserRole.ATTENDEE:
       return recipientRole === UserRole.MVP_DEALER;
     case UserRole.MVP_DEALER:
@@ -142,16 +142,16 @@ export const canSendDirectMessage = (
 /**
  * Dealers are read-only, everyone else can reply.
  */
-export const canReplyToMessage = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) return true;
+export const _canReplyToMessage = (userRole: UserRole): boolean => {
+  if (_IS_TEST_MODE) return true;
   return userRole !== UserRole.DEALER;
 };
 
 /**
  * Broadcast: MVP dealer (attendees only) or organizer (quota enforced server-side)
  */
-export const canSendBroadcast = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) return true;
+export const _canSendBroadcast = (userRole: UserRole): boolean => {
+  if (_IS_TEST_MODE) return true;
   return (
     userRole === UserRole.MVP_DEALER ||
     userRole === UserRole.SHOW_ORGANIZER
@@ -161,8 +161,8 @@ export const canSendBroadcast = (userRole: UserRole): boolean => {
 /**
  * Show organizers (for their shows) & admins (handled elsewhere) can moderate.
  */
-export const canModerateMessages = (userRole: UserRole): boolean => {
-  if (IS_TEST_MODE) return true;
+export const _canModerateMessages = (userRole: UserRole): boolean => {
+  if (_IS_TEST_MODE) return true;
   return userRole === UserRole.SHOW_ORGANIZER;
 };
 
@@ -171,22 +171,22 @@ export const canModerateMessages = (userRole: UserRole): boolean => {
  * @param userId The ID of the user.
  * @returns The user's role as a string, or null if not found/error.
  */
-export const getUserRole = async (userId: string): Promise<UserRole | null> => {
+export const _getUserRole = async (_userId: string): Promise<UserRole | null> => {
   try {
-    const { data, error } = await supabase
+    const { data, _error } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', userId)
+      .eq('id', _userId)
       .single();
 
-    if (error) {
-      console.error('Error fetching user role:', error);
+    if (_error) {
+      console.error('Error fetching user role:', _error);
       return null;
     }
 
     return normalizeRole(data?.role);
-  } catch (error) {
-    console.error('Exception in getUserRole:', error);
+  } catch (_error) {
+    console.error('Exception in getUserRole:', _error);
     return null;
   }
 };
@@ -196,22 +196,22 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
  * @param userId User ID to lookup
  * @returns User profile information or null
  */
-export const getUserProfile = async (userId: string) => {
+export const _getUserProfile = async (_userId: string) => {
   try {
-    const { data, error } = await supabase
+    const { data, _error } = await supabase
       .from('profiles')
-      .select('id, username, full_name, avatar_url, role')
-      .eq('id', userId)
+      .select('id, _username, full_name, avatar_url, role')
+      .eq('id', _userId)
       .single();
       
-    if (error) {
-      console.error('Error fetching user profile:', error);
+    if (_error) {
+      console.error('Error fetching user profile:', _error);
       return null;
     }
     
     return data;
-  } catch (error) {
-    console.error('Exception in getUserProfile:', error);
+  } catch (_error) {
+    console.error('Exception in getUserProfile:', _error);
     return null;
   }
 };
@@ -222,8 +222,8 @@ export const getUserProfile = async (userId: string) => {
  * @param userRole The role of the user.
  * @returns True if the user can send messages, false otherwise.
  */
-export const canUserSendMessage = (userRole: UserRole): boolean => {
-  return canPerformAction(userRole, Action.SEND_MESSAGE);
+export const _canUserSendMessage = (_userRole: UserRole): boolean => {
+  return canPerformAction(_userRole, Action.SEND_MESSAGE);
 };
 
 /**
@@ -232,8 +232,8 @@ export const canUserSendMessage = (userRole: UserRole): boolean => {
  * @param userRole The role of the user.
  * @returns True if the user can receive messages, false otherwise.
  */
-export const canUserReceiveMessage = (userRole: UserRole): boolean => {
-  return canPerformAction(userRole, Action.RECEIVE_MESSAGE);
+export const _canUserReceiveMessage = (_userRole: UserRole): boolean => {
+  return canPerformAction(_userRole, Action.RECEIVE_MESSAGE);
 };
 
 /**
@@ -242,8 +242,8 @@ export const canUserReceiveMessage = (userRole: UserRole): boolean => {
  * @param requiredRole The role required for the action.
  * @returns True if the user has the required role, false otherwise.
  */
-export const hasRole = (userRole: UserRole, requiredRole: UserRole): boolean => {
-  if (IS_TEST_MODE) {
+export const _hasRole = (userRole: UserRole, requiredRole: UserRole): boolean => {
+  if (_IS_TEST_MODE) {
     return true; // Bypass role checks in test mode
   }
   return userRole === requiredRole;
@@ -255,8 +255,8 @@ export const hasRole = (userRole: UserRole, requiredRole: UserRole): boolean => 
  * @param requiredRoles An array of roles, at least one of which the user must have.
  * @returns True if the user has any of the required roles, false otherwise.
  */
-export const hasAnyRole = (userRole: UserRole, requiredRoles: UserRole[]): boolean => {
-  if (IS_TEST_MODE) {
+export const _hasAnyRole = (userRole: UserRole, requiredRoles: UserRole[]): boolean => {
+  if (_IS_TEST_MODE) {
     return true; // Bypass role checks in test mode
   }
   return requiredRoles.includes(userRole);
@@ -268,8 +268,8 @@ export const hasAnyRole = (userRole: UserRole, requiredRoles: UserRole[]): boole
  * @param userRole The role of the user.
  * @returns True if the user can manage show listings, false otherwise.
  */
-export const canManageShows = (userRole: UserRole): boolean => {
-  return canPerformAction(userRole, Action.MANAGE_SHOWS);
+export const _canManageShows = (_userRole: UserRole): boolean => {
+  return canPerformAction(_userRole, Action.MANAGE_SHOWS);
 };
 
 /**
@@ -278,8 +278,8 @@ export const canManageShows = (userRole: UserRole): boolean => {
  * @param userRole The role of the user.
  * @returns True if the user can participate as a dealer, false otherwise.
  */
-export const canParticipateAsDealer = (userRole: UserRole): boolean => {
-  return canPerformAction(userRole, Action.DEALER_PARTICIPATION);
+export const _canParticipateAsDealer = (_userRole: UserRole): boolean => {
+  return canPerformAction(_userRole, Action.DEALER_PARTICIPATION);
 };
 
 /**
@@ -288,8 +288,8 @@ export const canParticipateAsDealer = (userRole: UserRole): boolean => {
  * @param userRole The role of the user.
  * @returns True if the user has premium features, false otherwise.
  */
-export const hasPremiumFeatures = (userRole: UserRole): boolean => {
-  return canPerformAction(userRole, Action.PREMIUM_FEATURE);
+export const _hasPremiumFeatures = (_userRole: UserRole): boolean => {
+  return canPerformAction(_userRole, Action.PREMIUM_FEATURE);
 };
 
 /**
@@ -298,7 +298,7 @@ export const hasPremiumFeatures = (userRole: UserRole): boolean => {
  * @param userRole The role of the user.
  * @returns True if the user needs to upgrade, false otherwise.
  */
-export const needsUpgrade = (userRole: UserRole): boolean => {
+export const _needsUpgrade = (userRole: UserRole): boolean => {
   return !hasPremiumFeatures(userRole);
 };
 
@@ -309,13 +309,13 @@ export const needsUpgrade = (userRole: UserRole): boolean => {
  * @param targetUserRole Role of the user to be messaged
  * @returns Boolean indicating if messaging is allowed
  */
-export const canContactUser = (currentUserRole: UserRole, targetUserRole: UserRole): boolean => {
-  if (IS_TEST_MODE) {
+export const _canContactUser = (_currentUserRole: UserRole, _targetUserRole: UserRole): boolean => {
+  if (_IS_TEST_MODE) {
     return true; // Allow all messaging in test mode
   }
   
   // Check if the target user can receive messages
-  return canUserReceiveMessage(targetUserRole);
+  return canUserReceiveMessage(_targetUserRole);
 };
 
 /* ------------------------------------------------------------------
@@ -328,9 +328,9 @@ export const canContactUser = (currentUserRole: UserRole, targetUserRole: UserRo
  * 2. Fetches the latest role from the database
  *
  * This should be called after any action that might change the user's
- * subscription or role (e.g., webhook, upgrade flow).
+ * subscription or role (e.g., _webhook, upgrade flow).
  */
-export const updateUserRole = async (userId: string): Promise<UserRole | null> => {
+export const _updateUserRole = async (_userId: string): Promise<UserRole | null> => {
   await refreshUserSession();
-  return getUserRole(userId);
+  return getUserRole(_userId);
 };
