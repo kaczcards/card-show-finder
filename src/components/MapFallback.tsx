@@ -1,5 +1,14 @@
 import React, { forwardRef, useRef, useImperativeHandle } from 'react';
-import { View, Text, _StyleSheet, _ViewStyle, _TextStyle, _Platform, TouchableOpacity, ScrollView,  } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ViewStyle,
+  TextStyle,
+  Platform,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 
 /**
  * MapFallback.tsx
