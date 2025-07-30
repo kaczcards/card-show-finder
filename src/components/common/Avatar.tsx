@@ -1,4 +1,4 @@
-import React, { _useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Image,
