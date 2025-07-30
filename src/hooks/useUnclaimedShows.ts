@@ -14,7 +14,7 @@ export interface UnclaimedItem {
  * @param organizerId The organizer ID (used for claiming shows later)
  * @returns Object containing unclaimed items, loading state, and error state
  */
-export const _useUnclaimedShows = (_organizerId: string) => {
+export const useUnclaimedShows = (organizerId: string) => {
   // State for unclaimed items (shows and series)
   const [unclaimedItems, setUnclaimedItems] = useState<UnclaimedItem[]>([]);
   // Loading state - start with true as we'll fetch data immediately
@@ -23,12 +23,12 @@ export const _useUnclaimedShows = (_organizerId: string) => {
   const [error, setError] = useState<Error | null>(null);
 
   // Function to fetch unclaimed shows and series
-  const _fetchUnclaimedShows = async () => {
+  const fetchUnclaimedShows = async () => {
     try {
        
 console.warn('[_useUnclaimedShows] Starting to fetch unclaimed shows and series');
-      setIsLoading(_true);
-      setError(_null);
+      setIsLoading(true);
+      setError(null);
       
       let unclaimedSeries: ShowSeries[] = [];
       let unclaimedStandaloneShows: Show[] = [];
@@ -45,9 +45,9 @@ console.warn('[_useUnclaimedShows] Attempting to fetch series…');
           organizerId: undefined
         });
          
-console.warn('[_useUnclaimedShows] Successfully fetched series:', _unclaimedSeries);
-      } catch (_seriesErr) {
-        console.error('CRASHED INSIDE: getAllShowSeries', _seriesErr);
+console.warn('[_useUnclaimedShows] Successfully fetched series:', unclaimedSeries);
+      } catch (seriesErr) {
+        console.error('CRASHED INSIDE: getAllShowSeries', seriesErr);
         throw seriesErr; // bubble up to outer catch
       }
 
@@ -59,14 +59,14 @@ console.warn('[_useUnclaimedShows] Successfully fetched series:', _unclaimedSeri
 console.warn('[_useUnclaimedShows] Attempting to fetch standalone shows…');
         unclaimedStandaloneShows = await showSeriesService.getUnclaimedShows();
          
-console.warn('[_useUnclaimedShows] Successfully fetched standalone shows:', _unclaimedStandaloneShows);
-      } catch (_showsErr) {
-        console.error('CRASHED INSIDE: getUnclaimedShows', _showsErr);
+console.warn('[_useUnclaimedShows] Successfully fetched standalone shows:', unclaimedStandaloneShows);
+      } catch (showsErr) {
+        console.error('CRASHED INSIDE: getUnclaimedShows', showsErr);
         throw showsErr; // bubble up to outer catch
       }
 
       // Combine and map the two lists
-      const _combinedItems = [
+      const combinedItems = [
         // Explicit type assertions ensure the literal unions are preserved,
         // preventing the `'string' is not assignable to '\"series\" | \"show\"'` error.
         ...unclaimedSeries.map(series => ({ type: 'series' as const, data: series })),
@@ -74,35 +74,35 @@ console.warn('[_useUnclaimedShows] Successfully fetched standalone shows:', _unc
       ];
       
       // Sort by date (most recent first)
-      const _getItemDate = (item: UnclaimedItem): number => {
+      const getItemDate = (item: UnclaimedItem): number => {
         if (item.type === 'show') {
-          const _show = item.data as Show;
+          const show = item.data as Show;
           return show?.startDate ? new Date(show.startDate).getTime() : Number.MAX_SAFE_INTEGER;
         }
-        const _series = item.data as ShowSeries;
+        const series = item.data as ShowSeries;
         return series?.nextShowDate ? new Date(series.nextShowDate).getTime() : Number.MAX_SAFE_INTEGER;
       };
 
-      combinedItems.sort((_a, _b) => getItemDate(_a) - getItemDate(_b));
+      combinedItems.sort((a, b) => getItemDate(a) - getItemDate(b));
       
        
 console.warn(`[_useUnclaimedShows] Fetch complete. Total unclaimed items: ${combinedItems.length}`);
-      setUnclaimedItems(_combinedItems);
+      setUnclaimedItems(combinedItems);
       
-    } catch (_err) {
-      console.error('[_useUnclaimedShows] Error fetching unclaimed shows:', _err);
+    } catch (err) {
+      console.error('[_useUnclaimedShows] Error fetching unclaimed shows:', err);
       setError(err instanceof Error ? err : new Error('Failed to load unclaimed shows. Please try again.'));
       // Set empty array on error to avoid undefined
       setUnclaimedItems([]);
     } finally {
-      setIsLoading(_false);
+      setIsLoading(false);
     }
   };
   
   // Fetch data when the component mounts or when organizerId changes
   useEffect(() => {
     fetchUnclaimedShows();
-  }, [_organizerId]);
+  }, [organizerId]);
   
   // Return all states and a function to refresh the data
   return { 
@@ -112,3 +112,4 @@ console.warn(`[_useUnclaimedShows] Fetch complete. Total unclaimed items: ${comb
     refreshUnclaimedShows: fetchUnclaimedShows 
   };
 };
+
