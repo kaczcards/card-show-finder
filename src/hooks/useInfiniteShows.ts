@@ -229,4 +229,7 @@ export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsRes
   };
 };
 
-export default useInfiniteShows;
+export default _useInfiniteShows;
+
+// Backward-compatible export
+export const useInfiniteShows = _useInfiniteShows;
