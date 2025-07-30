@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Animated, Dimensions, PanResponder, _Platform, Switch, TextInput,  } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  Animated,
+  Dimensions,
+  PanResponder,
+  Platform,
+  Switch,
+  TextInput,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ShowFilters, ShowFeature, CardCategory } from '../types';
 // Temporarily commenting out DatePicker import to fix the crash
