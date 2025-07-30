@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, Alert, AppState, Platform,  } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, Alert, AppState, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as locationService from '../../services/locationService';
@@ -64,7 +64,7 @@ interface Show {
 
 const HomeScreen = ({ 
   customFilters, 
-  _onFilterChange, 
+  onFilterChange, 
   onShowPress,
   userLocation: propUserLocation 
 }: HomeScreenProps = {}) => {
@@ -98,7 +98,7 @@ const HomeScreen = ({
   const filters = customFilters || localFilters;
   
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
-  const [_presetModalVisible, setPresetModalVisible] = useState(false);
+  const [presetModalVisible, setPresetModalVisible] = useState(false);
 
   /**
    * ------------------------------------------------------------------
@@ -108,7 +108,7 @@ const HomeScreen = ({
    * If the user is not logged in yet we fall back to "guest".
    * ------------------------------------------------------------------
    */
-  const _getTempFiltersKey = useCallback(
+  const getTempFiltersKey = useCallback(
     () => `homeFilters_${authState.user?.id ?? 'guest'}`,
     [authState.user?.id]
   );
@@ -119,8 +119,8 @@ const HomeScreen = ({
     
     (async () => {
       try {
-        const _stored = await AsyncStorage.getItem(getTempFiltersKey());
-        if (_stored) {
+        const stored = await AsyncStorage.getItem(getTempFiltersKey());
+        if (stored) {
           const parsed: ShowFilters = JSON.parse(stored);
           setLocalFilters({ ...defaultFilters, ...parsed });
         }
@@ -140,11 +140,11 @@ const HomeScreen = ({
   }, [localFilters, customFilters, getTempFiltersKey]);
 
   // Get stock image based on show index or ID to ensure consistency
-  const _getStockImage = (index: number, id?: string) => {
+  const getStockImage = (index: number, id?: string) => {
     if (!id) return stockImages[index % stockImages.length];
     
     // Use a hash-like approach to consistently map show IDs to images
-    const _hash = id.split('').reduce((_acc, _char) => acc + char.charCodeAt(0), 0);
+    const hash = id.split('').reduce((_acc, _char) => acc + char.charCodeAt(0), 0);
     return stockImages[hash % stockImages.length] || fallbackImage;
   };
 
@@ -156,7 +156,7 @@ const HomeScreen = ({
   }, [_propUserLocation]);
 
   // Get user coordinates if not provided in props
-  const _getUserCoordinates = async () => {
+  const getUserCoordinates = async () => {
     try {
       // First priority: Use coordinates from props if available
       if (_propUserLocation) {
@@ -174,7 +174,7 @@ console.warn('Using coordinates from props');
          
 console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         
-        const _zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
+        const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
         
         if (zipData && zipData.coordinates) {
           setCoordinates(zipData.coordinates);
@@ -193,7 +193,7 @@ console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
 
   // Monitor app state changes to refresh data when app comes to foreground
   useEffect(() => {
-    const _subscription = AppState.addEventListener('change', nextAppState => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
       if (
         appState.current.match(/inactive|background/) && 
         nextAppState === 'active'
@@ -231,7 +231,7 @@ console.warn('App has come to the foreground - refreshing data');
   /* ------------------------------------------------------------------
    * Debugging – log coordinate / results changes
    * ----------------------------------------------------------------*/
-  const _effectiveCoords = coordinates || { latitude: 39.9784, longitude: -86.118 };
+  const effectiveCoords = coordinates || { latitude: 39.9784, longitude: -86.118 };
 
   // Log when coordinates or filters change
   useEffect(() => {
@@ -364,7 +364,7 @@ console.warn('App has come to the foreground - refreshing data');
 
   // Apply filters callback
   const _handleApplyFilters = (_newFilters: ShowFilters) => {
-    if (_onFilterChange) {
+    if (onFilterChange) {
       // If parent is managing filters, call the callback
       onFilterChange(_newFilters);
     } else {
@@ -402,7 +402,7 @@ console.warn('App has come to the foreground - refreshing data');
       return updated;
     };
 
-    if (_onFilterChange) {
+    if (onFilterChange) {
       // If parent is managing filters, call the callback with updated filters
       onFilterChange(updateFilters(filters));
     } else {
@@ -413,7 +413,7 @@ console.warn('App has come to the foreground - refreshing data');
 
   // Reset filters to defaults
   const _resetFilters = () => {
-    if (_onFilterChange) {
+    if (onFilterChange) {
       onFilterChange(_defaultFilters);
     } else {
       setLocalFilters(_defaultFilters);
@@ -498,7 +498,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
   }, [shows.length, safeShows.length, currentRadius]);
 
   // Render show item
-  const _renderShowItem = ({ item, _index }: { item: Show; _index: number }) => (
+  const renderShowItem = ({ item, _index }: { item: Show; _index: number }) => (
     <TouchableOpacity
       style={styles.showCard}
       onPress={() => handleShowPress(item.id)}
@@ -542,7 +542,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
   );
 
   // Render footer loader for infinite scrolling
-  const _renderFooter = () => {
+  const renderFooter = () => {
     if (!isFetchingNextPage) return null;
     
     return (
@@ -654,7 +654,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
             <FlatList
               ref={flatListRef}
               data={useEmergencyList ? safeEmergencyShows : safeShows}
-              renderItem={_renderShowItem}
+              renderItem={renderShowItem}
               keyExtractor={(_item) => item.id}
               contentContainerStyle={styles.showsList}
               refreshControl={
@@ -662,7 +662,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
               }
               onEndReached={_handleEndReached}
               onEndReachedThreshold={0.5}
-              ListFooterComponent={_renderFooter}
+              ListFooterComponent={renderFooter}
               initialNumToRender={_10}
               maxToRenderPerBatch={_10}
               windowSize={_10}
@@ -681,11 +681,11 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
       
       {/* Preset Modal */}
       <FilterPresetModal
-        visible={_presetModalVisible}
+        visible={presetModalVisible}
         onClose={() => setPresetModalVisible(false)}
         currentFilters={filters}
         onApplyPreset={(_presetFilters) => {
-          if (_onFilterChange) {
+          if (onFilterChange) {
             onFilterChange(_presetFilters);
           } else {
             setLocalFilters(_presetFilters);
