@@ -70,14 +70,14 @@ export interface MapShowClusterHandle {
   getMapRef: () => any | null;
 }
 
-const _MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
+const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
   shows,
-  _region,
-  _onRegionChangeComplete,
+  region,
+  onRegionChangeComplete,
   onCalloutPress,
-  _loadingEnabled = true,
-  _showsUserLocation = true,
-  _showsCompass = true,
+  loadingEnabled = true,
+  showsUserLocation = true,
+  showsCompass = true,
   _showsScale = true,
   _provider = undefined,
   organizerProfiles = {},
@@ -537,16 +537,16 @@ const _MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
         ref={_mapRef}
         style={styles.map}
         data={_validShows}
-        initialRegion={_region}
-        region={_region}
+        initialRegion={region}
+        region={region}
         renderMarker={_renderMarker}
         renderCluster={_renderCluster}
-        showsUserLocation={_showsUserLocation}
-        loadingEnabled={_loadingEnabled}
-        showsCompass={_showsCompass}
+        showsUserLocation={showsUserLocation}
+        loadingEnabled={loadingEnabled}
+        showsCompass={showsCompass}
         showsScale={_showsScale}
         provider={_provider}
-        onRegionChangeComplete={_onRegionChangeComplete}
+        onRegionChangeComplete={onRegionChangeComplete}
         clusteringEnabled={_true}
         spiralEnabled={_true}
         zoomEnabled={_true}

@@ -70,7 +70,7 @@ export type CalloutProps = {
 };
 
 // Constants
-export const _PROVIDER_GOOGLE = 'google';
+export const PROVIDER_GOOGLE = 'google';
 
 // ---------------------------------------------------------------------------
 // Helper function to check if native maps module is available
@@ -79,7 +79,7 @@ export const _PROVIDER_GOOGLE = 'google';
  * Safely checks if the react-native-maps native module is available
  * without throwing an error
  */
-export const _isNativeMapsAvailable = (): boolean => {
+export const isNativeMapsAvailable = (): boolean => {
   if (Platform.OS === 'web') {
     return false;
   }
@@ -186,24 +186,24 @@ const _styles = StyleSheet.create({
 /**
  * Fallback MapView component that renders a placeholder when the native module is not available
  */
-export const _MapView = forwardRef<any, MapViewProps & {
+export const MapView = forwardRef<any, MapViewProps & {
   fallbackContainerStyle?: ViewStyle;
   fallbackTitleStyle?: TextStyle;
   fallbackTextStyle?: TextStyle;
-}>((_props, _ref) => {
+}>((props, ref) => {
   const {
     fallbackContainerStyle,
     fallbackTitleStyle,
     fallbackTextStyle,
-    _children,
+    children,
     ...restProps
   } = props;
 
   // Create a local ref that we'll expose if native maps aren't available
-  const _localRef = useRef<View>(null);
+  const localRef = useRef<View>(null);
   
   // Expose methods that might be called on the ref
-  useImperativeHandle(_ref, () => ({
+  useImperativeHandle(ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
        
 console.warn('MapView.animateToRegion called in fallback mode', { region, duration });
@@ -216,10 +216,10 @@ console.warn('MapView.animateToRegion called in fallback mode', { region, durati
   if (isNativeMapsAvailable()) {
     try {
       // Dynamically require react-native-maps only when we know it's available
-      const _RNMaps = require('react-native-maps');
-      const _RealMapView = RNMaps.default || RNMaps.MapView;
+      const RNMaps = require('react-native-maps');
+      const RealMapView = RNMaps.default || RNMaps.MapView;
       
-      return <RealMapView ref={_ref} {...restProps}>{_children}</RealMapView>;
+      return <RealMapView ref={ref} {...restProps}>{children}</RealMapView>;
     } catch (_error) {
       console.error('Failed to load react-native-maps even though native module was detected:', _error);
       // Fall through to fallback if dynamic require fails
@@ -229,7 +229,7 @@ console.warn('MapView.animateToRegion called in fallback mode', { region, durati
   // Fallback component when native maps are not available
   return (
     <View 
-      ref={_localRef}
+      ref={localRef}
       style={[styles.mapFallbackContainer, fallbackContainerStyle || props.style]}
     >
       <Text style={[styles.mapFallbackTitle, fallbackTitleStyle]}>
@@ -251,10 +251,10 @@ console.warn('MapView.animateToRegion called in fallback mode', { region, durati
 /**
  * Fallback Marker component
  */
-export const Marker: React.FC<MarkerProps> = (_props) => {
+export const Marker: React.FC<MarkerProps> = (props) => {
   if (isNativeMapsAvailable()) {
     try {
-      const _RNMaps = require('react-native-maps');
+      const RNMaps = require('react-native-maps');
       const _RealMarker = RNMaps.Marker;
       
       return <RealMarker {...props} />;
@@ -271,10 +271,10 @@ export const Marker: React.FC<MarkerProps> = (_props) => {
 /**
  * Fallback Callout component
  */
-export const Callout: React.FC<CalloutProps> = (_props) => {
+export const Callout: React.FC<CalloutProps> = (props) => {
   if (isNativeMapsAvailable()) {
     try {
-      const _RNMaps = require('react-native-maps');
+      const RNMaps = require('react-native-maps');
       const _RealCallout = RNMaps.Callout;
       
       return <RealCallout {...props} />;
@@ -298,7 +298,7 @@ export const Callout: React.FC<CalloutProps> = (_props) => {
 /**
  * Fallback for react-native-maps-super-cluster FixedClusteredMapView
  */
-export const _FixedClusteredMapView = forwardRef<any, MapViewProps & {
+export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
   fallbackContainerStyle?: ViewStyle;
   fallbackTitleStyle?: TextStyle;
   fallbackTextStyle?: TextStyle;
@@ -313,7 +313,7 @@ export const _FixedClusteredMapView = forwardRef<any, MapViewProps & {
   clusterPressMaxChildren?: number;
   nodeExtractor?: (item: any) => any;
   accessor?: string;
-}>((_props, _ref) => {
+}>((props, ref) => {
   const {
     fallbackContainerStyle,
     fallbackTitleStyle,
@@ -325,10 +325,10 @@ export const _FixedClusteredMapView = forwardRef<any, MapViewProps & {
   } = props;
 
   // Create a local ref that we'll expose if native maps aren't available
-  const _localRef = useRef<View>(null);
+  const localRef = useRef<View>(null);
   
   // Expose methods that might be called on the ref
-  useImperativeHandle(_ref, () => ({
+  useImperativeHandle(ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
        
 console.warn('FixedClusteredMapView.animateToRegion called in fallback mode', { region, duration });
@@ -347,12 +347,12 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
   if (isNativeMapsAvailable()) {
     try {
       // Try to dynamically require the clustered map view
-      const _RNMapsCluster = require('react-native-maps-super-cluster').default;
+      const RNMapsCluster = require('react-native-maps-super-cluster').default;
       
-      if (_RNMapsCluster) {
+      if (RNMapsCluster) {
         return (
           <RNMapsCluster
-            ref={_ref}
+            ref={ref}
             data={_data}
             renderMarker={_renderMarker}
             renderCluster={_renderCluster}
@@ -369,7 +369,7 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
   // Fallback component when native maps are not available
   return (
     <View 
-      ref={_localRef}
+      ref={localRef}
       style={[styles.clusterFallbackContainer, fallbackContainerStyle || props.style]}
     >
       <Text style={[styles.clusterFallbackTitle, fallbackTitleStyle]}>

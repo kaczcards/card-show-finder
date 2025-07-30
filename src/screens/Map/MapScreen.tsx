@@ -16,11 +16,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import _MapView, { Marker, Callout, _PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { useAuth } from '../../contexts/AuthContext';
-import { Show, _ShowStatus, ShowFilters, Coordinates } from '../../types';
+import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
-import MapShowCluster, { _MapShowClusterHandle } from '../../components/MapShowCluster/index';
+import MapShowCluster, { MapShowClusterHandle } from '../../components/MapShowCluster/index';
 import * as locationService from '../../services/locationService';
 import { getPaginatedShows } from '../../services/showService';
 // Import toast utilities for location notifications
@@ -42,20 +42,20 @@ interface MapScreenProps extends NativeStackScreenProps<MainStackParamList> {
 
 const MapScreen: React.FC<MapScreenProps> = ({
   navigation,
-  _customFilters,
+  customFilters,
   onFilterChange,
   onShowPress,
   initialUserLocation
 }) => {
   const [shows, setShows] = useState<Show[]>([]);
-  const [loading, setLoading] = useState(_true);
-  const [refreshing, setRefreshing] = useState(_false);
-  const [_filterVisible, setFilterVisible] = useState(_false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filterVisible, setFilterVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(initialUserLocation || null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
   // Indicates that we've completed at least one fetch cycle
-  const [dataLoaded, setDataLoaded] = useState(_false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Default filters
@@ -70,7 +70,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   // Use customFilters if provided, otherwise use local state
   const [localFilters, setLocalFilters] = useState<ShowFilters>(defaultFilters);
-  const _filters = customFilters || localFilters;
+  const filters = customFilters || localFilters;
 
   // Refs
   // Fix: Create proper ref for MapShowCluster with correct type
@@ -79,8 +79,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
   const _retryRef = useRef(_0);
 
   // Get auth context
-  const { _authState } = useAuth();
-  const { _user } = authState;
+  const { authState } = useAuth();
+  const { user } = authState;
 
   // Update userLocation when initialUserLocation changes
   useEffect(() => {
@@ -145,14 +145,14 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
       );
       return null;
     }
-  }, [_user]);
+  }, [user]);
 
   // Set up initial region based on user location or ZIP code
   useEffect(() => {
     const _setupInitialRegion = async () => {
       try {
-        setLoading(_true);
-        setError(_null);
+        setLoading(true);
+        setError(null);
 
         let determinedLocation: Coordinates | null = null;
         let regionToSet: Region | null = null;
@@ -226,7 +226,7 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
           'Failed to determine your location. Please try again later.'
         );
       } finally {
-        setLoading(_false);
+        setLoading(false);
       }
     };
 
@@ -238,11 +238,11 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
     if (!userLocation) return;
     try {
       if (!isRefreshing) {
-        setLoading(_true);
+        setLoading(true);
       }
-      setError(_null);
+      setError(null);
       // Reset dataLoaded flag for new fetch cycle
-      setDataLoaded(_false);
+      setDataLoaded(false);
 
       const _today = new Date();
       const _thirtyDaysOut = new Date();
@@ -291,10 +291,10 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
       setError(error?.message || 'Failed to load card shows. Please try again.');
     } finally {
       // Mark fetch completed before clearing loading flag
-      setDataLoaded(_true);
-      setLoading(_false);
+      setDataLoaded(true);
+      setLoading(false);
       if (_isRefreshing) {
-        setRefreshing(_false);
+        setRefreshing(false);
       }
     }
   }, [filters, userLocation, getUserLocation, user]);
@@ -310,8 +310,8 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
 
   // Handle pull-to-refresh
   const _onRefresh = useCallback(() => {
-    setRefreshing(_true);
-    fetchShows(_true);
+    setRefreshing(true);
+    fetchShows(true);
   }, [_fetchShows]);
 
   // Handle filter changes
@@ -321,7 +321,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
     } else {
       setLocalFilters(_newFilters);
     }
-    setFilterVisible(_false);
+    setFilterVisible(false);
   };
 
   // Reset filters to defaults
@@ -376,7 +376,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
   // Center map on user location
   const _centerOnUserLocation = async () => {
     try {
-      setLoading(_true);
+      setLoading(true);
       const _location = await getUserLocation();
 
       if (location && mapRef.current) {
@@ -431,7 +431,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
         'Failed to center on your location. Please try again.'
       );
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   };
 
@@ -526,7 +526,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
     if (loading || !dataLoaded || shows.length > 0) return null;
     return (
       <View style={styles.emptyStateContainer}>
-        <Ionicons name="map-outline" size={_50} color="#007AFF" />
+        <Ionicons name="map-outline" size={50} color="#007AFF" />
         <Text style={styles.emptyStateTitle}>No Shows Found</Text>
         <Text style={styles.emptyStateDescription}>
           Try adjusting your filters or expanding your search radius
@@ -544,8 +544,8 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
             <Text style={styles.filterInfoText}>
                 Showing shows within 25 miles
             </Text>
-            <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(_true)}>
-                <Ionicons name="filter" size={_18} color="#007AFF" />
+            <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(true)}>
+                <Ionicons name="filter" size={18} color="#007AFF" />
                 <Text style={styles.filterButtonText}>Filter</Text>
             </TouchableOpacity>
         </View>
@@ -583,7 +583,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
         style={styles.myLocationButton}
         onPress={_centerOnUserLocation}
       >
-        <Ionicons name="locate" size={_24} color="#007AFF" />
+        <Ionicons name="locate" size={24} color="#007AFF" />
       </TouchableOpacity>
 
       {/* Fix: Add null/undefined checks for filters.features and filters.categories arrays */}
@@ -602,9 +602,9 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
 
       {/* Filter Sheet */}
       <FilterSheet
-        visible={_filterVisible}
-        onClose={() => setFilterVisible(_false)}
-        filters={_filters}
+        visible={filterVisible}
+        onClose={() => setFilterVisible(false)}
+        filters={filters}
         onApplyFilters={_handleFilterChange}
       />
     </SafeAreaView>
@@ -613,7 +613,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
 
 const { width, height } = Dimensions.get('window');
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',

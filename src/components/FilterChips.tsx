@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ShowFilters, _CardCategory, _ShowFeature } from '../types';
+import { ShowFilters, CardCategory, ShowFeature } from '../types';
 
 // Constants
-const _PRIMARY_COLOR = '#FF6A00'; // Orange
-const _SECONDARY_COLOR = '#0057B8'; // Blue
+const PRIMARY_COLOR = '#FF6A00'; // Orange
+const SECONDARY_COLOR = '#0057B8'; // Blue
 
 interface FilterChipsProps {
   filters: ShowFilters;
@@ -21,7 +21,7 @@ interface FilterChipsProps {
 
 const FilterChips: React.FC<FilterChipsProps> = ({
   filters,
-  _onRemoveFilter,
+  onRemoveFilter,
   style,
 }) => {
   // Default filters for comparison
@@ -32,9 +32,9 @@ const FilterChips: React.FC<FilterChipsProps> = ({
   };
 
   // Format date for display
-  const _formatDate = (date: Date | string | null | undefined) => {
+  const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return '';
-    const _dateObj = new Date(_date);
+    const dateObj = new Date(date);
     return dateObj.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -42,8 +42,8 @@ const FilterChips: React.FC<FilterChipsProps> = ({
   };
 
   // Generate chips based on active filters
-  const _generateFilterChips = () => {
-    const _chips = [];
+  const generateFilterChips = () => {
+    const chips = [];
 
     // Radius chip
     if (filters.radius && filters.radius !== defaultFilters.radius) {
@@ -62,11 +62,11 @@ const FilterChips: React.FC<FilterChipsProps> = ({
         new Date(filters.endDate).toDateString() !==
           new Date(defaultFilters.endDate!).toDateString())
     ) {
-      const _startDateStr = filters.startDate ? formatDate(filters.startDate) : 'Any';
-      const _endDateStr = filters.endDate ? formatDate(filters.endDate) : 'Any';
+      const startDateStr = filters.startDate ? formatDate(filters.startDate) : 'Any';
+      const endDateStr = filters.endDate ? formatDate(filters.endDate) : 'Any';
       chips.push({
         key: 'dateRange',
-        label: `${_startDateStr} - ${_endDateStr}`,
+        label: `${startDateStr} - ${endDateStr}`,
       });
     }
 
@@ -103,7 +103,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
     return chips;
   };
 
-  const _filterChips = generateFilterChips();
+  const filterChips = generateFilterChips();
 
   // If no active filters, don't render anything
   if (filterChips.length === 0) {
@@ -114,19 +114,19 @@ const FilterChips: React.FC<FilterChipsProps> = ({
     <View style={[styles.container, style]}>
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={_false}
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {filterChips.map((_chip, _index) => (
+        {filterChips.map((chip, index) => (
           <TouchableOpacity
-            key={`${chip.key}-${_index}`}
+            key={`${chip.key}-${index}`}
             style={styles.chip}
             onPress={() => onRemoveFilter(chip.key)}
             activeOpacity={0.7}
           >
             <Text style={styles.chipText}>{chip.label}</Text>
             <View style={styles.removeIcon}>
-              <Ionicons name="close" size={_14} color="white" />
+              <Ionicons name="close" size={14} color="white" />
             </View>
           </TouchableOpacity>
         ))}
@@ -135,7 +135,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     marginVertical: 8,
   },
@@ -165,7 +165,7 @@ const _styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 24,
-    backgroundColor: 'rgba(0,_0,0,0.15)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
     borderTopRightRadius: 20,
     borderBottomRightRadius: 20,
     alignItems: 'center',

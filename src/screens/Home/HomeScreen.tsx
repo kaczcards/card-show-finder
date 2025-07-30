@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, Alert, AppState, Platform,  } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, Alert, AppState, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as locationService from '../../services/locationService';
@@ -64,16 +64,16 @@ interface Show {
 
 const HomeScreen = ({ 
   customFilters, 
-  _onFilterChange, 
+  onFilterChange, 
   onShowPress,
   userLocation: propUserLocation 
 }: HomeScreenProps = {}) => {
-  const _navigation = useNavigation();
-  const { _authState } = useAuth();
-  const [_refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
+  const { authState } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
-  const _appState = useRef(AppState.currentState);
-  const _flatListRef = useRef(null);
+  const appState = useRef(AppState.currentState);
+  const flatListRef = useRef(null);
   // Emergency fallback state
   const [emergencyShowList, setEmergencyShowList] = useState<Show[]>([]);
   const [useEmergencyList, setUseEmergencyList] = useState(false);
@@ -95,10 +95,10 @@ const HomeScreen = ({
   const [localFilters, setLocalFilters] = useState<ShowFilters>(defaultFilters);
   
   // Derive actual filters to use - prefer customFilters if provided
-  const _filters = customFilters || localFilters;
+  const filters = customFilters || localFilters;
   
-  const [_filterSheetVisible, setFilterSheetVisible] = useState(false);
-  const [_presetModalVisible, setPresetModalVisible] = useState(false);
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [presetModalVisible, setPresetModalVisible] = useState(false);
 
   /**
    * ------------------------------------------------------------------
@@ -108,7 +108,7 @@ const HomeScreen = ({
    * If the user is not logged in yet we fall back to "guest".
    * ------------------------------------------------------------------
    */
-  const _getTempFiltersKey = useCallback(
+  const getTempFiltersKey = useCallback(
     () => `homeFilters_${authState.user?.id ?? 'guest'}`,
     [authState.user?.id]
   );
@@ -119,8 +119,8 @@ const HomeScreen = ({
     
     (async () => {
       try {
-        const _stored = await AsyncStorage.getItem(getTempFiltersKey());
-        if (_stored) {
+        const stored = await AsyncStorage.getItem(getTempFiltersKey());
+        if (stored) {
           const parsed: ShowFilters = JSON.parse(stored);
           setLocalFilters({ ...defaultFilters, ...parsed });
         }
@@ -140,11 +140,11 @@ const HomeScreen = ({
   }, [localFilters, customFilters, getTempFiltersKey]);
 
   // Get stock image based on show index or ID to ensure consistency
-  const _getStockImage = (index: number, id?: string) => {
+  const getStockImage = (index: number, id?: string) => {
     if (!id) return stockImages[index % stockImages.length];
     
     // Use a hash-like approach to consistently map show IDs to images
-    const _hash = id.split('').reduce((_acc, _char) => acc + char.charCodeAt(0), 0);
+    const hash = id.split('').reduce((_acc, _char) => acc + char.charCodeAt(0), 0);
     return stockImages[hash % stockImages.length] || fallbackImage;
   };
 
@@ -156,7 +156,7 @@ const HomeScreen = ({
   }, [_propUserLocation]);
 
   // Get user coordinates if not provided in props
-  const _getUserCoordinates = async () => {
+  const getUserCoordinates = async () => {
     try {
       // First priority: Use coordinates from props if available
       if (_propUserLocation) {
@@ -174,7 +174,7 @@ console.warn('Using coordinates from props');
          
 console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         
-        const _zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
+        const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
         
         if (zipData && zipData.coordinates) {
           setCoordinates(zipData.coordinates);
@@ -193,7 +193,7 @@ console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
 
   // Monitor app state changes to refresh data when app comes to foreground
   useEffect(() => {
-    const _subscription = AppState.addEventListener('change', nextAppState => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
       if (
         appState.current.match(/inactive|background/) && 
         nextAppState === 'active'
@@ -231,7 +231,7 @@ console.warn('App has come to the foreground - refreshing data');
   /* ------------------------------------------------------------------
    * Debugging – log coordinate / results changes
    * ----------------------------------------------------------------*/
-  const _effectiveCoords = coordinates || { latitude: 39.9784, longitude: -86.118 };
+  const effectiveCoords = coordinates || { latitude: 39.9784, longitude: -86.118 };
 
   // Log when coordinates or filters change
   useEffect(() => {
@@ -364,7 +364,7 @@ console.warn('App has come to the foreground - refreshing data');
 
   // Apply filters callback
   const _handleApplyFilters = (_newFilters: ShowFilters) => {
-    if (_onFilterChange) {
+    if (onFilterChange) {
       // If parent is managing filters, call the callback
       onFilterChange(_newFilters);
     } else {
@@ -402,7 +402,7 @@ console.warn('App has come to the foreground - refreshing data');
       return updated;
     };
 
-    if (_onFilterChange) {
+    if (onFilterChange) {
       // If parent is managing filters, call the callback with updated filters
       onFilterChange(updateFilters(filters));
     } else {
@@ -413,7 +413,7 @@ console.warn('App has come to the foreground - refreshing data');
 
   // Reset filters to defaults
   const _resetFilters = () => {
-    if (_onFilterChange) {
+    if (onFilterChange) {
       onFilterChange(_defaultFilters);
     } else {
       setLocalFilters(_defaultFilters);
@@ -498,7 +498,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
   }, [shows.length, safeShows.length, currentRadius]);
 
   // Render show item
-  const _renderShowItem = ({ item, _index }: { item: Show; _index: number }) => (
+  const renderShowItem = ({ item, _index }: { item: Show; _index: number }) => (
     <TouchableOpacity
       style={styles.showCard}
       onPress={() => handleShowPress(item.id)}
@@ -529,7 +529,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
           })()}
         </Text>
         <View style={styles.showLocation}>
-          <Ionicons name="location" size={_14} color={SECONDARY_COLOR} />
+          <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
           <Text style={styles.showLocationText}>{item.location}</Text>
         </View>
         {item.entryFee > 0 && (
@@ -542,7 +542,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
   );
 
   // Render footer loader for infinite scrolling
-  const _renderFooter = () => {
+  const renderFooter = () => {
     if (!isFetchingNextPage) return null;
     
     return (
@@ -570,7 +570,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
               style={[styles.filterButton, { backgroundColor: SECONDARY_COLOR }]}
               onPress={_handleFilterPress}
             >
-              <Ionicons name="options" size={_18} color="white" />
+              <Ionicons name="options" size={18} color="white" />
               <Text style={styles.filterButtonText}>Filters</Text>
               {activeFilterCount() > 0 && (
                 <View style={styles.filterBadge}>
@@ -587,13 +587,13 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
               ]}
       onPress={() => setPresetModalVisible(true)}
             >
-              <Ionicons name="star" size={_18} color="white" />
+              <Ionicons name="star" size={18} color="white" />
               <Text style={styles.filterButtonText}>Presets</Text>
             </TouchableOpacity>
             
             {/* Display distance filter */}
             <View style={styles.activeFilterPill}>
-              <Ionicons name="location" size={_14} color={SECONDARY_COLOR} />
+              <Ionicons name="location" size={14} color={SECONDARY_COLOR} />
               <Text style={styles.activeFilterText}>
                 {filters.radius} miles
               </Text>
@@ -601,7 +601,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
             
             {/* Display date range filter */}
             <View style={styles.activeFilterPill}>
-              <Ionicons name="calendar" size={_14} color={SECONDARY_COLOR} />
+              <Ionicons name="calendar" size={14} color={SECONDARY_COLOR} />
               <Text style={styles.activeFilterText}>
                 Next {Math.round((new Date(filters.endDate as string | Date).getTime() - new Date(filters.startDate as string | Date).getTime()) / (1000 * 60 * 60 * 24))} days
               </Text>
@@ -610,7 +610,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
 
           {/* Active Filter Chips */}
           <FilterChips
-            filters={_filters}
+            filters={filters}
             onRemoveFilter={_handleRemoveFilter}
             style={{ marginTop: 10 }}
           />
@@ -619,7 +619,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
         {/* Error Message */}
         {error && (
           <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={_20} color="#D32F2F" />
+            <Ionicons name="alert-circle" size={20} color="#D32F2F" />
             <Text style={styles.errorText}>{_error}</Text>
           </View>
         )}
@@ -640,7 +640,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
             </View>
           ) : shows.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={_50} color={SECONDARY_COLOR} />
+              <Ionicons name="calendar-outline" size={50} color={SECONDARY_COLOR} />
               <Text style={styles.emptyStateText}>No upcoming shows found</Text>
               <Text style={styles.emptyStateSubtext}>Try adjusting your filters or expanding your search radius</Text>
               <TouchableOpacity 
@@ -652,17 +652,17 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
             </View>
           ) : (
             <FlatList
-              ref={_flatListRef}
+              ref={flatListRef}
               data={useEmergencyList ? safeEmergencyShows : safeShows}
-              renderItem={_renderShowItem}
+              renderItem={renderShowItem}
               keyExtractor={(_item) => item.id}
               contentContainerStyle={styles.showsList}
               refreshControl={
-                <RefreshControl refreshing={_refreshing} onRefresh={_onRefresh} />
+                <RefreshControl refreshing={refreshing} onRefresh={_onRefresh} />
               }
               onEndReached={_handleEndReached}
               onEndReachedThreshold={0.5}
-              ListFooterComponent={_renderFooter}
+              ListFooterComponent={renderFooter}
               initialNumToRender={_10}
               maxToRenderPerBatch={_10}
               windowSize={_10}
@@ -673,19 +673,19 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
 
       {/* Filter Sheet */}
       <FilterSheet
-        visible={_filterSheetVisible}
+        visible={filterSheetVisible}
         onClose={() => setFilterSheetVisible(false)}
-        filters={_filters}
+        filters={filters}
         onApplyFilters={_handleApplyFilters}
       />
       
       {/* Preset Modal */}
       <FilterPresetModal
-        visible={_presetModalVisible}
+        visible={presetModalVisible}
         onClose={() => setPresetModalVisible(false)}
-        currentFilters={_filters}
+        currentFilters={filters}
         onApplyPreset={(_presetFilters) => {
-          if (_onFilterChange) {
+          if (onFilterChange) {
             onFilterChange(_presetFilters);
           } else {
             setLocalFilters(_presetFilters);
