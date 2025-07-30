@@ -13,7 +13,7 @@ import animations from './animations';
 import components from './components';
 
 // Export the complete theme object
-export const theme = {
+export const _theme = {
   colors,
   typography,
   spacing,

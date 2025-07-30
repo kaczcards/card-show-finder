@@ -4,7 +4,7 @@
  * This file contains helpers for dealer-specific operations related to show participation.
  */
 
-import { supabase } from '../supabase';
+import { _supabase } from '../supabase';
 import { Show, UserRole } from '../types';
 
 /**
@@ -14,10 +14,10 @@ import { Show, UserRole } from '../types';
  * Normalize a role string (DB may store lowercase) to the lowercase
  * `UserRole` enum used throughout the client.
  */
-const normalizeRole = (role: string | null | undefined): UserRole | null => {
+const _normalizeRole = (role: string | null | undefined): UserRole | null => {
   if (!role) return null;
   // FIX: Convert to lowercase to match enum string values
-  const normalizedRoleString = role.toLowerCase();
+  const _normalizedRoleString = role.toLowerCase();
   
   // Check if the normalized string is one of the valid UserRole enum values
   if (Object.values(UserRole).includes(normalizedRoleString as UserRole)) {
@@ -60,7 +60,7 @@ export interface DealerParticipationInput {
 /**
  * Convert a raw Supabase row into a DealerShowParticipation object
  */
-const mapDbParticipationToAppParticipation = (row: any): DealerShowParticipation => ({
+const _mapDbParticipationToAppParticipation = (row: any): DealerShowParticipation => ({
   id: row.id,
   userId: row.userid,
   showId: row.showid,
@@ -81,19 +81,19 @@ const mapDbParticipationToAppParticipation = (row: any): DealerShowParticipation
  * object returned by Supabase into the app's `{ latitude, longitude }`
  * shape.  Returns `undefined` if the value is missing or malformed.
  */
-const mapDbCoordinatesToApp = (
+const _mapDbCoordinatesToApp = (
   geo: any
 ): { latitude: number; longitude: number } | undefined => {
   if (
     geo &&
     Array.isArray(geo.coordinates) &&
     geo.coordinates.length >= 2 &&
-    typeof geo.coordinates[0] === 'number' &&
-    typeof geo.coordinates[1] === 'number'
+    typeof geo.coordinates[_0] === 'number' &&
+    typeof geo.coordinates[_1] === 'number'
   ) {
     return {
-      latitude: geo.coordinates[1],
-      longitude: geo.coordinates[0],
+      latitude: geo.coordinates[_1],
+      longitude: geo.coordinates[_0],
     };
   }
   return undefined;
@@ -105,30 +105,30 @@ const mapDbCoordinatesToApp = (
  * @param status - Optional filter for participation status
  * @returns Array of shows with participation details
  */
-export const getDealerShows = async (
+export const _getDealerShows = async (
   userId: string,
-  status?: 'registered' | 'confirmed' | 'cancelled' | 'completed'
+  _status?: 'registered' | 'confirmed' | 'cancelled' | 'completed'
 ): Promise<{ data: Array<Show & { participation: DealerShowParticipation }> | null; error: string | null }> => {
   try {
     if (!userId) {
       return { data: null, error: 'Invalid userId' };
     }
 
-    let query = supabase
+    let _query = supabase
       .from('show_participants')
       .select(`
         *,
         shows:showid (*)
       `)
-      .eq('userid', userId);
+      .eq('userid', _userId);
 
-    if (status) {
-      query = query.eq('status', status);
+    if (_status) {
+      query = query.eq('status', _status);
     }
 
     const { data, error } = await query;
 
-    if (error) {
+    if (_error) {
       throw error;
     }
 
@@ -137,9 +137,9 @@ export const getDealerShows = async (
     }
 
     // Transform the data to match our expected format
-    const transformedData = data.map(item => {
-      const show = item.shows;
-      const participation = mapDbParticipationToAppParticipation(item);
+    const _transformedData = data.map(item => {
+      const _show = item.shows;
+      const _participation = mapDbParticipationToAppParticipation(_item);
       
       return {
         id: show.id,
@@ -165,7 +165,7 @@ export const getDealerShows = async (
 
     return { data: transformedData, error: null };
   } catch (err: any) {
-    console.error('Error fetching dealer shows:', err);
+    console.error('Error fetching dealer shows:', _err);
     return { data: null, error: err.message || 'Failed to fetch dealer shows' };
   }
 };
@@ -176,7 +176,7 @@ export const getDealerShows = async (
  * @param participationData - Dealer participation details
  * @returns The created participation record or error
  */
-export const registerForShow = async (
+export const _registerForShow = async (
   userId: string,
   participationData: DealerParticipationInput
 ): Promise<{ data: DealerShowParticipation | null; error: string | null }> => {
@@ -189,25 +189,25 @@ export const registerForShow = async (
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', userId)
+      .eq('id', _userId)
       .single();
 
-    if (userError) {
+    if (_userError) {
       throw userError;
     }
 
     // ------------------------------------------------------------
     // Debugging – log the raw role we got back from Supabase
     // ------------------------------------------------------------
-    // eslint-disable-next-line no-console
-    console.log(
-      '[registerForShow] DB role value:',
+     
+    console.warn(
+      '[_registerForShow] DB role value:',
       userData?.role,
       '| normalised:',
       normalizeRole(userData?.role)
     );
 
-    const userRole = normalizeRole(userData?.role);
+    const _userRole = normalizeRole(userData?.role);
 
     /**
      * Temporary, more lenient role check:
@@ -215,8 +215,8 @@ export const registerForShow = async (
      * 2. Fallback – if the raw string contains “dealer” or “mvp”
      * (case-insensitive) we also treat it as dealer-tier.
      */
-    const rawRole = (userData?.role || '').toString().toLowerCase();
-    const isDealerLike =
+    const _rawRole = (userData?.role || '').toString().toLowerCase();
+    const _isDealerLike =
       rawRole.includes('dealer') || rawRole.includes('mvp') || rawRole.includes('organizer'); // allow organizers
 
     if (
@@ -228,7 +228,7 @@ export const registerForShow = async (
 
     // If we passed the lenient check but normalisation failed,
     // treat the user as a basic DEALER for the remainder of this call.
-    const effectiveRole =
+    const _effectiveRole =
       userRole ?? UserRole.DEALER;
 
     if (
@@ -240,18 +240,18 @@ export const registerForShow = async (
     }
 
     // Check if dealer is already registered for this show
-    const { data: existingReg, error: checkError } = await supabase
+    const { data: _existingReg, error: checkError } = await supabase
       .from('show_participants')
       .select('id')
-      .eq('userid', userId)
+      .eq('userid', _userId)
       .eq('showid', participationData.showId)
       .maybeSingle();
 
-    if (checkError) {
+    if (_checkError) {
       throw checkError;
     }
 
-    if (existingReg) {
+    if (_existingReg) {
       return { data: null, error: 'Already registered for this show' };
     }
 
@@ -272,19 +272,19 @@ export const registerForShow = async (
     if (participationData.openToTrades !== undefined) insertData.open_to_trades = participationData.openToTrades;
     if (participationData.buyingCards !== undefined) insertData.buying_cards = participationData.buyingCards;
 
-    const { data, error } = await supabase
+    const { _data, error } = await supabase
       .from('show_participants')
       .insert(insertData)
       .select()
       .single();
 
-    if (error) {
+    if (_error) {
       throw error;
     }
 
-    return { data: mapDbParticipationToAppParticipation(data), error: null };
+    return { data: mapDbParticipationToAppParticipation(_data), error: null };
   } catch (err: any) {
-    console.error('Error registering for show:', err);
+    console.error('Error registering for show:', _err);
     return { data: null, error: err.message || 'Failed to register for show' };
   }
 };
@@ -296,7 +296,7 @@ export const registerForShow = async (
  * @param participationData - Updated dealer participation details
  * @returns The updated participation record or error
  */
-export const updateShowParticipation = async (
+export const _updateShowParticipation = async (
   userId: string,
   participationId: string,
   participationData: Partial<DealerParticipationInput>
@@ -310,11 +310,11 @@ export const updateShowParticipation = async (
     const { data: existingReg, error: checkError } = await supabase
       .from('show_participants')
       .select('id')
-      .eq('id', participationId)
-      .eq('userid', userId)
+      .eq('id', _participationId)
+      .eq('userid', _userId)
       .maybeSingle();
 
-    if (checkError) {
+    if (_checkError) {
       throw checkError;
     }
 
@@ -334,20 +334,20 @@ export const updateShowParticipation = async (
     if (participationData.buyingCards !== undefined) updateData.buying_cards = participationData.buyingCards;
 
     // Update the participation record
-    const { data, error } = await supabase
+    const { _data, error } = await supabase
       .from('show_participants')
       .update(updateData)
-      .eq('id', participationId)
+      .eq('id', _participationId)
       .select()
       .single();
 
-    if (error) {
+    if (_error) {
       throw error;
     }
 
-    return { data: mapDbParticipationToAppParticipation(data), error: null };
+    return { data: mapDbParticipationToAppParticipation(_data), error: null };
   } catch (err: any) {
-    console.error('Error updating show participation:', err);
+    console.error('Error updating show participation:', _err);
     return { data: null, error: err.message || 'Failed to update show participation' };
   }
 };
@@ -358,7 +358,7 @@ export const updateShowParticipation = async (
  * @param participationId - The participation record ID
  * @returns Success or error message
  */
-export const cancelShowParticipation = async (
+export const _cancelShowParticipation = async (
   userId: string,
   participationId: string
 ): Promise<{ success: boolean; error: string | null }> => {
@@ -371,11 +371,11 @@ export const cancelShowParticipation = async (
     const { data: existingReg, error: checkError } = await supabase
       .from('show_participants')
       .select('id')
-      .eq('id', participationId)
-      .eq('userid', userId)
+      .eq('id', _participationId)
+      .eq('userid', _userId)
       .maybeSingle();
 
-    if (checkError) {
+    if (_checkError) {
       throw checkError;
     }
 
@@ -388,18 +388,18 @@ export const cancelShowParticipation = async (
     // effect as setting a "cancelled" status.  This avoids relying on the
     // optional `status` column that may not be present in every deployed
     // database schema.
-    const { error } = await supabase
+    const { _error } = await supabase
       .from('show_participants')
       .delete()
-      .eq('id', participationId);
+      .eq('id', _participationId);
 
-    if (error) {
+    if (_error) {
       throw error;
     }
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Error cancelling show participation:', err);
+    console.error('Error cancelling show participation:', _err);
     return { success: false, error: err.message || 'Failed to cancel show participation' };
   }
 };
@@ -409,7 +409,7 @@ export const cancelShowParticipation = async (
  * * @param showId - The show ID
  * @returns Array of dealer participation records for the show
  */
-export const getDealersForShow = async (
+export const _getDealersForShow = async (
   showId: string
 ): Promise<{ data: Array<DealerShowParticipation> | null; error: string | null }> => {
   try {
@@ -421,10 +421,10 @@ export const getDealersForShow = async (
     const { data: participantsData, error: participantsError } = await supabase
       .from('show_participants')
       .select('*')
-      .eq('showid', showId)
+      .eq('showid', _showId)
       .order('createdat', { ascending: true });
 
-    if (participantsError) {
+    if (_participantsError) {
       throw participantsError;
     }
 
@@ -433,33 +433,33 @@ export const getDealersForShow = async (
     }
 
     // Step 2: Extract user IDs from participants
-    const userIds = participantsData.map(participant => participant.userid);
+    const _userIds = participantsData.map(participant => participant.userid);
 
     // Step 3: Fetch profiles for these user IDs
     // Only select columns that definitely exist in the schema
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
       .select(
-        'id, first_name, last_name, email, role, facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url'
+        'id, _first_name, last_name, email, role, facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url'
       )
-      .in('id', userIds);
+      .in('id', _userIds);
 
-    if (profilesError) {
+    if (_profilesError) {
       throw profilesError;
     }
 
     // Create a map of user profiles for easy lookup
     const profilesMap: Record<string, any> = {};
-    if (profilesData) {
+    if (_profilesData) {
       profilesData.forEach(profile => {
         profilesMap[profile.id] = profile;
       });
     }
 
     // Step 4: Combine the data in JavaScript
-    const transformedData = participantsData.map(item => {
-      const participation = mapDbParticipationToAppParticipation(item);
-      const profile = profilesMap[item.userid];
+    const _transformedData = participantsData.map(item => {
+      const _participation = mapDbParticipationToAppParticipation(_item);
+      const _profile = profilesMap[item.userid];
       
       // Add dealer profile info
       return {
@@ -481,7 +481,7 @@ export const getDealersForShow = async (
 
     return { data: transformedData, error: null };
   } catch (err: any) {
-    console.error('Error fetching dealers for show:', err);
+    console.error('Error fetching dealers for show:', _err);
     return { data: null, error: err.message || 'Failed to fetch dealers for show' };
   }
 };
@@ -492,7 +492,7 @@ export const getDealersForShow = async (
  * @param filters - Optional filters for shows
  * @returns Array of shows available for registration
  */
-export const getAvailableShowsForDealer = async (
+export const _getAvailableShowsForDealer = async (
   userId: string,
   filters: {
     startDate?: Date | string;
@@ -511,17 +511,17 @@ export const getAvailableShowsForDealer = async (
     const { data: participations, error: partError } = await supabase
       .from('show_participants')
       .select('showid')
-      .eq('userid', userId);
+      .eq('userid', _userId);
 
-    if (partError) {
+    if (_partError) {
       throw partError;
     }
 
     // Extract show IDs the dealer is already registered for
-    const registeredShowIds = participations ? participations.map(p => p.showid) : [];
+    const _registeredShowIds = participations ? participations.map(p => p.showid) : [];
 
     // Build the query for available shows
-    let query = supabase
+    let _query = supabase
       .from('shows')
       .select('*')
       .eq('status', 'ACTIVE')
@@ -545,13 +545,13 @@ export const getAvailableShowsForDealer = async (
 
     const { data, error } = await query;
 
-    if (error) {
+    if (_error) {
       throw error;
     }
 
     // If we have lat/lng and radius, filter results by distance
     // This is a client-side filter since we already have the data
-    let filteredData = data || [];
+    let _filteredData = data || [];
     
     if (
       filters.latitude && 
@@ -561,7 +561,8 @@ export const getAvailableShowsForDealer = async (
     ) {
       // This would ideally use the server-side PostGIS functions,
       // but for simplicity we'll do basic filtering here
-      console.log('Filtering by distance is not implemented in this version');
+       
+console.warn('Filtering by distance is not implemented in this version');
     }
 
     return { 
@@ -587,7 +588,7 @@ export const getAvailableShowsForDealer = async (
       error: null 
     };
   } catch (err: any) {
-    console.error('Error fetching available shows for dealer:', err);
+    console.error('Error fetching available shows for dealer:', _err);
     return { data: null, error: err.message || 'Failed to fetch available shows' };
   }
 };

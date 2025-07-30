@@ -1,11 +1,11 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { _createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import auth screens
 import {
-  LoginScreen,
-  RegisterScreen,
-  ForgotPasswordScreen,
+  _LoginScreen,
+  _RegisterScreen,
+  _ForgotPasswordScreen,
   ResetPasswordScreen,
 } from '../screens/Auth';
 
@@ -18,7 +18,7 @@ export type AuthStackParamList = {
 };
 
 // Create navigation stack
-const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const _AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
 /**
  * AuthNavigator - Handles navigation between authentication screens
@@ -34,9 +34,9 @@ const AuthNavigator: React.FC = () => {
         animation: 'slide_from_right',
       }}
     >
-      <AuthStack.Screen name="Login" component={LoginScreen} />
-      <AuthStack.Screen name="Register" component={RegisterScreen} />
-      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <AuthStack.Screen name="Login" component={_LoginScreen} />
+      <AuthStack.Screen name="Register" component={_RegisterScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={_ForgotPasswordScreen} />
       {/* Use a render callback so TypeScript infers the correct prop types */}
       <AuthStack.Screen name="ResetPassword">
         {props => <ResetPasswordScreen {...props} />}

@@ -13,11 +13,11 @@ import {
   Image,
   Linking,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../../supabase';
-import { updatePassword } from '../../services/supabaseAuthService';
+import { _SafeAreaView } from 'react-native-safe-area-context';
+import { _NativeStackScreenProps } from '@react-navigation/native-stack';
+import { _Ionicons } from '@expo/vector-icons';
+import { _supabase } from '../../supabase';
+import { _updatePassword } from '../../services/supabaseAuthService';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {
@@ -32,17 +32,17 @@ export type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
 const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   // State for form fields
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [password, _setPassword] = useState('');
+  const [confirmPassword, _setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(_false);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string>('');
+  const [_debugInfo, setDebugInfo] = useState<string>('');
   // flag to show “no token” UI after grace period
-  const [tokenTimedOut, setTokenTimedOut] = useState(false);
+  const [tokenTimedOut, setTokenTimedOut] = useState(_false);
   
   // Ref to track if component is mounted
-  const isMounted = useRef(true);
+  const _isMounted = useRef(_true);
 
   /**
    * Enhanced token extraction function that supports multiple URL formats:
@@ -51,84 +51,84 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
    * - reset-password?token=XYZ
    * - Any URL containing token=XYZ
    */
-  const extractToken = (url: string): string | null => {
-    console.log('[ResetPasswordScreen] Attempting to extract token from URL:', url);
+  const _extractToken = (url: string): string | null => {
+    console.warn('[_ResetPasswordScreen] Attempting to extract token from URL:', _url);
     
     // Try standard URLSearchParams approach first
     try {
       // Handle URLs with or without protocol
-      let parsableUrl = url;
+      let _parsableUrl = url;
       
       // If URL doesn't have a protocol, add a dummy one to make it parsable
       if (!url.includes('://')) {
-        parsableUrl = `https://dummy.com/${url}`;
+        parsableUrl = `https://dummy.com/${_url}`;
       }
       
-      const urlObj = new URL(parsableUrl);
-      const token = urlObj.searchParams.get('token');
+      const _urlObj = new URL(_parsableUrl);
+      const _token = urlObj.searchParams.get('token');
       
-      if (token) {
-        console.log('[ResetPasswordScreen] Token extracted using URL object:', token.substring(0, 5) + '...');
+      if (_token) {
+        console.warn('[_ResetPasswordScreen] Token extracted using URL object:', token.substring(0, _5) + '...');
         return token;
       }
-    } catch (e) {
-      console.log('[ResetPasswordScreen] URL parsing failed, falling back to string search');
+    } catch (_e) {
+      console.warn('[_ResetPasswordScreen] URL parsing failed, falling back to string search');
     }
     
     // Fallback to manual string search
-    const tokenKey = 'token=';
-    const idx = url.indexOf(tokenKey);
+    const _tokenKey = 'token=';
+    const _idx = url.indexOf(tokenKey);
     if (idx === -1) {
-      console.log('[ResetPasswordScreen] No token parameter found in URL');
+      console.warn('[_ResetPasswordScreen] No token parameter found in URL');
       return null;
     }
     
     // token is everything after `token=` until `&` or end-of-string
-    const tokenPart = url.slice(idx + tokenKey.length);
-    const ampIdx = tokenPart.indexOf('&');
-    const token = ampIdx === -1 ? tokenPart : tokenPart.slice(0, ampIdx);
+    const _tokenPart = url.slice(idx + tokenKey.length);
+    const _ampIdx = tokenPart.indexOf('&');
+    const _token = ampIdx === -1 ? tokenPart : tokenPart.slice(0, _ampIdx);
     
     // Log a truncated version of the token for debugging (avoid logging full token for security)
-    if (token) {
-      console.log('[ResetPasswordScreen] Token extracted using string search:', token.substring(0, 5) + '...');
+    if (_token) {
+      console.warn('[_ResetPasswordScreen] Token extracted using string search:', token.substring(0, _5) + '...');
     } else {
-      console.log('[ResetPasswordScreen] Failed to extract token using string search');
+      console.warn('[_ResetPasswordScreen] Failed to extract token using string search');
     }
     
     return token;
   };
 
   // Process a URL to extract the token
-  const processUrl = async (url: string | null) => {
+  const _processUrl = async (url: string | null) => {
     if (!url) {
-      console.log('[ResetPasswordScreen] No URL to process');
+      console.warn('[_ResetPasswordScreen] No URL to process');
       return;
     }
     
-    console.log('[ResetPasswordScreen] Processing URL:', url);
-    setDebugInfo(prev => `${prev}\nProcessing URL: ${url}`);
+    console.warn('[_ResetPasswordScreen] Processing URL:', _url);
+    setDebugInfo(_prev => `${_prev}\nProcessing URL: ${_url}`);
     
     if (url.includes('reset-password')) {
-      const urlToken = extractToken(url);
-      if (urlToken) {
-        console.log('[ResetPasswordScreen] Setting token from URL');
-        setToken(urlToken);
-        setTokenTimedOut(false);
-        setDebugInfo(prev => `${prev}\nToken found: ${urlToken.substring(0, 5)}...`);
+      const _urlToken = extractToken(_url);
+      if (_urlToken) {
+        console.warn('[_ResetPasswordScreen] Setting token from URL');
+        setToken(_urlToken);
+        setTokenTimedOut(_false);
+        setDebugInfo(_prev => `${_prev}\nToken found: ${urlToken.substring(0, _5)}...`);
       } else {
-        console.error('[ResetPasswordScreen] Reset password URL found but no token parameter');
+        console.error('[_ResetPasswordScreen] Reset password URL found but no token parameter');
         setError('No reset token found in the URL');
-        setDebugInfo(prev => `${prev}\nNo token found in URL`);
+        setDebugInfo(_prev => `${_prev}\nNo token found in URL`);
       }
     } else {
-      console.log('[ResetPasswordScreen] URL does not contain reset-password path');
-      setDebugInfo(prev => `${prev}\nURL does not contain reset-password path`);
+      console.warn('[_ResetPasswordScreen] URL does not contain reset-password path');
+      setDebugInfo(_prev => `${_prev}\nURL does not contain reset-password path`);
     }
   };
 
   // Extract token from route params or URL
   useEffect(() => {
-    console.log('[ResetPasswordScreen] Component mounted');
+    console.warn('[_ResetPasswordScreen] Component mounted');
     setDebugInfo('Component mounted');
     
     // Get token from route params if available
@@ -137,64 +137,64 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
       routeToken = route.params.token;
     }
 
-    if (routeToken) {
-      console.log('[ResetPasswordScreen] Token found in route params');
-      setToken(routeToken);
-      setDebugInfo(prev => `${prev}\nToken found in route params: ${routeToken.substring(0, 5)}...`);
+    if (_routeToken) {
+      console.warn('[_ResetPasswordScreen] Token found in route params');
+      setToken(_routeToken);
+      setDebugInfo(_prev => `${_prev}\nToken found in route params: ${routeToken.substring(0, _5)}...`);
       return;
     }
 
     // If no token in route params, check if we can extract it from the URL
-    const getTokenFromUrl = async () => {
+    const _getTokenFromUrl = async () => {
       try {
-        console.log('[ResetPasswordScreen] Checking initial URL');
-        setDebugInfo(prev => `${prev}\nChecking initial URL...`);
+        console.warn('[_ResetPasswordScreen] Checking initial URL');
+        setDebugInfo(_prev => `${_prev}\nChecking initial URL...`);
         
         // Get the initial URL that opened the app
-        const initialUrl = await Linking.getInitialURL();
-        console.log('[ResetPasswordScreen] Initial URL:', initialUrl);
-        setDebugInfo(prev => `${prev}\nInitial URL: ${initialUrl || 'none'}`);
+        const _initialUrl = await Linking.getInitialURL();
+        console.warn('[_ResetPasswordScreen] Initial URL:', _initialUrl);
+        setDebugInfo(_prev => `${_prev}\nInitial URL: ${initialUrl || 'none'}`);
         
-        await processUrl(initialUrl);
-      } catch (err) {
-        console.error('[ResetPasswordScreen] Error extracting token from URL:', err);
+        await processUrl(_initialUrl);
+      } catch (_err) {
+        console.error('[_ResetPasswordScreen] Error extracting token from URL:', _err);
         setError('Failed to process the password reset link');
-        setDebugInfo(prev => `${prev}\nError: ${err instanceof Error ? err.message : String(err)}`);
+        setDebugInfo(_prev => `${_prev}\nError: ${err instanceof Error ? err.message : String(_err)}`);
       }
     };
 
     getTokenFromUrl();
 
     // After 3 s, if we still have no token, reveal the “request new link” UI
-    const timeoutId = setTimeout(() => {
+    const _timeoutId = setTimeout(() => {
       if (isMounted.current && !token) {
-        setTokenTimedOut(true);
+        setTokenTimedOut(_true);
       }
     }, 3000);
 
     // Set up URL event listener for when app is already running
-    const urlListener = (event: { url: string }) => {
-      console.log('[ResetPasswordScreen] URL event received:', event.url);
-      setDebugInfo(prev => `${prev}\nURL event received: ${event.url}`);
+    const _urlListener = (event: { url: string }) => {
+      console.warn('[_ResetPasswordScreen] URL event received:', event.url);
+      setDebugInfo(_prev => `${_prev}\nURL event received: ${event.url}`);
       processUrl(event.url);
     };
 
     // Add the event listener
-    const subscription = Linking.addEventListener('url', urlListener);
+    const _subscription = Linking.addEventListener('url', _urlListener);
 
     // Clean up function
     return () => {
-      console.log('[ResetPasswordScreen] Component unmounting, cleaning up listeners');
+      console.warn('[_ResetPasswordScreen] Component unmounting, cleaning up listeners');
       isMounted.current = false;
       subscription.remove();
-      clearTimeout(timeoutId);
+      clearTimeout(_timeoutId);
     };
   }, [route.params]);
 
   // Validate passwords
-  const validatePasswords = () => {
+  const _validatePasswords = () => {
     // Clear previous errors
-    setError(null);
+    setError(_null);
 
     if (!password) {
       setError('Please enter a new password');
@@ -215,7 +215,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   // Handle password reset
-  const handleResetPassword = async () => {
+  const _handleResetPassword = async () => {
     if (!validatePasswords()) {
       return;
     }
@@ -226,13 +226,13 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
     }
 
     try {
-      setIsLoading(true);
-      console.log('[ResetPasswordScreen] Attempting to update password with token');
+      setIsLoading(_true);
+      console.warn('[_ResetPasswordScreen] Attempting to update password with token');
 
       // Update the user's password using the helper in supabaseAuthService
-      await updatePassword(password);
+      await updatePassword(_password);
 
-      console.log('[ResetPasswordScreen] Password updated successfully');
+      console.warn('[_ResetPasswordScreen] Password updated successfully');
       
       // Password reset successful
       Alert.alert(
@@ -241,22 +241,22 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );
     } catch (err: any) {
-      console.error('[ResetPasswordScreen] Error resetting password:', err);
+      console.error('[_ResetPasswordScreen] Error resetting password:', _err);
       setError(err.message || 'Failed to reset password. Please try again.');
     } finally {
       if (isMounted.current) {
-        setIsLoading(false);
+        setIsLoading(_false);
       }
     }
   };
 
   // Navigate back to login
-  const handleNavigateToLogin = () => {
+  const _handleNavigateToLogin = () => {
     navigation.navigate('Login');
   };
 
   // Request a new password reset link
-  const handleRequestNewLink = () => {
+  const _handleRequestNewLink = () => {
     navigation.navigate('ForgotPassword');
   };
 
@@ -272,9 +272,9 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={handleNavigateToLogin}
+            onPress={_handleNavigateToLogin}
           >
-            <Ionicons name="arrow-back" size={24} color="#007AFF" />
+            <Ionicons name="arrow-back" size={_24} color="#007AFF" />
           </TouchableOpacity>
 
           <View style={styles.logoContainer}>
@@ -294,7 +294,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
 
             {error ? (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={styles.errorText}>{_error}</Text>
               </View>
             ) : null}
 
@@ -305,7 +305,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
                 </Text>
                 <TouchableOpacity 
                   style={styles.requestNewLinkButton}
-                  onPress={handleRequestNewLink}
+                  onPress={_handleRequestNewLink}
                 >
                   <Text style={styles.requestNewLinkText}>Request New Reset Link</Text>
                 </TouchableOpacity>
@@ -313,31 +313,31 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={_20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="New Password"
                 placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
+                value={_password}
+                onChangeText={_setPassword}
                 secureTextEntry
                 autoCapitalize="none"
-                autoCorrect={false}
+                autoCorrect={_false}
                 editable={!isLoading && !!token}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={_20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Confirm New Password"
                 placeholderTextColor="#999"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                value={_confirmPassword}
+                onChangeText={_setConfirmPassword}
                 secureTextEntry
                 autoCapitalize="none"
-                autoCorrect={false}
+                autoCorrect={_false}
                 editable={!isLoading && !!token}
               />
             </View>
@@ -347,7 +347,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
                 styles.button, 
                 (isLoading || !token) && styles.buttonDisabled
               ]}
-              onPress={handleResetPassword}
+              onPress={_handleResetPassword}
               disabled={isLoading || !token}
             >
               {isLoading ? (
@@ -360,8 +360,8 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Remember your password? </Text>
               <TouchableOpacity
-                onPress={handleNavigateToLogin}
-                disabled={isLoading}
+                onPress={_handleNavigateToLogin}
+                disabled={_isLoading}
               >
                 <Text style={styles.loginLink}>Sign In</Text>
               </TouchableOpacity>
@@ -374,7 +374,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Text style={styles.debugText}>Token Status: {token ? 'Present' : 'Missing'}</Text>
                 <Text style={styles.debugText}>Debug Log:</Text>
                 <ScrollView style={styles.debugScroll}>
-                  <Text style={styles.debugLog}>{debugInfo}</Text>
+                  <Text style={styles.debugLog}>{_debugInfo}</Text>
                 </ScrollView>
               </View>
             )}
@@ -394,7 +394,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',

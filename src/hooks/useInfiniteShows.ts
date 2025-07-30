@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { _useInfiniteQuery } from '@tanstack/react-query';
 import {
   getPaginatedShows,
   PaginatedShowsParams,
@@ -85,7 +85,7 @@ export interface InfiniteShowsResult {
  * @param params - Filtering parameters and coordinates
  * @returns An object with shows data, loading states, and functions to fetch more data
  */
-export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResult => {
+export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResult => {
   const {
     coordinates,
     radius = 25,
@@ -109,12 +109,12 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
    *
    * Instead, we now:
    *   1. Detect whether the incoming coordinates are valid numbers
-   *   2. If invalid, fall back to a sensible default (Carmel, IN) which
+   *   2. If invalid, fall back to a sensible default (_Carmel, _IN) which
    *      is seeded with real shows in seed data
    *   3. Log a debug message so developers can see when the fallback
    *      path is taken
    */
-  const isValidCoordinates =
+  const _isValidCoordinates =
     coordinates &&
     typeof coordinates.latitude === 'number' &&
     typeof coordinates.longitude === 'number' &&
@@ -127,9 +127,9 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
 
   if (!isValidCoordinates) {
     // eslint-disable-next-line no-console
-    console.debug(
-      '[useInfiniteShows] Invalid or missing coordinates supplied. ' +
-        'Falling back to default coordinates (Carmel, IN).',
+    console.warn(
+      '[_useInfiniteShows] Invalid or missing coordinates supplied. ' +
+        'Falling back to default coordinates (_Carmel, _IN).',
       coordinates
     );
   }
@@ -157,10 +157,10 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
     }],
     // Start pagination at page 1
     initialPageParam: 1,
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ _pageParam = 1 }) => {
       // Prepare parameters for the paginated shows query
-      const page = Number(pageParam) || 1;
-      const queryParams: PaginatedShowsParams = {
+      const _page = Number(_pageParam) || 1;
+      const _queryParams: PaginatedShowsParams = {
         latitude: effectiveCoordinates.latitude,
         longitude: effectiveCoordinates.longitude,
         radius,
@@ -174,7 +174,7 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
       };
       
       // Call the service function to get paginated shows
-      const result = await getPaginatedShows(queryParams);
+      const _result = await getPaginatedShows(_queryParams);
       
       // If there's an error, throw it so React Query can handle it
       if (result.error) {
@@ -198,19 +198,19 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
   });
   
   // Function to refresh data
-  const refresh = async (): Promise<void> => {
+  const _refresh = async (): Promise<void> => {
     await refetch();
   };
   
   // Flatten the pages of shows into a single array
-  const flattenedShows =
+  const _flattenedShows =
     data?.pages.flatMap((page: PaginatedShowsResult) => page.data) || [];
   
   // Get the total count from the first page (or 0 if no data)
-  const totalCount = data?.pages[0]?.pagination.totalCount || 0;
+  const _totalCount = data?.pages[_0]?.pagination.totalCount || 0;
   
   // Extract error message if any
-  const errorMessage = isError ? (queryError as Error)?.message || 'Failed to load shows' : null;
+  const _errorMessage = isError ? (queryError as Error)?.message || 'Failed to load shows' : null;
   
   return {
     shows: flattenedShows,

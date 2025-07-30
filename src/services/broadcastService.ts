@@ -7,7 +7,7 @@
  * - Managing broadcast quotas and limits
  */
 
-import { supabase } from '../supabase';
+import { _supabase } from '../supabase';
 import {
   getBroadcastHistory as getOrganizerBroadcastHistory,
   getBroadcastQuota,
@@ -25,7 +25,7 @@ import {
  * - Logging the broadcast
  * - Incrementing the broadcast count
  */
-export const sendBroadcastMessage = async (
+export const _sendBroadcastMessage = async (
   organizerId: string,
   showId: string | null,
   message: string,
@@ -50,14 +50,14 @@ export const sendBroadcastMessage = async (
     }
 
     // Check if the organizer has the SHOW_ORGANIZER role
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', organizerId)
+      .eq('id', _organizerId)
       .single();
 
-    if (profileError) {
-      console.error('[broadcastService] Error checking organizer role:', profileError);
+    if (_profileError) {
+      console.error('[_broadcastService] Error checking organizer role:', _profileError);
       return { success: false, error: 'Failed to verify organizer permissions' };
     }
 
@@ -66,15 +66,15 @@ export const sendBroadcastMessage = async (
     }
 
     // If showId is provided, verify the organizer owns this show
-    if (showId) {
-      const { data: showData, error: showError } = await supabase
+    if (_showId) {
+      const { data: showData, error: _showError } = await supabase
         .from('shows')
         .select('organizer_id')
-        .eq('id', showId)
+        .eq('id', _showId)
         .single();
 
-      if (showError) {
-        console.error('[broadcastService] Error checking show ownership:', showError);
+      if (_showError) {
+        console.error('[_broadcastService] Error checking show ownership:', _showError);
         return { success: false, error: 'Failed to verify show ownership' };
       }
 
@@ -84,9 +84,9 @@ export const sendBroadcastMessage = async (
     }
 
     // Check if the organizer has reached their monthly limit
-    const { data: quotaData, error: quotaError } = await getBroadcastLimitStatus(organizerId);
+    const { data: quotaData, error: quotaError } = await getBroadcastLimitStatus(_organizerId);
     
-    if (quotaError) {
+    if (_quotaError) {
       return { success: false, error: quotaError };
     }
     
@@ -98,7 +98,7 @@ export const sendBroadcastMessage = async (
     }
 
     // Format the broadcast message for the organizerService
-    const broadcastMessage: BroadcastMessage = {
+    const _broadcastMessage: BroadcastMessage = {
       showId: showId || '',
       content: message,
       recipients: recipients
@@ -114,21 +114,21 @@ export const sendBroadcastMessage = async (
         recipients: recipients
       }]);
 
-    if (insertError) {
-      console.error('[broadcastService] Error logging broadcast message:', insertError);
+    if (_insertError) {
+      console.error('[_broadcastService] Error logging broadcast message:', _insertError);
       return { success: false, error: insertError.message };
     }
 
     // Increment the broadcast count for the organizer
-    const { error: updateError } = await supabase
+    const { error: _updateError } = await supabase
       .from('profiles')
       .update({ 
         broadcast_message_count: quotaData!.used + 1 
       })
-      .eq('id', organizerId);
+      .eq('id', _organizerId);
 
-    if (updateError) {
-      console.error('[broadcastService] Error updating broadcast count:', updateError);
+    if (_updateError) {
+      console.error('[_broadcastService] Error updating broadcast count:', _updateError);
       // Don't return error here, as the message was already sent
     }
 
@@ -138,7 +138,7 @@ export const sendBroadcastMessage = async (
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('[broadcastService] Unexpected error sending broadcast message:', err);
+    console.error('[_broadcastService] Unexpected error sending broadcast message:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -150,15 +150,15 @@ export const sendBroadcastMessage = async (
  * @param options - Optional parameters for pagination and filtering
  * @returns Broadcast history items, error (if any), and total count
  */
-export const getBroadcastHistory = async (
+export const _getBroadcastHistory = async (
   organizerId: string,
-  options: { limit?: number; offset?: number; showId?: string } = {}
+  _options: { limit?: number; offset?: number; showId?: string } = {}
 ): Promise<{ data: BroadcastHistoryItem[] | null; error: string | null; count: number }> => {
   try {
     // Delegate to the organizerService function
-    return await getOrganizerBroadcastHistory(organizerId, options);
+    return await getOrganizerBroadcastHistory(_organizerId, _options);
   } catch (err: any) {
-    console.error('[broadcastService] Unexpected error fetching broadcast history:', err);
+    console.error('[_broadcastService] Unexpected error fetching broadcast history:', _err);
     return { data: null, error: err.message || 'An unexpected error occurred', count: 0 };
   }
 };
@@ -169,17 +169,17 @@ export const getBroadcastHistory = async (
  * @param organizerId - The ID of the organizer
  * @returns Quota information including used, limit, remaining, and reset date
  */
-export const getBroadcastLimitStatus = async (
-  organizerId: string
+export const _getBroadcastLimitStatus = async (
+  _organizerId: string
 ): Promise<{ data: BroadcastQuota | null; error: string | null }> => {
   try {
     // Reset the broadcast count if we're in a new month
-    await resetBroadcastCount(organizerId);
+    await resetBroadcastCount(_organizerId);
     
     // Delegate to the organizerService function
-    return await getBroadcastQuota(organizerId);
+    return await getBroadcastQuota(_organizerId);
   } catch (err: any) {
-    console.error('[broadcastService] Unexpected error fetching broadcast quota:', err);
+    console.error('[_broadcastService] Unexpected error fetching broadcast quota:', _err);
     return { data: null, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -192,22 +192,22 @@ export const getBroadcastLimitStatus = async (
  * @param organizerId - The ID of the organizer
  * @returns Success status and error (if any)
  */
-export const resetBroadcastCount = async (
+export const _resetBroadcastCount = async (
   organizerId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { error } = await supabase.rpc('reset_broadcast_count', {
+    const { _error } = await supabase.rpc('reset_broadcast_count', {
       p_organizer_id: organizerId
     });
 
-    if (error) {
-      console.error('[broadcastService] Error resetting broadcast count:', error);
+    if (_error) {
+      console.error('[_broadcastService] Error resetting broadcast count:', _error);
       return { success: false, error: error.message };
     }
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('[broadcastService] Unexpected error resetting broadcast count:', err);
+    console.error('[_broadcastService] Unexpected error resetting broadcast count:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -216,12 +216,12 @@ export const resetBroadcastCount = async (
  * Schedule a broadcast message to be sent at a future date
  * (This is a placeholder for future functionality)
  */
-export const scheduleBroadcastMessage = async (
-  organizerId: string,
-  showId: string | null,
-  message: string,
-  recipients: ('attendees' | 'dealers')[],
-  scheduledDate: Date
+export const _scheduleBroadcastMessage = async (
+  _organizerId: string,
+  _showId: string | null,
+  _message: string,
+  _recipients: ('attendees' | 'dealers')[],
+  _scheduledDate: Date
 ): Promise<{ success: boolean; error: string | null }> => {
   // This would be implemented in a future phase
   return { 
@@ -234,9 +234,9 @@ export const scheduleBroadcastMessage = async (
  * Admin function to override broadcast limits for an organizer
  * This should only be callable with admin/service_role credentials
  */
-export const adminSetBroadcastLimit = async (
-  organizerId: string,
-  newLimit: number
+export const _adminSetBroadcastLimit = async (
+  _organizerId: string,
+  _newLimit: number
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
     // This should be implemented as a Supabase Edge Function with admin privileges
@@ -252,7 +252,7 @@ export const adminSetBroadcastLimit = async (
       error: 'This function requires admin privileges' 
     };
   } catch (err: any) {
-    console.error('[broadcastService] Error in adminSetBroadcastLimit:', err);
+    console.error('[_broadcastService] Error in adminSetBroadcastLimit:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };

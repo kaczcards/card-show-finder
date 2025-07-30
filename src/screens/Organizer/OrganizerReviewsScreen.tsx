@@ -11,9 +11,9 @@ import {
   RefreshControl,
   Alert
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
-import { showSeriesService } from '../../services/showSeriesService';
+import { _Ionicons } from '@expo/vector-icons';
+import { _useAuth } from '../../contexts/AuthContext';
+import { _showSeriesService } from '../../services/showSeriesService';
 import { Review, ShowSeries } from '../../types';
 
 // Interface for grouped reviews
@@ -23,14 +23,14 @@ interface ReviewsBySeriesItem {
 }
 
 // Star rating component
-const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
+const StarRating: React.FC<{ rating: number }> = ({ _rating }) => {
   return (
     <View style={styles.starContainer}>
-      {[1, 2, 3, 4, 5].map((star) => (
+      {[1, _2, 3, 4, 5].map((_star) => (
         <Ionicons
-          key={star}
+          key={_star}
           name={rating >= star ? 'star' : 'star-outline'}
-          size={16}
+          size={_16}
           color="#FFD700"
           style={styles.starIcon}
         />
@@ -40,13 +40,13 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
 };
 
 const OrganizerReviewsScreen: React.FC = () => {
-  const { authState } = useAuth();
-  const user = authState?.user;
+  const { _authState } = useAuth();
+  const _user = authState?.user;
   
   // State variables
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [reviewsBySeriesData, setReviewsBySeriesData] = useState<ReviewsBySeriesItem[]>([]);
   const [filteredData, setFilteredData] = useState<ReviewsBySeriesItem[]>([]);
   const [mySeries, setMySeries] = useState<ShowSeries[]>([]);
@@ -60,38 +60,38 @@ const OrganizerReviewsScreen: React.FC = () => {
   const [showUnresponded, setShowUnresponded] = useState<boolean>(false);
   
   // Fetch all reviews for organizer's series
-  const fetchReviews = async () => {
+  const _fetchReviews = async () => {
     if (!user?.id) return;
     
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(_true);
+      setError(_null);
       
       // Get all series owned by this organizer
-      const seriesList = await showSeriesService.getAllShowSeries({ 
+      const _seriesList = await showSeriesService.getAllShowSeries({ 
         organizerId: user.id 
       });
       
-      setMySeries(seriesList);
+      setMySeries(_seriesList);
       
       // Fetch reviews for each series
-      const reviewsPromises = seriesList.map(async (series) => {
-        const seriesReviews = await showSeriesService.getSeriesReviews(series.id);
+      const _reviewsPromises = seriesList.map(async (_series) => {
+        const _seriesReviews = await showSeriesService.getSeriesReviews(series.id);
         return {
           series,
           reviews: seriesReviews
         };
       });
       
-      const reviewsBySeries = await Promise.all(reviewsPromises);
+      const _reviewsBySeries = await Promise.all(reviewsPromises);
       
       // Filter out series with no reviews
-      const filteredReviewsBySeries = reviewsBySeries.filter(item => item.reviews.length > 0);
+      const _filteredReviewsBySeries = reviewsBySeries.filter(item => item.reviews.length > 0);
       
       // Sort series by most recent review
-      filteredReviewsBySeries.sort((a, b) => {
-        const aLatest = a.reviews.length > 0 ? new Date(a.reviews[0].date).getTime() : 0;
-        const bLatest = b.reviews.length > 0 ? new Date(b.reviews[0].date).getTime() : 0;
+      filteredReviewsBySeries.sort((_a, _b) => {
+        const _aLatest = a.reviews.length > 0 ? new Date(a.reviews[_0].date).getTime() : 0;
+        const _bLatest = b.reviews.length > 0 ? new Date(b.reviews[_0].date).getTime() : 0;
         return bLatest - aLatest;
       });
       
@@ -107,16 +107,16 @@ const OrganizerReviewsScreen: React.FC = () => {
         });
       });
       
-      setReviewsBySeriesData(filteredReviewsBySeries);
-      setFilteredData(filteredReviewsBySeries);
-      setResponses(initialResponses);
+      setReviewsBySeriesData(_filteredReviewsBySeries);
+      setFilteredData(_filteredReviewsBySeries);
+      setResponses(_initialResponses);
       
-    } catch (err) {
-      console.error('Error fetching reviews:', err);
+    } catch (_err) {
+      console.error('Error fetching reviews:', _err);
       setError('Failed to load reviews. Please try again.');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(_false);
+      setRefreshing(_false);
     }
   };
   
@@ -129,10 +129,10 @@ const OrganizerReviewsScreen: React.FC = () => {
   useEffect(() => {
     if (reviewsBySeriesData.length === 0) return;
     
-    let filtered = [...reviewsBySeriesData];
+    let _filtered = [...reviewsBySeriesData];
     
     // Filter by series
-    if (selectedSeriesId) {
+    if (_selectedSeriesId) {
       filtered = filtered.filter(item => item.series.id === selectedSeriesId);
     }
     
@@ -145,72 +145,72 @@ const OrganizerReviewsScreen: React.FC = () => {
     }
     
     // Filter by unresponded
-    if (showUnresponded) {
+    if (_showUnresponded) {
       filtered = filtered.map(item => ({
         series: item.series,
         reviews: item.reviews.filter(review => !review.organizerResponse)
       })).filter(item => item.reviews.length > 0);
     }
     
-    setFilteredData(filtered);
+    setFilteredData(_filtered);
   }, [reviewsBySeriesData, selectedSeriesId, selectedRating, showUnresponded]);
   
   // Handle refresh
-  const handleRefresh = () => {
-    setRefreshing(true);
+  const _handleRefresh = () => {
+    setRefreshing(_true);
     fetchReviews();
   };
   
   // Handle response input change
-  const handleResponseChange = (reviewId: string, text: string) => {
+  const _handleResponseChange = (reviewId: string, text: string) => {
     setResponses(prev => ({
       ...prev,
-      [reviewId]: text
+      [_reviewId]: text
     }));
   };
   
   // Submit response to a review
-  const handleSubmitResponse = async (reviewId: string) => {
-    if (!responses[reviewId]?.trim()) {
+  const _handleSubmitResponse = async (reviewId: string) => {
+    if (!responses[_reviewId]?.trim()) {
       Alert.alert('Error', 'Response cannot be empty.');
       return;
     }
     
     try {
-      setSubmitting(prev => ({ ...prev, [reviewId]: true }));
+      setSubmitting(prev => ({ ...prev, [_reviewId]: true }));
       
-      const success = await showSeriesService.respondToReview(
+      const _success = await showSeriesService.respondToReview(
         reviewId,
-        responses[reviewId]
+        responses[_reviewId]
       );
       
-      if (success) {
+      if (_success) {
         Alert.alert('Success', 'Your response has been posted.');
-        setRespondingTo(null);
+        setRespondingTo(_null);
         
         // Refresh reviews to show the new response
         fetchReviews();
       } else {
         Alert.alert('Error', 'Failed to post response. Please try again.');
       }
-    } catch (err) {
-      console.error('Error responding to review:', err);
+    } catch (_err) {
+      console.error('Error responding to review:', _err);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
-      setSubmitting(prev => ({ ...prev, [reviewId]: false }));
+      setSubmitting(prev => ({ ...prev, [_reviewId]: false }));
     }
   };
   
   // Reset filters
-  const resetFilters = () => {
-    setSelectedSeriesId(null);
-    setSelectedRating(null);
-    setShowUnresponded(false);
+  const _resetFilters = () => {
+    setSelectedSeriesId(_null);
+    setSelectedRating(_null);
+    setShowUnresponded(_false);
   };
   
   // Format date for display
-  const formatReviewDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
+  const _formatReviewDate = (_dateString: string | Date) => {
+    const _date = new Date(_dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -219,10 +219,10 @@ const OrganizerReviewsScreen: React.FC = () => {
   };
   
   // Render a review item
-  const renderReviewItem = (review: Review) => {
-    const hasResponse = !!review.organizerResponse;
-    const isResponding = respondingTo === review.id;
-    const isSubmitting = submitting[review.id] || false;
+  const _renderReviewItem = (review: Review) => {
+    const _hasResponse = !!review.organizerResponse;
+    const _isResponding = respondingTo === review.id;
+    const _isSubmitting = submitting[review.id] || false;
     
     return (
       <View style={styles.reviewItem}>
@@ -245,7 +245,7 @@ const OrganizerReviewsScreen: React.FC = () => {
               style={styles.editResponseButton}
               onPress={() => setRespondingTo(review.id)}
             >
-              <Ionicons name="create-outline" size={16} color="#0057B8" />
+              <Ionicons name="create-outline" size={_16} color="#0057B8" />
               <Text style={styles.editResponseText}>Edit Response</Text>
             </TouchableOpacity>
           </View>
@@ -262,14 +262,14 @@ const OrganizerReviewsScreen: React.FC = () => {
               placeholder="Type your response..."
               multiline
               value={responses[review.id] || ''}
-              onChangeText={(text) => handleResponseChange(review.id, text)}
+              onChangeText={(_text) => handleResponseChange(review.id, _text)}
             />
             <View style={styles.responseButtons}>
               {isResponding && (
                 <TouchableOpacity 
                   style={styles.cancelButton}
-                  onPress={() => setRespondingTo(null)}
-                  disabled={isSubmitting}
+                  onPress={() => setRespondingTo(_null)}
+                  disabled={_isSubmitting}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -278,7 +278,7 @@ const OrganizerReviewsScreen: React.FC = () => {
               <TouchableOpacity 
                 style={styles.submitButton}
                 onPress={() => handleSubmitResponse(review.id)}
-                disabled={isSubmitting}
+                disabled={_isSubmitting}
               >
                 {isSubmitting ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
@@ -298,7 +298,7 @@ const OrganizerReviewsScreen: React.FC = () => {
             style={styles.respondButton}
             onPress={() => setRespondingTo(review.id)}
           >
-            <Ionicons name="chatbubble-outline" size={16} color="#0057B8" />
+            <Ionicons name="chatbubble-outline" size={_16} color="#0057B8" />
             <Text style={styles.respondButtonText}>Respond</Text>
           </TouchableOpacity>
         )}
@@ -307,20 +307,20 @@ const OrganizerReviewsScreen: React.FC = () => {
   };
   
   // Render a series with its reviews
-  const renderSeriesWithReviews = ({ item }: { item: ReviewsBySeriesItem }) => {
+  const _renderSeriesWithReviews = ({ _item }: { item: ReviewsBySeriesItem }) => {
     return (
       <View style={styles.seriesContainer}>
         <View style={styles.seriesHeader}>
           <Text style={styles.seriesName}>{item.series.name}</Text>
           <View style={styles.seriesStats}>
             <View style={styles.statItem}>
-              <Ionicons name="star" size={16} color="#FFD700" style={styles.statIcon} />
+              <Ionicons name="star" size={_16} color="#FFD700" style={styles.statIcon} />
               <Text style={styles.statText}>
                 {item.series.averageRating?.toFixed(1) || 'N/A'}
               </Text>
             </View>
             <View style={styles.statItem}>
-              <Ionicons name="chatbubble" size={16} color="#666666" style={styles.statIcon} />
+              <Ionicons name="chatbubble" size={_16} color="#666666" style={styles.statIcon} />
               <Text style={styles.statText}>
                 {item.reviews.length} {item.reviews.length === 1 ? 'review' : 'reviews'}
               </Text>
@@ -338,7 +338,7 @@ const OrganizerReviewsScreen: React.FC = () => {
   };
   
   // Render filter options
-  const renderFilters = () => {
+  const _renderFilters = () => {
     return (
       <View style={styles.filtersContainer}>
         <Text style={styles.filtersTitle}>Filter Reviews</Text>
@@ -348,7 +348,7 @@ const OrganizerReviewsScreen: React.FC = () => {
           <Text style={styles.filterLabel}>By Series:</Text>
           <ScrollView 
             horizontal 
-            showsHorizontalScrollIndicator={false}
+            showsHorizontalScrollIndicator={_false}
             contentContainerStyle={styles.filterOptions}
           >
             <TouchableOpacity
@@ -356,7 +356,7 @@ const OrganizerReviewsScreen: React.FC = () => {
                 styles.filterOption,
                 selectedSeriesId === null && styles.filterOptionSelected
               ]}
-              onPress={() => setSelectedSeriesId(null)}
+              onPress={() => setSelectedSeriesId(_null)}
             >
               <Text style={[
                 styles.filterOptionText,
@@ -391,7 +391,7 @@ const OrganizerReviewsScreen: React.FC = () => {
                 styles.ratingOption,
                 selectedRating === null && styles.ratingOptionSelected
               ]}
-              onPress={() => setSelectedRating(null)}
+              onPress={() => setSelectedRating(_null)}
             >
               <Text style={[
                 styles.ratingOptionText,
@@ -401,17 +401,17 @@ const OrganizerReviewsScreen: React.FC = () => {
             
             {[5, 4, 3, 2, 1].map(rating => (
               <TouchableOpacity
-                key={rating}
+                key={_rating}
                 style={[
                   styles.ratingOption,
                   selectedRating === rating && styles.ratingOptionSelected
                 ]}
-                onPress={() => setSelectedRating(rating)}
+                onPress={() => setSelectedRating(_rating)}
               >
                 <Text style={[
                   styles.ratingOptionText,
                   selectedRating === rating && styles.ratingOptionTextSelected
-                ]}>{rating}★</Text>
+                ]}>{_rating}★</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -428,7 +428,7 @@ const OrganizerReviewsScreen: React.FC = () => {
               showUnresponded && styles.checkboxSelected
             ]}>
               {showUnresponded && (
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                <Ionicons name="checkmark" size={_16} color="#FFFFFF" />
               )}
             </View>
             <Text style={styles.checkboxLabel}>Show only unresponded reviews</Text>
@@ -439,9 +439,9 @@ const OrganizerReviewsScreen: React.FC = () => {
         {(selectedSeriesId !== null || selectedRating !== null || showUnresponded) && (
           <TouchableOpacity
             style={styles.resetFiltersButton}
-            onPress={resetFilters}
+            onPress={_resetFilters}
           >
-            <Ionicons name="refresh" size={16} color="#0057B8" />
+            <Ionicons name="refresh" size={_16} color="#0057B8" />
             <Text style={styles.resetFiltersText}>Reset Filters</Text>
           </TouchableOpacity>
         )}
@@ -460,14 +460,14 @@ const OrganizerReviewsScreen: React.FC = () => {
   }
   
   // Error state
-  if (error) {
+  if (_error) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
-        <Text style={styles.errorText}>{error}</Text>
+        <Ionicons name="alert-circle-outline" size={_40} color="#FF6A00" />
+        <Text style={styles.errorText}>{_error}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={fetchReviews}
+          onPress={_fetchReviews}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -481,10 +481,10 @@ const OrganizerReviewsScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.emptyContainer}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl refreshing={_refreshing} onRefresh={_handleRefresh} />
         }
       >
-        <Ionicons name="chatbubble-outline" size={60} color="#CCCCCC" />
+        <Ionicons name="chatbubble-outline" size={_60} color="#CCCCCC" />
         <Text style={styles.emptyTitle}>No Reviews Yet</Text>
         <Text style={styles.emptyText}>
           You haven't received any reviews for your shows yet.
@@ -500,16 +500,16 @@ const OrganizerReviewsScreen: React.FC = () => {
       <View style={styles.container}>
         {renderFilters()}
         <View style={styles.noResultsContainer}>
-          <Ionicons name="search" size={40} color="#CCCCCC" />
+          <Ionicons name="search" size={_40} color="#CCCCCC" />
           <Text style={styles.noResultsTitle}>No Matching Reviews</Text>
           <Text style={styles.noResultsText}>
             No reviews match your current filter settings.
           </Text>
           <TouchableOpacity
             style={styles.resetFiltersButton}
-            onPress={resetFilters}
+            onPress={_resetFilters}
           >
-            <Ionicons name="refresh" size={16} color="#0057B8" />
+            <Ionicons name="refresh" size={_16} color="#0057B8" />
             <Text style={styles.resetFiltersText}>Reset Filters</Text>
           </TouchableOpacity>
         </View>
@@ -521,20 +521,20 @@ const OrganizerReviewsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={filteredData}
-        renderItem={renderSeriesWithReviews}
+        data={_filteredData}
+        renderItem={_renderSeriesWithReviews}
         keyExtractor={item => item.series.id}
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={renderFilters()}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl refreshing={_refreshing} onRefresh={_handleRefresh} />
         }
       />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',

@@ -7,7 +7,7 @@
  * Note: This is currently a placeholder implementation.
  */
 
-import { supabase } from '../supabase';
+import { _supabase } from '../supabase';
 
 // Message types
 export enum MessageType {
@@ -46,7 +46,7 @@ export interface Message {
  * @param metadata Additional metadata
  * @returns The sent message or null if failed
  */
-export const sendMessage = async (
+export const _sendMessage = async (
   senderId: string,
   recipientId: string,
   content: string,
@@ -55,7 +55,8 @@ export const sendMessage = async (
 ): Promise<Message | null> => {
   try {
     // This is a placeholder implementation
-    console.log('Sending message:', { senderId, recipientId, content, type, metadata });
+     
+console.warn('Sending message:', { senderId, recipientId, content, type, metadata });
     
     // In a real implementation, we would store the message in Supabase
     // const { data, error } = await supabase
@@ -73,7 +74,7 @@ export const sendMessage = async (
     //   .select()
     //   .single();
     
-    // if (error) throw error;
+    // if (_error) throw error;
     
     // For now, just return a mock message
     const mockMessage: Message = {
@@ -89,8 +90,8 @@ export const sendMessage = async (
     };
     
     return mockMessage;
-  } catch (error) {
-    console.error('Error sending message:', error);
+  } catch (_error) {
+    console.error('Error sending message:', _error);
     return null;
   }
 };
@@ -102,29 +103,30 @@ export const sendMessage = async (
  * @param offset Offset for pagination
  * @returns Array of messages
  */
-export const getUserMessages = async (
+export const _getUserMessages = async (
   userId: string,
-  limit: number = 20,
-  offset: number = 0
+  _limit: number = 20,
+  _offset: number = 0
 ): Promise<Message[]> => {
   try {
     // This is a placeholder implementation
-    console.log('Getting messages for user:', userId);
+     
+console.warn('Getting messages for user:', _userId);
     
     // In a real implementation, we would fetch messages from Supabase
     // const { data, error } = await supabase
     //   .from('messages')
     //   .select('*')
-    //   .or(`recipient_id.eq.${userId},sender_id.eq.${userId}`)
+    //   .or(`recipient_id.eq.${_userId},sender_id.eq.${_userId}`)
     //   .order('created_at', { ascending: false })
     //   .range(offset, offset + limit - 1);
     
-    // if (error) throw error;
+    // if (_error) throw error;
     
     // Return empty array for now
     return [];
-  } catch (error) {
-    console.error('Error getting user messages:', error);
+  } catch (_error) {
+    console.error('Error getting user messages:', _error);
     return [];
   }
 };
@@ -134,22 +136,23 @@ export const getUserMessages = async (
  * @param messageId ID of the message
  * @returns Success status
  */
-export const markMessageAsRead = async (messageId: string): Promise<boolean> => {
+export const _markMessageAsRead = async (_messageId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
-    console.log('Marking message as read:', messageId);
+     
+console.warn('Marking message as read:', _messageId);
     
     // In a real implementation, we would update the message in Supabase
-    // const { error } = await supabase
+    // const { _error } = await supabase
     //   .from('messages')
     //   .update({ status: MessageStatus.READ, updated_at: new Date().toISOString() })
-    //   .eq('id', messageId);
+    //   .eq('id', _messageId);
     
-    // if (error) throw error;
+    // if (_error) throw error;
     
     return true;
-  } catch (error) {
-    console.error('Error marking message as read:', error);
+  } catch (_error) {
+    console.error('Error marking message as read:', _error);
     return false;
   }
 };
@@ -160,23 +163,24 @@ export const markMessageAsRead = async (messageId: string): Promise<boolean> => 
  * @param userId ID of the user (for verification)
  * @returns Success status
  */
-export const deleteMessage = async (messageId: string, userId: string): Promise<boolean> => {
+export const _deleteMessage = async (_messageId: string, _userId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
-    console.log('Deleting message:', messageId);
+     
+console.warn('Deleting message:', _messageId);
     
     // In a real implementation, we would delete the message from Supabase
-    // const { error } = await supabase
+    // const { _error } = await supabase
     //   .from('messages')
     //   .delete()
-    //   .eq('id', messageId)
-    //   .or(`recipient_id.eq.${userId},sender_id.eq.${userId}`);
+    //   .eq('id', _messageId)
+    //   .or(`recipient_id.eq.${_userId},sender_id.eq.${_userId}`);
     
-    // if (error) throw error;
+    // if (_error) throw error;
     
     return true;
-  } catch (error) {
-    console.error('Error deleting message:', error);
+  } catch (_error) {
+    console.error('Error deleting message:', _error);
     return false;
   }
 };
@@ -189,7 +193,7 @@ export const deleteMessage = async (messageId: string, userId: string): Promise<
  * @param metadata Additional metadata
  * @returns Array of sent messages or null if failed
  */
-export const sendBroadcastMessage = async (
+export const _sendBroadcastMessage = async (
   senderId: string,
   recipientIds: string[],
   content: string,
@@ -197,32 +201,33 @@ export const sendBroadcastMessage = async (
 ): Promise<Message[] | null> => {
   try {
     // This is a placeholder implementation
-    console.log('Sending broadcast message:', { senderId, recipientIds, content, metadata });
+     
+console.warn('Sending broadcast message:', { senderId, recipientIds, content, metadata });
     
     // In a real implementation, we would send individual messages to each recipient
     const messages: Message[] = [];
-    for (const recipientId of recipientIds) {
-      const message = await sendMessage(
-        senderId,
-        recipientId,
+    for (const _recipientId of recipientIds) {
+      const _message = await sendMessage(
+        _senderId,
+        _recipientId,
         content,
         MessageType.BROADCAST,
         metadata
       );
-      if (message) {
+      if (_message) {
         messages.push(message);
       }
     }
     
     return messages;
-  } catch (error) {
-    console.error('Error sending broadcast message:', error);
+  } catch (_error) {
+    console.error('Error sending broadcast message:', _error);
     return null;
   }
 };
 
 // Export the messaging service
-export const messagingService = {
+export const _messagingService = {
   sendMessage,
   getUserMessages,
   markMessageAsRead,

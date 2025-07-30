@@ -1,10 +1,10 @@
-import { supabase } from '../supabase';
+import { _supabase } from '../supabase';
 import { ShowSeries, Review, Show } from '../types';
 
 /**
  * Service for interacting with show_series table and related functionality
  */
-export const showSeriesService = {
+export const _showSeriesService = {
   /**
    * Get all show series with optional filtering
    * @param options Filter options
@@ -16,7 +16,7 @@ export const showSeriesService = {
     orderBy?: string;
     orderDirection?: 'asc' | 'desc';
   }): Promise<ShowSeries[]> {
-    let query = supabase.from('show_series').select('*');
+    let _query = supabase.from('show_series').select('*');
 
     // Apply filters
     if (options?.organizerId) {
@@ -41,14 +41,14 @@ export const showSeriesService = {
     const { data, error } = await query;
 
     // Debug log the raw response
-    console.log('[showSeriesService.getAllShowSeries] Raw Supabase response:', {
+    console.warn('[showSeriesService.getAllShowSeries] Raw Supabase response:', {
       dataType: Array.isArray(data) ? 'array' : typeof data,
       length: Array.isArray(data) ? data.length : 'n/a',
       error,
     });
 
-    if (error) {
-      console.error('Error fetching show series:', error);
+    if (_error) {
+      console.error('Error fetching show series:', _error);
       throw new Error(`Failed to fetch show series: ${error.message}`);
     }
 
@@ -77,19 +77,19 @@ export const showSeriesService = {
    * @param id Show series ID
    * @returns Show series object or null if not found
    */
-  async getShowSeriesById(id: string): Promise<ShowSeries | null> {
+  async getShowSeriesById(_id: string): Promise<ShowSeries | null> {
     const { data, error } = await supabase
       .from('show_series')
       .select('*')
-      .eq('id', id)
+      .eq('id', _id)
       .single();
 
-    if (error) {
+    if (_error) {
       if (error.code === 'PGRST116') {
         // PGRST116 is the error code for "no rows returned"
         return null;
       }
-      console.error('Error fetching show series by ID:', error);
+      console.error('Error fetching show series by ID:', _error);
       throw new Error(`Failed to fetch show series: ${error.message}`);
     }
 
@@ -110,15 +110,15 @@ export const showSeriesService = {
    * @param seriesId Show series ID
    * @returns Array of shows in the series
    */
-  async getShowsInSeries(seriesId: string): Promise<Show[]> {
+  async getShowsInSeries(_seriesId: string): Promise<Show[]> {
     const { data, error } = await supabase
       .from('shows')
       .select('*')
-      .eq('series_id', seriesId)
+      .eq('series_id', _seriesId)
       .order('start_date', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching shows in series:', error);
+    if (_error) {
+      console.error('Error fetching shows in series:', _error);
       throw new Error(`Failed to fetch shows in series: ${error.message}`);
     }
 
@@ -162,11 +162,11 @@ export const showSeriesService = {
     limit?: number;
     orderDirection?: 'asc' | 'desc';
   }): Promise<Show[]> {
-    let query = supabase
+    let _query = supabase
       .from('shows')
       .select('*')
-      .is('organizer_id', null)
-      .is('series_id', null);
+      .is('organizer_id', _null)
+      .is('series_id', _null);
 
     // Order by start_date (default ascending)
     query = query.order('start_date', {
@@ -181,14 +181,14 @@ export const showSeriesService = {
     const { data, error } = await query;
 
     // Debug log the raw response
-    console.log('[showSeriesService.getUnclaimedShows] Raw Supabase response:', {
+    console.warn('[showSeriesService.getUnclaimedShows] Raw Supabase response:', {
       dataType: Array.isArray(data) ? 'array' : typeof data,
       length: Array.isArray(data) ? data.length : 'n/a',
       error,
     });
 
-    if (error) {
-      console.error('Error fetching unclaimed shows:', error);
+    if (_error) {
+      console.error('Error fetching unclaimed shows:', _error);
       throw new Error(`Failed to fetch unclaimed shows: ${error.message}`);
     }
 
@@ -239,16 +239,16 @@ export const showSeriesService = {
       if (!coordinatesData.coordinates || 
           !Array.isArray(coordinatesData.coordinates) || 
           coordinatesData.coordinates.length < 2) {
-        console.warn('[showSeriesService] Invalid coordinates structure:', coordinatesData);
+        console.warn('[_showSeriesService] Invalid coordinates structure:', _coordinatesData);
         return undefined;
       }
       
       // Verify the coordinates are valid numbers
-      const longitude = Number(coordinatesData.coordinates[0]);
-      const latitude = Number(coordinatesData.coordinates[1]);
+      const _longitude = Number(coordinatesData.coordinates[_0]);
+      const _latitude = Number(coordinatesData.coordinates[_1]);
       
-      if (isNaN(latitude) || isNaN(longitude)) {
-        console.warn('[showSeriesService] Invalid coordinate values:', coordinatesData.coordinates);
+      if (isNaN(latitude) || isNaN(_longitude)) {
+        console.warn('[_showSeriesService] Invalid coordinate values:', coordinatesData.coordinates);
         return undefined;
       }
       
@@ -256,8 +256,8 @@ export const showSeriesService = {
         latitude,
         longitude
       };
-    } catch (error) {
-      console.error('[showSeriesService] Error extracting coordinates:', error);
+    } catch (_error) {
+      console.error('[_showSeriesService] Error extracting coordinates:', _error);
       return undefined;
     }
   },
@@ -267,21 +267,21 @@ export const showSeriesService = {
    * @param seriesId Show series ID
    * @returns Array of reviews
    */
-  async getSeriesReviews(seriesId: string): Promise<Review[]> {
+  async getSeriesReviews(_seriesId: string): Promise<Review[]> {
     const { data, error } = await supabase
       .from('reviews')
       .select(`
         *,
         profiles:user_id (
           first_name,
-          last_name
+          _last_name
         )
       `)
-      .eq('series_id', seriesId)
+      .eq('series_id', _seriesId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching series reviews:', error);
+    if (_error) {
+      console.error('Error fetching series reviews:', _error);
       throw new Error(`Failed to fetch series reviews: ${error.message}`);
     }
 
@@ -315,25 +315,25 @@ export const showSeriesService = {
    * @param seriesId Show series ID to claim
    * @returns Updated show series object
    */
-  async claimShowSeries(seriesId: string): Promise<{ success: boolean; message: string; series?: ShowSeries }> {
+  async claimShowSeries(_seriesId: string): Promise<{ success: boolean; message: string; series?: ShowSeries }> {
     try {
       // Get current access token using new getSession() API
-      const { data: { session } } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
+      const { data: { _session } } = await supabase.auth.getSession();
+      const _accessToken = session?.access_token;
 
-      const response = await fetch(
+      const _response = await fetch(
         `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/claim_show_series`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${_accessToken}`
           },
-          body: JSON.stringify({ seriesId })
+          body: JSON.stringify({ _seriesId })
         }
       );
 
-      const result = await response.json();
+      const _result = await response.json();
 
       if (!response.ok) {
         return {
@@ -353,8 +353,8 @@ export const showSeriesService = {
           createdAt: result.series.created_at
         } : undefined
       };
-    } catch (error) {
-      console.error('Error claiming show series:', error);
+    } catch (_error) {
+      console.error('Error claiming show series:', _error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -377,7 +377,7 @@ export const showSeriesService = {
     includeFavorites?: boolean;
   }): Promise<{ success: boolean; message: string; recipientCount?: number; quotaRemaining?: number }> {
     try {
-      const response = await fetch(
+      const _response = await fetch(
         `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/send_broadcast_message`,
         {
           method: 'POST',
@@ -390,7 +390,7 @@ export const showSeriesService = {
         }
       );
 
-      const result = await response.json();
+      const _result = await response.json();
 
       if (!response.ok) {
         return {
@@ -405,8 +405,8 @@ export const showSeriesService = {
         recipientCount: result.recipientCount,
         quotaRemaining: result.quotaRemaining
       };
-    } catch (error) {
-      console.error('Error sending broadcast message:', error);
+    } catch (_error) {
+      console.error('Error sending broadcast message:', _error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -443,13 +443,13 @@ export const showSeriesService = {
         *,
         profiles:user_id (
           first_name,
-          last_name
+          _last_name
         )
       `)
       .single();
 
-    if (error) {
-      console.error('Error adding series review:', error);
+    if (_error) {
+      console.error('Error adding series review:', _error);
       throw new Error(`Failed to add review: ${error.message}`);
     }
 
@@ -473,16 +473,16 @@ export const showSeriesService = {
    * @returns Success status
    */
   async respondToReview(reviewId: string, response: string): Promise<boolean> {
-    const { error } = await supabase
+    const { _error } = await supabase
       .from('reviews')
       .update({
         organizer_reply: response,
         updated_at: new Date().toISOString()
       })
-      .eq('id', reviewId);
+      .eq('id', _reviewId);
 
-    if (error) {
-      console.error('Error responding to review:', error);
+    if (_error) {
+      console.error('Error responding to review:', _error);
       throw new Error(`Failed to respond to review: ${error.message}`);
     }
 
@@ -501,37 +501,37 @@ export const showSeriesService = {
    * introspect the keys; if the table is empty we still log the shape of
    * the response object so you can verify what PostgREST is returning.
    *
-   * Usage (example):
+   * Usage (_example):
    *   await showSeriesService.debugShowsTableColumns();
    */
   async debugShowsTableColumns(): Promise<void> {
     try {
-      const { data, error } = await supabase
+      const { data, _error } = await supabase
         .from('shows')
         // fetch at most 1 row – we only need keys, not data volume
         .select('*')
         .limit(1);
 
-      if (error) {
-        console.error('[debugShowsTableColumns] Supabase error:', error);
+      if (_error) {
+        console.error('[_debugShowsTableColumns] Supabase error:', _error);
         return;
       }
 
       if (!data || data.length === 0) {
         // Even if there are no rows, Supabase will still return column meta
         console.warn(
-          '[debugShowsTableColumns] Table returned zero rows.  ' +
+          '[_debugShowsTableColumns] Table returned zero rows.  ' +
           'Column keys may be incomplete if the cache is stale.',
         );
-        console.log('[debugShowsTableColumns] Raw response keys:', Object.keys(data ?? {}));
+        console.warn('[_debugShowsTableColumns] Raw response keys:', Object.keys(data ?? {}));
       } else {
-        console.log(
-          '[debugShowsTableColumns] Column keys detected:',
-          Object.keys(data[0]),
+        console.warn(
+          '[_debugShowsTableColumns] Column keys detected:',
+          Object.keys(data[_0]),
         );
       }
-    } catch (err) {
-      console.error('[debugShowsTableColumns] Unexpected error:', err);
+    } catch (_err) {
+      console.error('[_debugShowsTableColumns] Unexpected error:', _err);
     }
   },
 
@@ -574,7 +574,7 @@ export const showSeriesService = {
     'id' | 'seriesId' | 'rating' | 'createdAt' | 'updatedAt' | 'coordinates'
   > & { seriesId?: null }): Promise<{ success: boolean; show?: Show; error?: string }> {
     try {
-      const payload = {
+      const _payload = {
         ...showData,
         series_id: null,
         // Supabase expects camelCase -> snake_case conversion
@@ -589,14 +589,14 @@ export const showSeriesService = {
         .select('*')
         .single();
 
-      if (error) {
-        console.error('Error creating standalone show:', error);
+      if (_error) {
+        console.error('Error creating standalone show:', _error);
         return { success: false, error: error.message };
       }
 
       return { success: true, show: this.mapShowRow(data) };
-    } catch (err) {
-      console.error('Unexpected error creating standalone show:', err);
+    } catch (_err) {
+      console.error('Unexpected error creating standalone show:', _err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Unknown error',
@@ -617,7 +617,7 @@ export const showSeriesService = {
     >
   ): Promise<{ success: boolean; show?: Show; error?: string }> {
     try {
-      const payload = {
+      const _payload = {
         ...showData,
         series_id: seriesId,
         start_date: showData.startDate,
@@ -631,14 +631,14 @@ export const showSeriesService = {
         .select('*')
         .single();
 
-      if (error) {
-        console.error('Error adding show to series:', error);
+      if (_error) {
+        console.error('Error adding show to series:', _error);
         return { success: false, error: error.message };
       }
 
       return { success: true, show: this.mapShowRow(data) };
-    } catch (err) {
-      console.error('Unexpected error adding show to series:', err);
+    } catch (_err) {
+      console.error('Unexpected error adding show to series:', _err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Unknown error',

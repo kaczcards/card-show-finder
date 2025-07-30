@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 
 // Define strict types for the show object with optional properties
 interface ShowTimeInfoProps {
@@ -28,16 +28,16 @@ type InfoRowProps = {
  * A robust InfoRow component that ensures all text is properly wrapped
  * in Text components and handles all edge cases.
  */
-const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value }) => {
+const InfoRow: React.FC<InfoRowProps> = ({ _icon, _label, value }) => {
   // Safe value with fallback
-  const safeValue = value || 'Not specified';
+  const _safeValue = value || 'Not specified';
 
   return (
     <View style={styles.infoRow}>
-      <Ionicons name={icon} size={20} color="#666666" style={styles.infoIcon} />
+      <Ionicons name={_icon} size={_20} color="#666666" style={styles.infoIcon} />
       <View style={styles.infoContent}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{safeValue}</Text>
+        <Text style={styles.infoLabel}>{_label}</Text>
+        <Text style={styles.infoValue}>{_safeValue}</Text>
       </View>
     </View>
   );
@@ -47,20 +47,20 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value }) => {
  * A super-robust ShowTimeInfo component that ensures all text is properly
  * wrapped in Text components and all data access is safely guarded.
  */
-const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
+const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ _show }) => {
   // Ensure show object exists
-  const safeShow = show || {};
+  const _safeShow = show || {};
   
   // Format a date for display with comprehensive error handling
-  const formatDate = (date?: string | null): string => {
+  const _formatDate = (date?: string | null): string => {
     if (!date) return '';
     
     try {
-      const dateObj = new Date(date);
+      const _dateObj = new Date(_date);
       
       // Check if date is valid
       if (isNaN(dateObj.getTime())) {
-        console.warn(`Invalid date format: ${date}`);
+        console.warn(`Invalid date format: ${_date}`);
         return date; // Return original string if parsing fails
       }
       
@@ -70,19 +70,19 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
         month: 'long',
         day: 'numeric'
       });
-    } catch (e) {
-      console.error('Error formatting date:', e);
+    } catch (_e) {
+      console.error('Error formatting date:', _e);
       return date || ''; // Return original string or empty string
     }
   };
 
   // Check if dates are the same with robust error handling
-  const areSameDates = (date1?: string | null, date2?: string | null): boolean => {
+  const _areSameDates = (date1?: string | null, date2?: string | null): boolean => {
     if (!date1 || !date2) return false;
     
     try {
-      const d1 = new Date(date1);
-      const d2 = new Date(date2);
+      const _d1 = new Date(_date1);
+      const _d2 = new Date(_date2);
       
       // Check if dates are valid
       if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
@@ -94,23 +94,23 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
         d1.getMonth() === d2.getMonth() &&
         d1.getDate() === d2.getDate()
       );
-    } catch (e) {
-      console.error('Error comparing dates:', e);
+    } catch (_e) {
+      console.error('Error comparing dates:', _e);
       return false;
     }
   };
 
   // Format date range for display with comprehensive error handling
-  const formatDateRange = (): string => {
+  const _formatDateRange = (): string => {
     // Support both DB snake_case fields and mapped camelCase fields
-    const startDate = safeShow.start_date || safeShow.startDate;
-    const endDate   = safeShow.end_date   || safeShow.endDate;
+    const _startDate = safeShow.start_date || safeShow.startDate;
+    const _endDate   = safeShow.end_date   || safeShow.endDate;
     
     if (!startDate) return 'Date not specified';
     
     // For single-day shows
-    if (!endDate || areSameDates(startDate, endDate)) {
-      return formatDate(startDate);
+    if (!endDate || areSameDates(_startDate, _endDate)) {
+      return formatDate(_startDate);
     }
     
     // For multi-day shows
@@ -118,17 +118,17 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
   };
 
   // Format time with comprehensive error handling
-  const formatTime = (timeString?: string | null): string => {
+  const _formatTime = (timeString?: string | null): string => {
     if (!timeString) return '';
     
     try {
       // Try parsing as a full ISO date first
       let date;
       if (typeof timeString === 'string' && timeString.includes('T')) {
-        date = new Date(timeString);
+        date = new Date(_timeString);
       } else {
         // If it's just a time string, add a dummy date
-        date = new Date(`2000-01-01T${timeString}`);
+        date = new Date(`2000-01-01T${_timeString}`);
       }
       
       // Check if date is valid
@@ -137,48 +137,48 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
       }
       
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (e) {
-      console.error('Error formatting time:', e);
+    } catch (_e) {
+      console.error('Error formatting time:', _e);
       return timeString; // Return original string if parsing fails
     }
   };
 
   // Get formatted show hours with comprehensive error handling
-  const getFormattedShowHours = (): string => {
+  const _getFormattedShowHours = (): string => {
     // Try all possible time fields with safe access
-    const startTime = safeShow.start_time || safeShow.startTime || safeShow.time;
-    const endTime = safeShow.end_time || safeShow.endTime;
+    const _startTime = safeShow.start_time || safeShow.startTime || safeShow.time;
+    const _endTime = safeShow.end_time || safeShow.endTime;
     
     // Format both times if available
     if (startTime && endTime) {
-      const formattedStart = formatTime(startTime);
-      const formattedEnd = formatTime(endTime);
+      const _formattedStart = formatTime(_startTime);
+      const _formattedEnd = formatTime(_endTime);
       
       // Only show range if times are different
       if (formattedStart && formattedEnd && formattedStart !== formattedEnd) {
-        return `${formattedStart} - ${formattedEnd}`;
+        return `${_formattedStart} - ${_formattedEnd}`;
       }
     }
     
     // Show single time if only start time is available
-    if (startTime) {
-      return formatTime(startTime);
+    if (_startTime) {
+      return formatTime(_startTime);
     }
     
     // Show single time if only end time is available
-    if (endTime) {
-      return formatTime(endTime);
+    if (_endTime) {
+      return formatTime(_endTime);
     }
     
     // Try to extract time from description as last resort
-    const description = safeShow.description;
+    const _description = safeShow.description;
     if (description && typeof description === 'string') {
       // Look for common time patterns
-      const timePattern = /(\d{1,2})(:\d{2})?\s*(am|pm)\s*[-–]?\s*(\d{1,2})(:\d{2})?\s*(am|pm)/i;
-      const match = description.match(timePattern);
+      const _timePattern = /(\d{1,2})(:\d{_2})?\s*(am|pm)\s*[-–]?\s*(\d{1,2})(:\d{_2})?\s*(am|pm)/i;
+      const _match = description.match(timePattern);
       
-      if (match) {
-        return `${match[1]}${match[2] || ''}${match[3]} - ${match[4]}${match[5] || ''}${match[6]}`;
+      if (_match) {
+        return `${match[_1]}${match[_2] || ''}${match[_3]} - ${match[_4]}${match[_5] || ''}${match[_6]}`;
       }
     }
     
@@ -207,7 +207,7 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     marginVertical: 10,
     padding: 15,

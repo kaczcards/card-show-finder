@@ -12,7 +12,7 @@ import shadows from './shadows';
 import spacing from './spacing';
 
 // Button styles
-export const buttons = {
+export const _buttons = {
   // Primary button
   primary: {
     container: {
@@ -121,7 +121,7 @@ export const buttons = {
 };
 
 // Card styles
-export const cards = {
+export const _cards = {
   // Standard card
   standard: {
     container: {
@@ -191,7 +191,7 @@ export const cards = {
 };
 
 // Input styles
-export const inputs = {
+export const _inputs = {
   // Standard text input
   standard: {
     container: {
@@ -233,7 +233,7 @@ export const inputs = {
 };
 
 // List item styles
-export const listItems = {
+export const _listItems = {
   // Standard list item
   standard: {
     container: {
@@ -261,7 +261,7 @@ export const listItems = {
 };
 
 // Loading state styles
-export const loadingStates = {
+export const _loadingStates = {
   // Screen loading state
   fullScreen: {
     container: {
@@ -295,7 +295,7 @@ export const loadingStates = {
 };
 
 // Error state styles
-export const errorStates = {
+export const _errorStates = {
   // Screen error state
   fullScreen: {
     container: {

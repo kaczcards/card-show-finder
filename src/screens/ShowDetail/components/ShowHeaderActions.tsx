@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 // Show model – needed to inspect start / end dates
-import { Show } from '../../../types';
+import { _Show } from '../../../types';
 
 interface ShowHeaderActionsProps {
   isFavorite: boolean;
@@ -17,51 +17,51 @@ interface ShowHeaderActionsProps {
 
 const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
   isFavorite,
-  isCurrentUserOrganizer,
-  onToggleFavorite,
-  onOpenMap,
-  onShare,
-  onReview,
-  show,
+  _isCurrentUserOrganizer,
+  _onToggleFavorite,
+  _onOpenMap,
+  _onShare,
+  _onReview,
+  _show,
 }) => {
   /**
    * Determines whether the show has already finished.
    * If `endDate` exists use that, otherwise fall back to `startDate`.
    * Reviews are only permitted for shows that have *ended*.
    */
-  const hasShowEnded = (s: Show): boolean => {
-    const dateStr = (s.endDate ?? s.startDate) as string | Date;
+  const _hasShowEnded = (s: Show): boolean => {
+    const _dateStr = (s.endDate ?? s.startDate) as string | Date;
     if (!dateStr) return false;
-    return new Date(dateStr).getTime() < Date.now();
+    return new Date(_dateStr).getTime() < Date.now();
   };
 
-  const canLeaveReview = hasShowEnded(show);
+  const _canLeaveReview = hasShowEnded(_show);
 
   return (
     <View style={styles.actionsContainer}>
-      <TouchableOpacity style={styles.actionButton} onPress={onToggleFavorite}>
+      <TouchableOpacity style={styles.actionButton} onPress={_onToggleFavorite}>
         <Ionicons 
           name={isFavorite ? 'heart' : 'heart-outline'} 
-          size={24} 
+          size={_24} 
           color={isFavorite ? '#FF6A00' : '#333333'} 
         />
         <Text style={styles.actionText}>Save</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.actionButton} onPress={onOpenMap}>
-        <Ionicons name="location" size={24} color="#333333" />
+      <TouchableOpacity style={styles.actionButton} onPress={_onOpenMap}>
+        <Ionicons name="location" size={_24} color="#333333" />
         <Text style={styles.actionText}>Map</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.actionButton} onPress={onShare}>
-        <Ionicons name="share-outline" size={24} color="#333333" />
+      <TouchableOpacity style={styles.actionButton} onPress={_onShare}>
+        <Ionicons name="share-outline" size={_24} color="#333333" />
         <Text style={styles.actionText}>Share</Text>
       </TouchableOpacity>
 
       {/* Review button – visible only AFTER the show has completed */}
       {canLeaveReview && (
-        <TouchableOpacity style={styles.actionButton} onPress={onReview}>
-          <Ionicons name="star-outline" size={24} color="#333333" />
+        <TouchableOpacity style={styles.actionButton} onPress={_onReview}>
+          <Ionicons name="star-outline" size={_24} color="#333333" />
           <Text style={styles.actionText}>Review</Text>
         </TouchableOpacity>
       )}
@@ -69,7 +69,7 @@ const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',

@@ -1,22 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Modal,
-  TextInput,
-  Alert,
-  ScrollView,
-  SafeAreaView,
-  Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, TextInput, _Alert, ScrollView, SafeAreaView, Dimensions,  } from 'react-native';
+import { _Ionicons } from '@expo/vector-icons';
 // Use fallback map components that gracefully degrade when the native
 // react-native-maps module isn’t available (e.g. running in Expo Go).
-import { Region, Marker } from '../../components/MapFallback';
-import { useNavigation } from '@react-navigation/native';
+import { Region, _Marker } from '../../components/MapFallback';
+import { _useNavigation } from '@react-navigation/native';
 import { Show, Coordinates } from '../../types';
 import { checkAdminStatus, getAllShowsForValidation, updateShowCoordinates } from '../../services/adminService';
 import MapShowCluster from '../../components/MapShowCluster';
@@ -30,13 +18,13 @@ import MapShowCluster from '../../components/MapShowCluster';
 const AdminMapScreen: React.FC = () => {
   // State variables
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [_isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [shows, setShows] = useState<Show[]>([]);
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
-  const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
+  const [_editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [newCoordinates, setNewCoordinates] = useState<Coordinates>({ latitude: 0, longitude: 0 });
-  const [mapRegion, setMapRegion] = useState<Region>({
+  const [_mapRegion, setMapRegion] = useState<Region>({
     latitude: 39.8283,  // Center of US
     longitude: -98.5795,
     latitudeDelta: 60,
@@ -46,55 +34,55 @@ const AdminMapScreen: React.FC = () => {
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
 
   // References
-  const mapRef = useRef<any>(null);
-  const navigation = useNavigation();
+  const _mapRef = useRef<any>(null);
+  const _navigation = useNavigation();
 
   // Check admin status on component mount
   useEffect(() => {
-    const verifyAdminStatus = async () => {
-      setIsLoading(true);
-      const { isAdmin: adminStatus, error: adminError } = await checkAdminStatus();
+    const _verifyAdminStatus = async () => {
+      setIsLoading(_true);
+      const { isAdmin: _adminStatus, error: _adminError } = await checkAdminStatus();
       
-      if (adminError) {
-        setError(adminError);
-        setIsAdmin(false);
+      if (_adminError) {
+        setError(_adminError);
+        setIsAdmin(_false);
       } else {
-        setIsAdmin(adminStatus);
+        setIsAdmin(_adminStatus);
         
-        if (adminStatus) {
+        if (_adminStatus) {
           await fetchAllShows();
         } else {
           setError('Unauthorized: Admin privileges required');
         }
       }
       
-      setIsLoading(false);
+      setIsLoading(_false);
     };
     
     verifyAdminStatus();
   }, []);
 
   // Fetch all shows from the database
-  const fetchAllShows = async () => {
-    const { shows: allShows, error: showsError } = await getAllShowsForValidation();
+  const _fetchAllShows = async () => {
+    const { shows: allShows, error: _showsError } = await getAllShowsForValidation();
     
-    if (showsError) {
-      setError(showsError);
+    if (_showsError) {
+      setError(_showsError);
     } else {
-      setShows(allShows);
+      setShows(_allShows);
       
       // Adjust map region if shows are available
       if (allShows.length > 0) {
         // Find the center of all shows
-        const validCoordinates = allShows
+        const _validCoordinates = allShows
           .filter(show => show.coordinates && 
             typeof show.coordinates.latitude === 'number' && 
             typeof show.coordinates.longitude === 'number')
           .map(show => show.coordinates as Coordinates);
         
         if (validCoordinates.length > 0) {
-          const avgLat = validCoordinates.reduce((sum, coord) => sum + coord.latitude, 0) / validCoordinates.length;
-          const avgLng = validCoordinates.reduce((sum, coord) => sum + coord.longitude, 0) / validCoordinates.length;
+          const _avgLat = validCoordinates.reduce((_sum, _coord) => sum + coord.latitude, 0) / validCoordinates.length;
+          const _avgLng = validCoordinates.reduce((_sum, _coord) => sum + coord.longitude, 0) / validCoordinates.length;
           
           setMapRegion({
             latitude: avgLat,
@@ -108,59 +96,59 @@ const AdminMapScreen: React.FC = () => {
   };
 
   // Handle show selection
-  const handleShowPress = (showId: string) => {
-    const show = shows.find(s => s.id === showId);
-    if (show) {
-      setSelectedShow(show);
+  const _handleShowPress = (showId: string) => {
+    const _show = shows.find(s => s.id === showId);
+    if (_show) {
+      setSelectedShow(_show);
       
       // If the show has coordinates, center the map on it
       if (show.coordinates) {
-        const region = {
+        const _region = {
           latitude: show.coordinates.latitude,
           longitude: show.coordinates.longitude,
           latitudeDelta: 0.1,
           longitudeDelta: 0.1,
         };
         
-        setMapRegion(region);
+        setMapRegion(_region);
         
         if (mapRef.current && mapRef.current.animateToRegion) {
-          mapRef.current.animateToRegion(region, 500);
+          mapRef.current.animateToRegion(region, _500);
         }
       }
     }
   };
 
   // Open edit modal for selected show
-  const openEditModal = () => {
+  const _openEditModal = () => {
     if (selectedShow && selectedShow.coordinates) {
       setNewCoordinates({
         latitude: selectedShow.coordinates.latitude,
         longitude: selectedShow.coordinates.longitude,
       });
-      setEditModalVisible(true);
-    } else if (selectedShow) {
+      setEditModalVisible(_true);
+    } else if (_selectedShow) {
       // If show has no coordinates, initialize with default values
       setNewCoordinates({ latitude: 0, longitude: 0 });
-      setEditModalVisible(true);
+      setEditModalVisible(_true);
     }
   };
 
   // Update show coordinates
-  const handleUpdateCoordinates = async () => {
+  const _handleUpdateCoordinates = async () => {
     if (!selectedShow) return;
     
-    setIsLoading(true);
-    const { success, error: updateError } = await updateShowCoordinates(
+    setIsLoading(_true);
+    const { _success, error: _updateError } = await updateShowCoordinates(
       selectedShow.id,
-      newCoordinates
+      _newCoordinates
     );
     
-    if (updateError) {
-      setUpdateSuccess(false);
-      setUpdateMessage(`Failed to update coordinates: ${updateError}`);
+    if (_updateError) {
+      setUpdateSuccess(_false);
+      setUpdateMessage(`Failed to update coordinates: ${_updateError}`);
     } else {
-      setUpdateSuccess(true);
+      setUpdateSuccess(_true);
       setUpdateMessage('Coordinates updated successfully');
       
       // Update the local state to reflect the change
@@ -178,18 +166,18 @@ const AdminMapScreen: React.FC = () => {
       );
     }
     
-    setEditModalVisible(false);
-    setIsLoading(false);
+    setEditModalVisible(_false);
+    setIsLoading(_false);
     
     // Clear the success/error message after 3 seconds
     setTimeout(() => {
-      setUpdateSuccess(null);
-      setUpdateMessage(null);
+      setUpdateSuccess(_null);
+      setUpdateMessage(_null);
     }, 3000);
   };
 
   // Render loading state
-  if (isLoading) {
+  if (_isLoading) {
     return (
       <View style={styles.centeredContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -202,7 +190,7 @@ const AdminMapScreen: React.FC = () => {
   if (!isAdmin) {
     return (
       <View style={styles.centeredContainer}>
-        <Ionicons name="lock-closed" size={64} color="#FF3B30" />
+        <Ionicons name="lock-closed" size={_64} color="#FF3B30" />
         <Text style={styles.errorTitle}>Unauthorized Access</Text>
         <Text style={styles.errorMessage}>
           {error || 'You do not have permission to access this page. Please contact an administrator.'}
@@ -218,15 +206,15 @@ const AdminMapScreen: React.FC = () => {
   }
 
   // Render error state
-  if (error) {
+  if (_error) {
     return (
       <View style={styles.centeredContainer}>
-        <Ionicons name="alert-circle" size={64} color="#FF3B30" />
+        <Ionicons name="alert-circle" size={_64} color="#FF3B30" />
         <Text style={styles.errorTitle}>Error</Text>
-        <Text style={styles.errorMessage}>{error}</Text>
+        <Text style={styles.errorMessage}>{_error}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={fetchAllShows}
+          onPress={_fetchAllShows}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -242,7 +230,7 @@ const AdminMapScreen: React.FC = () => {
           style={styles.backButtonHeader} 
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#007AFF" />
+          <Ionicons name="arrow-back" size={_24} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Admin: Coordinate Validation</Text>
       </View>
@@ -253,23 +241,23 @@ const AdminMapScreen: React.FC = () => {
           styles.statusMessage, 
           updateSuccess ? styles.successMessage : styles.errorMessageBanner
         ]}>
-          <Text style={styles.statusMessageText}>{updateMessage}</Text>
+          <Text style={styles.statusMessageText}>{_updateMessage}</Text>
         </View>
       )}
 
       {/* Map */}
       <View style={styles.mapContainer}>
         <MapShowCluster
-          ref={mapRef}
-          shows={shows}
-          onCalloutPress={handleShowPress}
-          region={mapRegion}
-          showsUserLocation={false}
-          loadingEnabled={true}
-          showsCompass={true}
-          showsScale={true}
+          ref={_mapRef}
+          shows={_shows}
+          onCalloutPress={_handleShowPress}
+          region={_mapRegion}
+          showsUserLocation={_false}
+          loadingEnabled={_true}
+          showsCompass={_true}
+          showsScale={_true}
           provider="google"
-          onRegionChangeComplete={setMapRegion}
+          onRegionChangeComplete={_setMapRegion}
         />
       </View>
 
@@ -291,7 +279,7 @@ const AdminMapScreen: React.FC = () => {
             
             <TouchableOpacity 
               style={styles.editButton}
-              onPress={openEditModal}
+              onPress={_openEditModal}
             >
               <Text style={styles.editButtonText}>Edit Coordinates</Text>
             </TouchableOpacity>
@@ -301,10 +289,10 @@ const AdminMapScreen: React.FC = () => {
 
       {/* Edit coordinates modal */}
       <Modal
-        visible={editModalVisible}
-        transparent={true}
+        visible={_editModalVisible}
+        transparent={_true}
         animationType="slide"
-        onRequestClose={() => setEditModalVisible(false)}
+        onRequestClose={() => setEditModalVisible(_false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -316,8 +304,8 @@ const AdminMapScreen: React.FC = () => {
               <TextInput
                 style={styles.input}
                 value={newCoordinates.latitude.toString()}
-                onChangeText={(text) => {
-                  const value = parseFloat(text);
+                onChangeText={(_text) => {
+                  const _value = parseFloat(_text);
                   if (!isNaN(value)) {
                     setNewCoordinates(prev => ({ ...prev, latitude: value }));
                   }
@@ -332,8 +320,8 @@ const AdminMapScreen: React.FC = () => {
               <TextInput
                 style={styles.input}
                 value={newCoordinates.longitude.toString()}
-                onChangeText={(text) => {
-                  const value = parseFloat(text);
+                onChangeText={(_text) => {
+                  const _value = parseFloat(_text);
                   if (!isNaN(value)) {
                     setNewCoordinates(prev => ({ ...prev, longitude: value }));
                   }
@@ -346,14 +334,14 @@ const AdminMapScreen: React.FC = () => {
             <View style={styles.modalButtons}>
               <TouchableOpacity 
                 style={styles.cancelButton}
-                onPress={() => setEditModalVisible(false)}
+                onPress={() => setEditModalVisible(_false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={styles.saveButton}
-                onPress={handleUpdateCoordinates}
+                onPress={_handleUpdateCoordinates}
               >
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               </TouchableOpacity>
@@ -380,7 +368,7 @@ const AdminMapScreen: React.FC = () => {
 
 const { width, height } = Dimensions.get('window');
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
@@ -528,7 +516,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, _0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: 'white',

@@ -1,7 +1,7 @@
-import { supabase } from '../supabase';
-import { UserRole, WantList } from '../types';
+import { _supabase } from '../supabase';
+import { UserRole, _WantList } from '../types';
 
-const INVENTORY_PREFIX = "[INVENTORY]";
+const _INVENTORY_PREFIX = "[_INVENTORY]";
 
 /**
  * Interface for want list with user information
@@ -48,20 +48,20 @@ export interface PaginatedWantLists {
  * @param params Parameters including userId (the MVP Dealer), pagination options
  * @returns Paginated want lists with user information
  */
-export const getWantListsForMvpDealer = async (
+export const _getWantListsForMvpDealer = async (
   params: GetWantListsParams
 ): Promise<{ data: PaginatedWantLists | null; error: any }> => {
   try {
-    const { userId, showId, page = 1, pageSize = 20, searchTerm } = params;
+    const { _userId, showId, page = 1, pageSize = 20, _searchTerm } = params;
     
     // Verify the user is an MVP dealer
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', userId)
+      .eq('id', _userId)
       .single();
     
-    if (userError) throw userError;
+    if (_userError) throw userError;
     
     if (!userData || userData.role !== UserRole.MVP_DEALER) {
       return { 
@@ -71,22 +71,22 @@ export const getWantListsForMvpDealer = async (
     }
 
     // Calculate pagination values
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+    const _from = (page - 1) * pageSize;
+    const _to = from + pageSize - 1;
     
     // Get shows the dealer is participating in - WITHOUT using a join
-    let participantsQuery = supabase
+    let _participantsQuery = supabase
       .from('show_participants')
       .select('showid')
-      .eq('userid', userId);
+      .eq('userid', _userId);
     
-    if (showId) {
-      participantsQuery = participantsQuery.eq('showid', showId);
+    if (_showId) {
+      participantsQuery = participantsQuery.eq('showid', _showId);
     }
     
     const { data: participatingShows, error: participantsError } = await participantsQuery;
     
-    if (participantsError) throw participantsError;
+    if (_participantsError) throw participantsError;
     
     if (!participatingShows || participatingShows.length === 0) {
       return {
@@ -102,17 +102,17 @@ export const getWantListsForMvpDealer = async (
     }
     
     // Get the show IDs the dealer is participating in
-    const allShowIds = participatingShows.map(show => show.showid);
+    const _allShowIds = participatingShows.map(show => show.showid);
     
     // Get show details in a separate query
-    const currentDate = new Date().toISOString();
+    const _currentDate = new Date().toISOString();
     const { data: showDetails, error: showDetailsError } = await supabase
       .from('shows')
-      .select('id, title, start_date, location')
-      .in('id', allShowIds)
-      .gte('start_date', currentDate); // Filter for upcoming shows
+      .select('id, _title, start_date, location')
+      .in('id', _allShowIds)
+      .gte('start_date', _currentDate); // Filter for upcoming shows
     
-    if (showDetailsError) throw showDetailsError;
+    if (_showDetailsError) throw showDetailsError;
     
     if (!showDetails || showDetails.length === 0) {
       return {
@@ -128,16 +128,16 @@ export const getWantListsForMvpDealer = async (
     }
     
     // Get only the IDs of upcoming shows
-    const showIds = showDetails.map(show => show.id);
+    const _showIds = showDetails.map(show => show.id);
     
     // Step 1: Get all attendees for these shows from user_favorite_shows table
     const { data: allAttendees, error: attendeesError } = await supabase
       .from('user_favorite_shows')
       .select('user_id, show_id')
-      .in('show_id', showIds)
-      .neq('user_id', userId); // Exclude the dealer themselves
+      .in('show_id', _showIds)
+      .neq('user_id', _userId); // Exclude the dealer themselves
     
-    if (attendeesError) throw attendeesError;
+    if (_attendeesError) throw attendeesError;
     
     if (!allAttendees || allAttendees.length === 0) {
       return {
@@ -153,16 +153,16 @@ export const getWantListsForMvpDealer = async (
     }
     
     // Get unique attendee IDs from all attendees
-    const allAttendeeIds = [...new Set(allAttendees.map(a => a.user_id))];
+    const _allAttendeeIds = [...new Set(allAttendees.map(a => a.user_id))];
     
     // Step 2: Fetch profiles for these attendees to filter by role
     const { data: attendeeProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, role')
-      .in('id', allAttendeeIds)
+      .in('id', _allAttendeeIds)
       .in('role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
     
-    if (profilesError) throw profilesError;
+    if (_profilesError) throw profilesError;
     
     if (!attendeeProfiles || attendeeProfiles.length === 0) {
       return {
@@ -178,7 +178,7 @@ export const getWantListsForMvpDealer = async (
     }
     
     // Step 3: Filter to get only the attendee IDs with the correct roles
-    const validAttendeeIds = attendeeProfiles.map(profile => profile.id);
+    const _validAttendeeIds = attendeeProfiles.map(profile => profile.id);
     
     // Step 4: Create a mapping of user to shows they're attending (only for valid attendees)
     const userShowMap: Record<string, string[]> = {};
@@ -192,40 +192,40 @@ export const getWantListsForMvpDealer = async (
     });
     
     // Create a count query to get total number of want lists
-    let countQuery = supabase
+    let _countQuery = supabase
       .from('want_lists')
       .select('id', { count: 'exact', head: true })
-      .in('userid', validAttendeeIds)
-      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
+      .in('userid', _validAttendeeIds)
+      .not('content', 'ilike', `${_INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', ''); // Filter out empty want lists
     
     // Add search term if provided to count query
-    if (searchTerm) {
-      countQuery = countQuery.ilike('content', `%${searchTerm}%`);
+    if (_searchTerm) {
+      countQuery = countQuery.ilike('content', `%${_searchTerm}%`);
     }
     
     // Execute count query
     const { count, error: countError } = await countQuery;
-    if (countError) throw countError;
+    if (_countError) throw countError;
     
     // Create a data query to get the want lists WITHOUT the profiles join
-    let dataQuery = supabase
+    let _dataQuery = supabase
       .from('want_lists')
-      .select('id, userid, content, createdat, updatedat')
-      .in('userid', validAttendeeIds)
-      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
+      .select('id, _userid, content, createdat, updatedat')
+      .in('userid', _validAttendeeIds)
+      .not('content', 'ilike', `${_INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', '') // Filter out empty want lists
       .order('updatedat', { ascending: false })
-      .range(from, to);
+      .range(from, _to);
     
     // Add search term if provided to data query
-    if (searchTerm) {
-      dataQuery = dataQuery.ilike('content', `%${searchTerm}%`);
+    if (_searchTerm) {
+      dataQuery = dataQuery.ilike('content', `%${_searchTerm}%`);
     }
     
     // Execute data query
     const { data: wantLists, error: wantListsError } = await dataQuery;
-    if (wantListsError) throw wantListsError;
+    if (_wantListsError) throw wantListsError;
     
     // If no want lists found, return empty result
     if (!wantLists || wantLists.length === 0) {
@@ -242,15 +242,15 @@ export const getWantListsForMvpDealer = async (
     }
     
     // Get unique user IDs from want lists
-    const wantListUserIds = [...new Set(wantLists.map(wl => wl.userid))];
+    const _wantListUserIds = [...new Set(wantLists.map(wl => wl.userid))];
     
     // Fetch user profiles separately
     const { data: profiles, error: wantListProfilesError } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, role')
-      .in('id', wantListUserIds);
+      .select('id, _first_name, last_name, role')
+      .in('id', _wantListUserIds);
     
-    if (wantListProfilesError) throw wantListProfilesError;
+    if (_wantListProfilesError) throw wantListProfilesError;
     
     // Create a map of user profiles by ID for quick lookup
     const profileMap: Record<string, { firstName: string; lastName: string; role: string }> = {};
@@ -273,15 +273,15 @@ export const getWantListsForMvpDealer = async (
     });
     
     // Transform the data to include show and user information
-    const transformedData = wantLists.map(item => {
+    const _transformedData = wantLists.map(item => {
       // Find which shows this user is attending
-      const userShows = userShowMap[item.userid] || [];
+      const _userShows = userShowMap[item.userid] || [];
       // Use the first show for context (we could enhance this to show all relevant shows)
-      const showId = userShows[0];
-      const showDetails = showDetailsMap[showId] || { title: 'Unknown Show', startDate: '', location: '' };
+      const _showId = userShows[_0];
+      const _showDetails = showDetailsMap[_showId] || { title: 'Unknown Show', startDate: '', location: '' };
       
       // Get user profile from map
-      const profile = profileMap[item.userid] || { firstName: 'Unknown', lastName: '', role: UserRole.ATTENDEE };
+      const _profile = profileMap[item.userid] || { firstName: 'Unknown', lastName: '', role: UserRole.ATTENDEE };
       
       return {
         id: item.id,
@@ -308,8 +308,8 @@ export const getWantListsForMvpDealer = async (
       },
       error: null
     };
-  } catch (error) {
-    console.error('Error fetching want lists for MVP dealer:', error);
+  } catch (_error) {
+    console.error('Error fetching want lists for MVP dealer:', _error);
     return { data: null, error };
   }
 };
@@ -320,20 +320,20 @@ export const getWantListsForMvpDealer = async (
  * @param params Parameters including userId (the Show Organizer), pagination options
  * @returns Paginated want lists with user information
  */
-export const getWantListsForShowOrganizer = async (
+export const _getWantListsForShowOrganizer = async (
   params: GetWantListsParams
 ): Promise<{ data: PaginatedWantLists | null; error: any }> => {
   try {
-    const { userId, showId, page = 1, pageSize = 20, searchTerm } = params;
+    const { _userId, showId, page = 1, pageSize = 20, _searchTerm } = params;
     
     // Verify the user is a Show Organizer
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', userId)
+      .eq('id', _userId)
       .single();
     
-    if (userError) throw userError;
+    if (_userError) throw userError;
     
     if (!userData || userData.role !== UserRole.SHOW_ORGANIZER) {
       return { 
@@ -343,24 +343,24 @@ export const getWantListsForShowOrganizer = async (
     }
 
     // Calculate pagination values
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+    const _from = (page - 1) * pageSize;
+    const _to = from + pageSize - 1;
     
     // Get shows organized by this user, filtering for upcoming shows only
-    const currentDate = new Date().toISOString();
-    let showsQuery = supabase
+    const _currentDate = new Date().toISOString();
+    let _showsQuery = supabase
       .from('shows')
-      .select('id, title, start_date, location')
-      .eq('organizer_id', userId)
-      .gte('start_date', currentDate); // Only include upcoming shows
+      .select('id, _title, start_date, location')
+      .eq('organizer_id', _userId)
+      .gte('start_date', _currentDate); // Only include upcoming shows
     
-    if (showId) {
-      showsQuery = showsQuery.eq('id', showId);
+    if (_showId) {
+      showsQuery = showsQuery.eq('id', _showId);
     }
     
     const { data: organizedShows, error: showsError } = await showsQuery;
     
-    if (showsError) throw showsError;
+    if (_showsError) throw showsError;
     
     if (!organizedShows || organizedShows.length === 0) {
       return {
@@ -376,7 +376,7 @@ export const getWantListsForShowOrganizer = async (
     }
     
     // Get the show IDs the user is organizing
-    const showIds = organizedShows.map(show => show.id);
+    const _showIds = organizedShows.map(show => show.id);
     
     // Create a map of show details
     const showDetailsMap: Record<string, { title: string; startDate: string; location: string }> = {};
@@ -392,10 +392,10 @@ export const getWantListsForShowOrganizer = async (
     const { data: allAttendees, error: attendeesError } = await supabase
       .from('user_favorite_shows')
       .select('user_id, show_id')
-      .in('show_id', showIds)
-      .neq('user_id', userId); // Exclude the organizer themselves
+      .in('show_id', _showIds)
+      .neq('user_id', _userId); // Exclude the organizer themselves
     
-    if (attendeesError) throw attendeesError;
+    if (_attendeesError) throw attendeesError;
     
     if (!allAttendees || allAttendees.length === 0) {
       return {
@@ -411,16 +411,16 @@ export const getWantListsForShowOrganizer = async (
     }
     
     // Get unique attendee IDs from all attendees
-    const allAttendeeIds = [...new Set(allAttendees.map(a => a.user_id))];
+    const _allAttendeeIds = [...new Set(allAttendees.map(a => a.user_id))];
     
     // Step 2: Fetch profiles for these attendees to filter by role
     const { data: attendeeProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, role')
-      .in('id', allAttendeeIds)
+      .in('id', _allAttendeeIds)
       .in('role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
     
-    if (profilesError) throw profilesError;
+    if (_profilesError) throw profilesError;
     
     if (!attendeeProfiles || attendeeProfiles.length === 0) {
       return {
@@ -436,7 +436,7 @@ export const getWantListsForShowOrganizer = async (
     }
     
     // Step 3: Filter to get only the attendee IDs with the correct roles
-    const validAttendeeIds = attendeeProfiles.map(profile => profile.id);
+    const _validAttendeeIds = attendeeProfiles.map(profile => profile.id);
     
     // Step 4: Create a mapping of user to shows they're attending (only for valid attendees)
     const userShowMap: Record<string, string[]> = {};
@@ -450,40 +450,40 @@ export const getWantListsForShowOrganizer = async (
     });
     
     // Create a count query to get total number of want lists
-    let countQuery = supabase
+    let _countQuery = supabase
       .from('want_lists')
       .select('id', { count: 'exact', head: true })
-      .in('userid', validAttendeeIds)
-      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
+      .in('userid', _validAttendeeIds)
+      .not('content', 'ilike', `${_INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', ''); // Filter out empty want lists
     
     // Add search term if provided to count query
-    if (searchTerm) {
-      countQuery = countQuery.ilike('content', `%${searchTerm}%`);
+    if (_searchTerm) {
+      countQuery = countQuery.ilike('content', `%${_searchTerm}%`);
     }
     
     // Execute count query
     const { count, error: countError } = await countQuery;
-    if (countError) throw countError;
+    if (_countError) throw countError;
     
     // Create a data query to get the want lists WITHOUT the profiles join
-    let dataQuery = supabase
+    let _dataQuery = supabase
       .from('want_lists')
-      .select('id, userid, content, createdat, updatedat')
-      .in('userid', validAttendeeIds)
-      .not('content', 'ilike', `${INVENTORY_PREFIX}%`) // Filter out inventory items
+      .select('id, _userid, content, createdat, updatedat')
+      .in('userid', _validAttendeeIds)
+      .not('content', 'ilike', `${_INVENTORY_PREFIX}%`) // Filter out inventory items
       .not('content', 'eq', '') // Filter out empty want lists
       .order('updatedat', { ascending: false })
-      .range(from, to);
+      .range(from, _to);
     
     // Add search term if provided to data query
-    if (searchTerm) {
-      dataQuery = dataQuery.ilike('content', `%${searchTerm}%`);
+    if (_searchTerm) {
+      dataQuery = dataQuery.ilike('content', `%${_searchTerm}%`);
     }
     
     // Execute data query
     const { data: wantLists, error: wantListsError } = await dataQuery;
-    if (wantListsError) throw wantListsError;
+    if (_wantListsError) throw wantListsError;
     
     // If no want lists found, return empty result
     if (!wantLists || wantLists.length === 0) {
@@ -500,15 +500,15 @@ export const getWantListsForShowOrganizer = async (
     }
     
     // Get unique user IDs from want lists
-    const wantListUserIds = [...new Set(wantLists.map(wl => wl.userid))];
+    const _wantListUserIds = [...new Set(wantLists.map(wl => wl.userid))];
     
     // Fetch user profiles separately
     const { data: profiles, error: wantListProfilesError } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, role')
-      .in('id', wantListUserIds);
+      .select('id, _first_name, last_name, role')
+      .in('id', _wantListUserIds);
     
-    if (wantListProfilesError) throw wantListProfilesError;
+    if (_wantListProfilesError) throw wantListProfilesError;
     
     // Create a map of user profiles by ID for quick lookup
     const profileMap: Record<string, { firstName: string; lastName: string; role: string }> = {};
@@ -521,15 +521,15 @@ export const getWantListsForShowOrganizer = async (
     });
     
     // Transform the data to include show and user information
-    const transformedData = wantLists.map(item => {
+    const _transformedData = wantLists.map(item => {
       // Find which shows this user is attending
-      const userShows = userShowMap[item.userid] || [];
+      const _userShows = userShowMap[item.userid] || [];
       // Use the first show for context (we could enhance this to show all relevant shows)
-      const showId = userShows[0];
-      const showDetails = showDetailsMap[showId] || { title: 'Unknown Show', startDate: '', location: '' };
+      const _showId = userShows[_0];
+      const _showDetails = showDetailsMap[_showId] || { title: 'Unknown Show', startDate: '', location: '' };
       
       // Get user profile from map
-      const profile = profileMap[item.userid] || { firstName: 'Unknown', lastName: '', role: UserRole.ATTENDEE };
+      const _profile = profileMap[item.userid] || { firstName: 'Unknown', lastName: '', role: UserRole.ATTENDEE };
       
       return {
         id: item.id,
@@ -556,8 +556,8 @@ export const getWantListsForShowOrganizer = async (
       },
       error: null
     };
-  } catch (error) {
-    console.error('Error fetching want lists for Show Organizer:', error);
+  } catch (_error) {
+    console.error('Error fetching want lists for Show Organizer:', _error);
     return { data: null, error };
   }
 };
@@ -574,7 +574,7 @@ export const getWantListsForShowOrganizer = async (
  * @param searchTerm Optional search term to filter want lists
  * @returns Paginated want lists with user information
  */
-export const getWantListsForShow = async (
+export const _getWantListsForShow = async (
   userId: string,
   showId: string,
   page: number = 1,
@@ -586,10 +586,10 @@ export const getWantListsForShow = async (
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', userId)
+      .eq('id', _userId)
       .single();
     
-    if (userError) throw userError;
+    if (_userError) throw userError;
     
     if (!userData) {
       return { data: null, error: new Error('User not found') };
@@ -601,11 +601,11 @@ export const getWantListsForShow = async (
       const { data: participation, error: participationError } = await supabase
         .from('show_participants')
         .select('id')
-        .eq('userid', userId)
-        .eq('showid', showId)
+        .eq('userid', _userId)
+        .eq('showid', _showId)
         .maybeSingle();
       
-      if (participationError) throw participationError;
+      if (_participationError) throw participationError;
       
       if (!participation) {
         return { 
@@ -617,7 +617,7 @@ export const getWantListsForShow = async (
       // Use the MVP Dealer function with the specific show ID
       return getWantListsForMvpDealer({
         userId,
-        showId,
+        _showId,
         page,
         pageSize,
         searchTerm
@@ -627,11 +627,11 @@ export const getWantListsForShow = async (
       const { data: show, error: showError } = await supabase
         .from('shows')
         .select('id')
-        .eq('id', showId)
-        .eq('organizer_id', userId)
+        .eq('id', _showId)
+        .eq('organizer_id', _userId)
         .maybeSingle();
       
-      if (showError) throw showError;
+      if (_showError) throw showError;
       
       if (!show) {
         return { 
@@ -643,7 +643,7 @@ export const getWantListsForShow = async (
       // Use the Show Organizer function with the specific show ID
       return getWantListsForShowOrganizer({
         userId,
-        showId,
+        _showId,
         page,
         pageSize,
         searchTerm
@@ -654,8 +654,8 @@ export const getWantListsForShow = async (
         error: new Error('Only MVP Dealers and Show Organizers can access want lists') 
       };
     }
-  } catch (error) {
-    console.error('Error fetching want lists for show:', error);
+  } catch (_error) {
+    console.error('Error fetching want lists for show:', _error);
     return { data: null, error };
   }
 };

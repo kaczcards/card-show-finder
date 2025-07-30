@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { mfaService, MFAEnrollmentResponse } from '../services/mfaService';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 
 // Setup steps enum
 enum SetupStep {
@@ -38,7 +38,7 @@ interface MFASetupProps {
  * 3. Code verification
  * 4. Recovery codes display and backup
  */
-const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
+const MFASetup: React.FC<MFASetupProps> = ({ onComplete, _onCancel }) => {
   // State
   const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.INTRO);
   const [loading, setLoading] = useState<boolean>(false);
@@ -53,35 +53,35 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
     if (currentStep === SetupStep.QR_CODE) {
       startEnrollment();
     }
-  }, [currentStep]);
+  }, [_currentStep]);
 
   // Start the enrollment process by getting a QR code
-  const startEnrollment = async () => {
-    setLoading(true);
-    setError(null);
+  const _startEnrollment = async () => {
+    setLoading(_true);
+    setError(_null);
     
     try {
-      const data = await mfaService.startEnrollment();
-      setEnrollmentData(data);
-    } catch (err) {
+      const _data = await mfaService.startEnrollment();
+      setEnrollmentData(_data);
+    } catch (_err) {
       setError(`Failed to start MFA enrollment: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
-      setLoading(false);
+      setLoading(_false);
     }
   };
 
   // Verify the code entered by the user
-  const verifyCode = async () => {
+  const _verifyCode = async () => {
     if (!enrollmentData || verificationCode.length !== 6) {
       setError('Please enter a valid 6-digit code');
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    setLoading(_true);
+    setError(_null);
     
     try {
-      const result = await mfaService.verifySetup(verificationCode, enrollmentData.challengeId);
+      const _result = await mfaService.verifySetup(verificationCode, enrollmentData.challengeId);
       
       if (result.success) {
         setRecoveryCodes(result.recoveryCodes);
@@ -89,27 +89,27 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
       } else {
         setError('Verification failed. Please try again.');
       }
-    } catch (err) {
+    } catch (_err) {
       setError(`Verification failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
-      setLoading(false);
+      setLoading(_false);
     }
   };
 
   // Copy recovery codes to clipboard
-  const copyRecoveryCodes = () => {
-    const codesText = recoveryCodes.join('\n');
+  const _copyRecoveryCodes = () => {
+    const _codesText = recoveryCodes.join('\n');
     Clipboard.setString(codesText);
-    setCopiedToClipboard(true);
+    setCopiedToClipboard(_true);
     
     // Reset the copied state after 3 seconds
     setTimeout(() => {
-      setCopiedToClipboard(false);
+      setCopiedToClipboard(_false);
     }, 3000);
   };
 
   // Confirm completion after saving recovery codes
-  const confirmCompletion = () => {
+  const _confirmCompletion = () => {
     if (!copiedToClipboard) {
       Alert.alert(
         'Save Your Recovery Codes',
@@ -120,21 +120,21 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
             text: 'I\'ve Saved Them', 
             onPress: () => {
               setCurrentStep(SetupStep.COMPLETE);
-              if (onComplete) onComplete();
+              if (_onComplete) onComplete();
             }
           }
         ]
       );
     } else {
       setCurrentStep(SetupStep.COMPLETE);
-      if (onComplete) onComplete();
+      if (_onComplete) onComplete();
     }
   };
 
   // Render the introduction step
-  const renderIntroStep = () => (
+  const _renderIntroStep = () => (
     <View style={styles.stepContainer}>
-      <Ionicons name="shield-checkmark" size={64} color="#4CAF50" style={styles.icon} />
+      <Ionicons name="shield-checkmark" size={_64} color="#4CAF50" style={styles.icon} />
       <Text style={styles.title}>Enhance Your Account Security</Text>
       
       <Text style={styles.description}>
@@ -145,7 +145,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
       <View style={styles.infoBox}>
         <Text style={styles.infoTitle}>You'll need:</Text>
         <Text style={styles.infoItem}>
-          • An authenticator app like Google Authenticator, Authy, or Microsoft Authenticator
+          • An authenticator app like Google Authenticator, _Authy, or Microsoft Authenticator
         </Text>
         <Text style={styles.infoItem}>
           • About 2 minutes to complete the setup
@@ -161,7 +161,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
       
       <TouchableOpacity 
         style={styles.secondaryButton} 
-        onPress={onCancel}
+        onPress={_onCancel}
       >
         <Text style={styles.secondaryButtonText}>Maybe Later</Text>
       </TouchableOpacity>
@@ -169,7 +169,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
   );
 
   // Render the QR code step
-  const renderQRCodeStep = () => (
+  const _renderQRCodeStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Scan QR Code</Text>
       
@@ -181,8 +181,8 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
         <ActivityIndicator size="large" color="#0066CC" style={styles.loader} />
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={startEnrollment}>
+          <Text style={styles.errorText}>{_error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={_startEnrollment}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -190,7 +190,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
         <View style={styles.qrContainer}>
           <QRCode
             value={`otpauth://totp/Card%20Show%20Finder:${enrollmentData.secret}?secret=${enrollmentData.secret}&issuer=Card%20Show%20Finder&algorithm=${enrollmentData.algorithm}&digits=${enrollmentData.digits}&period=${enrollmentData.period}`}
-            size={200}
+            size={_200}
             backgroundColor="white"
             color="black"
           />
@@ -221,14 +221,14 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
         style={styles.backButton} 
         onPress={() => setCurrentStep(SetupStep.INTRO)}
       >
-        <Ionicons name="arrow-back" size={18} color="#555" />
+        <Ionicons name="arrow-back" size={_18} color="#555" />
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
     </View>
   );
 
   // Render the code verification step
-  const renderVerifyCodeStep = () => (
+  const _renderVerifyCodeStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Verify Setup</Text>
       
@@ -238,22 +238,22 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
       
       <TextInput
         style={styles.codeInput}
-        value={verificationCode}
-        onChangeText={text => setVerificationCode(text.replace(/[^0-9]/g, '').slice(0, 6))}
+        value={_verificationCode}
+        onChangeText={text => setVerificationCode(text.replace(/[^0-9]/g, '').slice(0, _6))}
         placeholder="000000"
         keyboardType="number-pad"
-        maxLength={6}
-        autoFocus={true}
+        maxLength={_6}
+        autoFocus={_true}
       />
       
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text style={styles.errorText}>{_error}</Text> : null}
       
       <TouchableOpacity 
         style={[
           styles.primaryButton, 
           (verificationCode.length !== 6 || loading) ? styles.disabledButton : null
         ]} 
-        onPress={verifyCode}
+        onPress={_verifyCode}
         disabled={verificationCode.length !== 6 || loading}
       >
         {loading ? (
@@ -267,14 +267,14 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
         style={styles.backButton} 
         onPress={() => setCurrentStep(SetupStep.QR_CODE)}
       >
-        <Ionicons name="arrow-back" size={18} color="#555" />
+        <Ionicons name="arrow-back" size={_18} color="#555" />
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
     </View>
   );
 
   // Render the recovery codes step
-  const renderRecoveryCodesStep = () => (
+  const _renderRecoveryCodesStep = () => (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.stepContainer}>
         <Text style={styles.title}>Save Recovery Codes</Text>
@@ -285,16 +285,16 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
         </Text>
         
         <View style={styles.recoveryCodesContainer}>
-          {recoveryCodes.map((code, index) => (
-            <Text key={index} style={styles.recoveryCode}>{code}</Text>
+          {recoveryCodes.map((_code, _index) => (
+            <Text key={_index} style={styles.recoveryCode}>{_code}</Text>
           ))}
         </View>
         
         <TouchableOpacity 
           style={styles.copyButton} 
-          onPress={copyRecoveryCodes}
+          onPress={_copyRecoveryCodes}
         >
-          <Ionicons name={copiedToClipboard ? "checkmark-circle" : "copy-outline"} size={20} color="white" />
+          <Ionicons name={copiedToClipboard ? "checkmark-circle" : "copy-outline"} size={_20} color="white" />
           <Text style={styles.copyButtonText}>
             {copiedToClipboard ? "Copied to Clipboard" : "Copy All Codes"}
           </Text>
@@ -306,7 +306,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
         
         <TouchableOpacity 
           style={styles.primaryButton} 
-          onPress={confirmCompletion}
+          onPress={_confirmCompletion}
         >
           <Text style={styles.buttonText}>I've Saved My Codes</Text>
         </TouchableOpacity>
@@ -315,8 +315,8 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
   );
 
   // Render the current step
-  const renderCurrentStep = () => {
-    switch (currentStep) {
+  const _renderCurrentStep = () => {
+    switch (_currentStep) {
       case SetupStep.INTRO:
         return renderIntroStep();
       case SetupStep.QR_CODE:
@@ -334,9 +334,9 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
     <View style={styles.container}>
       {/* Progress indicator */}
       <View style={styles.progressContainer}>
-        {[SetupStep.INTRO, SetupStep.QR_CODE, SetupStep.VERIFY_CODE, SetupStep.RECOVERY_CODES].map((step, index) => (
+        {[SetupStep.INTRO, SetupStep.QR_CODE, SetupStep.VERIFY_CODE, SetupStep.RECOVERY_CODES].map((_step, _index) => (
           <View 
-            key={index} 
+            key={_index} 
             style={[
               styles.progressDot, 
               currentStep >= step ? styles.activeProgressDot : null
@@ -350,7 +350,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',
