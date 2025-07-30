@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  _ScrollView,
+  ScrollView,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _supabase } from '../supabase';
+import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../supabase';
 
 interface DealerDetailModalProps {
   isVisible: boolean;

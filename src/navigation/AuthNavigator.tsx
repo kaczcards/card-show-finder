@@ -1,5 +1,5 @@
 import React from 'react';
-import { _createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import auth screens
 import {

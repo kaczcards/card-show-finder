@@ -10,13 +10,13 @@ import {
   SectionList,
   SectionListData
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { _useAuth } from '../../contexts/AuthContext';
-import { _UserRole } from '../../types';
-import { _showSeriesService } from '../../services/showSeriesService';
-import { _supabase } from '../../supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
+import { showSeriesService } from '../../services/showSeriesService';
+import { supabase } from '../../supabase';
 import OrganizerShowsList, { _OrganizerShowsListRef } from '../../components/OrganizerShowsList';
 import UnclaimedShowsList from '../../components/UnclaimedShowsList';
 

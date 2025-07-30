@@ -8,10 +8,10 @@
  * - Sending broadcast messages to attendees/dealers
  */
 
-import { _supabase } from '../supabase';
-import { _Show } from '../types';
+import { supabase } from '../supabase';
+import { Show } from '../types';
 import { addOrganizerResponse, updateOrganizerResponse, removeOrganizerResponse } from './reviewService';
-import { _showSeriesService } from './showSeriesService';
+import { showSeriesService } from './showSeriesService';
 
 /**
  * Interface for broadcast message details

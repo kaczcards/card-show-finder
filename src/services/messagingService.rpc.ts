@@ -1,6 +1,6 @@
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import * as _userRoleService from './_userRoleService';
-import { _UserRole } from './userRoleService';
+import { UserRole } from './userRoleService';
 
 // TypeScript interfaces for Messages and Conversations
 export interface Message {

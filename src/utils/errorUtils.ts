@@ -1,5 +1,5 @@
 import _React, { useState, useCallback, useEffect } from 'react';
-import { _Alert } from 'react-native';
+import { Alert } from 'react-native';
 import {
   AppError,
   ErrorCategory,

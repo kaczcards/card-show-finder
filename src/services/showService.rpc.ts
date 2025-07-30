@@ -5,7 +5,7 @@
  * and query builder methods instead of raw SQL queries.
  */
 
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { Show, ShowStatus, UserRole } from '../types';
 
 // -----------------------------------------------------------------------------

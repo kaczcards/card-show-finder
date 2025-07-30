@@ -5,7 +5,7 @@
  * These functions are used for the coordinate validation tool and other admin features.
  */
 
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { Show, Coordinates } from '../types';
 
 /**

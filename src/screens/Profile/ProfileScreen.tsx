@@ -1,12 +1,12 @@
 import React, { useState, _useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Image, _Switch, _Platform, _FlatList, Linking,  } from 'react-native';
-import { _SafeAreaView } from 'react-native-safe-area-context';
-import { _Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Image, _Switch, _Platform, FlatList, Linking,  } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import SocialIcon from '../../components/ui/SocialIcon';
-import { _useAuth } from '../../contexts/AuthContext';
-import { _UserRole } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { _supabase } from '../../supabase';
+import { supabase } from '../../supabase';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole, resetPassword } = useAuth();

@@ -8,11 +8,11 @@ import {
   FlatList,
   Image
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { ShowSeries, Show } from '../types';
-import { _showSeriesService } from '../services/showSeriesService';
-import { _supabase } from '../supabase';
+import { showSeriesService } from '../services/showSeriesService';
+import { supabase } from '../supabase';
 import type { _OrganizerStackParamList } from '../navigation/OrganizerNavigator';
 
 // Default placeholder shown when a show has no custom image

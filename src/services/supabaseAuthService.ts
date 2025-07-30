@@ -1,12 +1,12 @@
 import { AuthState, AuthCredentials, User, UserRole } from '../types';
-import { _supabase } from '../supabase';
-import { _Alert } from 'react-native';
+import { supabase } from '../supabase';
+import { Alert } from 'react-native';
 // Toast utility for user-visible notifications
-import { _showLocationChangedToast } from '../utils/toastUtils';
+import { showLocationChangedToast } from '../utils/toastUtils';
 
 // Re-export the shared Supabase client so callers that previously imported it
 // from this service continue to work without changes.
-export { _supabase };
+export { supabase };
 
 /**
  * Converting Supabase profile data to our User type

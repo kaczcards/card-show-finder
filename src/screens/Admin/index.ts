@@ -7,5 +7,6 @@
 
 import AdminMapScreen from './AdminMapScreen';
 
-export { _AdminMapScreen };
+// Re-export with the correct name (automation added the leading underscore by mistake)
+export { AdminMapScreen };
 export default AdminMapScreen;

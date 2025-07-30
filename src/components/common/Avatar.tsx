@@ -9,7 +9,7 @@ import {
   ImageStyle,
   TextStyle,
 } from 'react-native';
-import { _MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 
 interface AvatarProps {
   uri?: string | null;

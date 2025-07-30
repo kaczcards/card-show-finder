@@ -10,10 +10,10 @@ import {
   Alert,
   RefreshControl
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { ShowSeries, Show } from '../types';
-import { _showSeriesService } from '../services/showSeriesService';
-import { _claimShow } from '../services/organizerService';
+import { showSeriesService } from '../services/showSeriesService';
+import { claimShow } from '../services/organizerService';
 import { useUnclaimedShows, UnclaimedItem } from '../hooks/useUnclaimedShows';
 
 // Define the extended ShowSeries type with additional properties

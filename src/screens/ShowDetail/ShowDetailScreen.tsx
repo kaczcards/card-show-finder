@@ -8,17 +8,17 @@ import {
   TouchableOpacity,
   Alert,
   _Linking,
-  _Share
+  Share
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { CommonActions, useNavigation } from '@react-navigation/native';
-import { _useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import * as _userRoleService from '../../services/_userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
 import { UserRole, Show as ShowType } from '../../types'; // Import enums & primary Show model
 // Use the wrapped Sentry helpers to avoid direct SDK calls that may be treeshaken out
-import { _captureMessage } from '../../services/sentryConfig';
+import { captureMessage } from '../../services/sentryConfig';
 
 // Import components from the components folder
 import {
@@ -32,7 +32,7 @@ import {
 } from './components';
 
 // Import the new hook
-import { _useShowDetailQuery } from '../../hooks/useShowDetailQuery';
+import { useShowDetailQuery } from '../../hooks/useShowDetailQuery';
 
 interface ShowDetailProps {
   route: any;

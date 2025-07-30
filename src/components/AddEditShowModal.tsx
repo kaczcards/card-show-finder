@@ -13,10 +13,10 @@ import {
   Platform,
   Switch
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Show, ShowSeries } from '../types';
-import { _showSeriesService } from '../services/showSeriesService';
+import { showSeriesService } from '../services/showSeriesService';
 
 interface AddEditShowModalProps {
   visible: boolean;

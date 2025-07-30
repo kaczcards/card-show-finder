@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, _TouchableOpacity, SafeAreaView,  } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,  } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const BadgesScreen: React.FC = () => {
   // Badge tiers

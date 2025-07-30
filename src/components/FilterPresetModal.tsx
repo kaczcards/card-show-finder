@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { 
   FilterPreset, 
   createFilterPreset, 
@@ -21,7 +21,7 @@ import {
   setDefaultFilterPreset,
   updateFilterPreset
 } from '../services/filterService';
-import { _ShowFilters } from '../types';
+import { ShowFilters } from '../types';
 
 // Constants
 const _PRIMARY_COLOR = '#FF6A00'; // Orange

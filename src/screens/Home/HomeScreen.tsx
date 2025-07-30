@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, _Alert, AppState, _Platform,  } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, _Alert, AppState, Platform,  } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as locationService from '../../services/locationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { _useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import FilterSheet from '../../components/FilterSheet';
 import FilterChips from '../../components/FilterChips';
 import FilterPresetModal from '../../components/FilterPresetModal';
 import { ShowFilters, Coordinates } from '../../types';
-import { _useInfiniteShows } from '../../hooks';
-import { _supabase } from '../../supabase';
+import { useInfiniteShows } from '../../hooks';
+import { supabase } from '../../supabase';
 
 // Constants
 const _PRIMARY_COLOR = '#FF6A00'; // Orange

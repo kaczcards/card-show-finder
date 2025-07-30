@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 // Show model – needed to inspect start / end dates
-import { _Show } from '../../../types';
+import { Show } from '../../../types';
 
 interface ShowHeaderActionsProps {
   isFavorite: boolean;
