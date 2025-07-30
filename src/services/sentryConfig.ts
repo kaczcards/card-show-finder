@@ -180,7 +180,12 @@ export const captureException = (error: Error, context?: ScopeContext): void => 
 export const captureMessage = (
   message: string, 
   level: SeverityLevel = 'info',
-  context?: ScopeContext
+  /**
+   * A partial {@link ScopeContext}.  
+   * Only the properties you need (e.g. `tags`, `extra`) have to be provided
+   * which makes the helper easier to use throughout the code-base.
+   */
+  context?: Partial<ScopeContext>
 ): void => {
   if (!SENTRY_DSN) {
     console.log(`[${level}] ${message}`);

@@ -20,7 +20,7 @@ import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-
 import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
-import MapShowCluster from '../../components/MapShowCluster/index';
+import MapShowCluster, { MapShowClusterHandle } from '../../components/MapShowCluster/index';
 import * as locationService from '../../services/locationService';
 import { getPaginatedShows } from '../../services/showService';
 // Import toast utilities for location notifications
@@ -73,7 +73,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
   const filters = customFilters || localFilters;
 
   // Refs
-  const mapRef = useRef<MapView>(null);
+  // Fix: Create proper ref for MapShowCluster with correct type
+  const mapRef = useRef<MapShowClusterHandle>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const retryRef = useRef(0);
 
@@ -165,7 +166,10 @@ const MapScreen: React.FC<MapScreenProps> = ({
             // Show toast for GPS location if it was successful
             try {
               const address = await locationService.reverseGeocodeCoordinates(location);
-              const locationName = address ? (address.city || address.subregion || address.region) : undefined;
+              // Fix: Handle null values from address properties
+              const locationName = address ? 
+                (address.city || address.subregion || address.region || undefined) : 
+                undefined;
               showGpsLocationToast(locationName);
             } catch (e) {
               showGpsLocationToast();
@@ -379,12 +383,15 @@ const MapScreen: React.FC<MapScreenProps> = ({
           longitudeDelta: 0.1,
         };
         setCurrentRegion(newRegion);
-        mapRef.current.animateToRegion(newRegion, 1000);
+        mapRef.current.getMapRef()?.animateToRegion(newRegion, 1000);
         
         // Get location name for better context in toast
         try {
           const address = await locationService.reverseGeocodeCoordinates(location);
-          const locationName = address ? (address.city || address.subregion || address.region) : undefined;
+          // Fix: Handle null values from address properties
+          const locationName = address ? 
+            (address.city || address.subregion || address.region || undefined) : 
+            undefined;
           showGpsLocationToast(locationName);
         } catch (e) {
           // If reverse geocoding fails, still show toast but without location name
@@ -404,7 +411,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
             longitudeDelta: 0.1,
           };
           setCurrentRegion(newRegion);
-          mapRef.current.animateToRegion(newRegion, 1000);
+          mapRef.current.getMapRef()?.animateToRegion(newRegion, 1000);
         }
       } else {
         // No location available at all
@@ -472,7 +479,8 @@ const MapScreen: React.FC<MapScreenProps> = ({
       .map((show) => (
         <Marker
           key={show.id}
-          coordinate={show.coordinates}
+          // Fix: Add null check before assigning coordinates to coordinate prop
+          coordinate={show.coordinates || { latitude: 0, longitude: 0 }}
           title={show.title}
           description={`${formatDate(show.startDate)} • ${
             isEntryFree(show.entryFee) ? 'Free' : `$${show.entryFee}`
@@ -553,7 +561,13 @@ const MapScreen: React.FC<MapScreenProps> = ({
         ) : dataLoaded ? (
             <MapShowCluster
                 ref={mapRef}
-                region={currentRegion}
+                // Fix: Add null check for currentRegion
+                region={currentRegion || {
+                  latitude: 39.8283, 
+                  longitude: -98.5795,
+                  latitudeDelta: 0.5,
+                  longitudeDelta: 0.5
+                }}
                 shows={shows}
                 onCalloutPress={handleShowPress}
                 onRegionChangeComplete={handleRegionChangeComplete}
@@ -568,11 +582,14 @@ const MapScreen: React.FC<MapScreenProps> = ({
         <Ionicons name="locate" size={24} color="#007AFF" />
       </TouchableOpacity>
 
-      {(filters.features?.length > 0 || filters.categories?.length > 0 || filters.maxEntryFee !== undefined) && (
+      {/* Fix: Add null/undefined checks for filters.features and filters.categories arrays */}
+      {((filters.features && filters.features.length > 0) || 
+        (filters.categories && filters.categories.length > 0) || 
+        filters.maxEntryFee !== undefined) && (
         <View style={styles.activeFiltersContainer}>
           <Text style={styles.activeFiltersText}>
-            {filters.features?.length > 0 && `${filters.features.length} features • `}
-            {filters.categories?.length > 0 && `${filters.categories.length} categories • `}
+            {filters.features && filters.features.length > 0 && `${filters.features.length} features • `}
+            {filters.categories && filters.categories.length > 0 && `${filters.categories.length} categories • `}
             {filters.maxEntryFee !== undefined && `Max $${filters.maxEntryFee} • `}
             <Text style={styles.resetFiltersText} onPress={resetFilters}>Reset</Text>
           </Text>
