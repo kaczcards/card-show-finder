@@ -39,6 +39,8 @@
     "unused:fix-imports": "node scripts/unused-cleanup.js --fix-imports --report-files",
     "unused:cleanup": "node scripts/unused-cleanup.js --fix-imports --clean-files --report-files",
     "unused:report": "node scripts/unused-cleanup.js --dry-run --report-files --verbose",
+    "auto-fix:unused": "node scripts/automated-unused-fixes.js",
+    "auto-fix:dry-run": "node scripts/automated-unused-fixes.js --dry-run --verbose",
     "typecheck": "tsc --noEmit",
     "test:lint": "npm run lint:src:check",
     "test:type": "npm run typecheck",
