@@ -1,6 +1,6 @@
 import * as Sentry from 'sentry-expo';
 import Constants from 'expo-constants';
-import { _Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { ScopeContext, SeverityLevel, Transaction, Breadcrumb } from '@sentry/types';
 
 /**
@@ -44,7 +44,7 @@ interface SentryConfigOptions {
  * 
  * @example
  * // In App.tsx or similar entry point:
- * import { _initSentry } from './services/sentryConfig';
+ * import { initSentry } from './services/sentryConfig';
  * 
  * // Basic initialization
  * initSentry();
@@ -262,7 +262,7 @@ console.warn(`Transaction "${_name}" (${_operation}); finished in ${Date.now() -
  * 
  * @example
  * // In a component file:
- * import { _getSentryErrorBoundary } from './services/sentryConfig';
+ * import { getSentryErrorBoundary } from './services/sentryConfig';
  * 
  * const _ErrorBoundary = getSentryErrorBoundary();
  * 

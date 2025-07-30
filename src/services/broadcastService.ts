@@ -7,7 +7,7 @@
  * - Managing broadcast quotas and limits
  */
 
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import {
   getBroadcastHistory as getOrganizerBroadcastHistory,
   getBroadcastQuota,

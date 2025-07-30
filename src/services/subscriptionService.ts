@@ -1,7 +1,7 @@
 // src/services/subscriptionService.ts
-import { _supabase } from '../supabase';
-import { _User } from '../types';
-import { _createPaymentSheetForSubscription } from './stripePaymentService';
+import { supabase } from '../supabase';
+import { User } from '../types';
+import { createPaymentSheetForSubscription } from './stripePaymentService';
 import {
   SubscriptionPlan,
   SubscriptionPlanType,

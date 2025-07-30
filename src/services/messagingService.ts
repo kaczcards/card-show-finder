@@ -7,7 +7,7 @@
  * Note: This is currently a placeholder implementation.
  */
 
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 
 // Message types
 export enum MessageType {

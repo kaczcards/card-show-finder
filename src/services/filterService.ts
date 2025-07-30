@@ -6,7 +6,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { ShowFilters, CardCategory, ShowFeature } from '../types';
 
 /**

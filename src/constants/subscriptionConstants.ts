@@ -1,4 +1,4 @@
-import { _SubscriptionPlan } from '../types'; // Import the interface from src/types/index.ts
+import { SubscriptionPlan } from '../types'; // Import the interface from src/types/index.ts
 
 // Define your subscription plans
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [

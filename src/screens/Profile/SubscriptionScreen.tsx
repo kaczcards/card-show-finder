@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, _Image, useWindowDimensions,  } from 'react-native';
-import { _useNavigation } from '@react-navigation/native';
-import { _useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
-import { _useUserSubscriptions } from '../../hooks/useUserSubscriptions';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, useWindowDimensions,  } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
+import { useUserSubscriptions } from '../../hooks/useUserSubscriptions';
 /* -------------------------------------------------------------
  * Subscription service – functions that act on the database
  * ----------------------------------------------------------- */

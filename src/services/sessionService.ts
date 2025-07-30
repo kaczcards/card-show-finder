@@ -1,6 +1,6 @@
 // src/services/sessionService.ts
 
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 
 /**
  * Forces Supabase to refresh the current JWT/session so that any recent

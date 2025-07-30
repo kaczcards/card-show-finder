@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { _createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { _NativeStackScreenProps } from '@react-navigation/native-stack';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeScreen from './HomeScreen';
 import MapScreen from '../Map/MapScreen';
 import { ShowFilters, Coordinates } from '../../types';
-import { _getCurrentLocation } from '../../services/locationService';
-import { _useAuth } from '../../contexts/AuthContext';
+import { getCurrentLocation } from '../../services/locationService';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Define the main stack param list type
 type MainStackParamList = {

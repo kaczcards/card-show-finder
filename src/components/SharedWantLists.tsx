@@ -11,9 +11,9 @@ import {
   UIManager,
   Platform,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _getSharedWantListsForDealer } from '../services/collectionService';
-import { _useAuth } from '../contexts/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
+import { getSharedWantListsForDealer } from '../services/collectionService';
+import { useAuth } from '../contexts/AuthContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);

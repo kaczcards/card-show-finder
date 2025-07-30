@@ -1,7 +1,7 @@
 import { _StripeProvider, _useStripe } from '@stripe/stripe-react-native';
-import { _supabase } from '../supabase';
+import { supabase } from '../supabase';
 import { SubscriptionPlan, SUBSCRIPTION_PLANS, calculateExpiryDate } from './subscriptionTypes';
-import { _UserRole } from './userRoleService';
+import { UserRole } from './userRoleService';
 
 // --- Type Definitions ---
 

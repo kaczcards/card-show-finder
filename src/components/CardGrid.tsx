@@ -9,8 +9,8 @@ import {
   Dimensions,
   Alert,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _UserCard } from '../types';
+import { Ionicons } from '@expo/vector-icons';
+import { UserCard } from '../types';
 
 interface CardGridProps {
   cards: UserCard[];

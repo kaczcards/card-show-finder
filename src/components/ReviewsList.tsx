@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _Review } from '../types';
+import { Ionicons } from '@expo/vector-icons';
+import { Review } from '../types';
 
 interface ReviewsListProps {
   reviews: Review[];

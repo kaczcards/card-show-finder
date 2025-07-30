@@ -13,16 +13,16 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 // Domain / context / services
-import { _useAuth } from '../../contexts/AuthContext';
-import { _UserRole } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
 import {
   _getUserWantList,
   _createWantList,
   _updateWantList,
   _shareWantList,
 } from '../../services/collectionService';
-import { _getUpcomingShows } from '../../services/showService';
-import { _supabase } from '../../supabase';
+import { getUpcomingShows } from '../../services/showService';
+import { supabase } from '../../supabase';
 // UI
 import WantListEditor from '../../components/WantListEditor';
 import AttendeeWantLists from '../../components/AttendeeWantLists';

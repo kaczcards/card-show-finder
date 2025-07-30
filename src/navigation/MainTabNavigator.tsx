@@ -1,16 +1,16 @@
 import React from 'react';
-import { _createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { _Ionicons } from '@expo/vector-icons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 
 // Import screen components
-import { _HomeScreen } from '../screens/Home';
-import { _MapScreen } from '../screens/Map';
+import { HomeScreen } from '../screens/Home';
+import { MapScreen } from '../screens/Map';
 import _CollectionScreen from '../screens/Collection';
 import _NotificationsScreen from '../screens/Notifications';
-import _ProfileNavigator from './_ProfileNavigator';
-import _OrganizerNavigator from './_OrganizerNavigator';
-import { _useAuth } from '../contexts/AuthContext';
-import { _UserRole } from '../types';
+import ProfileNavigator from './ProfileNavigator';
+import OrganizerNavigator from './OrganizerNavigator';
+import { useAuth } from '../contexts/AuthContext';
+import { UserRole } from '../types';
 
 // --- Define your brand colors for consistency ---
 const _BRAND_COLORS = {

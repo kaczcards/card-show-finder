@@ -9,14 +9,14 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { _Ionicons } from '@expo/vector-icons';
-import { _useNavigation } from '@react-navigation/native';
-import { _CommonActions } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
 import { Show, Review } from '../../types';
 import ReviewForm from '../../components/ReviewForm';
 import ReviewsList from '../../components/ReviewsList';
-import { _useAuth } from '../../contexts/AuthContext';
-import { _supabase } from '../../supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../supabase';
 
 /**
  * MyShowsScreen – Shows user's upcoming and past shows from:
