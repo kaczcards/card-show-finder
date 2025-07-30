@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, _useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,10 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { ShowSeries, Show } from '../types';
 import { showSeriesService } from '../services/showSeriesService';
 import { supabase } from '../supabase';
-import type { _OrganizerStackParamList } from '../navigation/OrganizerNavigator';
+import type { OrganizerStackParamList } from '../navigation/OrganizerNavigator';
 
 // Default placeholder shown when a show has no custom image
-const _placeholderShowImage = require('../../assets/images/placeholder-show.png');
+const placeholderShowImage = require('../../assets/images/placeholder-show.png');
 
 interface OrganizerShowsListProps {
   organizerId: string;
@@ -35,56 +35,56 @@ interface SeriesWithShows {
   nextShow?: Show | null;
 }
 
-const _OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListProps>(({
+const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListProps>(({
   organizerId,
-  _onRefresh,
-  _isRefreshing = false
-}, _ref) => {
-  const _navigation =
+  onRefresh,
+  isRefreshing = false
+}, ref) => {
+  const navigation =
     useNavigation<NavigationProp<OrganizerStackParamList>>();
   
   // State variables
-  const [_loading, setLoading] = useState<boolean>(true);
-  const [_error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [seriesList, setSeriesList] = useState<SeriesWithShows[]>([]);
   const [standaloneShows, setStandaloneShows] = useState<Show[]>([]);
   const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
   
   // Fetch organizer's shows using useCallback
-  const _fetchOrganizerShows = useCallback(async () => {
+  const fetchOrganizerShows = useCallback(async () => {
     if (!organizerId) return;
     
     try {
-      setLoading(_true);
-      setError(_null);
+      setLoading(true);
+      setError(null);
        
-console.warn('[_OrganizerShowsList] ➡️  Fetching organizer shows...');
+console.warn('[OrganizerShowsList] ➡️  Fetching organizer shows...');
 
       // 1️⃣  Get all series owned by this organizer
-      const _mySeries = await showSeriesService.getAllShowSeries({
+      const mySeries = await showSeriesService.getAllShowSeries({
         organizerId,
       });
 
       if (!Array.isArray(mySeries) || mySeries.length === 0) {
         console.warn(
-          `[_OrganizerShowsList] Organizer ${_organizerId} has no series.`,
+          `[OrganizerShowsList] Organizer ${organizerId} has no series.`,
         );
       }
 
       // 2️⃣  Process each series to get its shows – wrapped in try/catch
-      const _seriesWithShowsPromises = mySeries.map(async (_series) => {
+      const seriesWithShowsPromises = mySeries.map(async (series) => {
         try {
           if (!series?.id) {
-            console.warn('[_OrganizerShowsList] Series without ID detected:', _series);
+            console.warn('[OrganizerShowsList] Series without ID detected:', series);
             return undefined;
           }
           
-          const _showsInSeries = await showSeriesService.getShowsInSeries(
+          const showsInSeries = await showSeriesService.getShowsInSeries(
             series.id,
           );
           
           if (!Array.isArray(showsInSeries)) {
-            console.warn('[_OrganizerShowsList] Invalid shows array for series:', series.id);
+            console.warn('[OrganizerShowsList] Invalid shows array for series:', series.id);
             return {
               series,
               shows: [],
@@ -94,13 +94,13 @@ console.warn('[_OrganizerShowsList] ➡️  Fetching organizer shows...');
           }
         
           // Count upcoming shows and find the next show
-          const _now = new Date();
-          const _upcomingShows = showsInSeries.filter(show => 
+          const now = new Date();
+          const upcomingShows = showsInSeries.filter(show => 
             show?.startDate && new Date(show.startDate) > now
           );
           
           // Sort upcoming shows by date
-          upcomingShows.sort((_a, _b) => {
+          upcomingShows.sort((a, b) => {
             if (!a?.startDate) return 1;
             if (!b?.startDate) return -1;
             return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
@@ -110,11 +110,11 @@ console.warn('[_OrganizerShowsList] ➡️  Fetching organizer shows...');
             series,
             shows: showsInSeries,
             upcomingCount: upcomingShows.length,
-            nextShow: upcomingShows.length > 0 ? upcomingShows[_0] : null
+            nextShow: upcomingShows.length > 0 ? upcomingShows[0] : null
           };
-        } catch (_seriesErr) {
+        } catch (seriesErr) {
           console.error(
-            '[_OrganizerShowsList] Error while processing series:',
+            '[OrganizerShowsList] Error while processing series:',
             series?.id,
             seriesErr,
           );
@@ -124,16 +124,16 @@ console.warn('[_OrganizerShowsList] ➡️  Fetching organizer shows...');
       });
 
       // 3️⃣  Await all series promises – keep successes, log failures
-      const _settled = await Promise.allSettled(seriesWithShowsPromises);
+      const settled = await Promise.allSettled(seriesWithShowsPromises);
       const seriesWithShows: SeriesWithShows[] = [];
 
-      settled.forEach((_result, _idx) => {
+      settled.forEach((result, idx) => {
         if (result.status === 'fulfilled' && result.value) {
           seriesWithShows.push(result.value);
         } else if (result.status === 'rejected') {
           console.error(
-            '[_OrganizerShowsList] Promise rejected for series index',
-            _idx,
+            '[OrganizerShowsList] Promise rejected for series index',
+            idx,
             result.reason,
           );
         }
@@ -141,7 +141,7 @@ console.warn('[_OrganizerShowsList] ➡️  Fetching organizer shows...');
       
       // Sort series by next upcoming show date with defensive checks
       try {
-        seriesWithShows.sort((_a, _b) => {
+        seriesWithShows.sort((a, b) => {
           // Guard against undefined items
           if (!a || !b) return 0;
           
@@ -157,29 +157,29 @@ console.warn('[_OrganizerShowsList] ➡️  Fetching organizer shows...');
           // Safe comparison
           return new Date(a.nextShow.startDate).getTime() - new Date(b.nextShow.startDate).getTime();
         });
-      } catch (_sortErr) {
-        console.error('[_OrganizerShowsList] Error sorting series:', _sortErr);
+      } catch (sortErr) {
+        console.error('[OrganizerShowsList] Error sorting series:', sortErr);
         // Continue with unsorted list rather than crashing
       }
       
-      setSeriesList(_seriesWithShows);
+      setSeriesList(seriesWithShows);
       
       // Get standalone shows (not part of any series)
       // Query for shows where series_id is null and organizer_id matches
       const { data: standaloneData, error: standaloneError } = await supabase
         .from('shows')
         .select('*')
-        .eq('organizer_id', _organizerId)
-        .is('series_id', _null)
+        .eq('organizer_id', organizerId)
+        .is('series_id', null)
         .order('start_date', { ascending: true });
       
-      if (_standaloneError) {
-        console.error('Error fetching standalone shows:', _standaloneError);
+      if (standaloneError) {
+        console.error('Error fetching standalone shows:', standaloneError);
         throw new Error(`Failed to fetch standalone shows: ${standaloneError.message}`);
       }
       
       // Map the data to match the Show interface with robust null checks
-      const _mappedStandaloneShows = standaloneData?.map(show => {
+      const mappedStandaloneShows = standaloneData?.map(show => {
         // Extract coordinates safely
         let coordinates;
         try {
@@ -188,18 +188,18 @@ console.warn('[_OrganizerShowsList] ➡️  Fetching organizer shows...');
               Array.isArray(show.coordinates.coordinates) && 
               show.coordinates.coordinates.length >= 2) {
             coordinates = {
-              latitude: Number(show.coordinates.coordinates[_1]),
-              longitude: Number(show.coordinates.coordinates[_0])
+              latitude: Number(show.coordinates.coordinates[1]),
+              longitude: Number(show.coordinates.coordinates[0])
             };
             
             // Validate coordinates are actual numbers
             if (isNaN(coordinates.latitude) || isNaN(coordinates.longitude)) {
-              console.warn('[_OrganizerShowsList] Invalid coordinate values:', show.coordinates);
+              console.warn('[OrganizerShowsList] Invalid coordinate values:', show.coordinates);
               coordinates = undefined;
             }
           }
-        } catch (_coordErr) {
-          console.error('[_OrganizerShowsList] Error parsing coordinates:', _coordErr);
+        } catch (coordErr) {
+          console.error('[OrganizerShowsList] Error parsing coordinates:', coordErr);
           coordinates = undefined;
         }
         
@@ -226,8 +226,8 @@ console.warn('[_OrganizerShowsList] ➡️  Fetching organizer shows...');
       }) || [];
       
        
-console.warn(`[_OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${_organizerId}`);
-      setStandaloneShows(_mappedStandaloneShows);
+console.warn(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${organizerId}`);
+      setStandaloneShows(mappedStandaloneShows);
       
       // Initialize expanded state for all series
       const initialExpandedState: Record<string, boolean> = {};
@@ -241,74 +241,74 @@ console.warn(`[_OrganizerShowsList] Fetched ${mappedStandaloneShows.length} stan
           initialExpandedState[item.series.id] = false;
         } else {
           console.warn(
-            '[_OrganizerShowsList] Skipping series without valid id:',
+            '[OrganizerShowsList] Skipping series without valid id:',
             item?.series
           );
         }
       });
-      setExpandedSeries(_initialExpandedState);
+      setExpandedSeries(initialExpandedState);
       
-    } catch (_err) {
-      console.error('Error fetching organizer shows:', _err);
+    } catch (err) {
+      console.error('Error fetching organizer shows:', err);
       setError('Failed to load your shows. Please try again.');
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
-  }, [_organizerId]);
+  }, [organizerId]);
   
   // Expose the refetch function to parent components
-  useImperativeHandle(_ref, () => ({
+  useImperativeHandle(ref, () => ({
     refetch: fetchOrganizerShows
   }));
   
   // Initial data fetch
   useEffect(() => {
     fetchOrganizerShows();
-  }, [_fetchOrganizerShows]);
+  }, [fetchOrganizerShows]);
   
   // Toggle series expansion
-  const _toggleSeriesExpansion = (seriesId: string) => {
+  const toggleSeriesExpansion = (seriesId: string) => {
     if (!seriesId) {
-      console.warn('[_OrganizerShowsList] Attempted to toggle undefined seriesId');
+      console.warn('[OrganizerShowsList] Attempted to toggle undefined seriesId');
       return;
     }
     
     setExpandedSeries(prev => ({
       ...prev,
-      [_seriesId]: !prev[_seriesId]
+      [seriesId]: !prev[seriesId]
     }));
   };
   
   // Format date for display
-  const _formatShowDate = (dateString: string | Date) => {
+  const formatShowDate = (dateString: string | Date) => {
     if (!dateString) return 'Date not set';
     
     try {
-      const _date = new Date(_dateString);
+      const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
         day: 'numeric'
       });
-    } catch (_err) {
-      console.warn('[_OrganizerShowsList] Error formatting date:', _dateString, err);
+    } catch (err) {
+      console.warn('[OrganizerShowsList] Error formatting date:', dateString, err);
       return 'Invalid date';
     }
   };
   
   // Navigate to edit show
-  const _handleEditShow = (show: Show) => {
+  const handleEditShow = (show: Show) => {
     if (!show?.id) {
-      console.warn('[_OrganizerShowsList] Attempted to edit show without ID');
+      console.warn('[OrganizerShowsList] Attempted to edit show without ID');
       return;
     }
     navigation.navigate('EditShow', { showId: show.id });
   };
   
   // Navigate to send message
-  const _handleSendMessage = (show: Show) => {
+  const handleSendMessage = (show: Show) => {
     if (!show?.id) {
-      console.warn('[_OrganizerShowsList] Attempted to send message for show without ID');
+      console.warn('[OrganizerShowsList] Attempted to send message for show without ID');
       return;
     }
     navigation.navigate('SendBroadcast', { 
@@ -318,9 +318,9 @@ console.warn(`[_OrganizerShowsList] Fetched ${mappedStandaloneShows.length} stan
   };
   
   // Handle canceling a show
-  const _handleCancelShow = (show: Show) => {
+  const handleCancelShow = (show: Show) => {
     if (!show?.id) {
-      console.warn('[_OrganizerShowsList] Attempted to cancel show without ID');
+      console.warn('[OrganizerShowsList] Attempted to cancel show without ID');
       return;
     }
     // To be implemented - show confirmation dialog and call API
@@ -329,22 +329,22 @@ console.warn('Cancel show:', show.id);
   };
   
   // Navigate to series details
-  const _handleViewSeries = (series: ShowSeries) => {
+  const handleViewSeries = (series: ShowSeries) => {
     if (!series?.id) {
-      console.warn('[_OrganizerShowsList] Attempted to view series without ID');
+      console.warn('[OrganizerShowsList] Attempted to view series without ID');
       return;
     }
     navigation.navigate('SeriesDetail', { seriesId: series.id });
   };
   
   // Render a show item
-  const _renderShowItem = (show: Show) => {
+  const renderShowItem = (show: Show) => {
     if (!show) {
-      console.warn('[_OrganizerShowsList] Attempted to render undefined show');
+      console.warn('[OrganizerShowsList] Attempted to render undefined show');
       return null;
     }
     
-    const _isPastShow = show.endDate && new Date(show.endDate) < new Date();
+    const isPastShow = show.endDate && new Date(show.endDate) < new Date();
     
     return (
       <View style={[
@@ -366,26 +366,26 @@ console.warn('Cancel show:', show.id);
         <View style={styles.showActions}>
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => handleEditShow(_show)}
+            onPress={() => handleEditShow(show)}
           >
-            <Ionicons name="create-outline" size={_16} color="#0057B8" />
+            <Ionicons name="create-outline" size={16} color="#0057B8" />
             <Text style={styles.actionButtonText}>Edit</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => handleSendMessage(_show)}
+            onPress={() => handleSendMessage(show)}
           >
-            <Ionicons name="mail-outline" size={_16} color="#0057B8" />
+            <Ionicons name="mail-outline" size={16} color="#0057B8" />
             <Text style={styles.actionButtonText}>Message</Text>
           </TouchableOpacity>
           
           {!isPastShow && (
             <TouchableOpacity 
               style={[styles.actionButton, styles.cancelButton]}
-              onPress={() => handleCancelShow(_show)}
+              onPress={() => handleCancelShow(show)}
             >
-              <Ionicons name="close-circle-outline" size={_16} color="#FF3B30" />
+              <Ionicons name="close-circle-outline" size={16} color="#FF3B30" />
               <Text style={[styles.actionButtonText, styles.cancelButtonText]}>Cancel</Text>
             </TouchableOpacity>
           )}
@@ -395,21 +395,21 @@ console.warn('Cancel show:', show.id);
   };
   
   // Render a series item with its shows
-  const _renderSeriesItem = ({ _item }: { item: SeriesWithShows }) => {
+  const renderSeriesItem = ({ item }: { item: SeriesWithShows }) => {
     // Guard against undefined item or series
     if (!item || !item.series) {
-      console.warn('[_OrganizerShowsList] Attempted to render undefined series item');
+      console.warn('[OrganizerShowsList] Attempted to render undefined series item');
       return null;
     }
     
     // Safely extract properties with defaults
-    const _series = item.series;
-    const _shows = Array.isArray(item.shows) ? item.shows : [];
-    const _upcomingCount = item.upcomingCount || 0;
-    const _nextShow = item.nextShow;
+    const series = item.series;
+    const shows = Array.isArray(item.shows) ? item.shows : [];
+    const upcomingCount = item.upcomingCount || 0;
+    const nextShow = item.nextShow;
     
     // Safely access expanded state
-    const _isExpanded = series.id ? (expandedSeries[series.id] || false) : false;
+    const isExpanded = series.id ? (expandedSeries[series.id] || false) : false;
     
     return (
       <View style={styles.seriesContainer}>
@@ -423,22 +423,22 @@ console.warn('Cancel show:', show.id);
             <Text style={styles.seriesName}>{series.name || 'Unnamed Series'}</Text>
             <View style={styles.seriesStats}>
               <View style={styles.statItem}>
-                <Ionicons name="calendar" size={_14} color="#666666" style={styles.statIcon} />
+                <Ionicons name="calendar" size={14} color="#666666" style={styles.statIcon} />
                 <Text style={styles.statText}>
                   {shows.length} {shows.length === 1 ? 'show' : 'shows'}
                 </Text>
               </View>
               
               <View style={styles.statItem}>
-                <Ionicons name="time" size={_14} color="#666666" style={styles.statIcon} />
+                <Ionicons name="time" size={14} color="#666666" style={styles.statIcon} />
                 <Text style={styles.statText}>
-                  {_upcomingCount} upcoming
+                  {upcomingCount} upcoming
                 </Text>
               </View>
               
               {series.averageRating && (
                 <View style={styles.statItem}>
-                  <Ionicons name="star" size={_14} color="#FFD700" style={styles.statIcon} />
+                  <Ionicons name="star" size={14} color="#FFD700" style={styles.statIcon} />
                   <Text style={styles.statText}>
                     {series.averageRating.toFixed(1)}
                   </Text>
@@ -450,7 +450,7 @@ console.warn('Cancel show:', show.id);
           <View style={styles.seriesActions}>
             <TouchableOpacity 
               style={styles.viewSeriesButton}
-              onPress={() => handleViewSeries(_series)}
+              onPress={() => handleViewSeries(series)}
               disabled={!series.id}
             >
               <Text style={styles.viewSeriesText}>View Series</Text>
@@ -458,7 +458,7 @@ console.warn('Cancel show:', show.id);
             
             <Ionicons 
               name={isExpanded ? "chevron-up" : "chevron-down"} 
-              size={_24} 
+              size={24} 
               color="#666666" 
             />
           </View>
@@ -468,7 +468,7 @@ console.warn('Cancel show:', show.id);
         {!isExpanded && nextShow && (
           <View style={styles.nextShowPreview}>
             <View style={styles.nextShowHeader}>
-              <Ionicons name="calendar" size={_16} color="#0057B8" style={styles.nextShowIcon} />
+              <Ionicons name="calendar" size={16} color="#0057B8" style={styles.nextShowIcon} />
               <Text style={styles.nextShowLabel}>Next Show:</Text>
               <Text style={styles.nextShowDate}>{formatShowDate(nextShow.startDate)}</Text>
             </View>
@@ -479,17 +479,17 @@ console.warn('Cancel show:', show.id);
             <View style={styles.showActions}>
               <TouchableOpacity 
                 style={styles.actionButton}
-                onPress={() => handleEditShow(_nextShow)}
+                onPress={() => handleEditShow(nextShow)}
               >
-                <Ionicons name="create-outline" size={_16} color="#0057B8" />
+                <Ionicons name="create-outline" size={16} color="#0057B8" />
                 <Text style={styles.actionButtonText}>Edit</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={styles.actionButton}
-                onPress={() => handleSendMessage(_nextShow)}
+                onPress={() => handleSendMessage(nextShow)}
               >
-                <Ionicons name="mail-outline" size={_16} color="#0057B8" />
+                <Ionicons name="mail-outline" size={16} color="#0057B8" />
                 <Text style={styles.actionButtonText}>Message</Text>
               </TouchableOpacity>
             </View>
@@ -514,7 +514,7 @@ console.warn('Cancel show:', show.id);
                 style={styles.addShowButton}
                 onPress={() => navigation.navigate('AddShow', { seriesId: series.id })}
               >
-                <Ionicons name="add-circle" size={_16} color="#FFFFFF" style={styles.addShowIcon} />
+                <Ionicons name="add-circle" size={16} color="#FFFFFF" style={styles.addShowIcon} />
                 <Text style={styles.addShowText}>Add Show to Series</Text>
               </TouchableOpacity>
             )}
@@ -525,7 +525,7 @@ console.warn('Cancel show:', show.id);
   };
   
   // Loading state
-  if (_loading) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF6A00" />
@@ -535,14 +535,14 @@ console.warn('Cancel show:', show.id);
   }
   
   // Error state
-  if (_error) {
+  if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={_40} color="#FF6A00" />
-        <Text style={styles.errorText}>{_error}</Text>
+        <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
+        <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={_fetchOrganizerShows}
+          onPress={fetchOrganizerShows}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -555,7 +555,7 @@ console.warn('Cancel show:', show.id);
     return (
       <View style={styles.emptyContainer}>
         <Image 
-          source={_placeholderShowImage} 
+          source={placeholderShowImage} 
           style={styles.emptyImage}
           resizeMode="contain"
         />
@@ -580,9 +580,9 @@ console.warn('Cancel show:', show.id);
        * Use only series items that have a valid ID to avoid runtime errors
        * ----------------------------------------------------------------*/
       data={seriesList.filter(item => item?.series?.id)}
-      renderItem={_renderSeriesItem}
-      keyExtractor={(_item, _index) =>
-        item?.series?.id ?? `invalid-series-${_index}`
+      renderItem={renderSeriesItem}
+      keyExtractor={(item, index) =>
+        item?.series?.id ?? `invalid-series-${index}`
       }
       contentContainerStyle={styles.listContainer}
       ListHeaderComponent={
@@ -603,13 +603,13 @@ console.warn('Cancel show:', show.id);
           </View>
         ) : null
       }
-      refreshing={_isRefreshing}
+      refreshing={isRefreshing}
       onRefresh={onRefresh || fetchOrganizerShows}
     />
   );
 });
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
   },
