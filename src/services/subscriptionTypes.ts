@@ -1,5 +1,5 @@
 // src/services/subscriptionTypes.ts
-import { UserRole } from './userRoleService';
+import { _UserRole } from './userRoleService';
 
 /**
  * Subscription plan types available in the app
@@ -28,7 +28,7 @@ export interface SubscriptionPlan {
   price: number; // Price in USD
   duration: SubscriptionDuration; // Duration in months
   features: string[];
-  /** Free-trial length in days (optional, e.g. 7-day trial) */
+  /** Free-trial length in days (_optional, e.g. 7-day trial) */
   trialDays?: number;
   isPopular?: boolean;
 }
@@ -51,7 +51,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: 'mvp-dealer-monthly',
     type: SubscriptionPlanType.DEALER,
     name: 'MVP Dealer Monthly',
-    description: 'Preview inventory, interact with collectors & more (monthly)',
+    description: 'Preview inventory, interact with collectors & more (_monthly)',
     price: 29,
     duration: SubscriptionDuration.MONTHLY,
     trialDays: 7,
@@ -59,7 +59,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       'Preview inventory for upcoming shows you attend',
       'Interact with collectors planning to attend those shows',
       'View want lists of collectors within a 25-mile radius',
-      'Share external links (website, eBay, WhatNot, etc.)',
+      'Share external links (_website, _eBay, WhatNot, etc.)',
       'Dealer badge on profile'
     ]
   },
@@ -76,7 +76,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       'Preview inventory for upcoming shows you attend',
       'Interact with collectors planning to attend those shows',
       'View want lists of collectors within a 25-mile radius',
-      'Share external links (website, eBay, WhatNot, etc.)',
+      'Share external links (_website, _eBay, WhatNot, etc.)',
       'Dealer badge on profile',
       'Featured dealer status'
     ]
@@ -128,12 +128,12 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
  * @param plan The subscription plan
  * @returns Date when the subscription will expire
  */
-export const calculateExpiryDate = (plan: SubscriptionPlan): Date => {
-  const now = new Date();
+export const _calculateExpiryDate = (plan: SubscriptionPlan): Date => {
+  const _now = new Date();
 
   // We purposely ignore `trialDays` here; trials are applied in higher-level
   // payment logic.  This helper strictly converts *paid* duration → expiry.
-  const MS_IN_DAY = 24 * 60 * 60 * 1000;
+  const _MS_IN_DAY = 24 * 60 * 60 * 1000;
 
   let daysToAdd: number;
   switch (plan.duration) {

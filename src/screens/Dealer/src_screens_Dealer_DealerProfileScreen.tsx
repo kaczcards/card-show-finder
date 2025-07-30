@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Switch, Platform, Linking,  } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, _Switch, _Platform, Linking,  } from 'react-native';
+import { _SafeAreaView } from 'react-native-safe-area-context';
+import { _Ionicons } from '@expo/vector-icons';
+import { _useAuth } from '../../contexts/AuthContext';
 import { CardCategory, UserRole } from '../../types';
-import { supabase } from '../../supabase';
-import { useNavigation } from '@react-navigation/native';
+import { _supabase } from '../../supabase';
+import { _useNavigation } from '@react-navigation/native';
 
 // Define the dealer profile data structure
 interface DealerProfile {
@@ -26,15 +26,15 @@ interface DealerProfile {
 }
 
 const DealerProfileScreen: React.FC = () => {
-  const { authState } = useAuth();
-  const { user, isLoading: authLoading } = authState;
-  const navigation = useNavigation();
+  const { _authState } = useAuth();
+  const { user, isLoading: _authLoading } = authState;
+  const _navigation = useNavigation();
 
   // State for dealer profile
   const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(_true);
+  const [isEditMode, setIsEditMode] = useState(_false);
+  const [isSaving, setIsSaving] = useState(_false);
   const [error, setError] = useState<string | null>(null);
 
   // Form state
@@ -54,15 +54,15 @@ const DealerProfileScreen: React.FC = () => {
     if (user?.id) {
       fetchDealerProfile();
     } else {
-      setIsLoading(false);
+      setIsLoading(_false);
     }
   }, [user?.id]);
 
   // Fetch dealer profile from Supabase
-  const fetchDealerProfile = async () => {
+  const _fetchDealerProfile = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsLoading(_true);
+      setError(_null);
 
       const { data, error } = await supabase
         .from('dealer_profiles')
@@ -75,7 +75,7 @@ const DealerProfileScreen: React.FC = () => {
         throw error;
       }
 
-      if (data) {
+      if (_data) {
         setDealerProfile(data as unknown as DealerProfile);
         // Initialize form state with existing data
         setBusinessName(data.business_name || '');
@@ -93,16 +93,16 @@ const DealerProfileScreen: React.FC = () => {
         resetForm();
       }
     } catch (err: any) {
-      console.error('Error fetching dealer profile:', err);
+      console.error('Error fetching dealer profile:', _err);
       setError(err.message || 'Failed to load dealer profile');
     } finally {
-      setIsLoading(false);
+      setIsLoading(_false);
     }
   };
 
   // Reset form to initial values or empty
-  const resetForm = () => {
-    if (dealerProfile) {
+  const _resetForm = () => {
+    if (_dealerProfile) {
       // Reset to existing profile data
       setBusinessName(dealerProfile.businessName || '');
       setDescription(dealerProfile.description || '');
@@ -130,8 +130,8 @@ const DealerProfileScreen: React.FC = () => {
   };
 
   // Toggle edit mode
-  const toggleEditMode = () => {
-    if (isEditMode) {
+  const _toggleEditMode = () => {
+    if (_isEditMode) {
       // Cancel edit - reset form to original values
       resetForm();
     }
@@ -139,7 +139,7 @@ const DealerProfileScreen: React.FC = () => {
   };
 
   // Toggle category selection
-  const toggleCategory = (category: string) => {
+  const _toggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
       setSelectedCategories(selectedCategories.filter(c => c !== category));
     } else {
@@ -148,7 +148,7 @@ const DealerProfileScreen: React.FC = () => {
   };
 
   // Validate form inputs
-  const validateForm = () => {
+  const _validateForm = () => {
     // Business name is required
     if (!businessName.trim()) {
       Alert.alert('Error', 'Business name is required');
@@ -158,12 +158,12 @@ const DealerProfileScreen: React.FC = () => {
     // Website URL validation (if provided)
     if (websiteUrl.trim()) {
       try {
-        const url = new URL(websiteUrl);
+        const _url = new URL(_websiteUrl);
         if (!url.protocol.startsWith('http')) {
           Alert.alert('Error', 'Website URL must start with http:// or https://');
           return false;
         }
-      } catch (e) {
+      } catch (_e) {
         Alert.alert('Error', 'Please enter a valid website URL');
         return false;
       }
@@ -171,7 +171,7 @@ const DealerProfileScreen: React.FC = () => {
 
     // Email validation (if provided)
     if (businessEmail.trim()) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const _emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(businessEmail)) {
         Alert.alert('Error', 'Please enter a valid email address');
         return false;
@@ -180,7 +180,7 @@ const DealerProfileScreen: React.FC = () => {
 
     // Phone validation (if provided)
     if (businessPhone.trim()) {
-      const phoneRegex = /^\d{10}$/;
+      const _phoneRegex = /^\d{_10}$/;
       if (!phoneRegex.test(businessPhone.replace(/\D/g, ''))) {
         Alert.alert('Error', 'Please enter a valid 10-digit phone number');
         return false;
@@ -203,16 +203,16 @@ const DealerProfileScreen: React.FC = () => {
   };
 
   // Save dealer profile
-  const saveProfile = async () => {
+  const _saveProfile = async () => {
     if (!validateForm()) {
       return;
     }
 
     try {
-      setIsSaving(true);
-      setError(null);
+      setIsSaving(_true);
+      setError(_null);
 
-      const profileData = {
+      const _profileData = {
         user_id: user?.id,
         business_name: businessName.trim(),
         description: description.trim(),
@@ -228,7 +228,7 @@ const DealerProfileScreen: React.FC = () => {
       };
 
       let result;
-      if (dealerProfile) {
+      if (_dealerProfile) {
         // Update existing profile
         result = await supabase
           .from('dealer_profiles')
@@ -250,44 +250,44 @@ const DealerProfileScreen: React.FC = () => {
 
       // Refresh dealer profile data
       await fetchDealerProfile();
-      setIsEditMode(false);
+      setIsEditMode(_false);
       Alert.alert('Success', 'Dealer profile saved successfully');
     } catch (err: any) {
-      console.error('Error saving dealer profile:', err);
+      console.error('Error saving dealer profile:', _err);
       setError(err.message || 'Failed to save dealer profile');
       Alert.alert('Error', 'Failed to save dealer profile. Please try again.');
     } finally {
-      setIsSaving(false);
+      setIsSaving(_false);
     }
   };
 
   // Format phone number for display
-  const formatPhoneNumber = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, '');
+  const _formatPhoneNumber = (phone: string) => {
+    const _cleaned = phone.replace(/\D/g, '');
     if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+      return `(${cleaned.slice(0, _3)}) ${cleaned.slice(3, _6)}-${cleaned.slice(6)}`;
     }
     return phone;
   };
 
   // Open URL in browser
-  const openUrl = (url: string) => {
+  const _openUrl = (url: string) => {
     if (!url) return;
     
     // Add http:// if missing
-    let finalUrl = url;
+    let _finalUrl = url;
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      finalUrl = `https://${url}`;
+      finalUrl = `https://${_url}`;
     }
     
-    Linking.openURL(finalUrl).catch(err => {
-      console.error('Error opening URL:', err);
+    Linking.openURL(finalUrl).catch(_err => {
+      console.error('Error opening URL:', _err);
       Alert.alert('Error', 'Could not open the URL');
     });
   };
 
   // Check if user is a dealer
-  const isDealer = () => {
+  const _isDealer = () => {
     return (
       user?.role === UserRole.DEALER ||
       user?.role === UserRole.MVP_DEALER ||
@@ -296,25 +296,25 @@ const DealerProfileScreen: React.FC = () => {
   };
 
   // Render category checkbox
-  const renderCategoryCheckbox = (category: string) => {
-    const isSelected = selectedCategories.includes(category);
+  const _renderCategoryCheckbox = (category: string) => {
+    const _isSelected = selectedCategories.includes(category);
     
     return (
       <TouchableOpacity
         style={styles.categoryItem}
-        onPress={() => toggleCategory(category)}
+        onPress={() => toggleCategory(_category)}
         disabled={!isEditMode || isSaving}
       >
         <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-          {isSelected && <Ionicons name="checkmark" size={16} color="white" />}
+          {isSelected && <Ionicons name="checkmark" size={_16} color="white" />}
         </View>
-        <Text style={styles.categoryText}>{category}</Text>
+        <Text style={styles.categoryText}>{_category}</Text>
       </TouchableOpacity>
     );
   };
 
   // If auth is still loading or user is not authenticated
-  if (authLoading) {
+  if (_authLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0057B8" />
@@ -328,7 +328,7 @@ const DealerProfileScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <View style={styles.notDealerContainer}>
-          <Ionicons name="alert-circle-outline" size={60} color="#666" />
+          <Ionicons name="alert-circle-outline" size={_60} color="#666" />
           <Text style={styles.notDealerTitle}>Dealer Access Only</Text>
           <Text style={styles.notDealerText}>
             This section is only available to users with a dealer subscription.
@@ -358,12 +358,12 @@ const DealerProfileScreen: React.FC = () => {
           
           <TouchableOpacity
             style={styles.editButton}
-            onPress={toggleEditMode}
-            disabled={isSaving}
+            onPress={_toggleEditMode}
+            disabled={_isSaving}
           >
             <Ionicons
               name={isEditMode ? "close-outline" : "create-outline"}
-              size={20}
+              size={_20}
               color="white"
             />
             <Text style={styles.editButtonText}>
@@ -389,8 +389,8 @@ const DealerProfileScreen: React.FC = () => {
                     <Text style={styles.inputLabel}>Business/Store Name *</Text>
                     <TextInput
                       style={styles.input}
-                      value={businessName}
-                      onChangeText={setBusinessName}
+                      value={_businessName}
+                      onChangeText={_setBusinessName}
                       placeholder="Your business or store name"
                       editable={!isSaving}
                     />
@@ -400,11 +400,11 @@ const DealerProfileScreen: React.FC = () => {
                     <Text style={styles.inputLabel}>Description/Bio</Text>
                     <TextInput
                       style={[styles.input, styles.textArea]}
-                      value={description}
-                      onChangeText={setDescription}
+                      value={_description}
+                      onChangeText={_setDescription}
                       placeholder="Tell collectors about your business..."
                       multiline
-                      numberOfLines={4}
+                      numberOfLines={_4}
                       textAlignVertical="top"
                       editable={!isSaving}
                     />
@@ -414,8 +414,8 @@ const DealerProfileScreen: React.FC = () => {
                     <Text style={styles.inputLabel}>Website URL</Text>
                     <TextInput
                       style={styles.input}
-                      value={websiteUrl}
-                      onChangeText={setWebsiteUrl}
+                      value={_websiteUrl}
+                      onChangeText={_setWebsiteUrl}
                       placeholder="https://yourbusiness.com"
                       autoCapitalize="none"
                       keyboardType="url"
@@ -427,8 +427,8 @@ const DealerProfileScreen: React.FC = () => {
                     <Text style={styles.inputLabel}>Business Email</Text>
                     <TextInput
                       style={styles.input}
-                      value={businessEmail}
-                      onChangeText={setBusinessEmail}
+                      value={_businessEmail}
+                      onChangeText={_setBusinessEmail}
                       placeholder="contact@yourbusiness.com"
                       autoCapitalize="none"
                       keyboardType="email-address"
@@ -440,8 +440,8 @@ const DealerProfileScreen: React.FC = () => {
                     <Text style={styles.inputLabel}>Business Phone</Text>
                     <TextInput
                       style={styles.input}
-                      value={businessPhone}
-                      onChangeText={setBusinessPhone}
+                      value={_businessPhone}
+                      onChangeText={_setBusinessPhone}
                       placeholder="(123) 456-7890"
                       keyboardType="phone-pad"
                       editable={!isSaving}
@@ -460,15 +460,15 @@ const DealerProfileScreen: React.FC = () => {
                   {description ? (
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>Description:</Text>
-                      <Text style={styles.infoValue}>{description}</Text>
+                      <Text style={styles.infoValue}>{_description}</Text>
                     </View>
                   ) : null}
                   
                   {websiteUrl ? (
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>Website:</Text>
-                      <TouchableOpacity onPress={() => openUrl(websiteUrl)}>
-                        <Text style={styles.infoLink}>{websiteUrl}</Text>
+                      <TouchableOpacity onPress={() => openUrl(_websiteUrl)}>
+                        <Text style={styles.infoLink}>{_websiteUrl}</Text>
                       </TouchableOpacity>
                     </View>
                   ) : null}
@@ -477,9 +477,9 @@ const DealerProfileScreen: React.FC = () => {
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>Email:</Text>
                       <TouchableOpacity
-                        onPress={() => Linking.openURL(`mailto:${businessEmail}`)}
+                        onPress={() => Linking.openURL(`mailto:${_businessEmail}`)}
                       >
-                        <Text style={styles.infoLink}>{businessEmail}</Text>
+                        <Text style={styles.infoLink}>{_businessEmail}</Text>
                       </TouchableOpacity>
                     </View>
                   ) : null}
@@ -488,7 +488,7 @@ const DealerProfileScreen: React.FC = () => {
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>Phone:</Text>
                       <TouchableOpacity
-                        onPress={() => Linking.openURL(`tel:${businessPhone}`)}
+                        onPress={() => Linking.openURL(`tel:${_businessPhone}`)}
                       >
                         <Text style={styles.infoLink}>
                           {formatPhoneNumber(businessPhone)}
@@ -512,8 +512,8 @@ const DealerProfileScreen: React.FC = () => {
                       <Text style={styles.socialPrefix}>instagram.com/</Text>
                       <TextInput
                         style={styles.socialInput}
-                        value={instagramUrl}
-                        onChangeText={setInstagramUrl}
+                        value={_instagramUrl}
+                        onChangeText={_setInstagramUrl}
                         placeholder="username"
                         autoCapitalize="none"
                         editable={!isSaving}
@@ -527,8 +527,8 @@ const DealerProfileScreen: React.FC = () => {
                       <Text style={styles.socialPrefix}>twitter.com/</Text>
                       <TextInput
                         style={styles.socialInput}
-                        value={twitterUrl}
-                        onChangeText={setTwitterUrl}
+                        value={_twitterUrl}
+                        onChangeText={_setTwitterUrl}
                         placeholder="username"
                         autoCapitalize="none"
                         editable={!isSaving}
@@ -542,8 +542,8 @@ const DealerProfileScreen: React.FC = () => {
                       <Text style={styles.socialPrefix}>facebook.com/</Text>
                       <TextInput
                         style={styles.socialInput}
-                        value={facebookUrl}
-                        onChangeText={setFacebookUrl}
+                        value={_facebookUrl}
+                        onChangeText={_setFacebookUrl}
                         placeholder="username"
                         autoCapitalize="none"
                         editable={!isSaving}
@@ -559,10 +559,10 @@ const DealerProfileScreen: React.FC = () => {
                         <TouchableOpacity
                           style={styles.socialButton}
                           onPress={() =>
-                            openUrl(`https://instagram.com/${instagramUrl}`)
+                            openUrl(`https://instagram.com/${_instagramUrl}`)
                           }
                         >
-                          <Ionicons name="logo-instagram" size={24} color="#E1306C" />
+                          <Ionicons name="logo-instagram" size={_24} color="#E1306C" />
                           <Text style={styles.socialButtonText}>Instagram</Text>
                         </TouchableOpacity>
                       )}
@@ -570,9 +570,9 @@ const DealerProfileScreen: React.FC = () => {
                       {twitterUrl && (
                         <TouchableOpacity
                           style={styles.socialButton}
-                          onPress={() => openUrl(`https://twitter.com/${twitterUrl}`)}
+                          onPress={() => openUrl(`https://twitter.com/${_twitterUrl}`)}
                         >
-                          <Ionicons name="logo-twitter" size={24} color="#1DA1F2" />
+                          <Ionicons name="logo-twitter" size={_24} color="#1DA1F2" />
                           <Text style={styles.socialButtonText}>Twitter</Text>
                         </TouchableOpacity>
                       )}
@@ -581,10 +581,10 @@ const DealerProfileScreen: React.FC = () => {
                         <TouchableOpacity
                           style={styles.socialButton}
                           onPress={() =>
-                            openUrl(`https://facebook.com/${facebookUrl}`)
+                            openUrl(`https://facebook.com/${_facebookUrl}`)
                           }
                         >
-                          <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+                          <Ionicons name="logo-facebook" size={_24} color="#4267B2" />
                           <Text style={styles.socialButtonText}>Facebook</Text>
                         </TouchableOpacity>
                       )}
@@ -605,8 +605,8 @@ const DealerProfileScreen: React.FC = () => {
               
               {isEditMode ? (
                 <View style={styles.categoriesContainer}>
-                  {Object.values(CardCategory).map(category => 
-                    renderCategoryCheckbox(category)
+                  {Object.values(CardCategory).map(_category => 
+                    renderCategoryCheckbox(_category)
                   )}
                   
                   {/* Other Categories Input */}
@@ -615,9 +615,9 @@ const DealerProfileScreen: React.FC = () => {
                       <Text style={styles.inputLabel}>Specify Other Categories</Text>
                       <TextInput
                         style={styles.input}
-                        value={otherCategories}
-                        onChangeText={setOtherCategories}
-                        placeholder="E.g., Vintage, Non-Sports, etc."
+                        value={_otherCategories}
+                        onChangeText={_setOtherCategories}
+                        placeholder="E.g., _Vintage, Non-Sports, etc."
                         editable={!isSaving}
                       />
                     </View>
@@ -627,9 +627,9 @@ const DealerProfileScreen: React.FC = () => {
                 <View style={styles.viewForm}>
                   {selectedCategories.length > 0 ? (
                     <View style={styles.categoriesList}>
-                      {selectedCategories.map((category, index) => (
-                        <View key={index} style={styles.categoryBadge}>
-                          <Text style={styles.categoryBadgeText}>{category}</Text>
+                      {selectedCategories.map((_category, _index) => (
+                        <View key={_index} style={styles.categoryBadge}>
+                          <Text style={styles.categoryBadgeText}>{_category}</Text>
                         </View>
                       ))}
                       
@@ -637,7 +637,7 @@ const DealerProfileScreen: React.FC = () => {
                         otherCategories && (
                           <View style={styles.otherCategoriesView}>
                             <Text style={styles.infoLabel}>Other Categories:</Text>
-                            <Text style={styles.infoValue}>{otherCategories}</Text>
+                            <Text style={styles.infoValue}>{_otherCategories}</Text>
                           </View>
                         )}
                     </View>
@@ -653,14 +653,14 @@ const DealerProfileScreen: React.FC = () => {
               <View style={styles.actionButtons}>
                 <TouchableOpacity
                   style={[styles.saveButton, isSaving && styles.disabledButton]}
-                  onPress={saveProfile}
-                  disabled={isSaving}
+                  onPress={_saveProfile}
+                  disabled={_isSaving}
                 >
                   {isSaving ? (
                     <ActivityIndicator size="small" color="white" />
                   ) : (
                     <>
-                      <Ionicons name="save-outline" size={20} color="white" />
+                      <Ionicons name="save-outline" size={_20} color="white" />
                       <Text style={styles.saveButtonText}>Save Profile</Text>
                     </>
                   )}
@@ -668,10 +668,10 @@ const DealerProfileScreen: React.FC = () => {
                 
                 <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={toggleEditMode}
-                  disabled={isSaving}
+                  onPress={_toggleEditMode}
+                  disabled={_isSaving}
                 >
-                  <Ionicons name="close-outline" size={20} color="#666" />
+                  <Ionicons name="close-outline" size={_20} color="#666" />
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
@@ -680,8 +680,8 @@ const DealerProfileScreen: React.FC = () => {
             {/* Error Message */}
             {error && (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={20} color="#FF3B30" />
-                <Text style={styles.errorText}>{error}</Text>
+                <Ionicons name="alert-circle-outline" size={_20} color="#FF3B30" />
+                <Text style={styles.errorText}>{_error}</Text>
               </View>
             )}
           </>
@@ -691,7 +691,7 @@ const DealerProfileScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
@@ -723,14 +723,14 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, _255, 255, 0.8)',
     textAlign: 'center',
     marginBottom: 16,
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, _255, 255, 0.2)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,

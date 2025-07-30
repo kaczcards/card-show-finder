@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 
 interface ShowManagementButtonsProps {
   isShowOrganizer: boolean;
@@ -12,24 +12,24 @@ interface ShowManagementButtonsProps {
 
 const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
   isShowOrganizer,
-  isCurrentUserOrganizer,
+  _isCurrentUserOrganizer,
   isClaimingShow,
-  onClaimShow,
-  onEditShow,
+  _onClaimShow,
+  _onEditShow,
 }) => {
   return (
     <View style={styles.container}>
       {isShowOrganizer && !isCurrentUserOrganizer && (
         <TouchableOpacity 
           style={styles.claimShowButton} 
-          onPress={onClaimShow} 
-          disabled={isClaimingShow}
+          onPress={_onClaimShow} 
+          disabled={_isClaimingShow}
         >
           {isClaimingShow ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="flag" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Ionicons name="flag" size={_20} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>Claim This Show</Text>
             </>
           )}
@@ -37,8 +37,8 @@ const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
       )}
 
       {isCurrentUserOrganizer && (
-        <TouchableOpacity style={styles.editShowButton} onPress={onEditShow}>
-          <Ionicons name="create" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+        <TouchableOpacity style={styles.editShowButton} onPress={_onEditShow}>
+          <Ionicons name="create" size={_20} color="#FFFFFF" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Edit Show Details</Text>
         </TouchableOpacity>
       )}
@@ -46,7 +46,7 @@ const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     marginVertical: 8,
   },

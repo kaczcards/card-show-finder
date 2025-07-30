@@ -6,10 +6,10 @@
  */
 
 // Base unit for spacing (in pixels)
-const BASE_UNIT = 4;
+const _BASE_UNIT = 4;
 
 // Spacing scale - multipliers of the base unit
-export const spacing = {
+export const _spacing = {
   xs: BASE_UNIT,          // 4px
   small: BASE_UNIT * 2,   // 8px
   medium: BASE_UNIT * 4,  // 16px
@@ -37,7 +37,7 @@ export const spacing = {
 };
 
 // Layout-specific spacing constants
-export const layout = {
+export const _layout = {
   screenPadding: spacing.medium,      // Standard screen padding
   sectionSpacing: spacing.large,      // Spacing between major sections
   elementSpacing: spacing.small,      // Spacing between related elements

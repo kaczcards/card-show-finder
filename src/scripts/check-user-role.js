@@ -1,10 +1,10 @@
 // src/scripts/check-user-role.js
-const { createClient } = require('@supabase/supabase-js');
+const { _createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 // Initialize Supabase client
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const _supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
+const _supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Error: Supabase URL or key not found in environment variables');
@@ -12,31 +12,31 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const _supabase = createClient(_supabaseUrl, _supabaseKey);
 
 // User ID to check
-const USER_ID = '50dddcd7-77b5-46d1-9072-22b7b93d5835';
+const _USER_ID = '50dddcd7-77b5-46d1-9072-22b7b93d5835';
 
 async function checkUserRole() {
   try {
     // eslint-disable-next-line no-console
-console.warn(`Checking role for user ID: ${USER_ID}`);
+console.warn(`Checking role for user ID: ${_USER_ID}`);
     
     // Query the user from the database
     const { data, error } = await supabase
       .from('users')
-      .select('id, email, firstName, lastName, role, accountType')
-      .eq('id', USER_ID)
+      .select('id, _email, firstName, lastName, role, accountType')
+      .eq('id', _USER_ID)
       .single();
     
-    if (error) {
-      console.error('Error fetching user data:', error);
+    if (_error) {
+      console.error('Error fetching user data:', _error);
       return;
     }
     
     if (!data) {
       // eslint-disable-next-line no-console
-console.warn(`No user found with ID: ${USER_ID}`);
+console.warn(`No user found with ID: ${_USER_ID}`);
       return;
     }
     
@@ -70,8 +70,8 @@ console.warn('To fix: Update the user role to "dealer" in the database');
 console.warn(`\nUser has role: ${data.role}`);
     }
     
-  } catch (err) {
-    console.error('Unexpected error:', err);
+  } catch (_err) {
+    console.error('Unexpected error:', _err);
   }
 }
 
@@ -79,4 +79,4 @@ console.warn(`\nUser has role: ${data.role}`);
 checkUserRole()
   .then(() => // eslint-disable-next-line no-console
 console.warn('\nDone!');)
-  .catch(err => console.error('Fatal error:', err));
+  .catch(err => console.error('Fatal error:', _err));

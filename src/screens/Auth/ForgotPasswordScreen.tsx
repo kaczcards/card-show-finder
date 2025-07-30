@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { _useState } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,10 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
+import { _SafeAreaView } from 'react-native-safe-area-context';
+import { _NativeStackScreenProps } from '@react-navigation/native-stack';
+import { _Ionicons } from '@expo/vector-icons';
+import { _useAuth } from '../../contexts/AuthContext';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {
@@ -26,23 +26,23 @@ type AuthStackParamList = {
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
-const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
+const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
   // State for form fields
-  const [email, setEmail] = useState('');
+  const [email, _setEmail] = useState('');
 
   // Get auth context
   const { authState, resetPassword, clearError } = useAuth();
   const { isLoading, error } = authState;
 
   // Validate email
-  const validateEmail = () => {
+  const _validateEmail = () => {
     if (!email) {
       Alert.alert('Error', 'Please enter your email address');
       return false;
     }
 
     // Simple email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const _emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Please enter a valid email address');
       return false;
@@ -52,13 +52,13 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   // Handle password reset
-  const handleResetPassword = async () => {
+  const _handleResetPassword = async () => {
     if (!validateEmail()) {
       return;
     }
 
     try {
-      await resetPassword(email);
+      await resetPassword(_email);
       Alert.alert(
         'Password Reset Email Sent',
         'Please check your email for instructions to reset your password.',
@@ -70,7 +70,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   // Clear any existing errors when navigating
-  const handleNavigate = (screen: keyof AuthStackParamList) => {
+  const _handleNavigate = (screen: keyof AuthStackParamList) => {
     clearError();
     navigation.navigate(screen);
   };
@@ -89,7 +89,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.backButton}
             onPress={() => handleNavigate('Login')}
           >
-            <Ionicons name="arrow-back" size={24} color="#007AFF" />
+            <Ionicons name="arrow-back" size={_24} color="#007AFF" />
           </TouchableOpacity>
 
           <View style={styles.logoContainer}>
@@ -109,21 +109,21 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
 
             {error ? (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={styles.errorText}>{_error}</Text>
               </View>
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={_20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
                 placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
+                value={_email}
+                onChangeText={_setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                autoCorrect={false}
+                autoCorrect={_false}
                 editable={!isLoading}
                 autoFocus
               />
@@ -131,8 +131,8 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
 
             <TouchableOpacity
               style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={handleResetPassword}
-              disabled={isLoading}
+              onPress={_handleResetPassword}
+              disabled={_isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
@@ -145,7 +145,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.loginText}>Remember your password? </Text>
               <TouchableOpacity
                 onPress={() => handleNavigate('Login')}
-                disabled={isLoading}
+                disabled={_isLoading}
               >
                 <Text style={styles.loginLink}>Sign In</Text>
               </TouchableOpacity>
@@ -166,7 +166,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',

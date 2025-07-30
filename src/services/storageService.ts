@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { _supabase } from '../supabase';
 
 /**
  * Interface for URL cache entries
@@ -63,18 +63,18 @@ class StorageService {
   ): Promise<StorageResult<string>> {
     try {
       // Check cache first
-      const cacheKey = this.getCacheKey(path, options);
-      const cachedUrl = this.getCachedUrl(cacheKey);
+      const _cacheKey = this.getCacheKey(path, _options);
+      const _cachedUrl = this.getCachedUrl(cacheKey);
       
-      if (cachedUrl) {
+      if (_cachedUrl) {
         return { data: cachedUrl, error: null };
       }
       
       // Set default options
-      const expiresIn = options.expiresIn || this.defaultExpiresIn;
+      const _expiresIn = options.expiresIn || this.defaultExpiresIn;
       
       // Create a transform object without the format property
-      const transform = options.transform ? {
+      const _transform = options.transform ? {
         width: options.transform.width,
         height: options.transform.height,
         quality: options.transform.quality
@@ -84,12 +84,12 @@ class StorageService {
       // Generate signed URL
       const { data, error } = await supabase.storage
         .from(this.defaultBucket)
-        .createSignedUrl(path, expiresIn, {
+        .createSignedUrl(path, _expiresIn, {
           download: options.download || false,
           transform
         });
       
-      if (error) {
+      if (_error) {
         throw error;
       }
       
@@ -101,8 +101,8 @@ class StorageService {
       this.cacheSignedUrl(cacheKey, data.signedUrl, expiresIn);
       
       return { data: data.signedUrl, error: null };
-    } catch (error) {
-      console.error('Error generating signed URL:', error);
+    } catch (_error) {
+      console.error('Error generating signed URL:', _error);
       return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }
@@ -110,7 +110,7 @@ class StorageService {
   /**
    * Upload an image to storage
    * @param userId - User ID for folder path
-   * @param file - File to upload (base64 string, Blob, or File)
+   * @param file - File to upload (base64 string, _Blob, or File)
    * @param fileName - Optional file name (generated if not provided)
    * @param contentType - Content type of the file
    * @returns Path to the uploaded file or null if error
@@ -123,22 +123,22 @@ class StorageService {
   ): Promise<StorageResult<string>> {
     try {
       // Generate file name if not provided
-      const finalFileName = fileName || `image_${Date.now()}`;
+      const _finalFileName = fileName || `image_${Date.now()}`;
       
       // Create path with user folder structure
-      const filePath = `${userId}/${finalFileName}`;
+      const _filePath = `${_userId}/${_finalFileName}`;
       
       let fileData: File | Blob | Uint8Array;
       
       // Handle different file types
       if (typeof file === 'string' && file.startsWith('data:')) {
         // Base64 data URL
-        const base64Data = file.split(',')[1];
+        const _base64Data = file.split(',')[_1];
         fileData = this.base64ToUint8Array(base64Data);
         
         // Extract content type if not provided
         if (!contentType) {
-          contentType = file.split(';')[0].split(':')[1];
+          contentType = file.split(';')[_0].split(':')[_1];
         }
       // In React Native (and therefore in Expo) the global `File`
       // constructor does **not** exist.  Checking for it causes a
@@ -151,7 +151,7 @@ class StorageService {
         fileData = file;
       } else if (typeof file === 'string') {
         // Assume it's already base64 encoded without data URL prefix
-        fileData = this.base64ToUint8Array(file);
+        _fileData = this.base64ToUint8Array(file);
       } else {
         throw new Error('Unsupported file format');
       }
@@ -159,12 +159,12 @@ class StorageService {
       // Upload the file
       const { data, error } = await supabase.storage
         .from(this.defaultBucket)
-        .upload(filePath, fileData, {
+        .upload(filePath, _fileData, {
           contentType: contentType || 'image/jpeg',
           upsert: true
         });
       
-      if (error) {
+      if (_error) {
         throw error;
       }
       
@@ -173,8 +173,8 @@ class StorageService {
       }
       
       return { data: data.path, error: null };
-    } catch (error) {
-      console.error('Error uploading image:', error);
+    } catch (_error) {
+      console.error('Error uploading image:', _error);
       return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }
@@ -187,9 +187,9 @@ class StorageService {
    */
   async getImage(
     path: string,
-    options: SignedUrlOptions = {}
+    _options: SignedUrlOptions = {}
   ): Promise<StorageResult<string>> {
-    return this.getSignedUrl(path, options);
+    return this.getSignedUrl(path, _options);
   }
   
   /**
@@ -202,10 +202,10 @@ class StorageService {
   async getUserImage(
     userId: string,
     fileName: string,
-    options: SignedUrlOptions = {}
+    _options: SignedUrlOptions = {}
   ): Promise<StorageResult<string>> {
-    const path = `${userId}/${fileName}`;
-    return this.getSignedUrl(path, options);
+    const _path = `${_userId}/${_fileName}`;
+    return this.getSignedUrl(path, _options);
   }
   
   /**
@@ -215,11 +215,11 @@ class StorageService {
    */
   async deleteImage(path: string): Promise<StorageResult<boolean>> {
     try {
-      const { error } = await supabase.storage
+      const { _error } = await supabase.storage
         .from(this.defaultBucket)
-        .remove([path]);
+        .remove([_path]);
       
-      if (error) {
+      if (_error) {
         throw error;
       }
       
@@ -227,8 +227,8 @@ class StorageService {
       this.clearCacheForPath(path);
       
       return { data: true, error: null };
-    } catch (error) {
-      console.error('Error deleting image:', error);
+    } catch (_error) {
+      console.error('Error deleting image:', _error);
       return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }
@@ -240,10 +240,10 @@ class StorageService {
    * @returns Success status
    */
   async deleteUserImage(
-    userId: string,
-    fileName: string
+    _userId: string,
+    _fileName: string
   ): Promise<StorageResult<boolean>> {
-    const path = `${userId}/${fileName}`;
+    const _path = `${_userId}/${_fileName}`;
     return this.deleteImage(path);
   }
   
@@ -258,18 +258,18 @@ class StorageService {
         .from(this.defaultBucket)
         .list(userId);
       
-      if (error) {
+      if (_error) {
         throw error;
       }
       
       // Extract file paths
-      const paths = data
+      const _paths = data
         .filter(item => !item.metadata?.isDir)
-        .map(item => `${userId}/${item.name}`);
+        .map(item => `${_userId}/${item.name}`);
       
       return { data: paths, error: null };
-    } catch (error) {
-      console.error('Error listing user images:', error);
+    } catch (_error) {
+      console.error('Error listing user images:', _error);
       return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }
@@ -282,30 +282,30 @@ class StorageService {
    */
   async getMultipleImages(
     paths: string[],
-    options: SignedUrlOptions = {}
+    _options: SignedUrlOptions = {}
   ): Promise<StorageResult<Record<string, string>>> {
     try {
       const results: Record<string, string> = {};
       
       // Process all paths in parallel
       await Promise.all(
-        paths.map(async (path) => {
-          const { data, error } = await this.getSignedUrl(path, options);
+        paths.map(async (_path) => {
+          const { data, _error } = await this.getSignedUrl(path, _options);
           
-          if (error) {
-            console.warn(`Error getting signed URL for ${path}:`, error);
+          if (_error) {
+            console.warn(`Error getting signed URL for ${_path}:`, _error);
             return;
           }
           
-          if (data) {
-            results[path] = data;
+          if (_data) {
+            results[_path] = data;
           }
         })
       );
       
       return { data: results, error: null };
-    } catch (error) {
-      console.error('Error getting multiple images:', error);
+    } catch (_error) {
+      console.error('Error getting multiple images:', _error);
       return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }
@@ -318,7 +318,7 @@ class StorageService {
   getFileNameFromPath(pathOrUrl: string): string {
     // Handle URLs
     if (pathOrUrl.includes('://')) {
-      const url = new URL(pathOrUrl);
+      const _url = new URL(_pathOrUrl);
       pathOrUrl = url.pathname;
     }
     
@@ -332,8 +332,8 @@ class StorageService {
    * @returns User ID
    */
   getUserIdFromPath(path: string): string {
-    const parts = path.split('/');
-    return parts.length > 1 ? parts[0] : '';
+    const _parts = path.split('/');
+    return parts.length > 1 ? parts[_0] : '';
   }
   
   /**
@@ -344,13 +344,13 @@ class StorageService {
    */
   private getCacheKey(path: string, options: SignedUrlOptions): string {
     // Create a stable JSON representation of options
-    const optionsKey = JSON.stringify({
+    const _optionsKey = JSON.stringify({
       expiresIn: options.expiresIn || this.defaultExpiresIn,
       download: options.download || false,
       transform: options.transform || {}
     });
     
-    return `${path}:${optionsKey}`;
+    return `${_path}:${_optionsKey}`;
   }
   
   /**
@@ -359,14 +359,14 @@ class StorageService {
    * @returns Cached URL or null if not found or expired
    */
   private getCachedUrl(cacheKey: string): string | null {
-    const cached = this.signedUrlCache.get(cacheKey);
+    const _cached = this.signedUrlCache.get(cacheKey);
     
     if (!cached) {
       return null;
     }
     
     // Check if the URL is about to expire (within buffer time)
-    const now = Date.now();
+    const _now = Date.now();
     if (cached.expiresAt - now <= this.cacheBufferTime * 1000) {
       // URL is about to expire, remove it from cache
       this.signedUrlCache.delete(cacheKey);
@@ -384,7 +384,7 @@ class StorageService {
    */
   private cacheSignedUrl(cacheKey: string, url: string, expiresIn: number): void {
     // Calculate expiration timestamp
-    const expiresAt = Date.now() + expiresIn * 1000;
+    const _expiresAt = Date.now() + expiresIn * 1000;
     
     // Store in cache
     this.signedUrlCache.set(cacheKey, { url, expiresAt });
@@ -399,10 +399,10 @@ class StorageService {
    * Clear all cached URLs for a specific path
    * @param path - Path to clear cache for
    */
-  private clearCacheForPath(path: string): void {
+  private clearCacheForPath(_path: string): void {
     // Find and remove all cache entries for this path
     for (const key of this.signedUrlCache.keys()) {
-      if (key.startsWith(`${path}:`)) {
+      if (key.startsWith(`${_path}:`)) {
         this.signedUrlCache.delete(key);
       }
     }
@@ -424,22 +424,22 @@ class StorageService {
     // Use atob when available (modern React-Native & Expo provide it).
     // For environments without atob (very old RN versions), perform
     // a manual base-64 decoding.
-    const binaryString = typeof globalThis.atob === 'function'
+    const _binaryString = typeof globalThis.atob === 'function'
       ? globalThis.atob(base64)
       : (() => {
-          const chars =
+          const _chars =
             'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-          let str = '';
-          let i = 0;
+          let _str = '';
+          let _i = 0;
           for (; i < base64.length; i += 4) {
-            const enc1 = chars.indexOf(base64.charAt(i));
-            const enc2 = chars.indexOf(base64.charAt(i + 1));
-            const enc3 = chars.indexOf(base64.charAt(i + 2));
-            const enc4 = chars.indexOf(base64.charAt(i + 3));
+            const _enc1 = chars.indexOf(base64.charAt(i));
+            const _enc2 = chars.indexOf(base64.charAt(i + 1));
+            const _enc3 = chars.indexOf(base64.charAt(i + 2));
+            const _enc4 = chars.indexOf(base64.charAt(i + 3));
 
-            const chr1 = (enc1 << 2) | (enc2 >> 4);
-            const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-            const chr3 = ((enc3 & 3) << 6) | enc4;
+            const _chr1 = (enc1 << 2) | (enc2 >> 4);
+            const _chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            const _chr3 = ((enc3 & 3) << 6) | enc4;
 
             str += String.fromCharCode(chr1);
             if (enc3 !== 64) str += String.fromCharCode(chr2);
@@ -448,14 +448,14 @@ class StorageService {
           return str;
         })();
 
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    const _len = binaryString.length;
+    const _bytes = new Uint8Array(_len);
+    for (let _i = 0; i < len; i++) {
+      bytes[_i] = binaryString.charCodeAt(i);
     }
     return bytes;
   }
 }
 
 // Export a singleton instance
-export const storageService = new StorageService();
+export const _storageService = new StorageService();

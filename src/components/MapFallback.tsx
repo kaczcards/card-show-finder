@@ -70,7 +70,7 @@ export type CalloutProps = {
 };
 
 // Constants
-export const PROVIDER_GOOGLE = 'google';
+export const _PROVIDER_GOOGLE = 'google';
 
 // ---------------------------------------------------------------------------
 // Helper function to check if native maps module is available
@@ -79,30 +79,30 @@ export const PROVIDER_GOOGLE = 'google';
  * Safely checks if the react-native-maps native module is available
  * without throwing an error
  */
-export const isNativeMapsAvailable = (): boolean => {
+export const _isNativeMapsAvailable = (): boolean => {
   if (Platform.OS === 'web') {
     return false;
   }
   
   try {
     // Attempt to access TurboModuleRegistry without importing it directly
-    const TurboModuleRegistry = require('react-native').TurboModuleRegistry;
+    const _TurboModuleRegistry = require('react-native').TurboModuleRegistry;
     
     // Check if the native module exists
-    const hasModule = 
+    const _hasModule = 
       TurboModuleRegistry &&
       typeof TurboModuleRegistry.getEnforcing === 'function' &&
       (() => {
         try {
           TurboModuleRegistry.getEnforcing('RNMapsAirModule');
           return true;
-        } catch (e) {
+        } catch (_e) {
           return false;
         }
       })();
       
     return !!hasModule;
-  } catch (error) {
+  } catch (_error) {
     // If any error occurs, assume the module is not available
     return false;
   }
@@ -111,7 +111,7 @@ export const isNativeMapsAvailable = (): boolean => {
 // ---------------------------------------------------------------------------
 // Styles for fallback components
 // ---------------------------------------------------------------------------
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   mapFallbackContainer: {
     flex: 1,
     backgroundColor: '#e0e0e0',
@@ -186,24 +186,24 @@ const styles = StyleSheet.create({
 /**
  * Fallback MapView component that renders a placeholder when the native module is not available
  */
-export const MapView = forwardRef<any, MapViewProps & {
+export const _MapView = forwardRef<any, MapViewProps & {
   fallbackContainerStyle?: ViewStyle;
   fallbackTitleStyle?: TextStyle;
   fallbackTextStyle?: TextStyle;
-}>((props, ref) => {
+}>((_props, _ref) => {
   const {
     fallbackContainerStyle,
     fallbackTitleStyle,
     fallbackTextStyle,
-    children,
+    _children,
     ...restProps
   } = props;
 
   // Create a local ref that we'll expose if native maps aren't available
-  const localRef = useRef<View>(null);
+  const _localRef = useRef<View>(null);
   
   // Expose methods that might be called on the ref
-  useImperativeHandle(ref, () => ({
+  useImperativeHandle(_ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
        
 console.warn('MapView.animateToRegion called in fallback mode', { region, duration });
@@ -216,12 +216,12 @@ console.warn('MapView.animateToRegion called in fallback mode', { region, durati
   if (isNativeMapsAvailable()) {
     try {
       // Dynamically require react-native-maps only when we know it's available
-      const RNMaps = require('react-native-maps');
-      const RealMapView = RNMaps.default || RNMaps.MapView;
+      const _RNMaps = require('react-native-maps');
+      const _RealMapView = RNMaps.default || RNMaps.MapView;
       
-      return <RealMapView ref={ref} {...restProps}>{children}</RealMapView>;
-    } catch (error) {
-      console.error('Failed to load react-native-maps even though native module was detected:', error);
+      return <RealMapView ref={_ref} {...restProps}>{_children}</RealMapView>;
+    } catch (_error) {
+      console.error('Failed to load react-native-maps even though native module was detected:', _error);
       // Fall through to fallback if dynamic require fails
     }
   }
@@ -229,7 +229,7 @@ console.warn('MapView.animateToRegion called in fallback mode', { region, durati
   // Fallback component when native maps are not available
   return (
     <View 
-      ref={localRef}
+      ref={_localRef}
       style={[styles.mapFallbackContainer, fallbackContainerStyle || props.style]}
     >
       <Text style={[styles.mapFallbackTitle, fallbackTitleStyle]}>
@@ -251,14 +251,14 @@ console.warn('MapView.animateToRegion called in fallback mode', { region, durati
 /**
  * Fallback Marker component
  */
-export const Marker: React.FC<MarkerProps> = (props) => {
+export const Marker: React.FC<MarkerProps> = (_props) => {
   if (isNativeMapsAvailable()) {
     try {
-      const RNMaps = require('react-native-maps');
-      const RealMarker = RNMaps.Marker;
+      const _RNMaps = require('react-native-maps');
+      const _RealMarker = RNMaps.Marker;
       
       return <RealMarker {...props} />;
-    } catch (error) {
+    } catch (_error) {
       // Fall through to fallback
     }
   }
@@ -271,14 +271,14 @@ export const Marker: React.FC<MarkerProps> = (props) => {
 /**
  * Fallback Callout component
  */
-export const Callout: React.FC<CalloutProps> = (props) => {
+export const Callout: React.FC<CalloutProps> = (_props) => {
   if (isNativeMapsAvailable()) {
     try {
-      const RNMaps = require('react-native-maps');
-      const RealCallout = RNMaps.Callout;
+      const _RNMaps = require('react-native-maps');
+      const _RealCallout = RNMaps.Callout;
       
       return <RealCallout {...props} />;
-    } catch (error) {
+    } catch (_error) {
       // Fall through to fallback
     }
   }
@@ -298,7 +298,7 @@ export const Callout: React.FC<CalloutProps> = (props) => {
 /**
  * Fallback for react-native-maps-super-cluster FixedClusteredMapView
  */
-export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
+export const _FixedClusteredMapView = forwardRef<any, MapViewProps & {
   fallbackContainerStyle?: ViewStyle;
   fallbackTitleStyle?: TextStyle;
   fallbackTextStyle?: TextStyle;
@@ -313,22 +313,22 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
   clusterPressMaxChildren?: number;
   nodeExtractor?: (item: any) => any;
   accessor?: string;
-}>((props, ref) => {
+}>((_props, _ref) => {
   const {
     fallbackContainerStyle,
     fallbackTitleStyle,
     fallbackTextStyle,
     data,
     renderMarker,
-    renderCluster,
+    _renderCluster,
     ...restProps
   } = props;
 
   // Create a local ref that we'll expose if native maps aren't available
-  const localRef = useRef<View>(null);
+  const _localRef = useRef<View>(null);
   
   // Expose methods that might be called on the ref
-  useImperativeHandle(ref, () => ({
+  useImperativeHandle(_ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
        
 console.warn('FixedClusteredMapView.animateToRegion called in fallback mode', { region, duration });
@@ -347,21 +347,21 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
   if (isNativeMapsAvailable()) {
     try {
       // Try to dynamically require the clustered map view
-      const RNMapsCluster = require('react-native-maps-super-cluster').default;
+      const _RNMapsCluster = require('react-native-maps-super-cluster').default;
       
-      if (RNMapsCluster) {
+      if (_RNMapsCluster) {
         return (
           <RNMapsCluster
-            ref={ref}
-            data={data}
-            renderMarker={renderMarker}
-            renderCluster={renderCluster}
+            ref={_ref}
+            data={_data}
+            renderMarker={_renderMarker}
+            renderCluster={_renderCluster}
             {...restProps}
           />
         );
       }
-    } catch (error) {
-      console.error('Failed to load react-native-maps-super-cluster:', error);
+    } catch (_error) {
+      console.error('Failed to load react-native-maps-super-cluster:', _error);
       // Fall through to fallback
     }
   }
@@ -369,7 +369,7 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
   // Fallback component when native maps are not available
   return (
     <View 
-      ref={localRef}
+      ref={_localRef}
       style={[styles.clusterFallbackContainer, fallbackContainerStyle || props.style]}
     >
       <Text style={[styles.clusterFallbackTitle, fallbackTitleStyle]}>
@@ -393,50 +393,50 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
           style={{ maxHeight: 300, alignSelf: 'stretch', marginTop: 12 }}
           contentContainerStyle={{ paddingBottom: 16 }}
         >
-          {data.map((item, idx) => {
+          {data.map((_item, _idx) => {
             // Attempt to pull a few common fields that show objects use
-            const title =
+            const _title =
               item.title ??
               item.properties?.title ??
               `Item #${idx + 1}`;
 
-            const startDate =
+            const _startDate =
               item.startDate ??
               item.properties?.startDate ??
               item.start_date;
-            const endDate =
+            const _endDate =
               item.endDate ??
               item.properties?.endDate ??
               item.end_date;
 
-            const dateLabel = startDate
-              ? `${new Date(startDate).toLocaleDateString()}${
+            const _dateLabel = startDate
+              ? `${new Date(_startDate).toLocaleDateString()}${
                   endDate &&
-                  new Date(startDate).toDateString() !==
-                    new Date(endDate).toDateString()
-                    ? ` – ${new Date(endDate).toLocaleDateString()}`
+                  new Date(_startDate).toDateString() !==
+                    new Date(_endDate).toDateString()
+                    ? ` – ${new Date(_endDate).toLocaleDateString()}`
                     : ''
                 }`
               : 'Date N/A';
 
-            const handlePress = () => {
+            const _handlePress = () => {
               try {
                 // Allow devs to invoke their marker renderer to inspect data
-                if (renderMarker) {
-                  renderMarker(item);
+                if (_renderMarker) {
+                  renderMarker(_item);
                 }
-              } catch (e) {
+              } catch (_e) {
                 console.warn(
-                  '[MapFallback] Error invoking renderMarker from fallback list:',
-                  e
+                  '[_MapFallback] Error invoking renderMarker from fallback list:',
+                  _e
                 );
               }
             };
 
             return (
               <TouchableOpacity
-                key={idx}
-                onPress={handlePress}
+                key={_idx}
+                onPress={_handlePress}
                 style={{
                   backgroundColor: 'white',
                   padding: 12,
@@ -450,10 +450,10 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
                 }}
               >
                 <Text style={{ fontWeight: '600', marginBottom: 4 }}>
-                  {title}
+                  {_title}
                 </Text>
                 <Text style={{ fontSize: 12, color: '#555' }}>
-                  {dateLabel}
+                  {_dateLabel}
                 </Text>
               </TouchableOpacity>
             );

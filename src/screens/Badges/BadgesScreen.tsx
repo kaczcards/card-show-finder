@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,  } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, ScrollView, _TouchableOpacity, SafeAreaView,  } from 'react-native';
+import { _Ionicons } from '@expo/vector-icons';
 
 const BadgesScreen: React.FC = () => {
   // Badge tiers
-  const badgeTiers = [
+  const _badgeTiers = [
     {
       tier: 'bronze',
       name: 'Bronze',
@@ -36,7 +36,7 @@ const BadgesScreen: React.FC = () => {
   ];
 
   // Render a badge tier section
-  const renderBadgeTier = (tier: {
+  const _renderBadgeTier = (tier: {
     tier: string;
     name: string;
     color: string;
@@ -46,7 +46,7 @@ const BadgesScreen: React.FC = () => {
     <View key={tier.tier} style={styles.tierContainer}>
       <View style={styles.tierHeader}>
         <View style={[styles.tierBadge, { backgroundColor: tier.color }]}>
-          <Text style={styles.tierBadgeText}>{tier.name[0]}</Text>
+          <Text style={styles.tierBadgeText}>{tier.name[_0]}</Text>
         </View>
         <Text style={styles.tierName}>{tier.name} Badges</Text>
       </View>
@@ -57,7 +57,7 @@ const BadgesScreen: React.FC = () => {
       
       <View style={styles.badgesRow}>
         <View style={styles.emptyBadge}>
-          <Ionicons name={tier.icon as any} size={32} color="#ccc" />
+          <Ionicons name={tier.icon as any} size={_32} color="#ccc" />
           <Text style={styles.emptyBadgeText}>Not yet earned</Text>
         </View>
       </View>
@@ -98,7 +98,7 @@ const BadgesScreen: React.FC = () => {
           <Text style={styles.nextBadgeTitle}>Next Badge</Text>
           <View style={styles.nextBadgeContent}>
             <View style={[styles.nextBadgeIcon, { backgroundColor: '#CD7F32' }]}>
-              <Ionicons name="trophy-outline" size={24} color="white" />
+              <Ionicons name="trophy-outline" size={_24} color="white" />
             </View>
             <View style={styles.nextBadgeInfo}>
               <Text style={styles.nextBadgeName}>First Show</Text>
@@ -119,7 +119,7 @@ const BadgesScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',

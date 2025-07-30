@@ -10,10 +10,10 @@ import {
   Alert,
   RefreshControl
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 import { ShowSeries, Show } from '../types';
-import { showSeriesService } from '../services/showSeriesService';
-import { claimShow } from '../services/organizerService';
+import { _showSeriesService } from '../services/showSeriesService';
+import { _claimShow } from '../services/organizerService';
 import { useUnclaimedShows, UnclaimedItem } from '../hooks/useUnclaimedShows';
 
 // Define the extended ShowSeries type with additional properties
@@ -24,7 +24,7 @@ interface ShowSeriesExtended extends ShowSeries {
 }
 
 // Default placeholder image
-const placeholderShowImage = require('../../assets/images/placeholder-show.png');
+const _placeholderShowImage = require('../../assets/images/placeholder-show.png');
 
 interface UnclaimedShowsListProps {
   organizerId: string;
@@ -33,13 +33,13 @@ interface UnclaimedShowsListProps {
   onClaimSuccess?: () => void; // Callback when a show is successfully claimed
 }
 
-// Ref interface so parent components (e.g., Dashboard) can manually trigger a refetch
+// Ref interface so parent components (e.g., _Dashboard) can manually trigger a refetch
 export interface UnclaimedShowsListRef {
   refetch: () => Promise<void>;
 }
 
-const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListProps>((props, ref) => {
-  const { organizerId, onRefresh, isRefreshing = false, onClaimSuccess } = props;
+const _UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListProps>((_props, _ref) => {
+  const { _organizerId, onRefresh, isRefreshing = false, onClaimSuccess } = props;
   
   // Use the custom hook to fetch and manage unclaimed shows data
   const { 
@@ -47,7 +47,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
     isLoading, 
     error, 
     refreshUnclaimedShows 
-  } = useUnclaimedShows(organizerId);
+  } = useUnclaimedShows(_organizerId);
   
   // State for tracking which items are being claimed
   const [claimingInProgress, setClaimingInProgress] = useState<Record<string, boolean>>({});
@@ -58,30 +58,30 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
    * We memoise it with useCallback to avoid re-creating the function on every
    * render which would break the ref identity.
    */
-  const refetch = useCallback(async () => {
+  const _refetch = useCallback(async () => {
     await refreshUnclaimedShows();
-  }, [refreshUnclaimedShows]);
+  }, [_refreshUnclaimedShows]);
 
-  useImperativeHandle(ref, () => ({ refetch }), [refetch]);
+  useImperativeHandle(_ref, () => ({ _refetch }), [_refetch]);
   
   // Handle claiming a show or series
-  const handleClaim = async (item: UnclaimedItem) => {
+  const _handleClaim = async (item: UnclaimedItem) => {
     // Basic validation – bail early if the payload is malformed
     if (!item || !item.type || !item.data) {
-      console.warn('[UnclaimedShows] handleClaim called with invalid item', item);
+      console.warn('[_UnclaimedShows] handleClaim called with invalid item', _item);
       return;
     }
 
-    const itemId = item.data.id;
+    const _itemId = item.data.id;
 
     if (!itemId) {
-      console.warn('[UnclaimedShows] Missing ID while claiming', item);
+      console.warn('[_UnclaimedShows] Missing ID while claiming', _item);
       return;
     }
 
     try {
       // Set claiming in progress for this item
-      setClaimingInProgress(prev => ({ ...prev, [itemId]: true }));
+      setClaimingInProgress(prev => ({ ...prev, [_itemId]: true }));
       
       let result;
       if (item.type === 'series') {
@@ -89,7 +89,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         result = await showSeriesService.claimShowSeries(itemId);
       } else {
         // Claim individual show
-        result = await claimShow(itemId, organizerId);
+        result = await claimShow(_itemId, _organizerId);
       }
       
       // Type guard to check if the result has an error property
@@ -112,27 +112,27 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         );
         
         // Call success callback if provided
-        if (onClaimSuccess) {
+        if (_onClaimSuccess) {
           onClaimSuccess();
         }
       }
     } catch (err: any) {
-      console.error('Error claiming item:', err);
+      console.error('Error claiming item:', _err);
       Alert.alert(
         'Error',
         err.message || 'An unexpected error occurred. Please try again.'
       );
     } finally {
       // Guard – itemId may be undefined if earlier validation failed
-      if (itemId) {
-        setClaimingInProgress(prev => ({ ...prev, [itemId]: false }));
+      if (_itemId) {
+        setClaimingInProgress(prev => ({ ...prev, [_itemId]: false }));
       }
     }
   };
   
   // Format date for display
-  const formatDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
+  const _formatDate = (_dateString: string | Date) => {
+    const _date = new Date(_dateString);
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -141,9 +141,9 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   };
   
   // Render a series item
-  const renderSeriesItem = (series: ShowSeriesExtended) => {
+  const _renderSeriesItem = (series: ShowSeriesExtended) => {
     if (!series) return null; // Safety-net: avoid rendering invalid data
-    const isClaimingInProgress = claimingInProgress[series.id] || false;
+    const _isClaimingInProgress = claimingInProgress[series.id] || false;
     
     return (
       <View style={styles.itemContainer}>
@@ -157,7 +157,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         <View style={styles.itemDetails}>
           {series.reviewCount ? (
             <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFD700" />
+              <Ionicons name="star" size={_16} color="#FFD700" />
               <Text style={styles.ratingText}>
                 {series.averageRating?.toFixed(1)} ({series.reviewCount})
               </Text>
@@ -168,7 +168,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
           
           {series.nextShowDate && (
             <View style={styles.nextShowContainer}>
-              <Ionicons name="calendar-outline" size={16} color="#666666" style={styles.iconSpacing} />
+              <Ionicons name="calendar-outline" size={_16} color="#666666" style={styles.iconSpacing} />
               <Text style={styles.nextShowText}>
                 Next: {formatDate(series.nextShowDate)}
               </Text>
@@ -178,7 +178,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         
         <View style={styles.itemStats}>
           <View style={styles.statItem}>
-            <Ionicons name="calendar" size={14} color="#666666" style={styles.statIcon} />
+            <Ionicons name="calendar" size={_14} color="#666666" style={styles.statIcon} />
             <Text style={styles.statText}>
               {series.showCount || 0} {(series.showCount || 0) === 1 ? 'show' : 'shows'}
             </Text>
@@ -186,7 +186,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
           
           {series.upcomingCount > 0 && (
             <View style={styles.statItem}>
-              <Ionicons name="time" size={14} color="#666666" style={styles.statIcon} />
+              <Ionicons name="time" size={_14} color="#666666" style={styles.statIcon} />
               <Text style={styles.statText}>
                 {series.upcomingCount} upcoming
               </Text>
@@ -197,13 +197,13 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         <TouchableOpacity 
           style={[styles.claimButton, isClaimingInProgress && styles.claimButtonDisabled]}
           onPress={() => handleClaim({ type: 'series', data: series })}
-          disabled={isClaimingInProgress}
+          disabled={_isClaimingInProgress}
         >
           {isClaimingInProgress ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="flag" size={16} color="#FFFFFF" style={styles.buttonIcon} />
+              <Ionicons name="flag" size={_16} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.claimButtonText}>Claim Series</Text>
             </>
           )}
@@ -213,9 +213,9 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   };
   
   // Render a show item
-  const renderShowItem = (show: Show) => {
+  const _renderShowItem = (show: Show) => {
     if (!show) return null;
-    const isClaimingInProgress = claimingInProgress[show.id] || false;
+    const _isClaimingInProgress = claimingInProgress[show.id] || false;
     
     return (
       <View style={styles.itemContainer}>
@@ -230,13 +230,13 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         
         <View style={styles.itemDetails}>
           <View style={styles.dateContainer}>
-            <Ionicons name="calendar-outline" size={16} color="#666666" style={styles.iconSpacing} />
+            <Ionicons name="calendar-outline" size={_16} color="#666666" style={styles.iconSpacing} />
             <Text style={styles.dateText}>{formatDate(show.startDate)}</Text>
           </View>
           
           {show.rating ? (
             <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFD700" />
+              <Ionicons name="star" size={_16} color="#FFD700" />
               <Text style={styles.ratingText}>{show.rating.toFixed(1)}</Text>
             </View>
           ) : (
@@ -247,13 +247,13 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         <TouchableOpacity 
           style={[styles.claimButton, isClaimingInProgress && styles.claimButtonDisabled]}
           onPress={() => handleClaim({ type: 'show', data: show })}
-          disabled={isClaimingInProgress}
+          disabled={_isClaimingInProgress}
         >
           {isClaimingInProgress ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="flag" size={16} color="#FFFFFF" style={styles.buttonIcon} />
+              <Ionicons name="flag" size={_16} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.claimButtonText}>Claim Show</Text>
             </>
           )}
@@ -263,7 +263,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   };
   
   // Render an item (either series or show)
-  const renderItem = ({ item }: { item: UnclaimedItem }) => {
+  const _renderItem = ({ _item }: { item: UnclaimedItem }) => {
     if (!item || !item.data) return null;
     
     if (item.type === 'series') {
@@ -274,7 +274,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
       return renderShowItem(item.data as Show);
     }
     
-    console.warn('[UnclaimedShows] Skipped rendering invalid item', item);
+    console.warn('[_UnclaimedShows] Skipped rendering invalid item', _item);
     return null;
   };
   
@@ -289,14 +289,14 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   }
   
   // Error state
-  if (error) {
+  if (_error) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={40} color="#FF6A00" />
+        <Ionicons name="alert-circle-outline" size={_40} color="#FF6A00" />
         <Text style={styles.errorText}>{error.message || 'Failed to load unclaimed shows. Please try again.'}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={refreshUnclaimedShows}
+          onPress={_refreshUnclaimedShows}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -309,7 +309,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
     return (
       <View style={styles.emptyContainer}>
         <Image 
-          source={placeholderShowImage} 
+          source={_placeholderShowImage} 
           style={styles.emptyImage}
           resizeMode="contain"
         />
@@ -331,9 +331,9 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   // Main content - list of unclaimed items
   return (
     <FlatList
-      data={unclaimedItems}
-      renderItem={renderItem}
-      keyExtractor={(item, index) =>
+      data={_unclaimedItems}
+      renderItem={_renderItem}
+      keyExtractor={(_item, _index) =>
         item.type === 'series'
           ? `series-${item.data.id ?? index}`
           : `show-${item.data.id ?? index}`
@@ -341,7 +341,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
       contentContainerStyle={styles.listContainer}
       refreshControl={
         <RefreshControl 
-          refreshing={isRefreshing} 
+          refreshing={_isRefreshing} 
           onRefresh={onRefresh || refreshUnclaimedShows} 
         />
       }
@@ -354,7 +354,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   );
 });
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   listContainer: {
     padding: 16,
   },

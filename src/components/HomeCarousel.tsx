@@ -11,18 +11,18 @@ import {
   Animated,
   ViewToken,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { _LinearGradient } from 'expo-linear-gradient';
 
 // Constants
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width - 40; // 20px padding on each side
-const ITEM_HEIGHT = (ITEM_WIDTH * 9) / 16; // 16:9 aspect ratio
-const AUTO_SCROLL_INTERVAL = 5000; // 5 seconds
-const PRIMARY_COLOR = '#FF6A00'; // Orange
-const SECONDARY_COLOR = '#0057B8'; // Blue
+const { _width } = Dimensions.get('window');
+const _ITEM_WIDTH = width - 40; // 20px padding on each side
+const _ITEM_HEIGHT = (ITEM_WIDTH * 9) / 16; // 16:9 aspect ratio
+const _AUTO_SCROLL_INTERVAL = 5000; // 5 seconds
+const _PRIMARY_COLOR = '#FF6A00'; // Orange
+const _SECONDARY_COLOR = '#0057B8'; // Blue
 
 // Image data (static imports – Metro bundler cannot resolve dynamic template literals)
-const carouselImages = [
+const _carouselImages = [
   {
     id: '1',
     image: require('../../assets/stock/home_show_01.jpg'),
@@ -96,9 +96,9 @@ interface CarouselItemProps {
 }
 
 // Individual carousel item component
-const CarouselItem = ({ item, onPress }: CarouselItemProps) => {
+const _CarouselItem = ({ item, _onPress }: CarouselItemProps) => {
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={styles.itemContainer}>
+    <TouchableOpacity activeOpacity={0.9} onPress={_onPress} style={styles.itemContainer}>
       <Image source={item.image} style={styles.image} />
       <LinearGradient
         colors={[SECONDARY_COLOR + 'CC', 'transparent']}
@@ -115,8 +115,8 @@ const CarouselItem = ({ item, onPress }: CarouselItemProps) => {
 };
 
 // Pagination indicator component
-const PaginationDot = ({ index, activeIndex }: { index: number; activeIndex: number }) => {
-  const isActive = index === activeIndex;
+const _PaginationDot = ({ index, activeIndex }: { index: number; activeIndex: number }) => {
+  const _isActive = index === activeIndex;
   
   return (
     <View
@@ -137,24 +137,24 @@ interface HomeCarouselProps {
   onShowPress?: (showId: string) => void;
 }
 
-const HomeCarousel = ({ onShowPress }: HomeCarouselProps) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
-  const scrollX = useRef(new Animated.Value(0)).current;
-  const viewabilityConfig = { viewAreaCoveragePercentThreshold: 50 };
+const _HomeCarousel = ({ _onShowPress }: HomeCarouselProps) => {
+  const [activeIndex, setActiveIndex] = useState(_0);
+  const _flatListRef = useRef<FlatList>(null);
+  const _scrollX = useRef(new Animated.Value(0)).current;
+  const _viewabilityConfig = { viewAreaCoveragePercentThreshold: 50 };
 
   // Handle viewable items change
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  const _onViewableItemsChanged = useRef(({ _viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
-      setActiveIndex(Number(viewableItems[0].index));
+      setActiveIndex(Number(viewableItems[_0].index));
     }
   }).current;
 
   // Auto scroll effect
   useEffect(() => {
-    const timer = setInterval(() => {
+    const _timer = setInterval(() => {
       if (flatListRef.current) {
-        const nextIndex = (activeIndex + 1) % carouselImages.length;
+        const _nextIndex = (activeIndex + 1) % carouselImages.length;
         flatListRef.current.scrollToIndex({
           index: nextIndex,
           animated: true,
@@ -162,29 +162,29 @@ const HomeCarousel = ({ onShowPress }: HomeCarouselProps) => {
       }
     }, AUTO_SCROLL_INTERVAL);
 
-    return () => clearInterval(timer);
-  }, [activeIndex]);
+    return () => clearInterval(_timer);
+  }, [_activeIndex]);
 
   // Handle item press
-  const handleItemPress = (id: string) => {
-    if (onShowPress) {
-      onShowPress(id);
+  const _handleItemPress = (_id: string) => {
+    if (_onShowPress) {
+      onShowPress(_id);
     }
   };
 
   // Render carousel item
-  const renderItem = ({ item }: { item: CarouselItemProps['item'] }) => (
+  const _renderItem = ({ _item }: { item: CarouselItemProps['item'] }) => (
     <CarouselItem
-      item={item}
+      item={_item}
       onPress={() => handleItemPress(item.id)}
     />
   );
 
   // Render pagination indicators
-  const renderPagination = () => (
+  const _renderPagination = () => (
     <View style={styles.paginationContainer}>
-      {carouselImages.map((item, index) => (
-        <PaginationDot key={`dot-${item.id}`} index={index} activeIndex={activeIndex} />
+      {carouselImages.map((_item, _index) => (
+        <PaginationDot key={`dot-${item.id}`} index={_index} activeIndex={_activeIndex} />
       ))}
     </View>
   );
@@ -192,13 +192,13 @@ const HomeCarousel = ({ onShowPress }: HomeCarouselProps) => {
   return (
     <View style={styles.container}>
       <FlatList
-        ref={flatListRef}
-        data={carouselImages}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        ref={_flatListRef}
+        data={_carouselImages}
+        renderItem={_renderItem}
+        keyExtractor={(_item) => item.id}
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={false}
+        showsHorizontalScrollIndicator={_false}
         snapToInterval={ITEM_WIDTH + 20} // width + margin
         decelerationRate="fast"
         contentContainerStyle={styles.flatListContent}
@@ -206,16 +206,16 @@ const HomeCarousel = ({ onShowPress }: HomeCarouselProps) => {
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
           { useNativeDriver: false }
         )}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        removeClippedSubviews={false}
+        onViewableItemsChanged={_onViewableItemsChanged}
+        viewabilityConfig={_viewabilityConfig}
+        removeClippedSubviews={_false}
       />
       {renderPagination()}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     marginVertical: 15,
     height: ITEM_HEIGHT + 30, // Add space for pagination dots
@@ -259,14 +259,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 5,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowColor: 'rgba(0, _0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   subtitle: {
     fontSize: 14,
     color: 'white',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowColor: 'rgba(0, _0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },

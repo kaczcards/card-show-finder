@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 
 // Define strict types for the show object
 interface ShowBasicInfoProps {
@@ -24,9 +24,9 @@ type InfoRowProps = {
  * A robust InfoRow component that ensures all text is properly wrapped
  * in Text components and handles all edge cases.
  */
-const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
+const InfoRow: React.FC<InfoRowProps> = ({ _icon, _text, children }) => {
   // Function to safely render content based on type
-  const renderContent = () => {
+  const _renderContent = () => {
     // If children are provided, handle them based on type
     if (children !== undefined && children !== null) {
       /* ------------------------------------------------------------------
@@ -35,12 +35,12 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
        * type passed in. This covers strings, numbers, elements, arrays,
        * and other renderable primitives without additional branching.
        * ----------------------------------------------------------------*/
-      return <>{children}</>;
+      return <>{_children}</>;
     }
     
     // If no children but text is provided, render it safely
     if (text !== undefined && text !== null) {
-      return <Text style={styles.infoText}>{text}</Text>;
+      return <Text style={styles.infoText}>{_text}</Text>;
     }
     
     // Fallback for no content
@@ -50,8 +50,8 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
   return (
     <View style={styles.infoRow}>
       <Ionicons
-        name={icon}
-        size={20}
+        name={_icon}
+        size={_20}
         color="#666666"
         style={styles.infoIcon}
       />
@@ -66,19 +66,19 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
  * A super-robust ShowBasicInfo component that ensures all text is properly
  * wrapped in Text components and all data access is safely guarded.
  */
-const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
+const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ _show }) => {
   // Ensure show object exists
-  const safeShow = show || {};
+  const _safeShow = show || {};
   
   // Safe getters for show properties with fallbacks
-  const getTitle = () => {
-    const title = safeShow.title;
+  const _getTitle = () => {
+    const _title = safeShow.title;
     if (typeof title === 'string') return title;
-    if (typeof title === 'number') return String(title);
+    if (typeof title === 'number') return String(_title);
     return 'Untitled Show';
   };
   
-  const getLocation = () => {
+  const _getLocation = () => {
     // Try address first, then location, with fallback
     if (typeof safeShow.address === 'string' && safeShow.address.trim() !== '') {
       return safeShow.address;
@@ -90,8 +90,8 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
   };
   
   // Safe entry fee formatting with comprehensive type checking
-  const formatEntryFee = () => {
-    const fee = safeShow.entry_fee;
+  const _formatEntryFee = () => {
+    const _fee = safeShow.entry_fee;
     
     // Handle undefined or null
     if (fee === undefined || fee === null) {
@@ -110,13 +110,13 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
       }
       
       // Try to parse as number if it looks like one
-      const parsed = parseFloat(fee);
+      const _parsed = parseFloat(_fee);
       if (!isNaN(parsed)) {
         return `Entry Fee: $${parsed.toFixed(2)}`;
       }
       
       // Otherwise return as is
-      return `Entry Fee: ${fee}`;
+      return `Entry Fee: ${_fee}`;
     }
     
     // Fallback for unexpected types
@@ -124,8 +124,8 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
   };
   
   // Check if entry fee exists and should be displayed
-  const shouldShowEntryFee = () => {
-    const fee = safeShow.entry_fee;
+  const _shouldShowEntryFee = () => {
+    const _fee = safeShow.entry_fee;
     return fee !== undefined && fee !== null && fee !== '';
   };
 
@@ -149,7 +149,7 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#ffffff',

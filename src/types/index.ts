@@ -194,7 +194,7 @@ export interface Review {
   id: string;
   /**
    * Foreign key to the individual show being reviewed.
-   * Required by multiple screens (e.g., MyShows, Notifications).
+   * Required by multiple screens (e.g., _MyShows, Notifications).
    */
   showId: string;
   /**
@@ -219,7 +219,7 @@ export interface Review {
 
 // Filter-related types
 export interface ShowFilters {
-  radius?: number; // in miles (25, 50, 100, 200)
+  radius?: number; // in miles (_25, _50, 100, 200)
   startDate?: Date | string | null;
   endDate?: Date | string | null;
   maxEntryFee?: number;
@@ -266,7 +266,7 @@ export interface Badge {
   imageUrl: string;
   requirement: string;
   /**
-   * Tier of the badge (e.g., bronze, silver, gold, platinum).
+   * Tier of the badge (e.g., _bronze, silver, gold, platinum).
    */
   tier: BadgeTier;
   dateEarned?: Date | string;

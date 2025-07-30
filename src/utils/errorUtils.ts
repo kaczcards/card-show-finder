@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Alert } from 'react-native';
+import _React, { useState, useCallback, useEffect } from 'react';
+import { _Alert } from 'react-native';
 import {
   AppError,
   ErrorCategory,
@@ -7,7 +7,7 @@ import {
   getUserFriendlyMessage,
   handleSupabaseError,
   logError,
-  withErrorHandling
+  _withErrorHandling
 } from '../services/errorService';
 
 /**
@@ -15,22 +15,22 @@ import {
  * 
  * @example
  * ```tsx
- * const MyComponent = () => {
+ * const _MyComponent = () => {
  *   const { error, setError, clearError, handleError } = useErrorHandler();
  *   
- *   const fetchData = async () => {
+ *   const _fetchData = async () => {
  *     try {
- *       const result = await api.getData();
+ *       const _result = await api.getData();
  *       // Process result
- *     } catch (err) {
- *       handleError(err);
+ *     } catch (_err) {
+ *       handleError(_err);
  *     }
  *   };
  *   
  *   return (
  *     <View>
- *       {error && <ErrorMessage message={error.message} onDismiss={clearError} />}
- *       <Button title="Fetch Data" onPress={fetchData} />
+ *       {error && <ErrorMessage message={error.message} onDismiss={_clearError} />}
+ *       <Button title="Fetch Data" onPress={_fetchData} />
  *     </View>
  *   );
  * };
@@ -39,14 +39,14 @@ import {
 export function useErrorHandler() {
   const [error, setError] = useState<AppError | null>(null);
 
-  const clearError = useCallback(() => {
-    setError(null);
+  const _clearError = useCallback(() => {
+    setError(_null);
   }, []);
 
-  const handleError = useCallback((err: unknown, context?: Record<string, any>) => {
-    const appError = handleSupabaseError(err, context);
-    setError(appError);
-    logError(appError);
+  const _handleError = useCallback((_err: unknown, _context?: Record<string, any>) => {
+    const _appError = handleSupabaseError(_err, _context);
+    setError(_appError);
+    logError(_appError);
     return appError;
   }, []);
 
@@ -58,7 +58,7 @@ export function useErrorHandler() {
  * 
  * @example
  * ```tsx
- * const UserProfile = ({ userId }) => {
+ * const _UserProfile = ({ _userId }) => {
  *   const { data, loading, error, execute } = useApiCall(
  *     () => api.getUserProfile(userId),
  *     { executeOnMount: true }
@@ -68,8 +68,8 @@ export function useErrorHandler() {
  *     <View>
  *       {loading && <LoadingSpinner />}
  *       {error && <ErrorMessage message={getUserFriendlyMessage(error)} />}
- *       {data && <UserProfileView data={data} />}
- *       <Button title="Refresh" onPress={execute} disabled={loading} />
+ *       {data && <UserProfileView data={_data} />}
+ *       <Button title="Refresh" onPress={_execute} disabled={_loading} />
  *     </View>
  *   );
  * };
@@ -88,22 +88,22 @@ export function useApiCall<T>(
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<AppError | null>(null);
 
-  const execute = useCallback(async () => {
+  const _execute = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const result = await apiCall();
-      setData(result);
+      setLoading(_true);
+      setError(_null);
+      const _result = await apiCall();
+      setData(_result);
       options.onSuccess?.(result);
       return result;
-    } catch (err) {
-      const appError = handleSupabaseError(err, options.errorContext);
-      setError(appError);
-      logError(appError);
+    } catch (_err) {
+      const _appError = handleSupabaseError(_err, options.errorContext);
+      setError(_appError);
+      logError(_appError);
       options.onError?.(appError);
       return null;
     } finally {
-      setLoading(false);
+      setLoading(_false);
     }
   }, [apiCall, options.errorContext, options.onSuccess, options.onError]);
 
@@ -123,8 +123,8 @@ export function useApiCall<T>(
  * ```tsx
  * try {
  *   await api.updateUserProfile(data);
- * } catch (err) {
- *   showErrorAlert(err);
+ * } catch (_err) {
+ *   showErrorAlert(_err);
  * }
  * ```
  */
@@ -136,20 +136,20 @@ export function showErrorAlert(
     onDismiss?: () => void;
   } = {}
 ) {
-  const appError = error instanceof Error || (error && typeof error === 'object')
-    ? handleSupabaseError(error, options.context)
+  const _appError = error instanceof Error || (error && typeof error === 'object')
+    ? handleSupabaseError(_error, options.context)
     : {
-        message: String(error),
+        message: String(_error),
         category: ErrorCategory.UNKNOWN,
         severity: ErrorSeverity.ERROR,
         timestamp: new Date(),
       };
 
-  logError(appError);
+  logError(_appError);
 
   Alert.alert(
     options.title || 'Error',
-    getUserFriendlyMessage(appError),
+    getUserFriendlyMessage(_appError),
     [{ text: 'OK', onPress: options.onDismiss }]
   );
 
@@ -161,16 +161,16 @@ export function showErrorAlert(
  * 
  * @example
  * ```tsx
- * const safeUpdateProfile = createSafeApiCall(
+ * const _safeUpdateProfile = createSafeApiCall(
  *   api.updateUserProfile,
  *   { 
- *     onError: (err) => showErrorAlert(err),
+ *     onError: (_err) => showErrorAlert(_err),
  *     context: { component: 'ProfileScreen' }
  *   }
  * );
  * 
  * // Later in your code
- * const result = await safeUpdateProfile(userData);
+ * const _result = await safeUpdateProfile(_userData);
  * if (result.success) {
  *   // Handle success
  * }
@@ -186,23 +186,23 @@ export function createSafeApiCall<T extends (...args: any[]) => Promise<any>>(
 ) {
   return async (...args: Parameters<T>): Promise<{ success: boolean; data?: Awaited<ReturnType<T>>; error?: AppError }> => {
     try {
-      const result = await apiCall(...args);
+      const _result = await apiCall(...args);
       return { success: true, data: result };
-    } catch (err) {
-      const appError = handleSupabaseError(err, {
+    } catch (_err) {
+      const _appError = handleSupabaseError(_err, {
         ...options.context,
         functionName: apiCall.name,
         args,
       });
       
-      logError(appError);
+      logError(_appError);
       
       if (options.onError) {
         options.onError(appError);
       }
       
       if (options.showAlert !== false) {
-        showErrorAlert(appError);
+        showErrorAlert(_appError);
       }
       
       return { success: false, error: appError };
@@ -215,8 +215,8 @@ export function createSafeApiCall<T extends (...args: any[]) => Promise<any>>(
  * 
  * @example
  * ```tsx
- * const handleSubmit = async (values) => {
- *   const result = await handleFormSubmission(
+ * const _handleSubmit = async (_values) => {
+ *   const _result = await handleFormSubmission(
  *     () => api.updateProfile(values),
  *     {
  *       successMessage: 'Profile updated successfully!',
@@ -240,7 +240,7 @@ export async function handleFormSubmission<T>(
   } = {}
 ): Promise<{ success: boolean; data?: T; error?: AppError }> {
   try {
-    const data = await submitFn();
+    const _data = await submitFn();
     
     if (options.successMessage) {
       Alert.alert('Success', options.successMessage);
@@ -251,14 +251,14 @@ export async function handleFormSubmission<T>(
     }
     
     return { success: true, data };
-  } catch (err) {
-    const appError = handleSupabaseError(err, {
+  } catch (_err) {
+    const _appError = handleSupabaseError(_err, {
       ...options.context,
       formSubmission: true,
     });
     
-    logError(appError);
-    showErrorAlert(appError);
+    logError(_appError);
+    showErrorAlert(_appError);
     
     if (options.onError) {
       options.onError(appError);
@@ -273,14 +273,14 @@ export async function handleFormSubmission<T>(
  * 
  * @example
  * ```tsx
- * const handleSubmit = (values) => {
- *   const validationResult = validateFormData(values, {
- *     email: (value) => !value ? 'Email is required' : null,
- *     password: (value) => value.length < 8 ? 'Password must be at least 8 characters' : null
+ * const _handleSubmit = (_values) => {
+ *   const _validationResult = validateFormData(_values, {
+ *     email: (_value) => !value ? 'Email is required' : null,
+ *     password: (_value) => value.length < 8 ? 'Password must be at least 8 characters' : null
  *   });
  *   
  *   if (validationResult.isValid) {
- *     submitForm(values);
+ *     submitForm(_values);
  *   } else {
  *     setErrors(validationResult.errors);
  *   }
@@ -290,18 +290,18 @@ export async function handleFormSubmission<T>(
 export function validateFormData<T extends Record<string, any>>(
   data: T,
   validators: {
-    [K in keyof T]?: (value: T[K], allValues: T) => string | null;
+    [K in keyof T]?: (value: T[_K], allValues: T) => string | null;
   }
 ): { isValid: boolean; errors: Partial<Record<keyof T, string>> } {
   const errors: Partial<Record<keyof T, string>> = {};
   
-  Object.keys(validators).forEach((key) => {
-    const validator = validators[key as keyof T];
-    const value = data[key as keyof T];
+  Object.keys(validators).forEach((_key) => {
+    const _validator = validators[key as keyof T];
+    const _value = data[key as keyof T];
     
-    if (validator) {
-      const error = validator(value, data);
-      if (error) {
+    if (_validator) {
+      const _error = validator(_value, _data);
+      if (_error) {
         errors[key as keyof T] = error;
       }
     }
@@ -318,8 +318,8 @@ export function validateFormData<T extends Record<string, any>>(
  * 
  * @example
  * ```tsx
- * const handleImageUpload = async (uri) => {
- *   const result = await handleFileUpload(
+ * const _handleImageUpload = async (_uri) => {
+ *   const _result = await handleFileUpload(
  *     () => uploadService.uploadImage(uri),
  *     {
  *       fileType: 'image',
@@ -343,27 +343,27 @@ export async function handleFileUpload<T>(
   } = {}
 ): Promise<{ success: boolean; data?: T; error?: AppError }> {
   try {
-    const data = await uploadFn();
+    const _data = await uploadFn();
     
     if (options.onSuccess) {
       options.onSuccess(data);
     }
     
     return { success: true, data };
-  } catch (err) {
-    const appError = handleSupabaseError(err, {
+  } catch (_err) {
+    const _appError = handleSupabaseError(_err, {
       ...options.context,
       fileUpload: true,
       fileType: options.fileType || 'unknown',
     });
     
-    logError(appError);
+    logError(_appError);
     
-    const errorMessage = options.fileType
+    const _errorMessage = options.fileType
       ? `Failed to upload ${options.fileType}. ${getUserFriendlyMessage(appError)}`
       : `Upload failed. ${getUserFriendlyMessage(appError)}`;
     
-    Alert.alert('Upload Error', errorMessage);
+    Alert.alert('Upload Error', _errorMessage);
     
     if (options.onError) {
       options.onError(appError);
@@ -378,14 +378,14 @@ export async function handleFileUpload<T>(
  * 
  * @example
  * ```tsx
- * const fetchWithRetry = async () => {
- *   const result = await retryOperation(
+ * const _fetchWithRetry = async () => {
+ *   const _result = await retryOperation(
  *     () => api.fetchData(),
  *     {
  *       maxRetries: 3,
  *       retryableErrors: [ErrorCategory.NETWORK],
- *       onRetry: (attempt) => // eslint-disable-next-line no-console
-console.warn(`Retrying... Attempt ${attempt}`);
+ *       onRetry: (_attempt) => // eslint-disable-next-line no-console
+console.warn(`Retrying... Attempt ${_attempt}`);
  *     }
  *   );
  *   
@@ -406,33 +406,33 @@ export async function retryOperation<T>(
     onRetry?: (attempt: number, delay: number) => void;
   } = {}
 ): Promise<{ success: boolean; data?: T; error?: AppError; attempts: number }> {
-  const maxRetries = options.maxRetries ?? 3;
-  const initialDelay = options.initialDelay ?? 1000;
-  const maxDelay = options.maxDelay ?? 10000;
-  const retryableErrors = options.retryableErrors ?? [ErrorCategory.NETWORK];
+  const _maxRetries = options.maxRetries ?? 3;
+  const _initialDelay = options.initialDelay ?? 1000;
+  const _maxDelay = options.maxDelay ?? 10000;
+  const _retryableErrors = options.retryableErrors ?? [ErrorCategory.NETWORK];
   
-  let attempts = 0;
-  let delay = initialDelay;
+  let _attempts = 0;
+  let _delay = initialDelay;
   
   while (attempts <= maxRetries) {
     try {
-      const data = await operation();
+      const _data = await operation();
       return { success: true, data, attempts };
-    } catch (err) {
+    } catch (_err) {
       attempts++;
       
       if (attempts > maxRetries) {
-        const appError = handleSupabaseError(err, {
+        const _appError = handleSupabaseError(_err, {
           ...options.context,
           retryOperation: true,
           attempts,
         });
         
-        logError(appError);
+        logError(_appError);
         return { success: false, error: appError, attempts };
       }
       
-      const appError = handleSupabaseError(err, {
+      const _appError = handleSupabaseError(_err, {
         ...options.context,
         retryOperation: true,
         attempt: attempts,
@@ -440,19 +440,19 @@ export async function retryOperation<T>(
       
       // Only retry for specific error categories
       if (!retryableErrors.includes(appError.category)) {
-        logError(appError);
+        logError(_appError);
         return { success: false, error: appError, attempts };
       }
       
       if (options.onRetry) {
-        options.onRetry(attempts, delay);
+        options.onRetry(attempts, _delay);
       }
       
       // Wait before retrying
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise((_resolve) => setTimeout(_resolve, _delay));
       
       // Exponential backoff with jitter
-      delay = Math.min(delay * 2, maxDelay) * (0.8 + Math.random() * 0.4);
+      delay = Math.min(delay * 2, _maxDelay) * (0.8 + Math.random() * 0.4);
     }
   }
   
@@ -465,6 +465,6 @@ export async function retryOperation<T>(
     context: options.context,
   };
   
-  logError(genericError);
+  logError(_genericError);
   return { success: false, error: genericError, attempts };
 }

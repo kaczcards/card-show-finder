@@ -9,11 +9,11 @@ import {
   Animated,
   Dimensions,
   PanResponder,
-  Platform,
+  _Platform,
   Switch,
   TextInput,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 import { ShowFilters, ShowFeature, CardCategory } from '../types';
 // Temporarily commenting out DatePicker import to fix the crash
 // import DatePicker from 'react-native-date-picker';
@@ -25,48 +25,48 @@ interface FilterSheetProps {
   onApplyFilters: (filters: ShowFilters) => void;
 }
 
-const { height } = Dimensions.get('window');
+const { _height } = Dimensions.get('window');
 
-const RADIUS_OPTIONS = [25, 50, 100, 200];
+const _RADIUS_OPTIONS = [25, 50, 100, 200];
 
 const FilterSheet: React.FC<FilterSheetProps> = ({
   visible,
-  onClose,
+  _onClose,
   filters,
   onApplyFilters,
 }) => {
   // Animation for the bottom sheet
-  const translateY = useRef(new Animated.Value(height)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const _translateY = useRef(new Animated.Value(height)).current;
+  const _backdropOpacity = useRef(new Animated.Value(0)).current;
 
   // Local state for filter values
   const [localFilters, setLocalFilters] = useState<ShowFilters>(filters);
   
   // Date inputs
-  const [startDateText, setStartDateText] = useState('');
-  const [endDateText, setEndDateText] = useState('');
-  const [maxEntryFeeText, setMaxEntryFeeText] = useState('');
+  const [_startDateText, setStartDateText] = useState('');
+  const [_endDateText, setEndDateText] = useState('');
+  const [_maxEntryFeeText, setMaxEntryFeeText] = useState('');
 
   // Date picker state
-  const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [datePickerType, setDatePickerType] = useState<'start' | 'end'>('start');
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [_datePickerVisible, _setDatePickerVisible] = useState(_false);
+  const [_datePickerType, _setDatePickerType] = useState<'start' | 'end'>('start');
+  const [_selectedDate, _setSelectedDate] = useState<Date | null>(null);
 
   // Reset local filters when the component becomes visible
   useEffect(() => {
-    setLocalFilters(filters);
+    setLocalFilters(_filters);
     
     // Format dates for display
     if (filters.startDate) {
-      const startDate = new Date(filters.startDate);
-      setStartDateText(startDate.toISOString().split('T')[0]);
+      const _startDate = new Date(filters.startDate);
+      setStartDateText(startDate.toISOString().split('T')[_0]);
     } else {
       setStartDateText('');
     }
     
     if (filters.endDate) {
-      const endDate = new Date(filters.endDate);
-      setEndDateText(endDate.toISOString().split('T')[0]);
+      const _endDate = new Date(filters.endDate);
+      setEndDateText(endDate.toISOString().split('T')[_0]);
     } else {
       setEndDateText('');
     }
@@ -80,7 +80,7 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
 
   // Animate the bottom sheet when visibility changes
   useEffect(() => {
-    if (visible) {
+    if (_visible) {
       Animated.parallel([
         Animated.timing(translateY, {
           toValue: 0,
@@ -110,18 +110,18 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   }, [visible, translateY, backdropOpacity]);
 
   // Pan responder for dragging the sheet
-  const panResponder = useRef(
+  const _panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
+      onMoveShouldSetPanResponder: (_, _gestureState) => {
         return gestureState.dy > 0;
       },
-      onPanResponderMove: (_, gestureState) => {
+      onPanResponderMove: (_, _gestureState) => {
         if (gestureState.dy > 0) {
           translateY.setValue(gestureState.dy);
         }
       },
-      onPanResponderRelease: (_, gestureState) => {
+      onPanResponderRelease: (_, _gestureState) => {
         if (gestureState.dy > height * 0.2) {
           onClose();
         } else {
@@ -135,76 +135,76 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   ).current;
 
   // Handle radius selection
-  const handleRadiusChange = (radius: number) => {
-    setLocalFilters((prev) => ({
+  const _handleRadiusChange = (_radius: number) => {
+    setLocalFilters((_prev) => ({
       ...prev,
-      radius,
+      _radius,
     }));
   };
 
   // Handle date changes
-  const handleStartDateChange = (text: string) => {
-    setStartDateText(text);
+  const _handleStartDateChange = (text: string) => {
+    setStartDateText(_text);
     try {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-        const date = new Date(text);
+      if (/^\d{_4}-\d{_2}-\d{_2}$/.test(text)) {
+        const _date = new Date(_text);
         if (!isNaN(date.getTime())) {
-          setLocalFilters((prev) => ({
+          setLocalFilters((_prev) => ({
             ...prev,
             startDate: date,
           }));
         }
       } else if (text === '') {
-        setLocalFilters((prev) => ({
+        setLocalFilters((_prev) => ({
           ...prev,
           startDate: null,
         }));
       }
-    } catch (error) {
-      console.error('Invalid start date format:', error);
+    } catch (_error) {
+      console.error('Invalid start date format:', _error);
     }
   };
 
-  const handleEndDateChange = (text: string) => {
-    setEndDateText(text);
+  const _handleEndDateChange = (text: string) => {
+    setEndDateText(_text);
     try {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-        const date = new Date(text);
+      if (/^\d{_4}-\d{_2}-\d{_2}$/.test(text)) {
+        const _date = new Date(_text);
         if (!isNaN(date.getTime())) {
-          setLocalFilters((prev) => ({
+          setLocalFilters((_prev) => ({
             ...prev,
             endDate: date,
           }));
         }
       } else if (text === '') {
-        setLocalFilters((prev) => ({
+        setLocalFilters((_prev) => ({
           ...prev,
           endDate: null,
         }));
       }
-    } catch (error) {
-      console.error('Invalid end date format:', error);
+    } catch (_error) {
+      console.error('Invalid end date format:', _error);
     }
   };
 
   // Handle max entry fee change
-  const handleMaxEntryFeeChange = (text: string) => {
-    setMaxEntryFeeText(text);
-    const fee = parseFloat(text);
-    setLocalFilters((prev) => ({
+  const _handleMaxEntryFeeChange = (_text: string) => {
+    setMaxEntryFeeText(_text);
+    const _fee = parseFloat(_text);
+    setLocalFilters((_prev) => ({
       ...prev,
-      maxEntryFee: isNaN(fee) ? undefined : fee,
+      maxEntryFee: isNaN(_fee) ? undefined : fee,
     }));
   };
 
   // Handle feature toggle
-  const handleFeatureToggle = (feature: ShowFeature) => {
-    setLocalFilters((prev) => {
-      const features = prev.features || [];
+  const _handleFeatureToggle = (feature: ShowFeature) => {
+    setLocalFilters((_prev) => {
+      const _features = prev.features || [];
       if (features.includes(feature)) {
         return {
           ...prev,
-          features: features.filter((f) => f !== feature),
+          features: features.filter((_f) => f !== feature),
         };
       } else {
         return {
@@ -216,13 +216,13 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   };
 
   // Handle category toggle
-  const handleCategoryToggle = (category: CardCategory) => {
-    setLocalFilters((prev) => {
-      const categories = prev.categories || [];
+  const _handleCategoryToggle = (category: CardCategory) => {
+    setLocalFilters((_prev) => {
+      const _categories = prev.categories || [];
       if (categories.includes(category)) {
         return {
           ...prev,
-          categories: categories.filter((c) => c !== category),
+          categories: categories.filter((_c) => c !== category),
         };
       } else {
         return {
@@ -234,12 +234,12 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   };
 
   // Apply filters and close the sheet
-  const handleApplyFilters = () => {
-    onApplyFilters(localFilters);
+  const _handleApplyFilters = () => {
+    onApplyFilters(_localFilters);
   };
 
   // Reset filters to defaults
-  const handleResetFilters = () => {
+  const _handleResetFilters = () => {
     const defaultFilters: ShowFilters = {
       radius: 25,
       startDate: new Date(),
@@ -249,39 +249,39 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
       categories: [],
     };
     
-    setLocalFilters(defaultFilters);
+    setLocalFilters(_defaultFilters);
     
     // Update date text inputs
     // Ensure we convert to Date before calling toISOString in case defaults are strings
-    setStartDateText(new Date(defaultFilters.startDate!).toISOString().split('T')[0]);
-    setEndDateText(new Date(defaultFilters.endDate!).toISOString().split('T')[0]);
+    setStartDateText(new Date(defaultFilters.startDate!).toISOString().split('T')[_0]);
+    setEndDateText(new Date(defaultFilters.endDate!).toISOString().split('T')[_0]);
     setMaxEntryFeeText('');
   };
 
   // Check if a feature is selected
-  const isFeatureSelected = (feature: ShowFeature) => {
+  const _isFeatureSelected = (feature: ShowFeature) => {
     return localFilters.features?.includes(feature) || false;
   };
 
   // Check if a category is selected
-  const isCategorySelected = (category: CardCategory) => {
+  const _isCategorySelected = (category: CardCategory) => {
     return localFilters.categories?.includes(category) || false;
   };
 
   // Temporarily handle showing the date picker - just update the text fields manually
-  const handleShowDatePicker = (type: 'start' | 'end') => {
+  const _handleShowDatePicker = (type: 'start' | 'end') => {
      
-console.warn(`Would show date picker for ${type} date`);
+console.warn(`Would show date picker for ${_type} date`);
     // Simply provide a text field instruction instead of showing the date picker
     alert(`Please enter the ${type === 'start' ? 'Start' : 'End'} date manually in YYYY-MM-DD format`);
   };
 
   return (
     <Modal
-      visible={visible}
+      visible={_visible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={_onClose}
     >
       <View style={styles.modalContainer}>
         {/* Backdrop */}
@@ -290,14 +290,14 @@ console.warn(`Would show date picker for ${type} date`);
             styles.backdrop,
             { opacity: backdropOpacity },
           ]}
-          onTouchEnd={onClose}
+          onTouchEnd={_onClose}
         />
 
         {/* Bottom Sheet */}
         <Animated.View
           style={[
             styles.bottomSheet,
-            { transform: [{ translateY }] },
+            { transform: [{ _translateY }] },
           ]}
           {...panResponder.panHandlers}
         >
@@ -309,8 +309,8 @@ console.warn(`Would show date picker for ${type} date`);
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Filter Card Shows</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="#666" />
+            <TouchableOpacity onPress={_onClose}>
+              <Ionicons name="close" size={_24} color="#666" />
             </TouchableOpacity>
           </View>
 
@@ -321,14 +321,14 @@ console.warn(`Would show date picker for ${type} date`);
               <Text style={styles.sectionTitle}>Distance</Text>
               <Text style={styles.sectionSubtitle}>Show card shows within:</Text>
               <View style={styles.radiusOptions}>
-                {RADIUS_OPTIONS.map((option) => (
+                {RADIUS_OPTIONS.map((_option) => (
                   <TouchableOpacity
-                    key={option}
+                    key={_option}
                     style={[
                       styles.radiusOption,
                       localFilters.radius === option && styles.radiusOptionSelected,
                     ]}
-                    onPress={() => handleRadiusChange(option)}
+                    onPress={() => handleRadiusChange(_option)}
                   >
                     <Text
                       style={[
@@ -336,7 +336,7 @@ console.warn(`Would show date picker for ${type} date`);
                         localFilters.radius === option && styles.radiusOptionTextSelected,
                       ]}
                     >
-                      {option} miles
+                      {_option} miles
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -353,8 +353,8 @@ console.warn(`Would show date picker for ${type} date`);
                 <View style={styles.dateInputRow}>
                   <TextInput
                     style={styles.dateInput}
-                    value={startDateText}
-                    onChangeText={handleStartDateChange}
+                    value={_startDateText}
+                    onChangeText={_handleStartDateChange}
                     placeholder="YYYY-MM-DD"
                     keyboardType="default"
                   />
@@ -366,8 +366,8 @@ console.warn(`Would show date picker for ${type} date`);
                 <View style={styles.dateInputRow}>
                   <TextInput
                     style={styles.dateInput}
-                    value={endDateText}
-                    onChangeText={handleEndDateChange}
+                    value={_endDateText}
+                    onChangeText={_handleEndDateChange}
                     placeholder="YYYY-MM-DD"
                     keyboardType="default"
                   />
@@ -381,8 +381,8 @@ console.warn(`Would show date picker for ${type} date`);
               <Text style={styles.sectionSubtitle}>Only show events with entry fee up to:</Text>
               <TextInput
                 style={styles.textInput}
-                value={maxEntryFeeText}
-                onChangeText={handleMaxEntryFeeChange}
+                value={_maxEntryFeeText}
+                onChangeText={_handleMaxEntryFeeChange}
                 placeholder="e.g., 10.00 (leave blank for any fee)"
                 keyboardType="numeric"
               />
@@ -393,12 +393,12 @@ console.warn(`Would show date picker for ${type} date`);
               <Text style={styles.sectionTitle}>Show Features</Text>
               <Text style={styles.sectionSubtitle}>Filter by special features:</Text>
               
-              {Object.values(ShowFeature).map((feature) => (
-                <View key={feature} style={styles.toggleOption}>
-                  <Text style={styles.toggleOptionText}>{feature}</Text>
+              {Object.values(ShowFeature).map((_feature) => (
+                <View key={_feature} style={styles.toggleOption}>
+                  <Text style={styles.toggleOptionText}>{_feature}</Text>
                   <Switch
                     value={isFeatureSelected(feature)}
-                    onValueChange={() => handleFeatureToggle(feature)}
+                    onValueChange={() => handleFeatureToggle(_feature)}
                     trackColor={{ false: '#d1d1d1', true: '#b3d9ff' }}
                     thumbColor={isFeatureSelected(feature) ? '#007AFF' : '#f4f3f4'}
                     ios_backgroundColor="#d1d1d1"
@@ -412,12 +412,12 @@ console.warn(`Would show date picker for ${type} date`);
               <Text style={styles.sectionTitle}>Card Categories</Text>
               <Text style={styles.sectionSubtitle}>Filter by card types:</Text>
               
-              {Object.values(CardCategory).map((category) => (
-                <View key={category} style={styles.toggleOption}>
-                  <Text style={styles.toggleOptionText}>{category}</Text>
+              {Object.values(CardCategory).map((_category) => (
+                <View key={_category} style={styles.toggleOption}>
+                  <Text style={styles.toggleOptionText}>{_category}</Text>
                   <Switch
                     value={isCategorySelected(category)}
-                    onValueChange={() => handleCategoryToggle(category)}
+                    onValueChange={() => handleCategoryToggle(_category)}
                     trackColor={{ false: '#d1d1d1', true: '#b3d9ff' }}
                     thumbColor={isCategorySelected(category) ? '#007AFF' : '#f4f3f4'}
                     ios_backgroundColor="#d1d1d1"
@@ -431,14 +431,14 @@ console.warn(`Would show date picker for ${type} date`);
           <View style={styles.footer}>
             <TouchableOpacity
               style={styles.resetButton}
-              onPress={handleResetFilters}
+              onPress={_handleResetFilters}
             >
               <Text style={styles.resetButtonText}>Reset</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
               style={styles.applyButton}
-              onPress={handleApplyFilters}
+              onPress={_handleApplyFilters}
             >
               <Text style={styles.applyButtonText}>Apply Filters</Text>
             </TouchableOpacity>
@@ -451,7 +451,7 @@ console.warn(`Would show date picker for ${type} date`);
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
