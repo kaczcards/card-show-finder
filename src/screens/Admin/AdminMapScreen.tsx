@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, Tex
 import { Ionicons } from '@expo/vector-icons';
 // Use fallback map components that gracefully degrade when the native
 // react-native-maps module isn’t available (e.g. running in Expo Go).
-import { Region, _Marker } from '../../components/MapFallback';
+import { Region, Marker } from '../../components/MapFallback';
 import { useNavigation } from '@react-navigation/native';
 import { Show, Coordinates } from '../../types';
 import { checkAdminStatus, getAllShowsForValidation, updateShowCoordinates } from '../../services/adminService';
