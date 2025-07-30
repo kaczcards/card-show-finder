@@ -24,8 +24,8 @@ import {
 import { ShowFilters } from '../types';
 
 // Constants
-const _PRIMARY_COLOR = '#FF6A00'; // Orange
-const _SECONDARY_COLOR = '#0057B8'; // Blue
+const PRIMARY_COLOR = '#FF6A00'; // Orange
+const SECONDARY_COLOR = '#0057B8'; // Blue
 
 interface FilterPresetModalProps {
   visible: boolean;
@@ -37,7 +37,7 @@ interface FilterPresetModalProps {
 
 const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
   visible,
-  _onClose,
+  onClose,
   currentFilters,
   onApplyPreset,
   userId,
@@ -45,8 +45,8 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
   // State
   const [presets, setPresets] = useState<FilterPreset[]>([]);
   const [newPresetName, setNewPresetName] = useState('');
-  const [loading, setLoading] = useState(_false);
-  const [savingPreset, setSavingPreset] = useState(_false);
+  const [loading, setLoading] = useState(false);
+  const [savingPreset, setSavingPreset] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load presets when modal becomes visible
@@ -68,7 +68,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
   const _loadPresets = async () => {
     try {
       if (!userId) return;
-      setLoading(_true);
+      setLoading(true);
       setError(_null);
       const _userPresets = await loadFilterPresetsFromSupabase(_userId);
       setPresets(_userPresets);
@@ -76,7 +76,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
       setError('Failed to load saved presets');
       console.error('Error loading presets:', _err);
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   };
 
@@ -93,7 +93,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
     }
 
     try {
-      setSavingPreset(_true);
+      setSavingPreset(true);
       setError(_null);
 
       // Check if a preset with this name already exists
@@ -129,7 +129,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
             },
           ]
         );
-        setSavingPreset(_false);
+        setSavingPreset(false);
         return;
       }
 
@@ -150,7 +150,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
       setError('Failed to save preset');
       console.error('Error saving preset:', _err);
     } finally {
-      setSavingPreset(_false);
+      setSavingPreset(false);
     }
   };
 
@@ -170,14 +170,14 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
           style: 'destructive',
           onPress: async () => {
             try {
-              setLoading(_true);
+              setLoading(true);
               await deleteFilterPreset(preset.id!);
               loadPresets();
             } catch (err: any) {
               setError('Failed to delete preset');
               console.error('Error deleting preset:', _err);
             } finally {
-              setLoading(_false);
+              setLoading(false);
             }
           },
         },
@@ -189,7 +189,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
   const _handleSetDefaultPreset = async (preset: FilterPreset) => {
     if (!userId) return;
     try {
-      setLoading(_true);
+      setLoading(true);
       await setDefaultFilterPreset(_userId, preset.id!);
       loadPresets();
       Alert.alert('Success', `"${preset.name}" set as default`);
@@ -197,7 +197,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
       setError('Failed to set default preset');
       console.error('Error setting default preset:', _err);
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   };
 
@@ -228,7 +228,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
             style={[styles.presetAction, styles.defaultAction]}
             onPress={() => handleSetDefaultPreset(_item)}
           >
-            <Ionicons name="star-outline" size={_20} color={_PRIMARY_COLOR} />
+            <Ionicons name="star-outline" size={_20} color={PRIMARY_COLOR} />
           </TouchableOpacity>
         )}
         
@@ -247,7 +247,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
       visible={_visible}
       transparent
       animationType="slide"
-      onRequestClose={_onClose}
+      onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -257,7 +257,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Filter Presets</Text>
-            <TouchableOpacity onPress={_onClose}>
+            <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={_24} color="#666" />
             </TouchableOpacity>
           </View>
@@ -293,12 +293,12 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
           {/* Presets List */}
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={_PRIMARY_COLOR} />
+              <ActivityIndicator size="large" color={PRIMARY_COLOR} />
               <Text style={styles.loadingText}>Loading presets...</Text>
             </View>
           ) : presets.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="bookmarks-outline" size={_50} color={_SECONDARY_COLOR} />
+              <Ionicons name="bookmarks-outline" size={_50} color={SECONDARY_COLOR} />
               <Text style={styles.emptyText}>No saved presets</Text>
               <Text style={styles.emptySubtext}>
                 Save your current filters as a preset to quickly apply them later
@@ -310,7 +310,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
               renderItem={_renderPresetItem}
               keyExtractor={(_item) => item.id || item.name}
               contentContainerStyle={styles.presetList}
-              showsVerticalScrollIndicator={_false}
+              showsVerticalScrollIndicator={false}
             />
           )}
         </View>
