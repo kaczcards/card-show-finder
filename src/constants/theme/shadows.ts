@@ -17,9 +17,9 @@ export const _createElevation = (elevation: number) => {
     
     return {
       shadowColor: '#000',
-      shadowOffset: { width: 0, height },
-      shadowOpacity: opacity,
-      shadowRadius: radius,
+      shadowOffset: { width: 0, height: _height },
+      shadowOpacity: _opacity,
+      shadowRadius: _radius,
     };
   } else {
     // Android elevation - simple and direct
@@ -31,12 +31,16 @@ export const _createElevation = (elevation: number) => {
 
 // Predefined shadow levels
 export const _shadows = {
-  none: createElevation(_0),
-  xs: createElevation(_1),    // Subtle shadow for small UI elements
-  small: createElevation(_2), // Cards, buttons
-  medium: createElevation(_4), // Floating action buttons, nav bars
-  large: createElevation(_8), // Modals, dialogs
-  xl: createElevation(_16),   // Popovers, tooltips
+  none: _createElevation(0),
+  xs: _createElevation(1),    // Subtle shadow for small UI elements
+  small: _createElevation(2), // Cards, buttons
+  medium: _createElevation(4), // Floating action buttons, nav bars
+  large: _createElevation(8), // Modals, dialogs
+  xl: _createElevation(16),   // Popovers, tooltips
 };
 
-export default shadows;
+export default _shadows;
+
+// Backward-compatible exports
+export const shadows = _shadows;
+export const createElevation = _createElevation;

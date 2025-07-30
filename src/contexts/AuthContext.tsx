@@ -93,14 +93,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ _childre
 
     try {
       // Get the favorite_shows_count directly from the profiles table
-      const { data, _error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('favorite_shows_count')
-        .eq('id', _userId)
+        .eq('id', userId)
         .single();
 
-      if (_error) {
-        console.error('[_AuthContext] Error fetching favorite_shows_count:', _error);
+      if (error) {
+        console.error('[_AuthContext] Error fetching favorite_shows_count:', error);
         return;
       }
 
@@ -109,8 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ _childre
        
 console.warn('[_AuthContext] Fetched favorite_shows_count:', _count);
       setFavoriteCount(_count);
-    } catch (_error) {
-      console.error('[_AuthContext] Unexpected error in fetchFavoriteCount:', _error);
+    } catch (error) {
+      console.error('[_AuthContext] Unexpected error in fetchFavoriteCount:', error);
       // Keep the current count on error
     }
   };
@@ -122,7 +122,7 @@ console.warn('[_AuthContext] Fetched favorite_shows_count:', _count);
         // Check if we have a stored session
         const { data: { _session }, error } = await supabase.auth.getSession();
         
-        if (_error) {
+        if (error) {
           throw error;
         }
         
@@ -179,7 +179,7 @@ console.warn('[_AuthContext] Fetched favorite_shows_count:', _count);
           });
         }
       } catch (error: any) {
-        console.error('Error initializing auth:', _error);
+        console.error('Error initializing auth:', error);
         setAuthState({
           user: null,
           isLoading: false,
@@ -237,7 +237,7 @@ console.warn('[_AuthContext] Fetched favorite_shows_count:', _count);
             // Set favorite count from profile data
             setFavoriteCount(profileData.favorite_shows_count || 0);
           } catch (error: any) {
-            console.error('Error handling auth state change:', _error);
+            console.error('Error handling auth state change:', error);
             setAuthState(prev => ({
               ...prev,
               isLoading: false,
@@ -480,7 +480,7 @@ console.warn('[_AuthContext] Fetching user profile from database...');
 
       return userData;
     } catch (error: any) {
-      console.error('Registration error:', _error);
+      console.error('Registration error:', error);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
@@ -512,7 +512,7 @@ console.warn('[_AuthContext] Fetching user profile from database...');
       // Reset favorite count on logout
       setFavoriteCount(_0);
     } catch (error: any) {
-      console.error('Logout error:', _error);
+      console.error('Logout error:', error);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
@@ -535,7 +535,7 @@ console.warn('[_AuthContext] Fetching user profile from database...');
         error: null,
       }));
     } catch (error: any) {
-      console.error('Reset password error:', _error);
+      console.error('Reset password error:', error);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
@@ -570,7 +570,7 @@ console.warn('[_AuthContext] Fetching user profile from database...');
         error: null,
       }));
     } catch (error: any) {
-      console.error('Update profile error:', _error);
+      console.error('Update profile error:', error);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
@@ -600,7 +600,7 @@ console.warn('[_AuthContext] Adding show to favorites:', _showId);
        
 console.warn('[_AuthContext] Show added to favorites successfully');
     } catch (error: any) {
-      console.error('[_AuthContext] Error adding show to favorites:', _error);
+      console.error('[_AuthContext] Error adding show to favorites:', error);
       setAuthState(prev => ({
         ...prev,
         error: error.message || 'Failed to add show to favorites',
@@ -629,7 +629,7 @@ console.warn('[_AuthContext] Removing show from favorites:', _showId);
        
 console.warn('[_AuthContext] Show removed from favorites successfully');
     } catch (error: any) {
-      console.error('[_AuthContext] Error removing show from favorites:', _error);
+      console.error('[_AuthContext] Error removing show from favorites:', error);
       setAuthState(prev => ({
         ...prev,
         error: error.message || 'Failed to remove show from favorites',
@@ -682,11 +682,11 @@ console.warn('[_AuthContext] Cleared cached Supabase tokens', _supabaseKeys);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', _userId)
+        .eq('id', userId)
         .single();
 
       if (error || !profile) {
-        console.error('[_AuthContext] Failed to fetch profile after refresh', _error);
+        console.error('[_AuthContext] Failed to fetch profile after refresh', error);
         return null;
       }
 
@@ -768,9 +768,9 @@ console.warn('[_AuthContext] Fetched fresh profile', mapped.role, mapped.account
   };
   
   return (
-    <AuthContext.Provider value={_contextValue}>
-      {_children}
-    </AuthContext.Provider>
+    <_AuthContext.Provider value={_contextValue}>
+      {children}
+    </_AuthContext.Provider>
   );
 };
 
@@ -778,11 +778,16 @@ console.warn('[_AuthContext] Fetched fresh profile', mapped.role, mapped.account
 export const _useAuth = () => {
   const _context = useContext(_AuthContext);
   
-  if (!context) {
+  if (!_context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   
-  return context;
+  return _context;
 };
 
-export default AuthContext;
+// Back-compat named export and default export
+export const AuthContext = _AuthContext;
+export default _AuthContext;
+
+// Backward-compatible export for useAuth hook
+export const useAuth = _useAuth;

@@ -321,7 +321,7 @@ export const _errorStates = {
       textAlign: 'center' as const,
       marginBottom: spacing.spacing.large,
     } as TextStyle,
-    button: buttons.primary,
+    button: _buttons.primary,
   },
   
   // Inline error state
@@ -348,10 +348,20 @@ export const _errorStates = {
 };
 
 export default {
-  buttons,
-  cards,
-  inputs,
-  listItems,
-  loadingStates,
-  errorStates,
+  buttons: _buttons,
+  cards: _cards,
+  inputs: _inputs,
+  listItems: _listItems,
+  loadingStates: _loadingStates,
+  errorStates: _errorStates,
 };
+
+// ------------------------------------------------------------------
+// Backward-compatible named exports
+// ------------------------------------------------------------------
+export const buttons = _buttons;
+export const cards = _cards;
+export const inputs = _inputs;
+export const listItems = _listItems;
+export const loadingStates = _loadingStates;
+export const errorStates = _errorStates;

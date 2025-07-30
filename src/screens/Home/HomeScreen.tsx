@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, _Alert, AppState, Platform,  } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, Alert, AppState, Platform,  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as locationService from '../../services/locationService';
@@ -567,7 +567,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
         <View style={styles.filterContainer}>
           <View style={styles.filterOptions}>
             <TouchableOpacity
-              style={[styles.filterButton, { backgroundColor: SECONDARY_COLOR }]}
+              style={[styles.filterButton, { backgroundColor: _SECONDARY_COLOR }]}
               onPress={_handleFilterPress}
             >
               <Ionicons name="options" size={_18} color="white" />
@@ -583,7 +583,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
             <TouchableOpacity
               style={[
                 styles.filterButton,
-                { backgroundColor: PRIMARY_COLOR, marginLeft: 10 },
+                { backgroundColor: _PRIMARY_COLOR, marginLeft: 10 },
               ]}
               onPress={() => setPresetModalVisible(_true)}
             >
@@ -730,7 +730,7 @@ const _styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: _PRIMARY_COLOR,
     borderRadius: 10,
     paddingHorizontal: 4,
     paddingVertical: 1,
@@ -756,7 +756,7 @@ const _styles = StyleSheet.create({
     marginBottom: 8,
   },
   activeFilterText: {
-    color: SECONDARY_COLOR,
+    color: _SECONDARY_COLOR,
     fontSize: 12,
     fontWeight: '500',
     marginLeft: 4,
@@ -776,7 +776,7 @@ const _styles = StyleSheet.create({
   },
   resetFiltersText: {
     fontSize: 12,
-    color: SECONDARY_COLOR,
+    color: _SECONDARY_COLOR,
     fontWeight: '600',
   },
   errorContainer: {
@@ -816,7 +816,7 @@ const _styles = StyleSheet.create({
     color: '#636366',
   },
   viewAllText: {
-    color: PRIMARY_COLOR,
+    color: _PRIMARY_COLOR,
     fontWeight: '600',
   },
   showsList: {
@@ -869,7 +869,7 @@ const _styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: _PRIMARY_COLOR,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
@@ -910,7 +910,7 @@ const _styles = StyleSheet.create({
     marginBottom: 15,
   },
   resetFiltersButton: {
-    backgroundColor: SECONDARY_COLOR,
+    backgroundColor: _SECONDARY_COLOR,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,

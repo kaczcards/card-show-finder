@@ -1,4 +1,4 @@
-import React, { _useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
 import * as _Sentry from 'sentry-expo';
 import { getSentryErrorBoundary, captureException } from '../services/sentryConfig';

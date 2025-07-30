@@ -24,7 +24,7 @@ const _DURATIONS = {
 export const _showSuccessToast = (
   message: string, 
   subText?: string, 
-  duration: number = DURATIONS.NORMAL
+  duration: number = _DURATIONS.NORMAL
 ) => {
   Toast.show({
     type: 'success',
@@ -45,7 +45,7 @@ export const _showSuccessToast = (
 export const _showInfoToast = (
   message: string, 
   subText?: string, 
-  duration: number = DURATIONS.NORMAL
+  duration: number = _DURATIONS.NORMAL
 ) => {
   Toast.show({
     type: 'info',
@@ -66,7 +66,7 @@ export const _showInfoToast = (
 export const _showErrorToast = (
   message: string, 
   subText?: string, 
-  duration: number = DURATIONS.LONG
+  duration: number = _DURATIONS.LONG
 ) => {
   Toast.show({
     type: 'error',
@@ -87,7 +87,7 @@ export const _showErrorToast = (
 export const _showWarningToast = (
   message: string, 
   subText?: string, 
-  duration: number = DURATIONS.NORMAL
+  duration: number = _DURATIONS.NORMAL
 ) => {
   Toast.show({
     type: 'warning',
@@ -108,10 +108,10 @@ export const _showWarningToast = (
  * @param zipCode The ZIP code the map has centered on
  */
 export const _showLocationChangedToast = (_zipCode: string) => {
-  showInfoToast(
+  _showInfoToast(
     `Map centered on ${_zipCode}`,
     'Your location has been updated',
-    DURATIONS.SHORT
+    _DURATIONS.SHORT
   );
 };
 
@@ -121,12 +121,12 @@ export const _showLocationChangedToast = (_zipCode: string) => {
  * @param locationName Optional name of the location (_city, _neighborhood)
  */
 export const _showGpsLocationToast = (locationName?: string) => {
-  showInfoToast(
+  _showInfoToast(
     locationName 
-      ? `Using current location: ${_locationName}`
+      ? `Using current location: ${locationName}`
       : 'Using your current location',
     'Shows within your selected radius will appear',
-    DURATIONS.SHORT
+    _DURATIONS.SHORT
   );
 };
 
@@ -137,16 +137,16 @@ export const _showGpsLocationToast = (locationName?: string) => {
  */
 export const _showLocationFailedToast = (_fallbackZip?: string) => {
   if (_fallbackZip) {
-    showWarningToast(
+    _showWarningToast(
       'Location services unavailable',
       `Using your home ZIP code (${_fallbackZip}) instead`,
-      DURATIONS.NORMAL
+      _DURATIONS.NORMAL
     );
   } else {
-    showErrorToast(
+    _showErrorToast(
       'Location services unavailable',
       'Please set your home ZIP code in your profile',
-      DURATIONS.LONG
+      _DURATIONS.LONG
     );
   }
 };
@@ -160,13 +160,28 @@ export const _hideToast = () => {
 
 // Export all toast functions
 export default {
-  showSuccessToast,
-  showInfoToast,
-  showErrorToast,
-  showWarningToast,
-  showLocationChangedToast,
-  showGpsLocationToast,
-  showLocationFailedToast,
-  hideToast,
-  durations: DURATIONS
+  showSuccessToast: _showSuccessToast,
+  showInfoToast: _showInfoToast,
+  showErrorToast: _showErrorToast,
+  showWarningToast: _showWarningToast,
+  showLocationChangedToast: _showLocationChangedToast,
+  showGpsLocationToast: _showGpsLocationToast,
+  showLocationFailedToast: _showLocationFailedToast,
+  hideToast: _hideToast,
+  durations: _DURATIONS
 };
+
+/* -------------------------------------------------------------------------- */
+/* Back-compat named exports (non-underscore aliases)                         */
+/* -------------------------------------------------------------------------- */
+
+export const showSuccessToast = _showSuccessToast;
+export const showInfoToast = _showInfoToast;
+export const showErrorToast = _showErrorToast;
+export const showWarningToast = _showWarningToast;
+export const showLocationChangedToast = _showLocationChangedToast;
+export const showGpsLocationToast = _showGpsLocationToast;
+export const showLocationFailedToast = _showLocationFailedToast;
+export const hideToast = _hideToast;
+
+export const DURATIONS = _DURATIONS;
