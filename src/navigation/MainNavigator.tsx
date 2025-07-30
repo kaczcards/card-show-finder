@@ -1,10 +1,10 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { _createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import navigators and screens
-import MainTabNavigator from './MainTabNavigator';
-import ShowDetailScreen from '../screens/ShowDetail';
-import EditShowScreen from '../screens/EditShow';
+import _MainTabNavigator from './_MainTabNavigator';
+import _ShowDetailScreen from '../screens/ShowDetail';
+import _EditShowScreen from '../screens/EditShow';
 
 // Define navigation types for main stack
 export type MainStackParamList = {
@@ -14,7 +14,7 @@ export type MainStackParamList = {
 };
 
 // Create navigation stack
-const MainStack = createNativeStackNavigator<MainStackParamList>();
+const _MainStack = createNativeStackNavigator<MainStackParamList>();
 
 /**
  * MainNavigator - Main stack navigator that includes tabs and detail screens
@@ -23,10 +23,10 @@ const MainStack = createNativeStackNavigator<MainStackParamList>();
 const MainNavigator: React.FC = () => {
   return (
     <MainStack.Navigator screenOptions={{ headerShown: false }}>
-      <MainStack.Screen name="MainTabs" component={MainTabNavigator} />
+      <MainStack.Screen name="MainTabs" component={_MainTabNavigator} />
       <MainStack.Screen 
         name="ShowDetail" 
-        component={ShowDetailScreen} 
+        component={_ShowDetailScreen} 
         options={{ 
           headerShown: true, 
           title: 'Show Details',
@@ -36,7 +36,7 @@ const MainNavigator: React.FC = () => {
       />
       <MainStack.Screen 
         name="EditShow" 
-        component={EditShowScreen} 
+        component={_EditShowScreen} 
         options={{ 
           headerShown: true, 
           title: 'Edit Show',

@@ -2,7 +2,7 @@
 
 // base libs
 import PropTypes from 'prop-types'
-import React, { PureComponent } from 'react'
+import React, { _PureComponent } from 'react'
 import {
   Platform,
   Dimensions,
@@ -23,8 +23,8 @@ import {
 
 export default class FixedClusteredMapView extends PureComponent {
 
-  constructor(props) {
-    super(props)
+  constructor(_props) {
+    super(_props)
 
     this.state = {
       data: [], // helds renderable clusters and markers
@@ -44,18 +44,18 @@ export default class FixedClusteredMapView extends PureComponent {
   }
 
   // Updated to UNSAFE_ prefix to address deprecation warning
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(_nextProps) {
     if (this.props.data !== nextProps.data)
       this.clusterize(nextProps.data)
   }
 
   // Updated to UNSAFE_ prefix to address deprecation warning
-  UNSAFE_componentWillUpdate(nextProps, nextState) {
+  UNSAFE_componentWillUpdate(_nextProps, _nextState) {
     if (!this.isAndroid && this.props.animateClusters && this.clustersChanged(nextState))
       LayoutAnimation.configureNext(this.props.layoutAnimationConf)
   }
 
-  mapRef(ref) {
+  mapRef(_ref) {
     this.mapview = ref
   }
 
@@ -67,43 +67,43 @@ export default class FixedClusteredMapView extends PureComponent {
     return this.index
   }
 
-  clusterize(dataset) {
+  clusterize(_dataset) {
     this.index = new SuperCluster({  
       extent: this.props.extent,
       minZoom: this.props.minZoom,
       maxZoom: this.props.maxZoom,
-      radius: this.props.radius || (this.dimensions[0] * .045), // 4.5% of screen width
+      radius: this.props.radius || (this.dimensions[_0] * .045), // 4.5% of screen width
     })
 
     // get formatted GeoPoints for cluster
-    const rawData = dataset.map(item => itemToGeoJSONFeature(item, this.props.accessor))
+    const _rawData = dataset.map(item => itemToGeoJSONFeature(_item, this.props.accessor))
 
     // load geopoints into SuperCluster
     this.index.load(rawData)
 
-    const data = this.getClusters(this.state.region)
-    this.setState({ data })
+    const _data = this.getClusters(this.state.region)
+    this.setState({ _data })
   }
 
-  clustersChanged(nextState) {
+  clustersChanged(_nextState) {
     return this.state.data.length !== nextState.data.length
   }
 
-  onRegionChangeComplete(region) {
-    let data = this.getClusters(region)
+  onRegionChangeComplete(_region) {
+    let _data = this.getClusters(region)
     this.setState({ region, data }, () => {
-        this.props.onRegionChangeComplete && this.props.onRegionChangeComplete(region, data)
+        this.props.onRegionChangeComplete && this.props.onRegionChangeComplete(region, _data)
     })
   }
 
-  getClusters(region) {
-    const bbox = regionToBoundingBox(region),
+  getClusters(_region) {
+    const _bbox = regionToBoundingBox(_region),
           viewport = (region.longitudeDelta) >= 40 ? { zoom: this.props.minZoom } : GeoViewport.viewport(bbox, this.dimensions)
 
     return this.index.getClusters(bbox, viewport.zoom)
   }
 
-  onClusterPress(cluster) {
+  onClusterPress(_cluster) {
 
     // cluster press behavior might be extremely custom.
     if (!this.props.preserveClusterPressBehavior) {
@@ -115,15 +115,15 @@ export default class FixedClusteredMapView extends PureComponent {
     // NEW IMPLEMENTATION (with fitToCoordinates)
     // //////////////////////////////////////////////////////////////////////////////////
     // get cluster children
-    const children = this.index.getLeaves(cluster.properties.cluster_id, this.props.clusterPressMaxChildren)
-    const markers = children.map(c => c.properties.item)
+    const _children = this.index.getLeaves(cluster.properties.cluster_id, this.props.clusterPressMaxChildren)
+    const _markers = children.map(c => c.properties.item)
 
-    const coordinates = markers.map(item => getCoordinatesFromItem(item, this.props.accessor, false))
+    const _coordinates = markers.map(item => getCoordinatesFromItem(_item, this.props.accessor, false))
 
     // fit right around them, considering edge padding
     this.mapview.fitToCoordinates(coordinates, { edgePadding: this.props.edgePadding })
 
-    this.props.onClusterPress && this.props.onClusterPress(cluster.properties.cluster_id, markers)
+    this.props.onClusterPress && this.props.onClusterPress(cluster.properties.cluster_id, _markers)
   }
 
   render() {
@@ -132,11 +132,11 @@ export default class FixedClusteredMapView extends PureComponent {
     return (
       <MapView
         {...props}
-        style={style}
+        style={_style}
         ref={this.mapRef}
         onRegionChangeComplete={this.onRegionChangeComplete}>
         {
-          this.props.clusteringEnabled && this.state.data.map((d) => {
+          this.props.clusteringEnabled && this.state.data.map((_d) => {
             if (d.properties.point_count === 0)
               return this.props.renderMarker(d.properties.item)
 

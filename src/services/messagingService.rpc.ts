@@ -1,6 +1,6 @@
-import { supabase } from '../supabase';
-import * as userRoleService from './userRoleService';
-import { UserRole } from './userRoleService';
+import { _supabase } from '../supabase';
+import * as _userRoleService from './_userRoleService';
+import { _UserRole } from './userRoleService';
 
 // TypeScript interfaces for Messages and Conversations
 export interface Message {
@@ -59,27 +59,27 @@ export interface BroadcastMessageParams {
  * @param userB Second user id
  * @returns conversation id or null if none exists
  */
-export const findDirectConversation = async (
+export const _findDirectConversation = async (
   userA: string,
   userB: string
 ): Promise<string | null> => {
   try {
     // Call the RPC function to find direct conversation
-    const { data, error } = await supabase
+    const { data, _error } = await supabase
       .rpc('find_direct_conversation', { 
         user_a: userA, 
         user_b: userB 
       });
 
-    if (error) {
-      console.error('[messagingService/findDirectConversation] RPC error:', error);
+    if (_error) {
+      console.error('[messagingService/findDirectConversation] RPC error:', _error);
       return null;
     }
 
     // The RPC function returns the conversation ID or null
     return data;
-  } catch (error) {
-    console.error('[messagingService/findDirectConversation] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/findDirectConversation] exception:', _error);
     return null;
   }
 };
@@ -92,7 +92,7 @@ export const findDirectConversation = async (
  * @param userB Second user id
  * @returns The new conversation id
  */
-export const createDirectConversation = async (
+export const _createDirectConversation = async (
   userA: string,
   userB: string
 ): Promise<string> => {
@@ -104,8 +104,8 @@ export const createDirectConversation = async (
         user_b: userB
       });
 
-    if (error) {
-      console.error('[messagingService/createDirectConversation] RPC error:', error);
+    if (_error) {
+      console.error('[messagingService/createDirectConversation] RPC error:', _error);
       throw new Error(`Failed to create conversation: ${error.message}`);
     }
 
@@ -114,8 +114,8 @@ export const createDirectConversation = async (
     }
 
     return data;
-  } catch (error) {
-    console.error('[messagingService/createDirectConversation] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/createDirectConversation] exception:', _error);
     throw error;
   }
 };
@@ -129,7 +129,7 @@ export const createDirectConversation = async (
  * @param showId Optional Show ID if this is a show-specific group
  * @returns The conversation ID
  */
-export const createGroupConversation = async (
+export const _createGroupConversation = async (
   creatorId: string,
   participants: string[],
   showId?: string
@@ -143,8 +143,8 @@ export const createGroupConversation = async (
         show_id: showId || null
       });
 
-    if (error) {
-      console.error('[messagingService/createGroupConversation] RPC error:', error);
+    if (_error) {
+      console.error('[messagingService/createGroupConversation] RPC error:', _error);
       throw new Error(`Failed to create group conversation: ${error.message}`);
     }
 
@@ -153,8 +153,8 @@ export const createGroupConversation = async (
     }
 
     return data;
-  } catch (error) {
-    console.error('[messagingService/createGroupConversation] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/createGroupConversation] exception:', _error);
     throw error;
   }
 };
@@ -167,26 +167,26 @@ export const createGroupConversation = async (
  * @param userId The user ID marking messages as read
  * @returns Number of messages marked as read
  */
-export const markConversationAsRead = async (
+export const _markConversationAsRead = async (
   conversationId: string,
   userId: string
 ): Promise<number> => {
   try {
     // Call the RPC function to mark conversation as read
-    const { data, error } = await supabase
+    const { data, _error } = await supabase
       .rpc('mark_conversation_read', {
         conversation_id: conversationId,
         user_id: userId
       });
 
-    if (error) {
-      console.error('[messagingService/markConversationAsRead] RPC error:', error);
+    if (_error) {
+      console.error('[messagingService/markConversationAsRead] RPC error:', _error);
       return 0;
     }
 
     return data || 0;
-  } catch (error) {
-    console.error('[messagingService/markConversationAsRead] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/markConversationAsRead] exception:', _error);
     return 0;
   }
 };
@@ -199,20 +199,20 @@ export const markConversationAsRead = async (
  * @param userId The current user ID requesting the details
  * @returns Conversation details or null if not found
  */
-export const getConversationDetails = async (
+export const _getConversationDetails = async (
   conversationId: string,
   userId: string
 ): Promise<Conversation | null> => {
   try {
     // Call the RPC function to get conversation details
-    const { data, error } = await supabase
+    const { data, _error } = await supabase
       .rpc('get_conversation_with_participants', {
         conversation_id: conversationId,
         current_user_id: userId
       });
 
-    if (error) {
-      console.error('[messagingService/getConversationDetails] RPC error:', error);
+    if (_error) {
+      console.error('[messagingService/getConversationDetails] RPC error:', _error);
       return null;
     }
 
@@ -223,8 +223,8 @@ export const getConversationDetails = async (
 
     // Convert the JSONB response to our Conversation interface
     return data as Conversation;
-  } catch (error) {
-    console.error('[messagingService/getConversationDetails] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/getConversationDetails] exception:', _error);
     return null;
   }
 };
@@ -238,26 +238,26 @@ export const getConversationDetails = async (
  * @param messageText The message content
  * @returns The created message or null if failed
  */
-export const sendMessage = async (
+export const _sendMessage = async (
   conversationId: string,
   senderId: string,
   messageText: string
 ): Promise<Message | null> => {
   try {
     // Create a new message
-    const { data, error } = await supabase
+    const { data, _error } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversationId,
         sender_id: senderId,
         message_text: messageText,
-        read_by_user_ids: [senderId]
+        read_by_user_ids: [_senderId]
       })
       .select('*')
       .single();
 
-    if (error) {
-      console.error('[messagingService/sendMessage] error:', error);
+    if (_error) {
+      console.error('[messagingService/sendMessage] error:', _error);
       return null;
     }
 
@@ -265,11 +265,11 @@ export const sendMessage = async (
     await supabase
       .from('conversations')
       .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId);
+      .eq('id', _conversationId);
 
     return data as Message;
-  } catch (error) {
-    console.error('[messagingService/sendMessage] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/sendMessage] exception:', _error);
     return null;
   }
 };
@@ -283,31 +283,31 @@ export const sendMessage = async (
  * @param page Page number (1-based)
  * @returns Array of messages
  */
-export const getMessages = async (
+export const _getMessages = async (
   conversationId: string,
   limit: number = 20,
   page: number = 1
 ): Promise<Message[]> => {
   try {
-    const offset = (page - 1) * limit;
+    const _offset = (page - 1) * limit;
     
-    const { data, error } = await supabase
+    const { data, _error } = await supabase
       .from('messages')
       .select(`
         *,
         sender:sender_id (
           id,
-          username,
+          _username,
           full_name,
           avatar_url
         )
       `)
-      .eq('conversation_id', conversationId)
+      .eq('conversation_id', _conversationId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (error) {
-      console.error('[messagingService/getMessages] error:', error);
+    if (_error) {
+      console.error('[messagingService/getMessages] error:', _error);
       return [];
     }
 
@@ -321,8 +321,8 @@ export const getMessages = async (
       read_by_user_ids: item.read_by_user_ids || [],
       sender_profile: item.sender
     }));
-  } catch (error) {
-    console.error('[messagingService/getMessages] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/getMessages] exception:', _error);
     return [];
   }
 };
@@ -334,26 +334,26 @@ export const getMessages = async (
  * @param userId The user ID
  * @returns Array of conversations
  */
-export const getConversations = async (
-  userId: string
+export const _getConversations = async (
+  _userId: string
 ): Promise<Conversation[]> => {
   try {
     // This is a fallback if the RPC method fails
     // Normally, you should use the useConversationsQuery hook which uses the RPC function
-    const { data, error } = await supabase
+    const { data, _error } = await supabase
       .from('conversations')
       .select(`
         *,
         conversation_participants!inner (
           user_id,
-          display_name,
+          _display_name,
           photo_url
         )
       `)
-      .eq('conversation_participants.user_id', userId);
+      .eq('conversation_participants.user_id', _userId);
 
-    if (error) {
-      console.error('[messagingService/getConversations] error:', error);
+    if (_error) {
+      console.error('[messagingService/getConversations] error:', _error);
       return [];
     }
 
@@ -368,8 +368,8 @@ export const getConversations = async (
       last_message_text: '', // Would need another query to get this
       last_message_timestamp: convo.updated_at
     }));
-  } catch (error) {
-    console.error('[messagingService/getConversations] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/getConversations] exception:', _error);
     return [];
   }
 };
@@ -381,23 +381,23 @@ export const getConversations = async (
  * @param params Broadcast message parameters
  * @returns Success status
  */
-export const sendBroadcastMessage = async (
+export const _sendBroadcastMessage = async (
   params: BroadcastMessageParams
 ): Promise<boolean> => {
   try {
     // Call the edge function to handle broadcast message
-    const { data, error } = await supabase.functions.invoke('broadcast-message', {
+    const { data, _error } = await supabase.functions.invoke('broadcast-message', {
       body: params
     });
 
-    if (error) {
-      console.error('[messagingService/sendBroadcastMessage] error:', error);
+    if (_error) {
+      console.error('[messagingService/sendBroadcastMessage] error:', _error);
       return false;
     }
 
     return data?.success || false;
-  } catch (error) {
-    console.error('[messagingService/sendBroadcastMessage] exception:', error);
+  } catch (_error) {
+    console.error('[messagingService/sendBroadcastMessage] exception:', _error);
     return false;
   }
 };

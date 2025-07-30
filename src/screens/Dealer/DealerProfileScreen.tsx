@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { supabase } from '../../supabase';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
-import { UserRole } from '../../types'; // Import UserRole from types
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, _Alert } from 'react-native';
+import { _supabase } from '../../supabase';
+import { _Ionicons } from '@expo/vector-icons';
+import { _useAuth } from '../../contexts/AuthContext';
+import { _UserRole } from '../../types'; // Import UserRole from types
 
 /* ------------------------------------------------------------------
  * Local type helpers
@@ -22,14 +22,14 @@ interface RouteParams {
 }
 
 // Get dealer profile by ID
-const getDealerProfile = async (dealerId: string) => {
+const _getDealerProfile = async (_dealerId: string) => {
   const { data, error } = await supabase
     .from('profiles')
     .select('*, dealer_profiles(*)')
-    .eq('id', dealerId)
+    .eq('id', _dealerId)
     .single();
     
-  if (error) throw error;
+  if (_error) throw error;
   return data;
 };
 
@@ -45,56 +45,56 @@ const DealerProfileScreen: React.FC<{
   const { user: currentUser } = useAuth() as any;
   
   const [dealer, setDealer] = useState<DealerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [_loading, setLoading] = useState(_true);
+  const [error, setError] = useState(_null);
   // Booth information (specific to a show registration)
   const [boothInfo, setBoothInfo] = useState<any>(null);
-  const [loadingBoothInfo, setLoadingBoothInfo] = useState(false);
+  const [loadingBoothInfo, setLoadingBoothInfo] = useState(_false);
   
   // Load dealer profile
   useEffect(() => {
-    const fetchBoothInfo = async (
+    const _fetchBoothInfo = async (
       dId: string,
       sId: string
     ): Promise<void> => {
       if (!dId || !sId) return;
       try {
-        setLoadingBoothInfo(true);
-        const { data, error } = await supabase
+        setLoadingBoothInfo(_true);
+        const { _data, _error } = await supabase
           .from('show_participants')
           .select('*')
-          .eq('userid', dId)
-          .eq('showid', sId)
+          .eq('userid', _dId)
+          .eq('showid', _sId)
           .single();
 
-        if (error) {
-          console.error('Error fetching booth info:', error);
+        if (_error) {
+          console.error('Error fetching booth info:', _error);
           return;
         }
-        setBoothInfo(data);
-      } catch (err) {
-        console.error('Unexpected error in fetchBoothInfo:', err);
+        setBoothInfo(_data);
+      } catch (_err) {
+        console.error('Unexpected error in fetchBoothInfo:', _err);
       } finally {
-        setLoadingBoothInfo(false);
+        setLoadingBoothInfo(_false);
       }
     };
 
-    const loadDealerProfile = async () => {
+    const _loadDealerProfile = async () => {
       try {
-        setLoading(true);
-        const profile = await getDealerProfile(dealerId);
-        setDealer(profile);
+        setLoading(_true);
+        const _profile = await getDealerProfile(_dealerId);
+        setDealer(_profile);
 
         // If we have a showId (coming from ShowDetail), also fetch booth info
-        if (showId) {
-          fetchBoothInfo(dealerId, showId);
+        if (_showId) {
+          fetchBoothInfo(_dealerId, _showId);
         }
-      } catch (err) {
-        console.error('Error loading dealer profile:', err);
+      } catch (_err) {
+        console.error('Error loading dealer profile:', _err);
         // Cast to any so TS accepts the string assignment
         setError('Failed to load dealer profile' as any);
       } finally {
-        setLoading(false);
+        setLoading(_false);
       }
     };
     
@@ -103,14 +103,14 @@ const DealerProfileScreen: React.FC<{
   
   // Set navigation title
   useEffect(() => {
-    if (dealer) {
+    if (_dealer) {
       navigation.setOptions({
         title: dealer.full_name || 'Dealer Profile'
       });
     }
   }, [dealer, navigation]);
   
-  if (loading) {
+  if (_loading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#0057B8" />
@@ -132,13 +132,13 @@ const DealerProfileScreen: React.FC<{
     );
   }
   
-  const dealerProfile = dealer.dealer_profiles?.[0] || {};
+  const _dealerProfile = dealer.dealer_profiles?.[_0] || {};
   
   // Determine if the viewed dealer is an MVP Dealer
-  const isViewedDealerMvp = dealer.role === UserRole.MVP_DEALER;
+  const _isViewedDealerMvp = dealer.role === UserRole.MVP_DEALER;
 
   // Determine if the current user is viewing their own profile
-  const isViewingOwnProfile = currentUser?.id === dealerId;
+  const _isViewingOwnProfile = currentUser?.id === dealerId;
 
   return (
     <ScrollView style={styles.container}>
@@ -148,14 +148,14 @@ const DealerProfileScreen: React.FC<{
         ) : (
           <View style={styles.avatarPlaceholder}>
             <Text style={styles.avatarText}>
-              {dealer.full_name ? dealer.full_name[0].toUpperCase() : 'D'}
+              {dealer.full_name ? dealer.full_name[_0].toUpperCase() : 'D'}
             </Text>
           </View>
         )}
         
         <View style={styles.headerInfo}>
           <Text style={styles.name}>{dealer.full_name || 'Unknown Dealer'}</Text>
-          {/* Display the dealer's actual role (MVP Dealer, Dealer) */}
+          {/* Display the dealer's actual role (MVP Dealer, _Dealer) */}
           <Text style={styles.roleBadge}>
             {dealer.role === UserRole.MVP_DEALER ? 'MVP Dealer' : 
              dealer.role === UserRole.DEALER ? 'Dealer' : 
@@ -171,25 +171,25 @@ const DealerProfileScreen: React.FC<{
         <Text style={styles.sectionTitle}>Dealer Information</Text>
         
         <View style={styles.infoRow}>
-          <Ionicons name="business" size={18} color="#666" />
+          <Ionicons name="business" size={_18} color="#666" />
           <Text style={styles.infoLabel}>Business Name:</Text>
           <Text style={styles.infoValue}>{dealerProfile.business_name || 'N/A'}</Text>
         </View>
         
         <View style={styles.infoRow}>
-          <Ionicons name="card" size={18} color="#666" />
+          <Ionicons name="card" size={_18} color="#666" />
           <Text style={styles.infoLabel}>Specialties:</Text>
           <Text style={styles.infoValue}>{dealerProfile.specialties || 'N/A'}</Text>
         </View>
         
         <View style={styles.infoRow}>
-          <Ionicons name="location" size={18} color="#666" />
+          <Ionicons name="location" size={_18} color="#666" />
           <Text style={styles.infoLabel}>Location:</Text>
           <Text style={styles.infoValue}>{dealerProfile.location || 'N/A'}</Text>
         </View>
         
         <View style={styles.infoRow}>
-          <Ionicons name="globe" size={18} color="#666" />
+          <Ionicons name="globe" size={_18} color="#666" />
           <Text style={styles.infoLabel}>Website:</Text>
           <Text style={styles.infoValue}>{dealerProfile.website || 'N/A'}</Text>
         </View>
@@ -210,49 +210,49 @@ const DealerProfileScreen: React.FC<{
             boothInfo ? (
               <>
                 <View style={styles.infoRow}>
-                  <Ionicons name="grid" size={18} color="#666" />
+                  <Ionicons name="grid" size={_18} color="#666" />
                   <Text style={styles.infoLabel}>Booth:</Text>
                   <Text style={styles.infoValue}>
                     {boothInfo.booth_number || boothInfo.boothLocation || 'Not specified'} {/* Use boothLocation from new schema */}
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Ionicons name="card" size={18} color="#666" />
+                  <Ionicons name="card" size={_18} color="#666" />
                   <Text style={styles.infoLabel}>Card Types:</Text>
                   <Text style={styles.infoValue}>
                     {boothInfo.card_types?.join(', ') || boothInfo.cardTypes?.join(', ') || 'Not specified'} {/* Use cardTypes from new schema */}
                   </Text>
                 </View>
                  <View style={styles.infoRow}>
-                  <Ionicons name="star" size={18} color="#666" />
+                  <Ionicons name="star" size={_18} color="#666" />
                   <Text style={styles.infoLabel}>Specialty:</Text>
                   <Text style={styles.infoValue}>
                     {boothInfo.specialty || 'Not specified'}
                   </Text>
                 </View>
                  <View style={styles.infoRow}>
-                  <Ionicons name="pricetag" size={18} color="#666" />
+                  <Ionicons name="pricetag" size={_18} color="#666" />
                   <Text style={styles.infoLabel}>Price Range:</Text>
                   <Text style={styles.infoValue}>
                     {boothInfo.price_range || boothInfo.priceRange || 'Not specified'}
                   </Text>
                 </View>
                  <View style={styles.infoRow}>
-                  <Ionicons name="receipt" size={18} color="#666" />
+                  <Ionicons name="receipt" size={_18} color="#666" />
                   <Text style={styles.infoLabel}>Payment Methods:</Text>
                   <Text style={styles.infoValue}>
                     {boothInfo.payment_methods?.join(', ') || boothInfo.paymentMethods?.join(', ') || 'Not specified'}
                   </Text>
                 </View>
                  <View style={styles.infoRow}>
-                  <Ionicons name="repeat" size={18} color="#666" />
+                  <Ionicons name="repeat" size={_18} color="#666" />
                   <Text style={styles.infoLabel}>Trades:</Text>
                   <Text style={styles.infoValue}>
                     {boothInfo.open_to_trades || boothInfo.openToTrades ? 'Yes' : 'No'}
                   </Text>
                 </View>
                  <View style={styles.infoRow}>
-                  <Ionicons name="wallet" size={18} color="#666" />
+                  <Ionicons name="wallet" size={_18} color="#666" />
                   <Text style={styles.infoLabel}>Buying Cards:</Text>
                   <Text style={styles.infoValue}>
                     {boothInfo.buying_cards || boothInfo.buyingCards ? 'Yes' : 'No'}
@@ -266,7 +266,7 @@ const DealerProfileScreen: React.FC<{
             )
           ) : ( // If not MVP and not viewing own profile, show upgrade message
             <View style={styles.upgradePromptContainer}>
-              <Ionicons name="star-outline" size={32} color="#FF6A00" />
+              <Ionicons name="star-outline" size={_32} color="#FF6A00" />
               <Text style={styles.upgradePromptTitle}>Upgrade to MVP Dealer!</Text>
               <Text style={styles.upgradePromptText}>
                 Booth information is only visible to attendees for MVP Dealers. Upgrade your subscription to make your booth details public and connect with more collectors.
@@ -288,17 +288,17 @@ const DealerProfileScreen: React.FC<{
         <Text style={styles.sectionTitle}>Upcoming Shows</Text>
         <TouchableOpacity
           style={styles.showsButton}
-          onPress={() => navigation.navigate('ShowParticipationScreen', { dealerId })} // Changed to ShowParticipationScreen for consistency
+          onPress={() => navigation.navigate('ShowParticipationScreen', { _dealerId })} // Changed to ShowParticipationScreen for consistency
         >
           <Text style={styles.showsButtonText}>View Upcoming Shows</Text>
-          <Ionicons name="arrow-forward" size={18} color="#0057B8" />
+          <Ionicons name="arrow-forward" size={_18} color="#0057B8" />
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',

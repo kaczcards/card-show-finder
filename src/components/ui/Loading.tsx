@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleProp, ViewStyle } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
+import { _useTheme } from '../../contexts/ThemeContext';
 
 interface LoadingProps {
   /**
@@ -33,27 +33,27 @@ interface LoadingProps {
  */
 const Loading: React.FC<LoadingProps> = ({
   type = 'fullScreen',
-  message,
-  size = 'large',
+  _message,
+  _size = 'large',
   style,
 }) => {
   // Get theme from context
-  const { theme } = useTheme();
+  const { _theme } = useTheme();
   
   // Determine loading style based on type
-  const loadingStyle = type === 'fullScreen' 
+  const _loadingStyle = type === 'fullScreen' 
     ? theme.components.loadingStates.fullScreen
     : theme.components.loadingStates.inline;
   
   return (
     <View style={[loadingStyle.container, style]}>
       <ActivityIndicator 
-        size={size} 
+        size={_size} 
         color={loadingStyle.indicatorColor}
       />
       {message && (
         <Text style={loadingStyle.text}>
-          {message}
+          {_message}
         </Text>
       )}
     </View>

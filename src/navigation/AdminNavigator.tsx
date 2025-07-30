@@ -1,9 +1,9 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AdminMapScreen } from '../screens/Admin';
-import { useAuth } from '../contexts/AuthContext';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _createNativeStackNavigator } from '@react-navigation/native-stack';
+import { _AdminMapScreen } from '../screens/Admin';
+import { _useAuth } from '../contexts/AuthContext';
+import { View, Text, StyleSheet, _TouchableOpacity } from 'react-native';
+import { _Ionicons } from '@expo/vector-icons';
 
 // Define the param list for the Admin stack navigator
 export type AdminStackParamList = {
@@ -11,7 +11,7 @@ export type AdminStackParamList = {
   // Add other admin screens here as needed
 };
 
-const Stack = createNativeStackNavigator<AdminStackParamList>();
+const _Stack = createNativeStackNavigator<AdminStackParamList>();
 
 /**
  * Admin Navigator Component
@@ -20,14 +20,14 @@ const Stack = createNativeStackNavigator<AdminStackParamList>();
  * It's only accessible to users with admin privileges.
  */
 const AdminNavigator: React.FC = () => {
-  const { authState } = useAuth();
-  const { user, isAuthenticated } = authState;
+  const { _authState } = useAuth();
+  const { _user, isAuthenticated } = authState;
 
   // If user is not authenticated, show access denied screen
   if (!isAuthenticated) {
     return (
       <View style={styles.container}>
-        <Ionicons name="lock-closed" size={64} color="#FF3B30" />
+        <Ionicons name="lock-closed" size={_64} color="#FF3B30" />
         <Text style={styles.title}>Access Denied</Text>
         <Text style={styles.message}>
           You must be logged in to access admin features.
@@ -51,7 +51,7 @@ const AdminNavigator: React.FC = () => {
     >
       <Stack.Screen
         name="AdminMap"
-        component={AdminMapScreen}
+        component={_AdminMapScreen}
         options={{
           title: "Coordinate Validation",
           headerBackTitle: "Back",
@@ -62,7 +62,7 @@ const AdminNavigator: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

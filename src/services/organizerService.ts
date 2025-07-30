@@ -8,10 +8,10 @@
  * - Sending broadcast messages to attendees/dealers
  */
 
-import { supabase } from '../supabase';
-import { Show } from '../types';
+import { _supabase } from '../supabase';
+import { _Show } from '../types';
 import { addOrganizerResponse, updateOrganizerResponse, removeOrganizerResponse } from './reviewService';
-import { showSeriesService } from './showSeriesService';
+import { _showSeriesService } from './showSeriesService';
 
 /**
  * Interface for broadcast message details
@@ -56,7 +56,7 @@ export interface RecurringShowDetails {
  * Claim ownership of a show
  * This function now handles both individual shows and shows that are part of a series
  */
-export const claimShow = async (
+export const _claimShow = async (
   showId: string,
   organizerId: string
 ): Promise<{ success: boolean; error: string | null }> => {
@@ -65,19 +65,19 @@ export const claimShow = async (
     const { data: showData, error: showError } = await supabase
       .from('shows')
       .select('series_id')
-      .eq('id', showId)
+      .eq('id', _showId)
       .single();
 
-    if (showError) {
-      console.error('Error fetching show details:', showError);
+    if (_showError) {
+      console.error('Error fetching show details:', _showError);
       return { success: false, error: showError.message };
     }
 
     // If the show is part of a series, claim the entire series
     if (showData.series_id) {
        
-console.warn(`Show ${showId} is part of series ${showData.series_id}, claiming series instead`);
-      const result = await showSeriesService.claimShowSeries(showData.series_id);
+console.warn(`Show ${_showId} is part of series ${showData.series_id}, claiming series instead`);
+      const _result = await showSeriesService.claimShowSeries(showData.series_id);
       
       return { 
         success: result.success, 
@@ -89,16 +89,16 @@ console.warn(`Show ${showId} is part of series ${showData.series_id}, claiming s
     const { error: updateError } = await supabase
       .from('shows')
       .update({ organizer_id: organizerId })
-      .eq('id', showId);
+      .eq('id', _showId);
 
-    if (updateError) {
-      console.error('Error claiming individual show:', updateError);
+    if (_updateError) {
+      console.error('Error claiming individual show:', _updateError);
       return { success: false, error: updateError.message };
     }
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error claiming show:', err);
+    console.error('Unexpected error claiming show:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -106,19 +106,19 @@ console.warn(`Show ${showId} is part of series ${showData.series_id}, claiming s
 /**
  * Get shows owned by an organizer
  */
-export const getOrganizerShows = async (
+export const _getOrganizerShows = async (
   organizerId: string,
   options: { includeSeriesChildren?: boolean } = {}
 ): Promise<{ data: Show[] | null; error: string | null }> => {
   try {
-    let query = supabase
+    let _query = supabase
       .from('shows')
       .select('*')
-      .eq('organizer_id', organizerId);
+      .eq('organizer_id', _organizerId);
 
     // If we don't want to include series children, filter them out
     if (!options.includeSeriesChildren) {
-      query = query.is('parent_show_id', null);
+      query = query.is('parent_show_id', _null);
     }
 
     // Order by date, with series parents first
@@ -127,13 +127,13 @@ export const getOrganizerShows = async (
 
     const { data, error } = await query;
 
-    if (error) {
-      console.error('Error fetching organizer shows:', error);
+    if (_error) {
+      console.error('Error fetching organizer shows:', _error);
       return { data: null, error: error.message };
     }
 
     // Map the database response to our Show interface
-    const shows = data.map(row => ({
+    const _shows = data.map(row => ({
       id: row.id,
       title: row.title,
       location: row.location,
@@ -149,8 +149,8 @@ export const getOrganizerShows = async (
         Array.isArray(row.coordinates.coordinates) && 
         row.coordinates.coordinates.length >= 2
         ? {
-            latitude: row.coordinates.coordinates[1],
-            longitude: row.coordinates.coordinates[0],
+            latitude: row.coordinates.coordinates[_1],
+            longitude: row.coordinates.coordinates[_0],
           }
         : undefined,
       status: row.status,
@@ -166,7 +166,7 @@ export const getOrganizerShows = async (
 
     return { data: shows, error: null };
   } catch (err: any) {
-    console.error('Unexpected error fetching organizer shows:', err);
+    console.error('Unexpected error fetching organizer shows:', _err);
     return { data: null, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -174,23 +174,23 @@ export const getOrganizerShows = async (
 /**
  * Mark a show as a recurring series parent
  */
-export const markShowAsSeriesParent = async (
-  showId: string
+export const _markShowAsSeriesParent = async (
+  _showId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { error } = await supabase
+    const { _error } = await supabase
       .from('shows')
       .update({ is_series_parent: true })
-      .eq('id', showId);
+      .eq('id', _showId);
 
-    if (error) {
-      console.error('Error marking show as series parent:', error);
+    if (_error) {
+      console.error('Error marking show as series parent:', _error);
       return { success: false, error: error.message };
     }
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error marking show as series parent:', err);
+    console.error('Unexpected error marking show as series parent:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -198,7 +198,7 @@ export const markShowAsSeriesParent = async (
 /**
  * Add a show to a recurring series
  */
-export const addShowToSeries = async (
+export const _addShowToSeries = async (
   childShowId: string,
   parentShowId: string
 ): Promise<{ success: boolean; error: string | null }> => {
@@ -207,11 +207,11 @@ export const addShowToSeries = async (
     const { data: parentData, error: parentError } = await supabase
       .from('shows')
       .select('is_series_parent')
-      .eq('id', parentShowId)
+      .eq('id', _parentShowId)
       .single();
 
-    if (parentError) {
-      console.error('Error checking parent show:', parentError);
+    if (_parentError) {
+      console.error('Error checking parent show:', _parentError);
       return { success: false, error: parentError.message };
     }
 
@@ -220,28 +220,28 @@ export const addShowToSeries = async (
       const { error: updateError } = await supabase
         .from('shows')
         .update({ is_series_parent: true })
-        .eq('id', parentShowId);
+        .eq('id', _parentShowId);
 
-      if (updateError) {
-        console.error('Error marking parent show as series parent:', updateError);
+      if (_updateError) {
+        console.error('Error marking parent show as series parent:', _updateError);
         return { success: false, error: updateError.message };
       }
     }
 
     // Now update the child show to link to the parent
-    const { error } = await supabase
+    const { _error } = await supabase
       .from('shows')
       .update({ parent_show_id: parentShowId })
-      .eq('id', childShowId);
+      .eq('id', _childShowId);
 
-    if (error) {
-      console.error('Error adding show to series:', error);
+    if (_error) {
+      console.error('Error adding show to series:', _error);
       return { success: false, error: error.message };
     }
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error adding show to series:', err);
+    console.error('Unexpected error adding show to series:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -249,23 +249,23 @@ export const addShowToSeries = async (
 /**
  * Remove a show from a recurring series
  */
-export const removeShowFromSeries = async (
-  childShowId: string
+export const _removeShowFromSeries = async (
+  _childShowId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { error } = await supabase
+    const { _error } = await supabase
       .from('shows')
       .update({ parent_show_id: null })
-      .eq('id', childShowId);
+      .eq('id', _childShowId);
 
-    if (error) {
-      console.error('Error removing show from series:', error);
+    if (_error) {
+      console.error('Error removing show from series:', _error);
       return { success: false, error: error.message };
     }
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error removing show from series:', err);
+    console.error('Unexpected error removing show from series:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -273,7 +273,7 @@ export const removeShowFromSeries = async (
 /**
  * Get aggregate review score for a show series
  */
-export const getSeriesReviewScore = async (
+export const _getSeriesReviewScore = async (
   seriesParentId: string
 ): Promise<{ data: { averageRating: number; totalReviews: number } | null; error: string | null }> => {
   try {
@@ -281,8 +281,8 @@ export const getSeriesReviewScore = async (
       series_parent_id: seriesParentId
     });
 
-    if (error) {
-      console.error('Error getting series review score:', error);
+    if (_error) {
+      console.error('Error getting series review score:', _error);
       return { data: null, error: error.message };
     }
 
@@ -294,7 +294,7 @@ export const getSeriesReviewScore = async (
       error: null 
     };
   } catch (err: any) {
-    console.error('Unexpected error getting series review score:', err);
+    console.error('Unexpected error getting series review score:', _err);
     return { data: null, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -302,24 +302,24 @@ export const getSeriesReviewScore = async (
 /**
  * Update extra details for a show
  */
-export const updateShowExtraDetails = async (
+export const _updateShowExtraDetails = async (
   showId: string,
   extraDetails: Record<string, any>
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { error } = await supabase
+    const { _error } = await supabase
       .from('shows')
       .update({ extra_details: extraDetails })
-      .eq('id', showId);
+      .eq('id', _showId);
 
-    if (error) {
-      console.error('Error updating show extra details:', error);
+    if (_error) {
+      console.error('Error updating show extra details:', _error);
       return { success: false, error: error.message };
     }
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error updating show extra details:', err);
+    console.error('Unexpected error updating show extra details:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -328,7 +328,7 @@ export const updateShowExtraDetails = async (
  * Respond to a review as a show organizer
  * This is a wrapper around the existing reviewService functions
  */
-export const respondToReview = async (
+export const _respondToReview = async (
   reviewId: string,
   response: string
 ): Promise<{ success: boolean; error: string | null }> => {
@@ -337,11 +337,11 @@ export const respondToReview = async (
     const { data: review, error: getError } = await supabase
       .from('reviews')
       .select('organizer_response')
-      .eq('id', reviewId)
+      .eq('id', _reviewId)
       .single();
 
-    if (getError) {
-      console.error('Error checking review:', getError);
+    if (_getError) {
+      console.error('Error checking review:', _getError);
       return { success: false, error: getError.message };
     }
 
@@ -349,9 +349,9 @@ export const respondToReview = async (
     
     // If there's an existing response, update it; otherwise, add a new one
     if (review.organizer_response) {
-      result = await updateOrganizerResponse(reviewId, response);
+      result = await updateOrganizerResponse(_reviewId, _response);
     } else {
-      result = await addOrganizerResponse(reviewId, { reviewId, comment: response });
+      result = await addOrganizerResponse(_reviewId, { reviewId, comment: response });
     }
 
     if (result.error) {
@@ -360,7 +360,7 @@ export const respondToReview = async (
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error responding to review:', err);
+    console.error('Unexpected error responding to review:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -368,14 +368,14 @@ export const respondToReview = async (
 /**
  * Remove an organizer's response to a review
  */
-export const deleteReviewResponse = async (
-  reviewId: string
+export const _deleteReviewResponse = async (
+  _reviewId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const result = await removeOrganizerResponse(reviewId);
+    const _result = await removeOrganizerResponse(_reviewId);
     return result;
   } catch (err: any) {
-    console.error('Unexpected error deleting review response:', err);
+    console.error('Unexpected error deleting review response:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -383,15 +383,15 @@ export const deleteReviewResponse = async (
 /**
  * Send a broadcast message to attendees/dealers of a show
  */
-export const sendBroadcastMessage = async (
+export const _sendBroadcastMessage = async (
   organizerId: string,
   message: BroadcastMessage
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
     // First check if the organizer has reached their monthly limit
-    const { data: quotaData, error: quotaError } = await getBroadcastQuota(organizerId);
+    const { data: quotaData, error: quotaError } = await getBroadcastQuota(_organizerId);
     
-    if (quotaError) {
+    if (_quotaError) {
       return { success: false, error: quotaError };
     }
     
@@ -409,7 +409,7 @@ export const sendBroadcastMessage = async (
     }
 
     // Convert recipients array to string array
-    const recipientsArray = message.recipients.map(r => r.toString());
+    const _recipientsArray = message.recipients.map(r => r.toString());
 
     // Insert the broadcast log
     const { error: insertError } = await supabase
@@ -421,21 +421,21 @@ export const sendBroadcastMessage = async (
         recipients: recipientsArray
       }]);
 
-    if (insertError) {
-      console.error('Error logging broadcast message:', insertError);
+    if (_insertError) {
+      console.error('Error logging broadcast message:', _insertError);
       return { success: false, error: insertError.message };
     }
 
     // Increment the broadcast count for the organizer
-    const { error: updateError } = await supabase
+    const { error: _updateError } = await supabase
       .from('profiles')
       .update({ 
         broadcast_message_count: quotaData!.used + 1 
       })
-      .eq('id', organizerId);
+      .eq('id', _organizerId);
 
-    if (updateError) {
-      console.error('Error updating broadcast count:', updateError);
+    if (_updateError) {
+      console.error('Error updating broadcast count:', _updateError);
       // Don't return error here, as the message was already sent
     }
 
@@ -444,7 +444,7 @@ export const sendBroadcastMessage = async (
 
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error sending broadcast message:', err);
+    console.error('Unexpected error sending broadcast message:', _err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -452,29 +452,29 @@ export const sendBroadcastMessage = async (
 /**
  * Get broadcast message history for an organizer
  */
-export const getBroadcastHistory = async (
+export const _getBroadcastHistory = async (
   organizerId: string,
   options: { limit?: number; offset?: number; showId?: string } = {}
 ): Promise<{ data: BroadcastHistoryItem[] | null; error: string | null; count: number }> => {
   try {
     // First, get the count for pagination
-    let countQuery = supabase
+    let _countQuery = supabase
       .from('broadcast_logs')
       .select('id', { count: 'exact', head: true })
-      .eq('organizer_id', organizerId);
+      .eq('organizer_id', _organizerId);
       
     if (options.showId) {
       countQuery = countQuery.eq('show_id', options.showId);
     }
     
-    const countResponse = await countQuery;
-    const count = countResponse.count || 0;
+    const _countResponse = await countQuery;
+    const _count = countResponse.count || 0;
 
     // Then fetch the broadcast logs with pagination
-    let query = supabase
+    let _query = supabase
       .from('broadcast_logs')
       .select('*, shows:show_id(title)')
-      .eq('organizer_id', organizerId)
+      .eq('organizer_id', _organizerId)
       .order('sent_at', { ascending: false });
       
     if (options.showId) {
@@ -491,8 +491,8 @@ export const getBroadcastHistory = async (
 
     const { data, error } = await query;
 
-    if (error) {
-      console.error('Error fetching broadcast history:', error);
+    if (_error) {
+      console.error('Error fetching broadcast history:', _error);
       return { data: null, error: error.message, count: 0 };
     }
 
@@ -508,7 +508,7 @@ export const getBroadcastHistory = async (
 
     return { data: history, error: null, count };
   } catch (err: any) {
-    console.error('Unexpected error fetching broadcast history:', err);
+    console.error('Unexpected error fetching broadcast history:', _err);
     return { data: null, error: err.message || 'An unexpected error occurred', count: 0 };
   }
 };
@@ -516,7 +516,7 @@ export const getBroadcastHistory = async (
 /**
  * Get broadcast quota information for an organizer
  */
-export const getBroadcastQuota = async (
+export const _getBroadcastQuota = async (
   organizerId: string
 ): Promise<{ data: BroadcastQuota | null; error: string | null }> => {
   try {
@@ -529,17 +529,17 @@ export const getBroadcastQuota = async (
     const { data, error } = await supabase
       .from('profiles')
       .select('broadcast_message_count, last_broadcast_reset_date')
-      .eq('id', organizerId)
+      .eq('id', _organizerId)
       .single();
 
-    if (error) {
-      console.error('Error fetching broadcast quota:', error);
+    if (_error) {
+      console.error('Error fetching broadcast quota:', _error);
       return { data: null, error: error.message };
     }
 
     // The monthly limit is currently hardcoded, but could be based on subscription tier
-    const MONTHLY_LIMIT = 10;
-    const used = data.broadcast_message_count || 0;
+    const _MONTHLY_LIMIT = 10;
+    const _used = data.broadcast_message_count || 0;
     
     return { 
       data: {
@@ -551,7 +551,7 @@ export const getBroadcastQuota = async (
       error: null 
     };
   } catch (err: any) {
-    console.error('Unexpected error fetching broadcast quota:', err);
+    console.error('Unexpected error fetching broadcast quota:', _err);
     return { data: null, error: err.message || 'An unexpected error occurred' };
   }
 };

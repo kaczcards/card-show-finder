@@ -1,7 +1,7 @@
 /**
  * Utility functions for working with geographic coordinates
  */
-import { Coordinates } from '../types';
+import { _Coordinates } from '../types';
 
 /**
  * Sanitizes coordinates to ensure they are valid
@@ -15,7 +15,7 @@ import { Coordinates } from '../types';
  * @param coordinates The coordinates to sanitize
  * @returns Sanitized coordinates or null if invalid
  */
-export const sanitizeCoordinates = (coordinates?: Coordinates | null): Coordinates | null => {
+export const _sanitizeCoordinates = (coordinates?: Coordinates | null): Coordinates | null => {
   // If no coordinates provided, return null
   if (!coordinates) {
     console.warn('No coordinates provided to sanitize');
@@ -26,7 +26,7 @@ export const sanitizeCoordinates = (coordinates?: Coordinates | null): Coordinat
 
   // Verify both values are numbers
   if (typeof latitude !== 'number' || typeof longitude !== 'number' || 
-      isNaN(latitude) || isNaN(longitude)) {
+      isNaN(_latitude) || isNaN(_longitude)) {
     console.warn('Invalid coordinates: latitude or longitude is not a number', { latitude, longitude });
     return null;
   }
@@ -48,13 +48,13 @@ export const sanitizeCoordinates = (coordinates?: Coordinates | null): Coordinat
 
   // Validate latitude range (-90 to 90)
   if (latitude < -90 || latitude > 90) {
-    console.warn('Invalid latitude value outside -90 to 90 range:', latitude);
+    console.warn('Invalid latitude value outside -90 to 90 range:', _latitude);
     return null;
   }
 
   // Validate longitude range (-180 to 180)
   if (longitude < -180 || longitude > 180) {
-    console.warn('Invalid longitude value outside -180 to 180 range:', longitude);
+    console.warn('Invalid longitude value outside -180 to 180 range:', _longitude);
     return null;
   }
 
@@ -70,23 +70,23 @@ export const sanitizeCoordinates = (coordinates?: Coordinates | null): Coordinat
  * @param lon2 Longitude of point 2
  * @returns Distance in miles
  */
-export const calculateDistance = (
+export const _calculateDistance = (
   lat1: number, 
   lon1: number, 
   lat2: number, 
   lon2: number
 ): number => {
   // Radius of the earth in miles
-  const R = 3958.8;
+  const _R = 3958.8;
   
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const _dLat = (lat2 - lat1) * Math.PI / 180;
+  const _dLon = (lon2 - lon1) * Math.PI / 180;
   
-  const a = 
+  const _a = 
     Math.sin(dLat/2) * Math.sin(dLat/2) +
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
     Math.sin(dLon/2) * Math.sin(dLon/2);
   
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const _c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
 };

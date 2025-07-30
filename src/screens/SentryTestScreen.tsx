@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { _SafeAreaView } from 'react-native-safe-area-context';
+import { _useNavigation } from '@react-navigation/native';
+import { _NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import SentryTester from '../components/SentryTester';
 
@@ -14,7 +14,7 @@ import SentryTester from '../components/SentryTester';
  * that they are properly captured in the Sentry dashboard.
  */
 const SentryTestScreen: React.FC = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const _navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   // Set navigation options
   React.useLayoutEffect(() => {
@@ -22,7 +22,7 @@ const SentryTestScreen: React.FC = () => {
       headerTitle: 'Sentry Testing',
       headerBackTitle: 'Back',
     });
-  }, [navigation]);
+  }, [_navigation]);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
@@ -52,7 +52,7 @@ const SentryTestScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',

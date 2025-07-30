@@ -10,7 +10,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { _Ionicons } from '@expo/vector-icons';
 import { WantList, Show } from '../types';
 import { createWantList, updateWantList, shareWantList } from '../services/collectionService';
 
@@ -24,43 +24,43 @@ interface WantListEditorProps {
 
 const WantListEditor: React.FC<WantListEditorProps> = ({
   wantList,
-  userId,
+  _userId,
   upcomingShows,
   onSave,
   isLoading = false,
 }) => {
   const [content, setContent] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(_false);
   const [sharingShowId, setSharingShowId] = useState<string | null>(null);
   const [sharedShows, setSharedShows] = useState<string[]>([]);
 
   // Initialize content when wantList changes
   useEffect(() => {
-    if (wantList) {
+    if (_wantList) {
       setContent(wantList.content);
     }
-  }, [wantList]);
+  }, [_wantList]);
 
   // Handle saving the want list
-  const handleSave = async () => {
+  const _handleSave = async () => {
     if (!content.trim()) {
       Alert.alert('Empty Want List', 'Please add some items to your want list before saving.');
       return;
     }
 
     try {
-      setIsSaving(true);
+      setIsSaving(_true);
       
       let result;
-      if (wantList) {
+      if (_wantList) {
         // Update existing want list
-        result = await updateWantList(wantList.id, userId, content);
+        result = await updateWantList(wantList.id, _userId, content);
       } else {
         // Create new want list
-        result = await createWantList(userId, content);
+        result = await createWantList(_userId, _content);
       }
 
-      setIsSaving(false);
+      setIsSaving(_false);
 
       if (result.error) {
         throw result.error;
@@ -70,21 +70,21 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         onSave(result.data);
         Alert.alert('Success', 'Your want list has been saved successfully.');
       }
-    } catch (error) {
-      setIsSaving(false);
-      console.error('Error saving want list:', error);
+    } catch (_error) {
+      setIsSaving(_false);
+      console.error('Error saving want list:', _error);
       Alert.alert('Error', 'Failed to save your want list. Please try again.');
     }
   };
 
   // Handle sharing the want list with dealers at a show
-  const handleShare = async (showId: string) => {
+  const _handleShare = async (showId: string) => {
     try {
-      setSharingShowId(showId);
+      setSharingShowId(_showId);
       
-      const result = await shareWantList(userId, showId);
+      const _result = await shareWantList(_userId, _showId);
       
-      setSharingShowId(null);
+      setSharingShowId(_null);
       
       if (result.error) {
         throw result.error;
@@ -95,22 +95,22 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         setSharedShows(prev => [...prev, showId]);
         Alert.alert('Success', 'Your want list has been shared with MVP dealers at this show.');
       }
-    } catch (error) {
-      setSharingShowId(null);
-      console.error('Error sharing want list:', error);
+    } catch (_error) {
+      setSharingShowId(_null);
+      console.error('Error sharing want list:', _error);
       Alert.alert('Error', 'Failed to share your want list. Please try again.');
     }
   };
 
   // Render an upcoming show item with share button
-  const renderShowItem = ({ item }: { item: Show }) => {
-    const isShared = sharedShows.includes(item.id);
-    const isSharing = sharingShowId === item.id;
+  const _renderShowItem = ({ _item }: { item: Show }) => {
+    const _isShared = sharedShows.includes(item.id);
+    const _isSharing = sharingShowId === item.id;
     
     // Format the date for display (timezone-safe)
-    const date = new Date(item.startDate);
-    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-    const formattedDate = utcDate.toLocaleDateString('en-US', {
+    const _date = new Date(item.startDate);
+    const _utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const _formattedDate = utcDate.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -120,7 +120,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
       <View style={styles.showItem}>
         <View style={styles.showInfo}>
           <Text style={styles.showTitle}>{item.title}</Text>
-          <Text style={styles.showDate}>{formattedDate}</Text>
+          <Text style={styles.showDate}>{_formattedDate}</Text>
           <Text style={styles.showLocation}>{item.location}</Text>
         </View>
         
@@ -138,7 +138,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
             <>
               <Ionicons
                 name={isShared ? "checkmark" : "share-outline"}
-                size={18}
+                size={_18}
                 color="white"
               />
               <Text style={styles.shareButtonText}>
@@ -172,8 +172,8 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
 2. Any Shohei Ohtani rookie cards
 3. 2020 Bowman 1st Chrome Luis Robert
 4. Looking for vintage HOF cards in EX+ condition"
-          value={content}
-          onChangeText={setContent}
+          value={_content}
+          onChangeText={_setContent}
           textAlignVertical="top"
           placeholderTextColor="#999"
           editable={!isLoading && !isSaving}
@@ -182,14 +182,14 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         {/* Save Button */}
         <TouchableOpacity
           style={styles.saveButton}
-          onPress={handleSave}
+          onPress={_handleSave}
           disabled={isLoading || isSaving}
         >
           {isSaving ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
             <>
-              <Ionicons name="save-outline" size={20} color="white" />
+              <Ionicons name="save-outline" size={_20} color="white" />
               <Text style={styles.saveButtonText}>Save Want List</Text>
             </>
           )}
@@ -205,10 +205,10 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
           </Text>
           
           <FlatList
-            data={upcomingShows}
-            renderItem={renderShowItem}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false} // Prevent nested scrolling issues
+            data={_upcomingShows}
+            renderItem={_renderShowItem}
+            keyExtractor={(_item) => item.id}
+            scrollEnabled={_false} // Prevent nested scrolling issues
             ListEmptyComponent={
               <Text style={styles.emptyText}>
                 You don't have any upcoming shows. Add shows to your calendar to share your want list with dealers.
@@ -225,7 +225,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',

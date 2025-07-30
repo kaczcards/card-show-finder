@@ -46,16 +46,16 @@ interface SocialIconProps {
  * Replaces Ionicons with custom platform logo images
  */
 const SocialIcon: React.FC<SocialIconProps> = ({
-  platform,
-  onPress,
+  _platform,
+  _onPress,
   style,
   iconStyle,
   size = 20,
-  activeOpacity = 0.7,
+  _activeOpacity = 0.7,
 }) => {
   // Map of platform to image source
-  const getImageSource = () => {
-    switch (platform) {
+  const _getImageSource = () => {
+    switch (_platform) {
       case 'whatnot':
         return require('../../../assets/images/social/whatnot-logo.png');
       case 'ebay':
@@ -73,8 +73,8 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   };
 
   // Map of platform to brand color
-  const getPlatformColor = (): string => {
-    switch (platform) {
+  const _getPlatformColor = (): string => {
+    switch (_platform) {
       case 'whatnot':
         return '#FF001F';
       case 'ebay':
@@ -93,9 +93,9 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   return (
     <TouchableOpacity
       style={[styles.socialIconButton, style]}
-      onPress={onPress}
-      activeOpacity={activeOpacity}
-      accessibilityLabel={`${platform} link`}
+      onPress={_onPress}
+      activeOpacity={_activeOpacity}
+      accessibilityLabel={`${_platform} link`}
       accessibilityRole="button"
     >
       <Image
@@ -111,7 +111,7 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   socialIconButton: {
     width: 40, // Match existing size from MapShowCluster.tsx
     height: 40, // Match existing size from MapShowCluster.tsx

@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, Platform,  } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, _Platform,  } from 'react-native';
+import { _Ionicons } from '@expo/vector-icons';
+import { _useNavigation } from '@react-navigation/native';
 
 // Define types
 interface OrganizerProfile {
@@ -27,15 +27,15 @@ interface CalloutContentProps {
 }
 
 // Utility functions
-const formatDate = (dateValue: Date | string) => {
+const _formatDate = (_dateValue: Date | string) => {
   try {
-    const date = new Date(dateValue);
+    const _date = new Date(_dateValue);
     if (isNaN(date.getTime())) {
       return 'Unknown date';
     }
-    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const _utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
     return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  } catch (err) {
+  } catch (_err) {
     return 'Unknown date';
   }
 };
@@ -45,42 +45,42 @@ const formatDate = (dateValue: Date | string) => {
 // -------------------------------------------------
 
 const CalloutContent: React.FC<CalloutContentProps> = ({
-  showId,
-  title,
+  _showId,
+  _title,
   startDate,
   endDate,
-  address,
+  _address,
   entryFee,
   organizer,
   onPressViewDetails,
 }) => {
-  const navigation = useNavigation<any>();
+  const _navigation = useNavigation<any>();
 
-  const handleViewDetails = () => {
-    if (onPressViewDetails) {
-      onPressViewDetails(showId);
+  const _handleViewDetails = () => {
+    if (_onPressViewDetails) {
+      onPressViewDetails(_showId);
     } else {
       // Fallback navigation if consumer didn't supply a handler
-      navigation.navigate('ShowDetail', { showId });
+      navigation.navigate('ShowDetail', { _showId });
     }
   };
 
-  const openLink = (url?: string) => {
+  const _openLink = (url?: string) => {
     if (!url) return;
     Linking.openURL(url).catch(() =>
-      Alert.alert('Unable to open link', url),
+      Alert.alert('Unable to open link', _url),
     );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>{_title}</Text>
       <Text style={styles.dates}>
         {formatDate(startDate)} – {formatDate(endDate)}
       </Text>
-      <Text style={styles.address}>{address}</Text>
+      <Text style={styles.address}>{_address}</Text>
       {entryFee ? (
-        <Text style={styles.entryFee}>Entry: ${entryFee}</Text>
+        <Text style={styles.entryFee}>Entry: ${_entryFee}</Text>
       ) : null}
 
       {/* Social links */}
@@ -88,23 +88,23 @@ const CalloutContent: React.FC<CalloutContentProps> = ({
         <View style={styles.socialRow}>
           {organizer.facebookUrl && (
             <TouchableOpacity onPress={() => openLink(organizer.facebookUrl)}>
-              <Ionicons name="logo-facebook" size={20} color="#4267B2" />
+              <Ionicons name="logo-facebook" size={_20} color="#4267B2" />
             </TouchableOpacity>
           )}
           {organizer.instagramUrl && (
             <TouchableOpacity onPress={() => openLink(organizer.instagramUrl)}>
-              <Ionicons name="logo-instagram" size={20} color="#C13584" />
+              <Ionicons name="logo-instagram" size={_20} color="#C13584" />
             </TouchableOpacity>
           )}
           {organizer.twitterUrl && (
             <TouchableOpacity onPress={() => openLink(organizer.twitterUrl)}>
-              <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
+              <Ionicons name="logo-twitter" size={_20} color="#1DA1F2" />
             </TouchableOpacity>
           )}
         </View>
       ) : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleViewDetails}>
+      <TouchableOpacity style={styles.button} onPress={_handleViewDetails}>
         <Text style={styles.buttonText}>View Details</Text>
       </TouchableOpacity>
     </View>
@@ -115,7 +115,7 @@ const CalloutContent: React.FC<CalloutContentProps> = ({
 // Styles
 // -------------------------------------------------
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     maxWidth: 260,
   },

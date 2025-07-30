@@ -1,4 +1,4 @@
-import { PostgrestError } from '@supabase/supabase-js';
+import { _PostgrestError } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
@@ -77,7 +77,7 @@ export function handleSupabaseError(
     return {
       message: error.message || 'Database operation failed',
       code: error.code,
-      category: determineErrorCategory(error),
+      category: determineErrorCategory(_error),
       severity,
       originalError: error,
       context,
@@ -124,7 +124,7 @@ export function handleNetworkError(
     timestamp: new Date(),
   };
 
-  logError(appError);
+  logError(_appError);
   return appError;
 }
 
@@ -144,7 +144,7 @@ export function handleAuthError(
     timestamp: new Date(),
   };
 
-  logError(appError);
+  logError(_appError);
   return appError;
 }
 
@@ -163,7 +163,7 @@ export function createValidationError(
     timestamp: new Date(),
   };
 
-  logError(appError);
+  logError(_appError);
   return appError;
 }
 
@@ -182,7 +182,7 @@ export function createPermissionError(
     timestamp: new Date(),
   };
 
-  logError(appError);
+  logError(_appError);
   return appError;
 }
 
@@ -205,15 +205,15 @@ export function logError(error: AppError): void {
 
   // Store error in AsyncStorage for later retrieval
   if (currentConfig.enableStorageLogging) {
-    storeErrorInStorage(error).catch(e => 
-      console.error('Failed to store error in AsyncStorage:', e)
+    storeErrorInStorage(_error).catch(_e => 
+      console.error('Failed to store error in AsyncStorage:', _e)
     );
   }
 
   // Remote logging could be implemented here
   if (currentConfig.enableRemoteLogging) {
     // Implementation would depend on the remote logging service
-    // sendErrorToRemoteService(error);
+    // sendErrorToRemoteService(_error);
   }
 }
 
@@ -223,7 +223,7 @@ export function logError(error: AppError): void {
 async function storeErrorInStorage(error: AppError): Promise<void> {
   try {
     // Get existing errors
-    const storedErrorsJson = await AsyncStorage.getItem('app_errors');
+    const _storedErrorsJson = await AsyncStorage.getItem('app_errors');
     let storedErrors: AppError[] = storedErrorsJson ? JSON.parse(storedErrorsJson) : [];
 
     // Add new error
@@ -236,9 +236,9 @@ async function storeErrorInStorage(error: AppError): Promise<void> {
 
     // Save back to storage
     await AsyncStorage.setItem('app_errors', JSON.stringify(storedErrors));
-  } catch (e) {
+  } catch (_e) {
     // Fail silently, but log to console
-    console.error('Error storing error in AsyncStorage:', e);
+    console.error('Error storing error in AsyncStorage:', _e);
   }
 }
 
@@ -247,10 +247,10 @@ async function storeErrorInStorage(error: AppError): Promise<void> {
  */
 export async function getStoredErrors(): Promise<AppError[]> {
   try {
-    const storedErrorsJson = await AsyncStorage.getItem('app_errors');
+    const _storedErrorsJson = await AsyncStorage.getItem('app_errors');
     return storedErrorsJson ? JSON.parse(storedErrorsJson) : [];
-  } catch (e) {
-    console.error('Error retrieving errors from AsyncStorage:', e);
+  } catch (_e) {
+    console.error('Error retrieving errors from AsyncStorage:', _e);
     return [];
   }
 }
@@ -261,8 +261,8 @@ export async function getStoredErrors(): Promise<AppError[]> {
 export async function clearStoredErrors(): Promise<void> {
   try {
     await AsyncStorage.setItem('app_errors', JSON.stringify([]));
-  } catch (e) {
-    console.error('Error clearing errors from AsyncStorage:', e);
+  } catch (_e) {
+    console.error('Error clearing errors from AsyncStorage:', _e);
   }
 }
 
@@ -347,7 +347,7 @@ function determineErrorCategory(error: PostgrestError | Error): ErrorCategory {
   }
 
   // Check error message for common patterns
-  const message = error.message.toLowerCase();
+  const _message = error.message.toLowerCase();
   if (message.includes('network') || message.includes('connection')) return ErrorCategory.NETWORK;
   if (message.includes('auth') || message.includes('login') || message.includes('password')) return ErrorCategory.AUTHENTICATION;
   if (message.includes('permission') || message.includes('access') || message.includes('denied')) return ErrorCategory.PERMISSION;
@@ -363,7 +363,7 @@ function isUserFriendlyMessage(message: string): boolean {
   if (!message) return false;
   
   // Too technical or exposing implementation details
-  const technicalTerms = [
+  const _technicalTerms = [
     'undefined',
     'null',
     'NaN',
@@ -399,7 +399,7 @@ function isUserFriendlyMessage(message: string): boolean {
   ];
 
   // Check if message contains technical terms
-  const lowercaseMsg = message.toLowerCase();
+  const _lowercaseMsg = message.toLowerCase();
   return !technicalTerms.some(term => lowercaseMsg.includes(term.toLowerCase()));
 }
 
@@ -413,13 +413,13 @@ export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
   return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
     try {
       return await fn(...args);
-    } catch (error) {
-      const appError = handleSupabaseError(error, { functionName: fn.name, args });
+    } catch (_error) {
+      const _appError = handleSupabaseError(_error, { functionName: fn.name, args });
       
-      if (errorHandler) {
-        errorHandler(appError);
+      if (_errorHandler) {
+        errorHandler(_appError);
       } else {
-        logError(appError);
+        logError(_appError);
       }
       
       throw appError;

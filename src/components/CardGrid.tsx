@@ -9,8 +9,8 @@ import {
   Dimensions,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { UserCard } from '../types';
+import { _Ionicons } from '@expo/vector-icons';
+import { _UserCard } from '../types';
 
 interface CardGridProps {
   cards: UserCard[];
@@ -22,39 +22,39 @@ interface CardGridProps {
 
 const CardGrid: React.FC<CardGridProps> = ({
   cards,
-  onCardPress,
+  _onCardPress,
   onCardLongPress,
-  onAddCard,
+  _onAddCard,
   isLoading = false,
 }) => {
   // Calculate item width based on screen width (2 items per row with spacing)
-  const screenWidth = Dimensions.get('window').width;
-  const itemWidth = (screenWidth - 48) / 2; // 16px padding on each side, 16px between items
+  const _screenWidth = Dimensions.get('window').width;
+  const _itemWidth = (screenWidth - 48) / 2; // 16px padding on each side, 16px between items
 
   // Create a full array of 10 items (filled with cards or empty slots)
   // Explicitly allow null placeholders so TypeScript understands the mixed array
   const gridItems: (UserCard | null)[] = [...cards];
-  const emptySlots = Math.max(0, 10 - gridItems.length);
+  const _emptySlots = Math.max(0, 10 - gridItems.length);
   
   // Add empty slots to fill the grid up to 10 items
-  for (let i = 0; i < emptySlots; i++) {
+  for (let _i = 0; i < emptySlots; i++) {
     gridItems.push(null);
   }
 
-  const renderItem = ({ item, index }: { item: UserCard | null; index: number }) => {
+  const _renderItem = ({ item, _index }: { item: UserCard | null; _index: number }) => {
     // If we have a card, render the card
-    if (item) {
+    if (_item) {
       return (
         <TouchableOpacity
           style={[styles.cardContainer, { width: itemWidth }]}
-          onPress={() => onCardPress(item)}
+          onPress={() => onCardPress(_item)}
           onLongPress={() => {
             Alert.alert(
               "Remove Card",
               "Are you sure you want to remove this card from your collection?",
               [
                 { text: "Cancel", style: "cancel" },
-                { text: "Remove", style: "destructive", onPress: () => onCardLongPress(item) }
+                { text: "Remove", style: "destructive", onPress: () => onCardLongPress(_item) }
               ]
             );
           }}
@@ -67,7 +67,7 @@ const CardGrid: React.FC<CardGridProps> = ({
           />
           {item.title && (
             <View style={styles.cardTitleContainer}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
+              <Text style={styles.cardTitle} numberOfLines={_1}>
                 {item.title}
               </Text>
             </View>
@@ -80,11 +80,11 @@ const CardGrid: React.FC<CardGridProps> = ({
     return (
       <TouchableOpacity
         style={[styles.emptyCardContainer, { width: itemWidth }]}
-        onPress={onAddCard}
+        onPress={_onAddCard}
         activeOpacity={0.7}
       >
         <View style={styles.addCardButton}>
-          <Ionicons name="add-circle" size={40} color="#007AFF" />
+          <Ionicons name="add-circle" size={_40} color="#007AFF" />
           <Text style={styles.addCardText}>Add Card</Text>
         </View>
       </TouchableOpacity>
@@ -93,13 +93,13 @@ const CardGrid: React.FC<CardGridProps> = ({
 
   return (
     <FlatList
-      data={gridItems}
-      renderItem={renderItem}
-      keyExtractor={(item, index) => (item ? item.id : `empty-${index}`)}
-      numColumns={2}
+      data={_gridItems}
+      renderItem={_renderItem}
+      keyExtractor={(_item, _index) => (item ? item.id : `empty-${_index}`)}
+      numColumns={_2}
       columnWrapperStyle={styles.row}
       contentContainerStyle={styles.gridContainer}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={_false}
       ListEmptyComponent={
         isLoading ? (
           <View style={styles.emptyStateContainer}>
@@ -107,13 +107,13 @@ const CardGrid: React.FC<CardGridProps> = ({
           </View>
         ) : (
           <View style={styles.emptyStateContainer}>
-            <Ionicons name="images-outline" size={64} color="#ccc" />
+            <Ionicons name="images-outline" size={_64} color="#ccc" />
             <Text style={styles.emptyStateTitle}>No Cards Yet</Text>
             <Text style={styles.emptyStateText}>
               Add your favorite cards to showcase in your collection.
             </Text>
-            <TouchableOpacity style={styles.emptyStateButton} onPress={onAddCard}>
-              <Ionicons name="add-circle-outline" size={20} color="white" />
+            <TouchableOpacity style={styles.emptyStateButton} onPress={_onAddCard}>
+              <Ionicons name="add-circle-outline" size={_20} color="white" />
               <Text style={styles.emptyStateButtonText}>Add Your First Card</Text>
             </TouchableOpacity>
           </View>
@@ -123,7 +123,7 @@ const CardGrid: React.FC<CardGridProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   gridContainer: {
     padding: 16,
     paddingBottom: 32,
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, _0, 0, 0.6)',
     padding: 8,
   },
   cardTitle: {

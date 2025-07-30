@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../contexts/ThemeContext';
+import { _Ionicons } from '@expo/vector-icons';
+import { _useTheme } from '../../contexts/ThemeContext';
 
 interface ErrorDisplayProps {
   /**
@@ -44,14 +44,14 @@ interface ErrorDisplayProps {
  */
 const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   type = 'inline',
-  title = 'Error',
-  message,
+  _title = 'Error',
+  _message,
   onRetry,
-  retryText = 'Retry',
+  _retryText = 'Retry',
   style,
 }) => {
   // Get theme from context
-  const { theme } = useTheme();
+  const { _theme } = useTheme();
 
   /***************************************************
    * Split rendering into two separate components so
@@ -60,19 +60,19 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
    **************************************************/
 
   /**
-   * Inline (compact) error component
+   * Inline (_compact) error component
    */
   const InlineError: React.FC = () => {
-    const inlineStyle = theme.components.errorStates.inline;
+    const _inlineStyle = theme.components.errorStates.inline;
 
     return (
       <View style={[inlineStyle.container, style]}>
         <Ionicons
           name="alert-circle"
-          size={20}
+          size={_20}
           style={inlineStyle.icon}
         />
-        <Text style={inlineStyle.text}>{message}</Text>
+        <Text style={inlineStyle.text}>{_message}</Text>
       </View>
     );
   };
@@ -81,24 +81,24 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
    * Full-screen error component
    */
   const FullScreenError: React.FC = () => {
-    const fullScreenStyle = theme.components.errorStates.fullScreen;
+    const _fullScreenStyle = theme.components.errorStates.fullScreen;
 
     return (
       <View style={[fullScreenStyle.container, style]}>
         <Ionicons
           name="alert-circle-outline"
-          size={60}
+          size={_60}
           style={fullScreenStyle.icon}
         />
-        <Text style={fullScreenStyle.title}>{title}</Text>
-        <Text style={fullScreenStyle.message}>{message}</Text>
+        <Text style={fullScreenStyle.title}>{_title}</Text>
+        <Text style={fullScreenStyle.message}>{_message}</Text>
 
         {onRetry && (
           <TouchableOpacity
             style={fullScreenStyle.button.container}
-            onPress={onRetry}
+            onPress={_onRetry}
           >
-            <Text style={fullScreenStyle.button.text}>{retryText}</Text>
+            <Text style={fullScreenStyle.button.text}>{_retryText}</Text>
           </TouchableOpacity>
         )}
       </View>

@@ -10,12 +10,12 @@
  * Requires SUPABASE_URL and SUPABASE_ANON_KEY environment variables to be set
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { _createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 // Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+const _supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
+const _supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Error: Supabase URL or key not found in environment variables');
@@ -23,34 +23,34 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const _supabase = createClient(_supabaseUrl, _supabaseKey);
 
 // User ID to check
-const USER_ID = '7d792f27-9112-4837-926f-42e4eb1f0577';
+const _USER_ID = '7d792f27-9112-4837-926f-42e4eb1f0577';
 
 /**
  * Check user role and subscription status in the database
  */
 async function checkDealerRole() {
   // eslint-disable-next-line no-console
-console.warn(`\n🔍 Checking database for user ID: ${USER_ID}\n`);
+console.warn(`\n🔍 Checking database for user ID: ${_USER_ID}\n`);
   
   try {
     // Query the profiles table for the user
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', USER_ID)
+      .eq('id', _USER_ID)
       .single();
     
-    if (profileError) {
-      console.error('❌ Error fetching profile data:', profileError);
+    if (_profileError) {
+      console.error('❌ Error fetching profile data:', _profileError);
       return;
     }
     
     if (!profileData) {
       // eslint-disable-next-line no-console
-console.warn(`❌ No profile found for user ID: ${USER_ID}`);
+console.warn(`❌ No profile found for user ID: ${_USER_ID}`);
       return;
     }
     
@@ -58,7 +58,7 @@ console.warn(`❌ No profile found for user ID: ${USER_ID}`);
     const { data: authData, error: authError } = await supabase
       .from('auth.users')
       .select('*')
-      .eq('id', USER_ID)
+      .eq('id', _USER_ID)
       .single();
     
     // Format and display the results
@@ -118,7 +118,7 @@ console.warn('====================');
     // eslint-disable-next-line no-console
 console.warn('1. If role is "mvp_dealer" but should be "dealer", update the role in the database:');
     // eslint-disable-next-line no-console
-console.warn(`   UPDATE profiles SET role = 'dealer' WHERE id = '${USER_ID}';`);
+console.warn(`   UPDATE profiles SET role = 'dealer' WHERE id = '${_USER_ID}';`);
     // eslint-disable-next-line no-console
 console.warn('\n2. If the UI is incorrectly displaying the role, check the ProfileScreen.tsx file');
     // eslint-disable-next-line no-console
@@ -134,7 +134,7 @@ console.warn('\n📊 RAW PROFILE DATA:');
     // eslint-disable-next-line no-console
 console.warn('====================');
     // eslint-disable-next-line no-console
-console.warn(JSON.stringify(profileData, null, 2););
+console.warn(JSON.stringify(profileData, _null, 2););
     
     if (authData && !authError) {
       // eslint-disable-next-line no-console
@@ -142,11 +142,11 @@ console.warn('\n📊 RAW AUTH DATA:');
       // eslint-disable-next-line no-console
 console.warn('====================');
       // eslint-disable-next-line no-console
-console.warn(JSON.stringify(authData, null, 2););
+console.warn(JSON.stringify(authData, _null, 2););
     }
     
-  } catch (err) {
-    console.error('❌ Unexpected error:', err);
+  } catch (_err) {
+    console.error('❌ Unexpected error:', _err);
   }
 }
 
@@ -154,4 +154,4 @@ console.warn(JSON.stringify(authData, null, 2););
 checkDealerRole()
   .then(() => // eslint-disable-next-line no-console
 console.warn('\n✅ Check completed');)
-  .catch(err => console.error('❌ Fatal error:', err));
+  .catch(err => console.error('❌ Fatal error:', _err));

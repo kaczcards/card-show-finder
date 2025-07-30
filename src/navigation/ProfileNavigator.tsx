@@ -1,10 +1,10 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { _createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import screens
-import { ProfileScreen } from '../screens/Profile';
-import SubscriptionScreen from '../screens/Profile/SubscriptionScreen';
-import ShowParticipationScreen from '../screens/Dealer/ShowParticipationScreen';
+import { _ProfileScreen } from '../screens/Profile';
+import _SubscriptionScreen from '../screens/Profile/_SubscriptionScreen';
+import _ShowParticipationScreen from '../screens/Dealer/_ShowParticipationScreen';
 
 // Define navigation types for profile stack
 export type ProfileStackParamList = {
@@ -14,7 +14,7 @@ export type ProfileStackParamList = {
 };
 
 // Create navigation stack
-const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+const _ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 
 /**
  * ProfileNavigator - Stack navigator for the Profile section
@@ -25,7 +25,7 @@ const ProfileNavigator: React.FC = () => {
     <ProfileStack.Navigator>
       <ProfileStack.Screen 
         name="ProfileMain" 
-        component={ProfileScreen} 
+        component={_ProfileScreen} 
         options={{ 
           headerShown: true,
           title: 'My Profile',
@@ -33,7 +33,7 @@ const ProfileNavigator: React.FC = () => {
       />
       <ProfileStack.Screen
         name="ShowParticipationScreen"
-        component={ShowParticipationScreen}
+        component={_ShowParticipationScreen}
         options={{
           headerShown: true,
           title: 'Dealer Show Registration',
@@ -43,7 +43,7 @@ const ProfileNavigator: React.FC = () => {
       />
       <ProfileStack.Screen 
         name="SubscriptionScreen" 
-        component={SubscriptionScreen} 
+        component={_SubscriptionScreen} 
         options={{ 
           headerShown: true,
           title: 'Subscription Management',

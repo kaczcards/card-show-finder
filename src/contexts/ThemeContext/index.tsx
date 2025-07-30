@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { _useColorScheme } from 'react-native';
 import theme from '../../constants/theme';
 
 // Define the theme context type
@@ -9,7 +9,7 @@ type ThemeContextType = {
 };
 
 // Create the theme context with default values
-const ThemeContext = createContext<ThemeContextType>({
+const _ThemeContext = createContext<ThemeContextType>({
   theme,
   colorScheme: 'light',
 });
@@ -25,9 +25,9 @@ interface ThemeProviderProps {
  * This component wraps the application and provides access to theme settings
  * and color scheme information. It also handles dark/light mode detection.
  */
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ _children }) => {
   // Get device color scheme (light/dark)
-  const colorScheme = useColorScheme() || 'light';
+  const _colorScheme = useColorScheme() || 'light';
   
   // We're just using the default theme for now, but this is where
   // you would implement any theme switching logic (e.g., dark mode)
@@ -35,7 +35,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Provide the theme context to the component tree
   return (
     <ThemeContext.Provider value={{ theme, colorScheme }}>
-      {children}
+      {_children}
     </ThemeContext.Provider>
   );
 };
@@ -46,6 +46,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
  * Use this hook in components to access theme values:
  * const { theme, colorScheme } = useTheme();
  */
-export const useTheme = () => useContext(ThemeContext);
+export const _useTheme = () => useContext(_ThemeContext);
 
 export default ThemeProvider;

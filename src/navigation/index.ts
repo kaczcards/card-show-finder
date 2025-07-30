@@ -1,7 +1,7 @@
-import AuthNavigator, { AuthStackParamList } from './AuthNavigator';
-import MainTabNavigator, { MainTabParamList } from './MainTabNavigator';
-import MainNavigator, { MainStackParamList } from './MainNavigator';
-import AdminNavigator, { AdminStackParamList } from './AdminNavigator';
+import AuthNavigator, { _AuthStackParamList } from './AuthNavigator';
+import MainTabNavigator, { _MainTabParamList } from './MainTabNavigator';
+import MainNavigator, { _MainStackParamList } from './MainNavigator';
+import AdminNavigator, { _AdminStackParamList } from './AdminNavigator';
 import RootNavigator from './RootNavigator';
 
 // Export all navigators

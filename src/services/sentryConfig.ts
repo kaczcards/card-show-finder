@@ -1,6 +1,6 @@
 import * as Sentry from 'sentry-expo';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { _Platform } from 'react-native';
 import { ScopeContext, SeverityLevel, Transaction, Breadcrumb } from '@sentry/types';
 
 /**
@@ -11,7 +11,7 @@ import { ScopeContext, SeverityLevel, Transaction, Breadcrumb } from '@sentry/ty
  */
 
 // Get the Sentry DSN from Expo constants (configured in app.config.js)
-const SENTRY_DSN = Constants.expoConfig?.extra?.sentryDsn;
+const _SENTRY_DSN = Constants.expoConfig?.extra?.sentryDsn;
 
 /**
  * Environment names for different build types
@@ -44,7 +44,7 @@ interface SentryConfigOptions {
  * 
  * @example
  * // In App.tsx or similar entry point:
- * import { initSentry } from './services/sentryConfig';
+ * import { _initSentry } from './services/sentryConfig';
  * 
  * // Basic initialization
  * initSentry();
@@ -56,10 +56,10 @@ interface SentryConfigOptions {
  *   environment: Environment.PRODUCTION
  * });
  */
-export const initSentry = (options: SentryConfigOptions = {}): void => {
+export const _initSentry = (options: SentryConfigOptions = {}): void => {
   const {
-    userId,
-    userData,
+    _userId,
+    _userData,
     environment = __DEV__ ? Environment.DEVELOPMENT : Environment.PRODUCTION,
     debug = __DEV__,
     enableTracing = !__DEV__,
@@ -81,7 +81,7 @@ export const initSentry = (options: SentryConfigOptions = {}): void => {
     debug,
     environment,
     tracesSampleRate: enableTracing ? 0.2 : 0, // Sample 20% of transactions in non-dev
-    beforeSend(event) {
+    beforeSend(_event) {
       // You can modify or filter events before they are sent to Sentry
       // For example, remove sensitive data
       return event;
@@ -89,8 +89,8 @@ export const initSentry = (options: SentryConfigOptions = {}): void => {
   });
 
   // Set user context if provided
-  if (userId) {
-    setUserContext(userId, userData);
+  if (_userId) {
+    setUserContext(_userId, _userData);
   }
 
   // Add device context
@@ -102,7 +102,7 @@ export const initSentry = (options: SentryConfigOptions = {}): void => {
   });
 
    
-console.warn(`Sentry initialized in ${environment} environment`);
+console.warn(`Sentry initialized in ${_environment} environment`);
 };
 
 /**
@@ -116,7 +116,7 @@ console.warn(`Sentry initialized in ${environment} environment`);
  * // After user login:
  * setUserContext('user-123', { email: 'user@example.com', subscription: 'premium' });
  */
-export const setUserContext = (userId: string, userData?: Record<string, any>): void => {
+export const _setUserContext = (userId: string, userData?: Record<string, any>): void => {
   if (!SENTRY_DSN) return;
 
   Sentry.Native.setUser({
@@ -133,7 +133,7 @@ export const setUserContext = (userId: string, userData?: Record<string, any>): 
  * // After user logout:
  * clearUserContext();
  */
-export const clearUserContext = (): void => {
+export const _clearUserContext = (): void => {
   if (!SENTRY_DSN) return;
   
   Sentry.Native.setUser(null);
@@ -149,17 +149,17 @@ export const clearUserContext = (): void => {
  * try {
  *   // Some code that might throw
  *   throw new Error('Something went wrong');
- * } catch (error) {
- *   captureException(error, { extra: { action: 'saving_data' } });
+ * } catch (_error) {
+ *   captureException(_error, { extra: { action: 'saving_data' } });
  * }
  */
-export const captureException = (error: Error, context?: ScopeContext): void => {
+export const _captureException = (error: Error, _context?: ScopeContext): void => {
   if (!SENTRY_DSN) {
-    console.error('Error captured but Sentry is not initialized:', error);
+    console.error('Error captured but Sentry is not initialized:', _error);
     return;
   }
 
-  Sentry.Native.captureException(error, context);
+  Sentry.Native.captureException(error, _context);
 };
 
 /**
@@ -178,7 +178,7 @@ export const captureException = (error: Error, context?: ScopeContext): void => 
  *   extra: { remainingCalls: 10, resetTime: '2023-07-19T15:00:00Z' } 
  * });
  */
-export const captureMessage = (
+export const _captureMessage = (
   message: string, 
   level: SeverityLevel = 'info',
   /**
@@ -190,7 +190,7 @@ export const captureMessage = (
 ): void => {
   if (!SENTRY_DSN) {
      
-console.warn(`[${level}] ${message}`);
+console.warn(`[${_level}] ${_message}`);
     return;
   }
 
@@ -209,28 +209,28 @@ console.warn(`[${level}] ${message}`);
  * 
  * @example
  * // Measure the time it takes to load data
- * const transaction = startTransaction('loadUserData', 'data-loading');
+ * const _transaction = startTransaction('loadUserData', 'data-loading');
  * try {
  *   await fetchUserData();
  *   transaction.setStatus('ok');
- * } catch (error) {
+ * } catch (_error) {
  *   transaction.setStatus('error');
- *   captureException(error);
+ *   captureException(_error);
  * } finally {
  *   transaction.finish();
  * }
  */
-export const startTransaction = (
+export const _startTransaction = (
   name: string,
   operation: string
 ): Transaction => {
   if (!SENTRY_DSN) {
     // Return a dummy transaction if Sentry is not initialized
-    const startTime = Date.now();
+    const _startTime = Date.now();
     return {
       finish: () => {
          
-console.warn(`Transaction "${name}" (${operation}); finished in ${Date.now() - startTime}ms`);
+console.warn(`Transaction "${_name}" (${_operation}); finished in ${Date.now() - startTime}ms`);
       },
       setStatus: () => {},
       setTag: () => {},
@@ -262,9 +262,9 @@ console.warn(`Transaction "${name}" (${operation}); finished in ${Date.now() - s
  * 
  * @example
  * // In a component file:
- * import { getSentryErrorBoundary } from './services/sentryConfig';
+ * import { _getSentryErrorBoundary } from './services/sentryConfig';
  * 
- * const ErrorBoundary = getSentryErrorBoundary();
+ * const _ErrorBoundary = getSentryErrorBoundary();
  * 
  * export default function App() {
  *   return (
@@ -274,7 +274,7 @@ console.warn(`Transaction "${name}" (${operation}); finished in ${Date.now() - s
  *   );
  * }
  */
-export const getSentryErrorBoundary = () => {
+export const _getSentryErrorBoundary = () => {
   return Sentry.Native.ErrorBoundary;
 };
 
@@ -299,11 +299,11 @@ export const getSentryErrorBoundary = () => {
  *   level: 'debug'
  * });
  */
-export const addBreadcrumb = (breadcrumb: Breadcrumb): void => {
+export const _addBreadcrumb = (breadcrumb: Breadcrumb): void => {
   if (!SENTRY_DSN) return;
   
   Sentry.Native.addBreadcrumb(breadcrumb);
 };
 
 // Export the raw Sentry object for advanced use cases
-export const SentryRaw = Sentry;
+export const _SentryRaw = Sentry;
