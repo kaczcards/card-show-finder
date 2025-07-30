@@ -5,7 +5,7 @@
  * animations throughout the app.
  */
 
-import { Animated, Easing, _ViewStyle, EasingFunction, LayoutAnimation } from 'react-native';
+import { Animated, Easing, ViewStyle, EasingFunction, LayoutAnimation } from 'react-native';
 
 // Animation Durations
 export const duration = {
