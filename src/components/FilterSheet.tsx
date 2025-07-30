@@ -25,19 +25,19 @@ interface FilterSheetProps {
   onApplyFilters: (filters: ShowFilters) => void;
 }
 
-const { _height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
-const _RADIUS_OPTIONS = [25, 50, 100, 200];
+const RADIUS_OPTIONS = [25, 50, 100, 200];
 
 const FilterSheet: React.FC<FilterSheetProps> = ({
   visible,
-  _onClose,
+  onClose,
   filters,
   onApplyFilters,
 }) => {
   // Animation for the bottom sheet
-  const _translateY = useRef(new Animated.Value(height)).current;
-  const _backdropOpacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(height)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
 
   // Local state for filter values
   const [localFilters, setLocalFilters] = useState<ShowFilters>(filters);
@@ -281,7 +281,7 @@ console.warn(`Would show date picker for ${_type} date`);
       visible={_visible}
       transparent
       animationType="none"
-      onRequestClose={_onClose}
+      onRequestClose={onClose}
     >
       <View style={styles.modalContainer}>
         {/* Backdrop */}
@@ -290,14 +290,14 @@ console.warn(`Would show date picker for ${_type} date`);
             styles.backdrop,
             { opacity: backdropOpacity },
           ]}
-          onTouchEnd={_onClose}
+          onTouchEnd={onClose}
         />
 
         {/* Bottom Sheet */}
         <Animated.View
           style={[
             styles.bottomSheet,
-            { transform: [{ _translateY }] },
+            { transform: [{ translateY }] },
           ]}
           {...panResponder.panHandlers}
         >
@@ -309,7 +309,7 @@ console.warn(`Would show date picker for ${_type} date`);
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Filter Card Shows</Text>
-            <TouchableOpacity onPress={_onClose}>
+            <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={_24} color="#666" />
             </TouchableOpacity>
           </View>
