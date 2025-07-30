@@ -788,3 +788,6 @@ export const _useAuth = () => {
 // Back-compat named export and default export
 export const AuthContext = _AuthContext;
 export default _AuthContext;
+
+// Backward-compatible export for useAuth hook
+export const useAuth = _useAuth;
