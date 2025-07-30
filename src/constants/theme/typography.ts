@@ -55,87 +55,96 @@ export const _letterSpacing = {
 // Preset typography styles
 export const _variant = {
   h1: {
-    fontFamily: fontFamily.heading,
-    fontWeight: fontWeight.bold,
-    fontSize: fontSize.h1,
-    lineHeight: lineHeight.small,
-    letterSpacing: letterSpacing.tight,
+    fontFamily: _fontFamily.heading,
+    fontWeight: _fontWeight.bold,
+    fontSize: _fontSize.h1,
+    lineHeight: _lineHeight.small,
+    letterSpacing: _letterSpacing.tight,
   },
   h2: {
-    fontFamily: fontFamily.heading,
-    fontWeight: fontWeight.bold,
-    fontSize: fontSize.h2,
-    lineHeight: lineHeight.small,
-    letterSpacing: letterSpacing.tight,
+    fontFamily: _fontFamily.heading,
+    fontWeight: _fontWeight.bold,
+    fontSize: _fontSize.h2,
+    lineHeight: _lineHeight.small,
+    letterSpacing: _letterSpacing.tight,
   },
   h3: {
-    fontFamily: fontFamily.heading,
-    fontWeight: fontWeight.semiBold,
-    fontSize: fontSize.h3,
-    lineHeight: lineHeight.small,
-    letterSpacing: letterSpacing.normal,
+    fontFamily: _fontFamily.heading,
+    fontWeight: _fontWeight.semiBold,
+    fontSize: _fontSize.h3,
+    lineHeight: _lineHeight.small,
+    letterSpacing: _letterSpacing.normal,
   },
   title: {
-    fontFamily: fontFamily.base,
-    fontWeight: fontWeight.semiBold,
-    fontSize: fontSize.title,
-    lineHeight: lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
+    fontFamily: _fontFamily.base,
+    fontWeight: _fontWeight.semiBold,
+    fontSize: _fontSize.title,
+    lineHeight: _lineHeight.normal,
+    letterSpacing: _letterSpacing.normal,
   },
   subtitle: {
-    fontFamily: fontFamily.base,
-    fontWeight: fontWeight.medium,
-    fontSize: fontSize.body,
-    lineHeight: lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
+    fontFamily: _fontFamily.base,
+    fontWeight: _fontWeight.medium,
+    fontSize: _fontSize.body,
+    lineHeight: _lineHeight.normal,
+    letterSpacing: _letterSpacing.normal,
   },
   body1: {
-    fontFamily: fontFamily.base,
-    fontWeight: fontWeight.regular,
-    fontSize: fontSize.body,
-    lineHeight: lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
+    fontFamily: _fontFamily.base,
+    fontWeight: _fontWeight.regular,
+    fontSize: _fontSize.body,
+    lineHeight: _lineHeight.normal,
+    letterSpacing: _letterSpacing.normal,
   },
   body2: {
-    fontFamily: fontFamily.base,
-    fontWeight: fontWeight.regular,
-    fontSize: fontSize.small,
-    lineHeight: lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
+    fontFamily: _fontFamily.base,
+    fontWeight: _fontWeight.regular,
+    fontSize: _fontSize.small,
+    lineHeight: _lineHeight.normal,
+    letterSpacing: _letterSpacing.normal,
   },
   button: {
-    fontFamily: fontFamily.base,
-    fontWeight: fontWeight.medium,
-    fontSize: fontSize.button,
-    lineHeight: lineHeight.small,
-    letterSpacing: letterSpacing.normal,
+    fontFamily: _fontFamily.base,
+    fontWeight: _fontWeight.medium,
+    fontSize: _fontSize.button,
+    lineHeight: _lineHeight.small,
+    letterSpacing: _letterSpacing.normal,
     textTransform: 'none' as const,
   },
   caption: {
-    fontFamily: fontFamily.base,
-    fontWeight: fontWeight.regular,
-    fontSize: fontSize.small,
-    lineHeight: lineHeight.small,
-    letterSpacing: letterSpacing.normal,
+    fontFamily: _fontFamily.base,
+    fontWeight: _fontWeight.regular,
+    fontSize: _fontSize.small,
+    lineHeight: _lineHeight.small,
+    letterSpacing: _letterSpacing.normal,
   },
   overline: {
-    fontFamily: fontFamily.base,
-    fontWeight: fontWeight.medium,
-    fontSize: fontSize.xs,
-    lineHeight: lineHeight.small,
-    letterSpacing: letterSpacing.wide,
+    fontFamily: _fontFamily.base,
+    fontWeight: _fontWeight.medium,
+    fontSize: _fontSize.xs,
+    lineHeight: _lineHeight.small,
+    letterSpacing: _letterSpacing.wide,
     textTransform: 'uppercase' as const,
   },
 };
 
 // Export the typography system
 export const _typography = {
-  fontFamily,
-  fontWeight,
-  fontSize,
-  lineHeight,
-  letterSpacing,
-  variant,
+  fontFamily: _fontFamily,
+  fontWeight: _fontWeight,
+  fontSize: _fontSize,
+  lineHeight: _lineHeight,
+  letterSpacing: _letterSpacing,
+  variant: _variant,
 };
 
-export default typography;
+export default _typography;
+
+// Backward-compatible exports
+export const typography = _typography;
+export const fontFamily = _fontFamily;
+export const fontWeight = _fontWeight;
+export const fontSize = _fontSize;
+export const lineHeight = _lineHeight;
+export const letterSpacing = _letterSpacing;
+export const variant = _variant;
