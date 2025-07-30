@@ -559,7 +559,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
                 onRegionChangeComplete={handleRegionChangeComplete}
             />
         ) : null
-        )}
+        }
 
       <TouchableOpacity
         style={styles.myLocationButton}
