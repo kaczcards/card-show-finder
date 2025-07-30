@@ -1,6 +1,6 @@
 import { AuthState, AuthCredentials, User, UserRole } from '../types';
 import { supabase } from '../supabase';
-import { _Alert } from 'react-native';
+import { Alert } from 'react-native';
 // Toast utility for user-visible notifications
 import { showLocationChangedToast } from '../utils/toastUtils';
 

@@ -1,6 +1,6 @@
 import * as Sentry from 'sentry-expo';
 import Constants from 'expo-constants';
-import { _Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { ScopeContext, SeverityLevel, Transaction, Breadcrumb } from '@sentry/types';
 
 /**
