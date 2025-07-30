@@ -67,11 +67,11 @@ const MainTabNavigator: React.FC = () => {
           return <Ionicons name={_iconName} size={_size} color={_color} />;
         },
         // --- Updated Styling ---
-        tabBarActiveTintColor: BRAND_COLORS.activeTab,
-        tabBarInactiveTintColor: BRAND_COLORS.inactiveTab,
+        tabBarActiveTintColor: _BRAND_COLORS.activeTab,
+        tabBarInactiveTintColor: _BRAND_COLORS.inactiveTab,
         headerShown: true, // Keep headers visible on most screens
         tabBarStyle: {
-          backgroundColor: BRAND_COLORS.barBackground,
+          backgroundColor: _BRAND_COLORS.barBackground,
           height: 90, // A more modern, taller tab bar
           paddingTop: 10,
           paddingBottom: 30,

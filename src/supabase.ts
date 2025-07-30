@@ -14,8 +14,8 @@ const _supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.
 // shipping production builds if desired.
 console.warn(
   '\n================= [SUPABASE CONFIG] =================\n' +
-  `• SUPABASE URL : ${supabaseUrl || '<EMPTY>'}\n` +
-  `• ANON KEY     : ${supabaseAnonKey?.slice(0, _8) || '<EMPTY>'}…\n` +
+  `• SUPABASE URL : ${_supabaseUrl || '<EMPTY>'}\n` +
+  `• ANON KEY     : ${_supabaseAnonKey?.slice(0, 8) || '<EMPTY>'}…\n` +
   '====================================================\n'
 );
 
@@ -23,7 +23,7 @@ console.warn(
 /* 1. Guard-rails / configuration validation                                  */
 /* -------------------------------------------------------------------------- */
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!_supabaseUrl || !_supabaseAnonKey) {
   // Fail fast – running with a broken client leads to subtle bugs later
   console.error(
     '[_Supabase] Missing configuration. ' +
@@ -53,7 +53,7 @@ let _supabaseSingleton = createClient(_supabaseUrl, _supabaseAnonKey, {
  * Public accessor used throughout the codebase to avoid importing
  * `createClient` elsewhere.  Always returns **the same** instance.
  */
-export const _supabase = supabaseSingleton;
+export const _supabase = _supabaseSingleton;
 
 /* -------------------------------------------------------------------------- */
 /* 3. Helper utilities                                                        */
@@ -64,7 +64,7 @@ export const _supabase = supabaseSingleton;
  */
 export const _isSupabaseInitialized = (): boolean => {
   try {
-    return Boolean(supabaseSingleton && supabaseSingleton.auth);
+    return Boolean(_supabaseSingleton && _supabaseSingleton.auth);
   } catch (_err) {
     console.error('[_Supabase] initialization check failed:', _err);
     return false;
@@ -76,12 +76,12 @@ export const _isSupabaseInitialized = (): boolean => {
  * Prefer this helper in newly-written code so errors surface early.
  */
 export const _getSupabase = () => {
-  if (!isSupabaseInitialized()) {
+  if (!_isSupabaseInitialized()) {
     throw new Error(
       '[_Supabase] Client not initialised – check environment variables.'
     );
   }
-  return supabaseSingleton;
+  return _supabaseSingleton;
 };
 
 /**
@@ -89,7 +89,7 @@ export const _getSupabase = () => {
  * cached auth state, or inside E2E tests).  Most apps will never need this.
  */
 export const _recreateSupabaseClient = () => {
-  supabaseSingleton = createClient(_supabaseUrl, _supabaseAnonKey, {
+  _supabaseSingleton = createClient(_supabaseUrl, _supabaseAnonKey, {
     auth: {
       storage: AsyncStorage,
       autoRefreshToken: true,
@@ -97,8 +97,21 @@ export const _recreateSupabaseClient = () => {
       detectSessionInUrl: false,
     },
   });
-  return supabaseSingleton;
+  return _supabaseSingleton;
 };
 
 // Export types from Supabase for use in other files
 export type { User, Session } from '@supabase/supabase-js';
+
+/* -------------------------------------------------------------------------- */
+/* 4. Back-compat exports (non-underscore names)                               */
+/* -------------------------------------------------------------------------- */
+// Many legacy modules still import these helpers without the leading
+// underscore.  Re-export them here so existing imports continue to work
+// while new code can adopt the explicit “private” underscore versions.
+
+// eslint-disable-next-line import/prefer-default-export
+export const supabase = _supabase;
+export const isSupabaseInitialized = _isSupabaseInitialized;
+export const getSupabase = _getSupabase;
+export const recreateSupabaseClient = _recreateSupabaseClient;

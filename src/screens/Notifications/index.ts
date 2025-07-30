@@ -1,1 +1,1 @@
-export { default }; from "./MyShowsScreen";
+export { default } from "./MyShowsScreen";

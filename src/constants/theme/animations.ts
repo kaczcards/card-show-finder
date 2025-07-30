@@ -33,8 +33,8 @@ export const _animation = {
   fadeIn: (value: Animated.Value, config?: { duration?: number; easing?: EasingFunction }) => {
     return Animated.timing(value, {
       toValue: 1,
-      duration: config?.duration || duration.standard,
-      easing: config?.easing || easing.easeOut,
+      duration: config?.duration || _duration.standard,
+      easing: config?.easing || _easing.easeOut,
       useNativeDriver: true,
     });
   },
@@ -43,8 +43,8 @@ export const _animation = {
   fadeOut: (value: Animated.Value, config?: { duration?: number; easing?: EasingFunction }) => {
     return Animated.timing(value, {
       toValue: 0,
-      duration: config?.duration || duration.standard,
-      easing: config?.easing || easing.easeIn,
+      duration: config?.duration || _duration.standard,
+      easing: config?.easing || _easing.easeIn,
       useNativeDriver: true,
     });
   },
@@ -54,8 +54,8 @@ export const _animation = {
     const _distance = config?.distance || 100;
     return Animated.timing(value, {
       toValue: 0,
-      duration: config?.duration || duration.standard,
-      easing: config?.easing || easing.easeOut,
+      duration: config?.duration || _duration.standard,
+      easing: config?.easing || _easing.easeOut,
       useNativeDriver: true,
     });
   },
@@ -64,9 +64,9 @@ export const _animation = {
   slideOutToBottom: (value: Animated.Value, config?: { distance?: number; duration?: number; easing?: EasingFunction }) => {
     const _distance = config?.distance || 100;
     return Animated.timing(value, {
-      toValue: distance,
-      duration: config?.duration || duration.standard,
-      easing: config?.easing || easing.easeIn,
+      toValue: _distance,
+      duration: config?.duration || _duration.standard,
+      easing: config?.easing || _easing.easeIn,
       useNativeDriver: true,
     });
   },
@@ -75,8 +75,8 @@ export const _animation = {
   scaleUp: (value: Animated.Value, config?: { toValue?: number; duration?: number; easing?: EasingFunction }) => {
     return Animated.timing(value, {
       toValue: config?.toValue || 1,
-      duration: config?.duration || duration.standard,
-      easing: config?.easing || easing.easeOut,
+      duration: config?.duration || _duration.standard,
+      easing: config?.easing || _easing.easeOut,
       useNativeDriver: true,
     });
   },
@@ -85,8 +85,8 @@ export const _animation = {
   scaleDown: (value: Animated.Value, config?: { toValue?: number; duration?: number; easing?: EasingFunction }) => {
     return Animated.timing(value, {
       toValue: config?.toValue || 0,
-      duration: config?.duration || duration.standard,
-      easing: config?.easing || easing.easeIn,
+      duration: config?.duration || _duration.standard,
+      easing: config?.easing || _easing.easeIn,
       useNativeDriver: true,
     });
   },
@@ -95,24 +95,24 @@ export const _animation = {
   buttonPress: (scaleValue: Animated.Value) => {
     const _downScale = Animated.timing(scaleValue, {
       toValue: 0.95,
-      duration: duration.shortest,
-      easing: easing.easeOut,
+      duration: _duration.shortest,
+      easing: _easing.easeOut,
       useNativeDriver: true,
     });
     
     const _upScale = Animated.timing(scaleValue, {
       toValue: 1,
-      duration: duration.shortest,
-      easing: easing.easeOut,
+      duration: _duration.shortest,
+      easing: _easing.easeOut,
       useNativeDriver: true,
     });
     
     return {
       onPressIn: () => {
-        downScale.start();
+        _downScale.start();
       },
       onPressOut: () => {
-        upScale.start();
+        _upScale.start();
       },
       style: {
         transform: [{ scale: scaleValue }],
@@ -122,10 +122,15 @@ export const _animation = {
 };
 
 export default {
-  duration,
-  easing,
-  animation,
+  duration: _duration,
+  easing: _easing,
+  animation: _animation,
   // Re-exporting the native LayoutAnimation object allows calling modules
   // to use LayoutAnimation.configureNext and other static members directly.
   layoutAnimation: LayoutAnimation,
 };
+
+// Backward-compatible exports
+export const duration = _duration;
+export const easing = _easing;
+export const animation = _animation;

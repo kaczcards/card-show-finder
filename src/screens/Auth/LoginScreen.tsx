@@ -1,4 +1,4 @@
-import React, { _useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -231,7 +231,7 @@ const _BRAND_COLORS = {
 const _styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.lightGray,
+    backgroundColor: _BRAND_COLORS.lightGray,
   },
   container: {
     flex: 1,
@@ -260,7 +260,7 @@ const _styles = StyleSheet.create({
   appName: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: BRAND_COLORS.primaryOrange,
+    color: _BRAND_COLORS.primaryOrange,
   },
   formContainer: {
     width: '100%',
@@ -268,13 +268,13 @@ const _styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: BRAND_COLORS.darkText,
+    color: _BRAND_COLORS.darkText,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: BRAND_COLORS.subtleText,
+    color: _BRAND_COLORS.subtleText,
     textAlign: 'center',
     marginBottom: 30,
   },
@@ -286,20 +286,20 @@ const _styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: BRAND_COLORS.errorRed,
+    color: _BRAND_COLORS.errorRed,
     fontSize: 14,
     textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.white,
+    backgroundColor: _BRAND_COLORS.white,
     borderRadius: 12,
     marginBottom: 18,
     height: 55,
     paddingHorizontal: 15,
     borderWidth: 1,
-    borderColor: BRAND_COLORS.lightBorder,
+    borderColor: _BRAND_COLORS.lightBorder,
   },
   inputIcon: {
     marginRight: 10,
@@ -307,7 +307,7 @@ const _styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    color: BRAND_COLORS.darkText,
+    color: _BRAND_COLORS.darkText,
     fontSize: 16,
   },
   eyeIcon: {
@@ -318,12 +318,12 @@ const _styles = StyleSheet.create({
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: BRAND_COLORS.primaryBlue,
+    color: _BRAND_COLORS.primaryBlue,
     fontSize: 14,
     fontWeight: '600',
   },
   button: {
-    backgroundColor: BRAND_COLORS.primaryBlue,
+    backgroundColor: _BRAND_COLORS.primaryBlue,
     borderRadius: 12,
     height: 55,
     alignItems: 'center',
@@ -338,7 +338,7 @@ const _styles = StyleSheet.create({
     backgroundColor: '#99C9FF',
   },
   buttonText: {
-    color: BRAND_COLORS.white,
+    color: _BRAND_COLORS.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -348,16 +348,16 @@ const _styles = StyleSheet.create({
     marginTop: 25,
   },
   registerText: {
-    color: BRAND_COLORS.subtleText,
+    color: _BRAND_COLORS.subtleText,
     fontSize: 14,
   },
   registerLink: {
-    color: BRAND_COLORS.primaryBlue,
+    color: _BRAND_COLORS.primaryBlue,
     fontSize: 14,
     fontWeight: 'bold',
   },
   resendButton: {
-    backgroundColor: BRAND_COLORS.errorRed,
+    backgroundColor: _BRAND_COLORS.errorRed,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 8,
@@ -366,7 +366,7 @@ const _styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resendButtonText: {
-    color: BRAND_COLORS.white,
+    color: _BRAND_COLORS.white,
     fontSize: 14,
     fontWeight: 'bold',
   },

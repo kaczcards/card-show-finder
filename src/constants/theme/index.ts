@@ -33,4 +33,7 @@ export {
 };
 
 // Default export of the complete theme
-export default theme;
+export default _theme;
+
+// Backward-compatible export
+export const theme = _theme;
