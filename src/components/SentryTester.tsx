@@ -92,7 +92,6 @@ const SentryTester: React.FC = () => {
       // No user context for these test messages
       user: {} as any, // providing empty user object to satisfy User type
       requestSession: {},
-      propagationContext: { traceId: '', spanId: '' }
     });
     setLastAction(`${level} message sent to Sentry`);
   };

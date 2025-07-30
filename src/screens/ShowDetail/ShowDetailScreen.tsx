@@ -17,7 +17,8 @@ import * as userRoleService from '../../services/userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
 import { UserRole, Show as ShowType } from '../../types'; // Import enums & primary Show model
-import * as Sentry from 'sentry-expo';
+// Use the wrapped Sentry helpers to avoid direct SDK calls that may be treeshaken out
+import { captureMessage } from '../../services/sentryConfig';
 
 // Import components from the components folder
 import {
@@ -166,16 +167,17 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       Alert.alert("Success", "You've marked this show as attended!");
       
       // Track this business event in Sentry
-      Sentry.captureMessage('Show Attended', {
-        level: 'info',
-        tags: {
-          event_type: 'business',
-        },
-        extra: {
-          showId: parsedShow.id,
-          userId: user.id,
-        },
-      });
+      captureMessage(
+        'Show Attended',
+        'info',
+        {
+          tags: { event_type: 'business' },
+          extra: {
+            showId: parsedShow.id,
+            userId: user.id,
+          },
+        }
+      );
     } catch (error) {
       Alert.alert("Error", "Failed to mark show as attended");
       console.error("Error marking show as attended:", error);

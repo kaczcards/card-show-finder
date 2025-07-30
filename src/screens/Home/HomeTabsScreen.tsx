@@ -132,7 +132,7 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
           )}
         </Tab.Screen>
         <Tab.Screen name="Map">
-          {() => <MapScreen />}
+          {(props) => <MapScreen {...props} />}
         </Tab.Screen>
       </Tab.Navigator>
     </View>
