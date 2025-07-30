@@ -32,7 +32,8 @@ const USER_ID = '7d792f27-9112-4837-926f-42e4eb1f0577';
  * Check user role and subscription status in the database
  */
 async function checkDealerRole() {
-  console.log(`\n🔍 Checking database for user ID: ${USER_ID}\n`);
+  // eslint-disable-next-line no-console
+console.warn(`\n🔍 Checking database for user ID: ${USER_ID}\n`);
   
   try {
     // Query the profiles table for the user
@@ -48,7 +49,8 @@ async function checkDealerRole() {
     }
     
     if (!profileData) {
-      console.log(`❌ No profile found for user ID: ${USER_ID}`);
+      // eslint-disable-next-line no-console
+console.warn(`❌ No profile found for user ID: ${USER_ID}`);
       return;
     }
     
@@ -60,56 +62,87 @@ async function checkDealerRole() {
       .single();
     
     // Format and display the results
-    console.log('📋 USER PROFILE DATA:');
-    console.log('====================');
-    console.log(`ID: ${profileData.id}`);
-    console.log(`Name: ${profileData.first_name} ${profileData.last_name || ''}`);
-    console.log(`Email: ${profileData.email}`);
-    console.log(`Role: ${profileData.role}`);
-    console.log(`Account Type: ${profileData.account_type}`);
-    console.log(`Subscription Status: ${profileData.subscription_status}`);
-    console.log(`Subscription Expiry: ${profileData.subscription_expiry || 'N/A'}`);
+    // eslint-disable-next-line no-console
+console.warn('📋 USER PROFILE DATA:');
+    // eslint-disable-next-line no-console
+console.warn('====================');
+    // eslint-disable-next-line no-console
+console.warn(`ID: ${profileData.id}`);
+    // eslint-disable-next-line no-console
+console.warn(`Name: ${profileData.first_name} ${profileData.last_name || ''}`);
+    // eslint-disable-next-line no-console
+console.warn(`Email: ${profileData.email}`);
+    // eslint-disable-next-line no-console
+console.warn(`Role: ${profileData.role}`);
+    // eslint-disable-next-line no-console
+console.warn(`Account Type: ${profileData.account_type}`);
+    // eslint-disable-next-line no-console
+console.warn(`Subscription Status: ${profileData.subscription_status}`);
+    // eslint-disable-next-line no-console
+console.warn(`Subscription Expiry: ${profileData.subscription_expiry || 'N/A'}`);
     
     // Check for role-subscription mismatches
-    console.log('\n🔍 DIAGNOSIS:');
-    console.log('====================');
+    // eslint-disable-next-line no-console
+console.warn('\n🔍 DIAGNOSIS:');
+    // eslint-disable-next-line no-console
+console.warn('====================');
     
     // Check if role is dealer but showing as MVP
     if (profileData.role === 'dealer' && profileData.account_type === 'dealer') {
-      console.log('✅ User has correct role "dealer" in the database');
+      // eslint-disable-next-line no-console
+console.warn('✅ User has correct role "dealer" in the database');
     } else if (profileData.role === 'mvp_dealer') {
-      console.log('⚠️ User has "mvp_dealer" role in the database but should be "dealer"');
-      console.log('   This explains why they are showing as MVP Dealer in the UI');
+      // eslint-disable-next-line no-console
+console.warn('⚠️ User has "mvp_dealer" role in the database but should be "dealer"');
+      // eslint-disable-next-line no-console
+console.warn('   This explains why they are showing as MVP Dealer in the UI');
     } else {
-      console.log(`⚠️ User has unexpected role "${profileData.role}" with account type "${profileData.account_type}"`);
+      // eslint-disable-next-line no-console
+console.warn(`⚠️ User has unexpected role "${profileData.role}" with account type "${profileData.account_type}"`);
     }
     
     // Check subscription status
     if (profileData.subscription_status === 'active' && profileData.account_type === 'dealer') {
-      console.log('✅ User has active subscription as expected for a dealer');
+      // eslint-disable-next-line no-console
+console.warn('✅ User has active subscription as expected for a dealer');
     } else if (profileData.subscription_status !== 'active') {
-      console.log(`⚠️ User has "${profileData.subscription_status}" subscription status`);
+      // eslint-disable-next-line no-console
+console.warn(`⚠️ User has "${profileData.subscription_status}" subscription status`);
     }
     
     // Check for any UI display logic issues
-    console.log('\n🔧 POSSIBLE FIXES:');
-    console.log('====================');
-    console.log('1. If role is "mvp_dealer" but should be "dealer", update the role in the database:');
-    console.log(`   UPDATE profiles SET role = 'dealer' WHERE id = '${USER_ID}';`);
-    console.log('\n2. If the UI is incorrectly displaying the role, check the ProfileScreen.tsx file');
-    console.log('   for any logic that might be overriding the role display.');
-    console.log('\n3. Check the getRoleDisplayName function in ProfileScreen.tsx to ensure');
-    console.log('   it correctly maps UserRole.DEALER to "Dealer" and not "MVP Dealer".');
+    // eslint-disable-next-line no-console
+console.warn('\n🔧 POSSIBLE FIXES:');
+    // eslint-disable-next-line no-console
+console.warn('====================');
+    // eslint-disable-next-line no-console
+console.warn('1. If role is "mvp_dealer" but should be "dealer", update the role in the database:');
+    // eslint-disable-next-line no-console
+console.warn(`   UPDATE profiles SET role = 'dealer' WHERE id = '${USER_ID}';`);
+    // eslint-disable-next-line no-console
+console.warn('\n2. If the UI is incorrectly displaying the role, check the ProfileScreen.tsx file');
+    // eslint-disable-next-line no-console
+console.warn('   for any logic that might be overriding the role display.');
+    // eslint-disable-next-line no-console
+console.warn('\n3. Check the getRoleDisplayName function in ProfileScreen.tsx to ensure');
+    // eslint-disable-next-line no-console
+console.warn('   it correctly maps UserRole.DEALER to "Dealer" and not "MVP Dealer".');
     
     // Raw data for debugging
-    console.log('\n📊 RAW PROFILE DATA:');
-    console.log('====================');
-    console.log(JSON.stringify(profileData, null, 2));
+    // eslint-disable-next-line no-console
+console.warn('\n📊 RAW PROFILE DATA:');
+    // eslint-disable-next-line no-console
+console.warn('====================');
+    // eslint-disable-next-line no-console
+console.warn(JSON.stringify(profileData, null, 2););
     
     if (authData && !authError) {
-      console.log('\n📊 RAW AUTH DATA:');
-      console.log('====================');
-      console.log(JSON.stringify(authData, null, 2));
+      // eslint-disable-next-line no-console
+console.warn('\n📊 RAW AUTH DATA:');
+      // eslint-disable-next-line no-console
+console.warn('====================');
+      // eslint-disable-next-line no-console
+console.warn(JSON.stringify(authData, null, 2););
     }
     
   } catch (err) {
@@ -119,5 +152,6 @@ async function checkDealerRole() {
 
 // Run the function
 checkDealerRole()
-  .then(() => console.log('\n✅ Check completed'))
+  .then(() => // eslint-disable-next-line no-console
+console.warn('\n✅ Check completed');)
   .catch(err => console.error('❌ Fatal error:', err));

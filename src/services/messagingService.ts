@@ -55,7 +55,8 @@ export const sendMessage = async (
 ): Promise<Message | null> => {
   try {
     // This is a placeholder implementation
-    console.log('Sending message:', { senderId, recipientId, content, type, metadata });
+    // eslint-disable-next-line no-console
+console.warn('Sending message:', { senderId, recipientId, content, type, metadata });
     
     // In a real implementation, we would store the message in Supabase
     // const { data, error } = await supabase
@@ -109,7 +110,8 @@ export const getUserMessages = async (
 ): Promise<Message[]> => {
   try {
     // This is a placeholder implementation
-    console.log('Getting messages for user:', userId);
+    // eslint-disable-next-line no-console
+console.warn('Getting messages for user:', userId);
     
     // In a real implementation, we would fetch messages from Supabase
     // const { data, error } = await supabase
@@ -137,7 +139,8 @@ export const getUserMessages = async (
 export const markMessageAsRead = async (messageId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
-    console.log('Marking message as read:', messageId);
+    // eslint-disable-next-line no-console
+console.warn('Marking message as read:', messageId);
     
     // In a real implementation, we would update the message in Supabase
     // const { error } = await supabase
@@ -163,7 +166,8 @@ export const markMessageAsRead = async (messageId: string): Promise<boolean> => 
 export const deleteMessage = async (messageId: string, userId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
-    console.log('Deleting message:', messageId);
+    // eslint-disable-next-line no-console
+console.warn('Deleting message:', messageId);
     
     // In a real implementation, we would delete the message from Supabase
     // const { error } = await supabase
@@ -197,7 +201,8 @@ export const sendBroadcastMessage = async (
 ): Promise<Message[] | null> => {
   try {
     // This is a placeholder implementation
-    console.log('Sending broadcast message:', { senderId, recipientIds, content, metadata });
+    // eslint-disable-next-line no-console
+console.warn('Sending broadcast message:', { senderId, recipientIds, content, metadata });
     
     // In a real implementation, we would send individual messages to each recipient
     const messages: Message[] = [];

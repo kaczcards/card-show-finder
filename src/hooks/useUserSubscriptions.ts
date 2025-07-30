@@ -27,7 +27,8 @@ export const useUserSubscriptions = () => {
         setIsLoading(true);
         setError(null);
 
-        console.log('[useUserSubscriptions] Fetching subscriptions for user:', user.id);
+        // eslint-disable-next-line no-console
+console.warn('[useUserSubscriptions] Fetching subscriptions for user:', user.id);
 
         /* --------------------------------------------------------------
          * Subscription info lives in the `profiles` table, not a separate
@@ -59,7 +60,8 @@ export const useUserSubscriptions = () => {
           : [];
 
         setSubscriptions(mapped);
-        console.log('[useUserSubscriptions] Fetched subscriptions:', mapped.length);
+        // eslint-disable-next-line no-console
+console.warn('[useUserSubscriptions] Fetched subscriptions:', mapped.length);
       } catch (err) {
         console.error('[useUserSubscriptions] Unexpected error:', err);
         setError(err instanceof Error ? err : new Error('An unknown error occurred'));

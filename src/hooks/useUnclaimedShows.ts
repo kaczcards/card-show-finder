@@ -25,7 +25,8 @@ export const useUnclaimedShows = (organizerId: string) => {
   // Function to fetch unclaimed shows and series
   const fetchUnclaimedShows = async () => {
     try {
-      console.log('[useUnclaimedShows] Starting to fetch unclaimed shows and series');
+      // eslint-disable-next-line no-console
+console.warn('[useUnclaimedShows] Starting to fetch unclaimed shows and series');
       setIsLoading(true);
       setError(null);
       
@@ -36,13 +37,15 @@ export const useUnclaimedShows = (organizerId: string) => {
        * 1️⃣  Fetch series – isolate failures here
        * ----------------------------------------*/
       try {
-        console.log('[useUnclaimedShows] Attempting to fetch series…');
+        // eslint-disable-next-line no-console
+console.warn('[useUnclaimedShows] Attempting to fetch series…');
         unclaimedSeries = await showSeriesService.getAllShowSeries({
           // Explicitly pass `undefined` so the RPC receives a SQL NULL,
           // avoiding the `string | undefined` type error.
           organizerId: undefined
         });
-        console.log('[useUnclaimedShows] Successfully fetched series:', unclaimedSeries);
+        // eslint-disable-next-line no-console
+console.warn('[useUnclaimedShows] Successfully fetched series:', unclaimedSeries);
       } catch (seriesErr) {
         console.error('CRASHED INSIDE: getAllShowSeries', seriesErr);
         throw seriesErr; // bubble up to outer catch
@@ -52,9 +55,11 @@ export const useUnclaimedShows = (organizerId: string) => {
        * 2️⃣  Fetch standalone shows – isolate failures here
        * ------------------------------------------------*/
       try {
-        console.log('[useUnclaimedShows] Attempting to fetch standalone shows…');
+        // eslint-disable-next-line no-console
+console.warn('[useUnclaimedShows] Attempting to fetch standalone shows…');
         unclaimedStandaloneShows = await showSeriesService.getUnclaimedShows();
-        console.log('[useUnclaimedShows] Successfully fetched standalone shows:', unclaimedStandaloneShows);
+        // eslint-disable-next-line no-console
+console.warn('[useUnclaimedShows] Successfully fetched standalone shows:', unclaimedStandaloneShows);
       } catch (showsErr) {
         console.error('CRASHED INSIDE: getUnclaimedShows', showsErr);
         throw showsErr; // bubble up to outer catch
@@ -80,7 +85,8 @@ export const useUnclaimedShows = (organizerId: string) => {
 
       combinedItems.sort((a, b) => getItemDate(a) - getItemDate(b));
       
-      console.log(`[useUnclaimedShows] Fetch complete. Total unclaimed items: ${combinedItems.length}`);
+      // eslint-disable-next-line no-console
+console.warn(`[useUnclaimedShows] Fetch complete. Total unclaimed items: ${combinedItems.length}`);
       setUnclaimedItems(combinedItems);
       
     } catch (err) {

@@ -1,14 +1,5 @@
 import React, { useRef } from 'react';
-import { 
-  TouchableOpacity, 
-  Text, 
-  StyleSheet, 
-  StyleProp, 
-  ViewStyle,
-  TextStyle,
-  Animated,
-  ActivityIndicator,
-} from 'react-native';
+import { TouchableOpacity, Text, _StyleSheet, StyleProp, ViewStyle, TextStyle, Animated, ActivityIndicator,  } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface ButtonProps {

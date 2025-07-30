@@ -1,6 +1,6 @@
 import * as Sentry from 'sentry-expo';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { _Platform } from 'react-native';
 import { ScopeContext, SeverityLevel, Transaction, Breadcrumb } from '@sentry/types';
 
 /**
@@ -101,7 +101,8 @@ export const initSentry = (options: SentryConfigOptions = {}): void => {
     appVersion: Constants.expoConfig?.version || 'unknown',
   });
 
-  console.log(`Sentry initialized in ${environment} environment`);
+  // eslint-disable-next-line no-console
+console.warn(`Sentry initialized in ${environment} environment`);
 };
 
 /**
@@ -188,7 +189,8 @@ export const captureMessage = (
   context?: Partial<ScopeContext>
 ): void => {
   if (!SENTRY_DSN) {
-    console.log(`[${level}] ${message}`);
+    // eslint-disable-next-line no-console
+console.warn(`[${level}] ${message}`);
     return;
   }
 
@@ -227,7 +229,8 @@ export const startTransaction = (
     const startTime = Date.now();
     return {
       finish: () => {
-        console.log(`Transaction "${name}" (${operation}) finished in ${Date.now() - startTime}ms`);
+        // eslint-disable-next-line no-console
+console.warn(`Transaction "${name}" (${operation}); finished in ${Date.now() - startTime}ms`);
       },
       setStatus: () => {},
       setTag: () => {},

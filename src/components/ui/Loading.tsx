@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, ActivityIndicator, _StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface LoadingProps {

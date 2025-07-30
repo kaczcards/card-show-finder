@@ -1,14 +1,5 @@
 import React, { forwardRef, useRef, useImperativeHandle } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  Platform,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { View, Text, _StyleSheet, _ViewStyle, _TextStyle, _Platform, TouchableOpacity, ScrollView,  } from 'react-native';
 
 /**
  * MapFallback.tsx
@@ -205,7 +196,8 @@ export const MapView = forwardRef<any, MapViewProps & {
   // Expose methods that might be called on the ref
   useImperativeHandle(ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
-      console.log('MapView.animateToRegion called in fallback mode', { region, duration });
+      // eslint-disable-next-line no-console
+console.warn('MapView.animateToRegion called in fallback mode', { region, duration });
       // No-op in fallback mode
     },
     getMapRef: () => null,
@@ -329,12 +321,14 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
   // Expose methods that might be called on the ref
   useImperativeHandle(ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
-      console.log('FixedClusteredMapView.animateToRegion called in fallback mode', { region, duration });
+      // eslint-disable-next-line no-console
+console.warn('FixedClusteredMapView.animateToRegion called in fallback mode', { region, duration });
       // No-op in fallback mode
     },
     getMapRef: () => ({
       animateToRegion: (region: Region, duration = 500) => {
-        console.log('getMapRef().animateToRegion called in fallback mode', { region, duration });
+        // eslint-disable-next-line no-console
+console.warn('getMapRef();.animateToRegion called in fallback mode', { region, duration });
         // No-op in fallback mode
       }
     }),

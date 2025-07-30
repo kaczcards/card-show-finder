@@ -68,7 +68,7 @@ export default class FixedClusteredMapView extends PureComponent {
   }
 
   clusterize(dataset) {
-    this.index = new SuperCluster({ // eslint-disable-line new-cap
+    this.index = new SuperCluster({  
       extent: this.props.extent,
       minZoom: this.props.minZoom,
       maxZoom: this.props.maxZoom,

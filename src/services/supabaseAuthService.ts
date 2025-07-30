@@ -1,6 +1,6 @@
 import { AuthState, AuthCredentials, User, UserRole } from '../types';
 import { supabase } from '../supabase';
-import { Alert } from 'react-native';
+import { _Alert } from 'react-native';
 // Toast utility for user-visible notifications
 import { showLocationChangedToast } from '../utils/toastUtils';
 
@@ -377,7 +377,8 @@ export const getCurrentUser = async (userId: string): Promise<User | null> => {
       return null;
     }
 
-    console.log('[supabaseAuthService] Fetching user profile for ID:', userId);
+    // eslint-disable-next-line no-console
+console.warn('[supabaseAuthService] Fetching user profile for ID:', userId);
 
     /* -----------------------------------------------------------
      * 1) Fetch the user's profile row from `profiles`
@@ -610,7 +611,8 @@ export const subscribeToAuthChanges = (
 
   const subscription = supabase.auth.onAuthStateChange(
     async (event, session) => {
-      console.log('Auth state change event:', event);
+      // eslint-disable-next-line no-console
+console.warn('Auth state change event:', event);
       
       // Initial state is loading
       if (!initialized) {

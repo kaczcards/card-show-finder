@@ -561,7 +561,8 @@ export const getAvailableShowsForDealer = async (
     ) {
       // This would ideally use the server-side PostGIS functions,
       // but for simplicity we'll do basic filtering here
-      console.log('Filtering by distance is not implemented in this version');
+      // eslint-disable-next-line no-console
+console.warn('Filtering by distance is not implemented in this version');
     }
 
     return { 

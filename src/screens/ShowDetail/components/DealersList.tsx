@@ -50,7 +50,8 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    console.log('[DealersList] Opening URL:', formattedUrl);
+    // eslint-disable-next-line no-console
+console.warn('[DealersList] Opening URL:', formattedUrl);
 
     Linking.openURL(formattedUrl).catch(err => {
       console.error('Error opening URL:', err);
@@ -124,11 +125,13 @@ const DealersList: React.FC<DealersListProps> = ({
   const handleViewDealerDetails = useCallback((dealerId: string, dealerName: string) => {
     // Prevent multiple rapid clicks
     if (isNavigating) {
-      console.log('[DealersList] Navigation already in progress, ignoring click');
+      // eslint-disable-next-line no-console
+console.warn('[DealersList] Navigation already in progress, ignoring click');
       return;
     }
 
-    console.log('[DealersList] Dealer pressed:', dealerId, dealerName);
+    // eslint-disable-next-line no-console
+console.warn('[DealersList] Dealer pressed:', dealerId, dealerName);
     
     // Set visual feedback and prevent double-clicks
     setIsNavigating(true);

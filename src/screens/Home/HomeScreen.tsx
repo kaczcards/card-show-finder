@@ -1,17 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  RefreshControl,
-  FlatList,
-  Image,
-  ActivityIndicator,
-  Alert,
-  AppState,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, _Alert, AppState, _Platform,  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as locationService from '../../services/locationService';
@@ -172,7 +160,8 @@ const HomeScreen = ({
     try {
       // First priority: Use coordinates from props if available
       if (propUserLocation) {
-        console.log('Using coordinates from props');
+        // eslint-disable-next-line no-console
+console.warn('Using coordinates from props');
         setCoordinates(propUserLocation);
         return propUserLocation;
       } 
@@ -182,7 +171,8 @@ const HomeScreen = ({
       }
       // Third priority: Get coordinates from user's home zip code
       else if (authState.user && authState.user.homeZipCode) {
-        console.log(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
+        // eslint-disable-next-line no-console
+console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         
         const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
         
@@ -208,7 +198,8 @@ const HomeScreen = ({
         appState.current.match(/inactive|background/) && 
         nextAppState === 'active'
       ) {
-        console.log('App has come to the foreground - refreshing data');
+        // eslint-disable-next-line no-console
+console.warn('App has come to the foreground - refreshing data');
         refresh();
       }
       appState.current = nextAppState;
@@ -497,7 +488,8 @@ const HomeScreen = ({
   // Log the filtering results for debugging
   useEffect(() => {
     if (shows.length > 0) {
-      console.log(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
+      // eslint-disable-next-line no-console
+console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
       
       if (shows.length !== safeShows.length) {
         console.warn(`[HomeScreen] Filtered out ${shows.length - safeShows.length} shows that were outside the ${currentRadius} mile radius!`);
