@@ -13,11 +13,11 @@ import { useInfiniteShows } from '../../hooks';
 import { supabase } from '../../supabase';
 
 // Constants
-const _PRIMARY_COLOR = '#FF6A00'; // Orange
-const _SECONDARY_COLOR = '#0057B8'; // Blue
+const PRIMARY_COLOR = '#FF6A00';   // Orange
+const SECONDARY_COLOR = '#0057B8'; // Blue
 
 // Stock images for show items
-const _stockImages = [
+const stockImages = [
   require('../../../assets/stock/home_show_01.jpg'),
   require('../../../assets/stock/home_show_02.jpg'),
   require('../../../assets/stock/home_show_03.jpg'),
@@ -31,7 +31,7 @@ const _stockImages = [
 ];
 
 // Always-safe fallback
-const _fallbackImage = require('../../../assets/stock/home_show_01.jpg');
+const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
 
 // Define props interface for HomeScreen
 interface HomeScreenProps {
@@ -62,7 +62,7 @@ interface Show {
   coordinates?: Coordinates;
 }
 
-const _HomeScreen = ({ 
+const HomeScreen = ({ 
   customFilters, 
   _onFilterChange, 
   onShowPress,
@@ -70,13 +70,13 @@ const _HomeScreen = ({
 }: HomeScreenProps = {}) => {
   const _navigation = useNavigation();
   const { _authState } = useAuth();
-  const [_refreshing, setRefreshing] = useState(_false);
+  const [_refreshing, setRefreshing] = useState(false);
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const _appState = useRef(AppState.currentState);
-  const _flatListRef = useRef(_null);
+  const _flatListRef = useRef(null);
   // Emergency fallback state
   const [emergencyShowList, setEmergencyShowList] = useState<Show[]>([]);
-  const [useEmergencyList, setUseEmergencyList] = useState(_false);
+  const [useEmergencyList, setUseEmergencyList] = useState(false);
   
   // Default filter values
   const defaultFilters: ShowFilters = {
@@ -97,8 +97,8 @@ const _HomeScreen = ({
   // Derive actual filters to use - prefer customFilters if provided
   const _filters = customFilters || localFilters;
   
-  const [_filterSheetVisible, setFilterSheetVisible] = useState(_false);
-  const [_presetModalVisible, setPresetModalVisible] = useState(_false);
+  const [_filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [_presetModalVisible, setPresetModalVisible] = useState(false);
 
   /**
    * ------------------------------------------------------------------
@@ -236,7 +236,7 @@ console.warn('App has come to the foreground - refreshing data');
   // Log when coordinates or filters change
   useEffect(() => {
      
-    console.warn('[_HomeScreen] useInfiniteShows called with:', {
+    console.warn('[HomeScreen] useInfiniteShows called with:', {
       coordinates: effectiveCoords,
       filters,
     });
@@ -245,7 +245,7 @@ console.warn('App has come to the foreground - refreshing data');
   // Log whenever shows / totalCount updates
   useEffect(() => {
      
-    console.warn('[_HomeScreen] shows/totalCount updated:', {
+    console.warn('[HomeScreen] shows/totalCount updated:', {
       showsLength: shows.length,
       totalCount,
     });
@@ -256,7 +256,7 @@ console.warn('App has come to the foreground - refreshing data');
    * ----------------------------------------------------------------*/
   useEffect(() => {
     if (!isLoading && shows.length === 0 && totalCount > 0 && !useEmergencyList) {
-      console.warn('[_HomeScreen] Main query returned 0 shows but totalCount > 0 - doing emergency fetch');
+      console.warn('[HomeScreen] Main query returned 0 shows but totalCount > 0 - doing emergency fetch');
       const _fetchAllActiveShows = async () => {
         try {
           const { data, _error } = await supabase
@@ -266,11 +266,11 @@ console.warn('App has come to the foreground - refreshing data');
             .gte('end_date', new Date().toISOString());
 
           if (_error) {
-            console.error('[_HomeScreen] Emergency fetch error:', _error);
+            console.error('[HomeScreen] Emergency fetch error:', _error);
             return;
           }
 
-          console.warn(`[_HomeScreen] Emergency fetch found ${data?.length || 0} shows`);
+          console.warn(`[HomeScreen] Emergency fetch found ${data?.length || 0} shows`);
 
           if (data && data.length > 0) {
             const _mappedShows = data.map(show => ({
@@ -306,17 +306,17 @@ console.warn('App has come to the foreground - refreshing data');
             }));
 
             setEmergencyShowList(_mappedShows);
-            setUseEmergencyList(_true);
+      setUseEmergencyList(true);
           }
         } catch (_e) {
-          console.error('[_HomeScreen] Failed to fetch emergency shows:', _e);
+          console.error('[HomeScreen] Failed to fetch emergency shows:', _e);
         }
       };
 
       fetchAllActiveShows();
     } else if (shows.length > 0 && useEmergencyList) {
       // Reset if main query has data again
-      setUseEmergencyList(_false);
+      setUseEmergencyList(false);
       setEmergencyShowList([]);
     }
   }, [isLoading, shows.length, totalCount, useEmergencyList]);
@@ -341,9 +341,9 @@ console.warn('App has come to the foreground - refreshing data');
 
   // Handle pull-to-refresh
   const _onRefresh = async () => {
-    setRefreshing(_true);
+    setRefreshing(true);
     await refresh();
-    setRefreshing(_false);
+    setRefreshing(false);
   };
 
   // Navigate to show detail screen or use provided callback
@@ -489,10 +489,10 @@ console.warn('App has come to the foreground - refreshing data');
   useEffect(() => {
     if (shows.length > 0) {
        
-console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
+console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
       
       if (shows.length !== safeShows.length) {
-        console.warn(`[_HomeScreen] Filtered out ${shows.length - safeShows.length} shows that were outside the ${_currentRadius} mile radius!`);
+        console.warn(`[HomeScreen] Filtered out ${shows.length - safeShows.length} shows that were outside the ${_currentRadius} mile radius!`);
       }
     }
   }, [shows.length, safeShows.length, currentRadius]);
@@ -510,7 +510,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
             : getStockImage(_index, item.id)
         }
         style={styles.showImage}
-        defaultSource={_fallbackImage}
+        defaultSource={fallbackImage}
       />
       <View style={styles.showInfo}>
         <Text style={styles.showTitle}>{item.title}</Text>
@@ -529,7 +529,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
           })()}
         </Text>
         <View style={styles.showLocation}>
-          <Ionicons name="location" size={_14} color={_SECONDARY_COLOR} />
+          <Ionicons name="location" size={_14} color={SECONDARY_COLOR} />
           <Text style={styles.showLocationText}>{item.location}</Text>
         </View>
         {item.entryFee > 0 && (
@@ -547,7 +547,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
     
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color={_PRIMARY_COLOR} />
+        <ActivityIndicator size="small" color={PRIMARY_COLOR} />
         <Text style={styles.footerLoaderText}>Loading more shows...</Text>
       </View>
     );
@@ -567,7 +567,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
         <View style={styles.filterContainer}>
           <View style={styles.filterOptions}>
             <TouchableOpacity
-              style={[styles.filterButton, { backgroundColor: _SECONDARY_COLOR }]}
+              style={[styles.filterButton, { backgroundColor: SECONDARY_COLOR }]}
               onPress={_handleFilterPress}
             >
               <Ionicons name="options" size={_18} color="white" />
@@ -583,9 +583,9 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
             <TouchableOpacity
               style={[
                 styles.filterButton,
-                { backgroundColor: _PRIMARY_COLOR, marginLeft: 10 },
+                { backgroundColor: PRIMARY_COLOR, marginLeft: 10 },
               ]}
-              onPress={() => setPresetModalVisible(_true)}
+      onPress={() => setPresetModalVisible(true)}
             >
               <Ionicons name="star" size={_18} color="white" />
               <Text style={styles.filterButtonText}>Presets</Text>
@@ -593,7 +593,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
             
             {/* Display distance filter */}
             <View style={styles.activeFilterPill}>
-              <Ionicons name="location" size={_14} color={_SECONDARY_COLOR} />
+              <Ionicons name="location" size={_14} color={SECONDARY_COLOR} />
               <Text style={styles.activeFilterText}>
                 {filters.radius} miles
               </Text>
@@ -601,7 +601,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
             
             {/* Display date range filter */}
             <View style={styles.activeFilterPill}>
-              <Ionicons name="calendar" size={_14} color={_SECONDARY_COLOR} />
+              <Ionicons name="calendar" size={_14} color={SECONDARY_COLOR} />
               <Text style={styles.activeFilterText}>
                 Next {Math.round((new Date(filters.endDate as string | Date).getTime() - new Date(filters.startDate as string | Date).getTime()) / (1000 * 60 * 60 * 24))} days
               </Text>
@@ -635,12 +635,12 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
 
           {isLoading && !isRefreshing ? (
             <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color={_PRIMARY_COLOR} style={styles.loader} />
+              <ActivityIndicator size="large" color={PRIMARY_COLOR} style={styles.loader} />
               <Text style={styles.loaderText}>Loading shows...</Text>
             </View>
           ) : shows.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={_50} color={_SECONDARY_COLOR} />
+              <Ionicons name="calendar-outline" size={_50} color={SECONDARY_COLOR} />
               <Text style={styles.emptyStateText}>No upcoming shows found</Text>
               <Text style={styles.emptyStateSubtext}>Try adjusting your filters or expanding your search radius</Text>
               <TouchableOpacity 
@@ -674,7 +674,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
       {/* Filter Sheet */}
       <FilterSheet
         visible={_filterSheetVisible}
-        onClose={() => setFilterSheetVisible(_false)}
+        onClose={() => setFilterSheetVisible(false)}
         filters={_filters}
         onApplyFilters={_handleApplyFilters}
       />
@@ -682,7 +682,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
       {/* Preset Modal */}
       <FilterPresetModal
         visible={_presetModalVisible}
-        onClose={() => setPresetModalVisible(_false)}
+        onClose={() => setPresetModalVisible(false)}
         currentFilters={_filters}
         onApplyPreset={(_presetFilters) => {
           if (_onFilterChange) {
@@ -698,7 +698,7 @@ console.warn(`[_HomeScreen] Client-side filtering: ${shows.length} shows → ${s
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
@@ -730,7 +730,7 @@ const _styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: _PRIMARY_COLOR,
+    backgroundColor: PRIMARY_COLOR,
     borderRadius: 10,
     paddingHorizontal: 4,
     paddingVertical: 1,
@@ -756,7 +756,7 @@ const _styles = StyleSheet.create({
     marginBottom: 8,
   },
   activeFilterText: {
-    color: _SECONDARY_COLOR,
+    color: SECONDARY_COLOR,
     fontSize: 12,
     fontWeight: '500',
     marginLeft: 4,
@@ -776,7 +776,7 @@ const _styles = StyleSheet.create({
   },
   resetFiltersText: {
     fontSize: 12,
-    color: _SECONDARY_COLOR,
+    color: SECONDARY_COLOR,
     fontWeight: '600',
   },
   errorContainer: {
@@ -816,7 +816,7 @@ const _styles = StyleSheet.create({
     color: '#636366',
   },
   viewAllText: {
-    color: _PRIMARY_COLOR,
+    color: PRIMARY_COLOR,
     fontWeight: '600',
   },
   showsList: {
@@ -869,7 +869,7 @@ const _styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: _PRIMARY_COLOR,
+    backgroundColor: PRIMARY_COLOR,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
@@ -910,7 +910,7 @@ const _styles = StyleSheet.create({
     marginBottom: 15,
   },
   resetFiltersButton: {
-    backgroundColor: _SECONDARY_COLOR,
+    backgroundColor: SECONDARY_COLOR,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,

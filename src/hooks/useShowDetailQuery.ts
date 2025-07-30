@@ -312,4 +312,12 @@ export const _useShowDetailQuery = (showId: string) => {
   };
 };
 
-export default useShowDetailQuery;
+// ------------------------------------------------------------------
+// Exports
+// ------------------------------------------------------------------
+
+// Default export should reference the correctly-named hook
+export default _useShowDetailQuery;
+
+// Backward-compatible named export (legacy imports without underscore)
+export const useShowDetailQuery = _useShowDetailQuery;
