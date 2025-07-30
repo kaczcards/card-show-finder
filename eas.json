@@ -56,24 +56,19 @@
         "APP_ENV": "production"
       },
       "cache": {
-        "key": "prod-${{ eas.build.id }}",
-        "cacheDefaultPaths": true
+        "key": "prod-${{ eas.build.id }}"
       },
       "ios": {
-        "resourceClass": "m1-large",
+        "resourceClass": "m-large",
         "autoIncrement": "buildNumber",
         "scheme": "cardshowfinder"
       },
       "android": {
-        "resourceClass": "xlarge",
+        "resourceClass": "large",
         "autoIncrement": "versionCode",
         "buildType": "app-bundle"
       }
     }
-  },
-  "hooks": {
-    "prebuild": "npm run test && npm run lint",
-    "postbuild": "echo \"✅ Build completed for $APP_ENV environment\""
   },
   "submit": {
     "staging": {
