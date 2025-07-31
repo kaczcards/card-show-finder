@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/66</span>
+                <span class='fraction'>0/67</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/66</span>
+                <span class='fraction'>0/67</span>
             </div>
         
             
@@ -321,7 +321,8 @@
 <a name='L256'></a><a href='#L256'>256</a>
 <a name='L257'></a><a href='#L257'>257</a>
 <a name='L258'></a><a href='#L258'>258</a>
-<a name='L259'></a><a href='#L259'>259</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -479,6 +480,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -666,7 +668,7 @@ export const sendBroadcastMessage = <span class="cstat-no" title="statement not 
 &nbsp;
     // Check if the organizer has reached their monthly limit
     const { data: quotaData, error: quotaError } = <span class="cstat-no" title="statement not covered" >await getBroadcastLimitStatus(organizerId);</span>
-    
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    if (quotaError) {</span>
 <span class="cstat-no" title="statement not covered" >      return { success: false, error: quotaError };</span>
     }
@@ -679,7 +681,7 @@ export const sendBroadcastMessage = <span class="cstat-no" title="statement not 
     }
 &nbsp;
     // Format the broadcast message for the organizerService
-    const broadcastMessage: BroadcastMessage = <span class="cstat-no" title="statement not covered" >{</span>
+    const _broadcastMessage: BroadcastMessage = <span class="cstat-no" title="statement not covered" >{</span>
       showId: showId || '',
       content: message,
       recipients: recipients
@@ -733,10 +735,11 @@ export const sendBroadcastMessage = <span class="cstat-no" title="statement not 
  */
 export const getBroadcastHistory = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
   organizerId: string,
-  options: { limit?: number; offset?: number; showId?: string } = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
+  _options: { limit?: number; offset?: number; showId?: string } = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
 ): Promise&lt;{ data: BroadcastHistoryItem[] | null; error: string | null; count: number }&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     // Delegate to the organizerService function
+    const options = <span class="cstat-no" title="statement not covered" >_options;</span>
 <span class="cstat-no" title="statement not covered" >    return await getOrganizerBroadcastHistory(organizerId, options);</span>
   } catch (err: any) {
 <span class="cstat-no" title="statement not covered" >    console.error('[broadcastService] Unexpected error fetching broadcast history:', err);</span>
@@ -797,12 +800,12 @@ export const resetBroadcastCount = <span class="cstat-no" title="statement not c
  * Schedule a broadcast message to be sent at a future date
  * (This is a placeholder for future functionality)
  */
-export const scheduleBroadcastMessage = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
-  organizerId: string,
-  showId: string | null,
-  message: string,
-  recipients: ('attendees' | 'dealers')[],
-  scheduledDate: Date
+export const _scheduleBroadcastMessage = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+  _organizerId: string,
+  _showId: string | null,
+  _message: string,
+  _recipients: ('attendees' | 'dealers')[],
+  _scheduledDate: Date
 ): Promise&lt;{ success: boolean; error: string | null }&gt; =&gt; {
   // This would be implemented in a future phase
 <span class="cstat-no" title="statement not covered" >  return { </span>
@@ -815,9 +818,9 @@ export const scheduleBroadcastMessage = <span class="cstat-no" title="statement 
  * Admin function to override broadcast limits for an organizer
  * This should only be callable with admin/service_role credentials
  */
-export const adminSetBroadcastLimit = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
-  organizerId: string,
-  newLimit: number
+export const _adminSetBroadcastLimit = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+  _organizerId: string,
+  _newLimit: number
 ): Promise&lt;{ success: boolean; error: string | null }&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     // This should be implemented as a Supabase Edge Function with admin privileges
@@ -844,7 +847,7 @@ export const adminSetBroadcastLimit = <span class="cstat-no" title="statement no
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.767Z
+                at 2025-07-31T19:28:55.556Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
