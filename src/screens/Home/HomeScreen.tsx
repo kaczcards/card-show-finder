@@ -132,7 +132,7 @@ const HomeScreen = ({
 
   // Persist filters whenever they change - only if customFilters is not provided
   useEffect(() => {
-    if (_customFilters) return; // Skip if customFilters is provided
+    if (customFilters) return; // Skip if customFilters is provided
     
     AsyncStorage.setItem(getTempFiltersKey(), JSON.stringify(localFilters)).catch(() =>
       console.warn('Failed to persist filters')
@@ -150,19 +150,19 @@ const HomeScreen = ({
 
   // Set coordinates based on propUserLocation if provided
   useEffect(() => {
-    if (_propUserLocation) {
-      setCoordinates(_propUserLocation);
+    if (propUserLocation) {
+      setCoordinates(propUserLocation);
     }
-  }, [_propUserLocation]);
+  }, [propUserLocation]);
 
   // Get user coordinates if not provided in props
   const getUserCoordinates = async () => {
     try {
       // First priority: Use coordinates from props if available
-      if (_propUserLocation) {
+      if (propUserLocation) {
          
 console.warn('Using coordinates from props');
-        setCoordinates(_propUserLocation);
+        setCoordinates(propUserLocation);
         return propUserLocation;
       } 
       // Second priority: Use existing coordinates if available
@@ -324,9 +324,9 @@ console.warn('App has come to the foreground - refreshing data');
   // Fetch user coordinates and enable the query when the screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      const _fetchCoordinates = async () => {
-        const _coords = await getUserCoordinates();
-        if (_coords) {
+      const fetchCoordinates = async () => {
+        const coords = await getUserCoordinates();
+        if (coords) {
           refresh();
         }
       };
