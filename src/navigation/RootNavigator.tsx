@@ -21,17 +21,17 @@ import { Loading } from '../components/ui';
  * Shows either the auth flow or main app based on authentication status
  */
 const RootNavigator: React.FC = () => {
-  const { _authState } = useAuth();
-  const { isAuthenticated, _isLoading } = authState;
+  const { authState } = useAuth();
+  const { isAuthenticated, isLoading } = authState;
   
   // Get theme from context
-  const { _theme } = useTheme();
+  const { theme } = useTheme();
 
   // Root stack that will hold the main app and the admin tools
-  const _RootStack = createNativeStackNavigator();
+  const RootStack = createNativeStackNavigator();
 
   // Show loading indicator while auth state is being determined
-  if (_isLoading) {
+  if (isLoading) {
     return (
       <Loading 
         type="fullScreen"
@@ -49,7 +49,7 @@ const RootNavigator: React.FC = () => {
    *  React Navigation will automatically drill into nested navigators
    *  as long as we declare the screen name in the config.
    */
-  const _linking = {
+  const linking = {
     // Accept both the custom-scheme URL and the universal https link
     prefixes: [
       'cardshowfinder://',
@@ -66,13 +66,13 @@ const RootNavigator: React.FC = () => {
   };
 
   return (
-    <NavigationContainer linking={_linking}>
+    <NavigationContainer linking={linking}>
       {isAuthenticated ? (
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {/* Main user‐facing app */}
-          <RootStack.Screen name="Main" component={_MainNavigator} />
+          <RootStack.Screen name="Main" component={MainNavigator} />
           {/* Admin tools – only navigated to manually or via deep links */}
-          <RootStack.Screen name="Admin" component={_AdminNavigator} />
+          <RootStack.Screen name="Admin" component={AdminNavigator} />
         </RootStack.Navigator>
       ) : (
         <AuthNavigator />
