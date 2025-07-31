@@ -16,10 +16,10 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import {
-  _getUserWantList,
-  _createWantList,
-  _updateWantList,
-  _shareWantList,
+  getUserWantList,
+  createWantList,
+  updateWantList,
+  shareWantList,
 } from '../../services/collectionService';
 import { getUpcomingShows } from '../../services/showService';
 import { supabase } from '../../supabase';
@@ -27,17 +27,17 @@ import { supabase } from '../../supabase';
 import WantListEditor from '../../components/WantListEditor';
 import AttendeeWantLists from '../../components/AttendeeWantLists';
 
-const _INVENTORY_PREFIX = "[_INVENTORY]";
+const INVENTORY_PREFIX = "[INVENTORY]";
 
 const CollectionScreen: React.FC = () => {
   // ===== Navigation =====
-  const _navigation = useNavigation();
+  const navigation = useNavigation();
 
   // ===== Auth =====
   const {
-    authState: { _user },
+    authState: { user },
   } = useAuth();
-  const _userId = user?.id ?? '';
+  const userId = user?.id ?? '';
 
   // ===== Want List State =====
   const [wantList, setWantList] = useState<any | null>(null); // Using 'any' for now
@@ -49,7 +49,7 @@ const CollectionScreen: React.FC = () => {
   const [loadingInventory, setLoadingInventory] = useState<boolean>(true);
   const [savingInventory, setSavingInventory] = useState<boolean>(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
-  const [_inventoryId, setInventoryId] = useState<string | null>(null);
+  const [inventoryId, setInventoryId] = useState<string | null>(null);
 
   // ===== Upcoming Shows State =====
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
@@ -58,37 +58,37 @@ const CollectionScreen: React.FC = () => {
   
   // ===== FlatList Data =====
   // Single item array for the FlatList - we only need one AttendeeWantLists component
-  const _flatListData = user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER 
+  const flatListData = user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER 
     ? [{ id: 'attendee-want-lists' }] 
     : [];
 
   // ===== Navigation Handlers =====
-  const _handleNavigateToSubscription = () => {
+  const handleNavigateToSubscription = () => {
     // Navigate directly to the subscription screen; nested params not required
     navigation.navigate('My Profile' as never);
   };
 
   // Helper to check if there are database issues
-  const _hasDatabaseIssues = () => {
+  const hasDatabaseIssues = () => {
     // Check if any of the database-related functions encountered errors
     return !!(wantListError || showsError || inventoryError);
   };
 
   // ---------------- Dealer Inventory helpers ----------------
-  const _loadDealerInventory = async () => {
+  const loadDealerInventory = async () => {
     if (!userId) return;
-    setLoadingInventory(_true);
-    setInventoryError(_null);
+    setLoadingInventory(true);
+    setInventoryError(null);
     
     try {
       // Query all want_lists for this user
-      const { data, _error } = await supabase
+      const { data, error } = await supabase
         .from('want_lists')
         .select('id, content')
-        .eq('userid', _userId);
+        .eq('userid', userId);
 
-      if (_error) {
-        console.error('Error loading dealer inventory:', _error);
+      if (error) {
+        console.error('Error loading dealer inventory:', error);
         setInventoryError('Failed to load your inventory. Please try again.');
         // Set empty content so UI doesn't break
         setInventoryContent('');
@@ -96,46 +96,46 @@ const CollectionScreen: React.FC = () => {
       }
 
       // Find the one with the inventory prefix
-      const _inventoryItem = data?.find(item => 
+      const inventoryItem = data?.find(item => 
         item.content && item.content.startsWith(INVENTORY_PREFIX)
       );
       
-      if (_inventoryItem) {
+      if (inventoryItem) {
         // Remove the prefix for display
         setInventoryContent(inventoryItem.content.substring(INVENTORY_PREFIX.length));
         setInventoryId(inventoryItem.id);
       } else {
         setInventoryContent('');
-        setInventoryId(_null);
+        setInventoryId(null);
       }
-    } catch (_err) {
-      console.error('Error loading dealer inventory:', _err);
+    } catch (err) {
+      console.error('Error loading dealer inventory:', err);
       setInventoryError('An unexpected error occurred. Please try again.');
       setInventoryContent('');
     } finally {
-      setLoadingInventory(_false);
+      setLoadingInventory(false);
     }
   };
 
-  const _saveDealerInventory = async () => {
+  const saveDealerInventory = async () => {
     if (!userId) return;
-    setInventoryError(_null);
+    setInventoryError(null);
     
     try {
-      setSavingInventory(_true);
+      setSavingInventory(true);
       
       // Add the inventory prefix to the content
-      const _contentWithPrefix = `${_INVENTORY_PREFIX}${inventoryContent.trim()}`;
+      const contentWithPrefix = `${INVENTORY_PREFIX}${inventoryContent.trim()}`;
       
       let result;
-      if (_inventoryId) {
+      if (inventoryId) {
         // Update existing inventory
         result = await supabase.from('want_lists').update({
           content: contentWithPrefix,
           updatedat: new Date().toISOString(),
         })
-        .eq('id', _inventoryId)
-        .eq('userid', _userId);
+        .eq('id', inventoryId)
+        .eq('userid', userId);
       } else {
         // Create new inventory entry
         result = await supabase.from('want_lists').insert({
@@ -158,39 +158,39 @@ const CollectionScreen: React.FC = () => {
       }
       
       Alert.alert('Success', 'Your inventory has been saved.');
-    } catch (_err) {
-      console.error('Error saving inventory:', _err);
+    } catch (err) {
+      console.error('Error saving inventory:', err);
       setInventoryError('Failed to save your inventory. Please try again.');
       Alert.alert('Error', 'Failed to save inventory. Please try again.');
     } finally {
-      setSavingInventory(_false);
+      setSavingInventory(false);
     }
   };
 
-  const _loadWantList = async () => {
+  const loadWantList = async () => {
     if (!userId) return;
-    setLoadingWantList(_true);
-    setWantListError(_null);
+    setLoadingWantList(true);
+    setWantListError(null);
     
     try {
       // Get want lists but filter out inventory items
       const { data, error } = await supabase
         .from('want_lists')
         .select('*')
-        .eq('userid', _userId);
+        .eq('userid', userId);
         
-      if (_error) {
-        console.error('Error loading want list:', _error);
+      if (error) {
+        console.error('Error loading want list:', error);
         setWantListError(error.message || 'Failed to load your want list');
         return;
       }
       
       // Find the first want list that doesn't have the inventory prefix
-      const _regularWantList = data?.find(item => 
+      const regularWantList = data?.find(item => 
         !item.content || !item.content.startsWith(INVENTORY_PREFIX)
       );
       
-      if (_regularWantList) {
+      if (regularWantList) {
         // Transform to match the expected format from getUserWantList
         setWantList({
           id: regularWantList.id,
@@ -200,20 +200,20 @@ const CollectionScreen: React.FC = () => {
           updatedAt: regularWantList.updatedat
         });
       } else {
-        setWantList(_null);
+        setWantList(null);
       }
-    } catch (_err) {
-      console.error('Unexpected error loading want list:', _err);
+    } catch (err) {
+      console.error('Unexpected error loading want list:', err);
       setWantListError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
-      setLoadingWantList(_false);
+      setLoadingWantList(false);
     }
   };
 
-  const _loadUpcomingShows = async () => {
+  const loadUpcomingShows = async () => {
     if (!userId) return;
-    setLoadingShows(_true);
-    setShowsError(_null);
+    setLoadingShows(true);
+    setShowsError(null);
     
     try {
       // Get shows the user is planning to attend
@@ -225,28 +225,28 @@ const CollectionScreen: React.FC = () => {
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
 
-      if (_error) {
-        console.error('Error fetching upcoming shows:', _error);
+      if (error) {
+        console.error('Error fetching upcoming shows:', error);
         setShowsError(typeof error === 'string' ? error : 'Failed to load upcoming shows');
         setUpcomingShows([]);
-      } else if (_data) {
+      } else if (data) {
         setUpcomingShows(data as any[]); // Cast to any[]
       } else {
         setUpcomingShows([]);
       }
-    } catch (_error) {
-      console.error('Error in loadUpcomingShows:', _error);
+    } catch (error) {
+      console.error('Error in loadUpcomingShows:', error);
       setShowsError(error instanceof Error ? error.message : 'An unexpected error occurred');
       setUpcomingShows([]);
     } finally {
-      setLoadingShows(_false);
+      setLoadingShows(false);
     }
   };
 
   useFocusEffect(
     React.useCallback(() => {
       // Refresh each time screen comes into focus
-      if (_userId) {
+      if (userId) {
         if (user?.role === UserRole.DEALER ||
             user?.role === UserRole.MVP_DEALER ||
             user?.role === UserRole.SHOW_ORGANIZER) {
@@ -255,11 +255,11 @@ const CollectionScreen: React.FC = () => {
         loadWantList();
         loadUpcomingShows();
       }
-    }, [_userId])
+    }, [userId])
   );
 
   // ---------------- Render helpers ----------------
-  const _renderDealerInventorySection = () => (
+  const renderDealerInventorySection = () => (
     <View style={styles.editorContainer}>
       <Text style={styles.sectionTitle}>What I Sell</Text>
       
@@ -270,10 +270,10 @@ const CollectionScreen: React.FC = () => {
         </View>
       ) : inventoryError ? (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{_inventoryError}</Text>
+          <Text style={styles.errorText}>{inventoryError}</Text>
           <TouchableOpacity 
             style={styles.retryButton}
-            onPress={_loadDealerInventory}
+            onPress={loadDealerInventory}
           >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
@@ -284,8 +284,8 @@ const CollectionScreen: React.FC = () => {
             style={styles.textInput}
             multiline
             placeholder={'List the products you typically carry…'}
-            value={_inventoryContent}
-            onChangeText={_setInventoryContent}
+            value={inventoryContent}
+            onChangeText={setInventoryContent}
             editable={!savingInventory}
             textAlignVertical="top"
             placeholderTextColor="#999"
@@ -293,8 +293,8 @@ const CollectionScreen: React.FC = () => {
           <View style={{ height: 8 }} />
           <TouchableOpacity
             style={[styles.saveButtonWrapper, savingInventory && styles.saveButtonDisabled]}
-            onPress={_saveDealerInventory}
-            disabled={_savingInventory}
+            onPress={saveDealerInventory}
+            disabled={savingInventory}
           >
             {savingInventory ? (
               <ActivityIndicator color="white" />
@@ -308,12 +308,12 @@ const CollectionScreen: React.FC = () => {
   );
 
   // Render error message for want list
-  const _renderWantListError = () => (
+  const renderWantListError = () => (
     <View style={styles.errorContainer}>
-      <Text style={styles.errorText}>{_wantListError}</Text>
+      <Text style={styles.errorText}>{wantListError}</Text>
       <TouchableOpacity 
         style={styles.retryButton}
-        onPress={_loadWantList}
+        onPress={loadWantList}
       >
         <Text style={styles.retryButtonText}>Retry</Text>
       </TouchableOpacity>
@@ -321,12 +321,12 @@ const CollectionScreen: React.FC = () => {
   );
 
   // Render error message for shows
-  const _renderShowsError = () => (
+  const renderShowsError = () => (
     <View style={styles.errorContainer}>
-      <Text style={styles.errorText}>{_showsError}</Text>
+      <Text style={styles.errorText}>{showsError}</Text>
       <TouchableOpacity 
         style={styles.retryButton}
-        onPress={_loadUpcomingShows}
+        onPress={loadUpcomingShows}
       >
         <Text style={styles.retryButtonText}>Retry</Text>
       </TouchableOpacity>
@@ -334,8 +334,8 @@ const CollectionScreen: React.FC = () => {
   );
   
   // Render header for FlatList (all content before AttendeeWantLists)
-  const _renderHeader = useCallback(() => {
-    const _isPrivileged =
+  const renderHeader = useCallback(() => {
+    const isPrivileged =
       user?.role === UserRole.MVP_DEALER ||
       user?.role === UserRole.SHOW_ORGANIZER;
       
@@ -355,7 +355,7 @@ const CollectionScreen: React.FC = () => {
               available to all attendees.{' '}
               <Text 
                 style={styles.teaseLink}
-                onPress={_handleNavigateToSubscription}
+                onPress={handleNavigateToSubscription}
               >
                 Tap to upgrade now
               </Text>
@@ -371,10 +371,10 @@ const CollectionScreen: React.FC = () => {
 
         {/* Want List Editor (sharing disabled for privileged roles) */}
         <WantListEditor
-          wantList={_wantList}
-          userId={_userId}
+          wantList={wantList}
+          userId={userId}
           upcomingShows={isPrivileged ? [] : upcomingShows}
-          onSave={(_list) => setWantList(_list)}
+          onSave={(list) => setWantList(list)}
           isLoading={loadingWantList || loadingShows}
         />
         
@@ -407,10 +407,10 @@ const CollectionScreen: React.FC = () => {
     savingInventory
   ]);
   
-  // Render item for FlatList (_AttendeeWantLists)
-  const _renderItem = useCallback(
-    ({ _item }: { item: { id: string } }) => {
-    const _isPrivileged =
+  // Render item for FlatList (AttendeeWantLists)
+  const renderItem = useCallback(
+    ({ item }: { item: { id: string } }) => {
+    const isPrivileged =
       user?.role === UserRole.MVP_DEALER ||
       user?.role === UserRole.SHOW_ORGANIZER;
       
@@ -418,9 +418,9 @@ const CollectionScreen: React.FC = () => {
     if (isPrivileged && !hasDatabaseIssues()) {
       return (
         <AttendeeWantLists
-          userId={_userId}
+          userId={userId}
           userRole={user?.role}
-          shows={_upcomingShows}
+          shows={upcomingShows}
         />
       );
     }
@@ -441,10 +441,10 @@ const CollectionScreen: React.FC = () => {
       {/* Content */}
       <View style={styles.content}>
         <FlatList
-          data={_flatListData}
-          renderItem={_renderItem}
-          keyExtractor={(_item) => item.id}
-          ListHeaderComponent={_renderHeader}
+          data={flatListData}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.flatListContent}
           keyboardShouldPersistTaps="handled"
         />
@@ -453,7 +453,7 @@ const CollectionScreen: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
