@@ -22,26 +22,26 @@ import { supabase } from '../../supabase';
  * Lightweight geocoding helper (OpenStreetMap Nominatim).
  * NOTE: Replace with a robust geocoder or your own backend in production.
  */
-const _geocodeAddress = async (
+const geocodeAddress = async (
   address: string,
 ): Promise<{ latitude: number; longitude: number }> => {
   try {
-    const _url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
       address,
     )}`;
-    const _res = await fetch(_url, {
+    const res = await fetch(url, {
       headers: {
         'User-Agent': 'CardShowFinder/1.0 (contact@cardshowfinder.app)',
       },
     });
-    const _json = await res.json();
+    const json = await res.json();
     if (Array.isArray(json) && json.length > 0) {
-      const { _lat, _lon } = json[_0];
-      return { latitude: parseFloat(_lat), longitude: parseFloat(_lon) };
+      const { lat, lon } = json[0];
+      return { latitude: parseFloat(lat), longitude: parseFloat(lon) };
     }
     throw new Error('No geocoding results');
-  } catch (_err) {
-    console.error('[_geocodeAddress] Failed to geocode:', _err);
+  } catch (err) {
+    console.error('[_geocodeAddress] Failed to geocode:', err);
     throw err;
   }
 };
@@ -78,15 +78,15 @@ const AddShowScreen: React.FC = () => {
   const [endPeriod, setEndPeriod]   = useState<'AM' | 'PM'>('PM');
 
   // Calendar-modal visibility (actual UI to be added in follow-up patch)
-  const [showStartPicker, setShowStartPicker] = useState(_false);
-  const [showEndPicker,   setShowEndPicker]   = useState(_false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker,   setShowEndPicker]   = useState(false);
   
   // Categories and features (_optional)
   const [categories, setCategories] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
 
   // UI state
-  const [isSubmitting, setIsSubmitting] = useState(_false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Helper function to compare only the date part (not time)
@@ -294,7 +294,7 @@ const AddShowScreen: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(_true);
+    setIsSubmitting(true);
 
     try {
       // Create full datetime objects with time components
@@ -312,7 +312,7 @@ const AddShowScreen: React.FC = () => {
       if (!addressValidation.isValid) {
         console.warn('[_AddShowScreen] Address validation failed:', addressValidation.message);
         Alert.alert('Invalid Address', addressValidation.message || 'Please check your address format and try again.');
-        setIsSubmitting(_false);
+        setIsSubmitting(false);
         return;
       }
 
@@ -339,7 +339,7 @@ const AddShowScreen: React.FC = () => {
           '• The state code is valid (e.g., _CA, NY, TX)\n' +
           '• The ZIP code matches the city and state'
         );
-        setIsSubmitting(_false);
+        setIsSubmitting(false);
         return;
       }
 
@@ -348,19 +348,19 @@ const AddShowScreen: React.FC = () => {
        * --------------------------------------------------------- */
       if (!isGeocodingAccurate(coords)) {
         console.warn('[_AddShowScreen] Geocoding result may be inaccurate:', _coords);
-        const _continueWithInaccurate = await new Promise<boolean>((_resolve) => {
+        const _continueWithInaccurate = await new Promise<boolean>((resolve) => {
           Alert.alert(
             'Address May Be Inaccurate',
             'We found the address, but the location may not be precise. This could affect how your show appears on the map.\n\nDo you want to continue anyway?',
             [
-              { text: 'No, Let Me Fix It', onPress: () => resolve(_false), style: 'cancel' },
-              { text: 'Yes, Continue', onPress: () => resolve(_true) }
+              { text: 'No, Let Me Fix It', onPress: () => resolve(false), style: 'cancel' },
+              { text: 'Yes, Continue', onPress: () => resolve(true) }
             ]
           );
         });
         
         if (!continueWithInaccurate) {
-          setIsSubmitting(_false);
+          setIsSubmitting(false);
           return;
         }
       }
@@ -389,12 +389,12 @@ const AddShowScreen: React.FC = () => {
             : null,
         p_categories: categories.length > 0 ? categories : null,
         p_series_id: seriesId || null,
-        p_image_url: null,
+        p_imageurl: null,
       };
 
       console.warn(
         '[_AddShowScreen] Sending RPC payload:',
-        JSON.stringify(rpcParams, _null, 2),
+        JSON.stringify(rpcParams, null, 2),
       );
 
       // Call RPC to create show (bypasses problematic trigger)
@@ -402,8 +402,8 @@ const AddShowScreen: React.FC = () => {
         .rpc('create_show_with_coordinates', _rpcParams)
         .single();
 
-      if (_error) {
-        console.error('Error creating show:', _error);
+      if (error) {
+        console.error('Error creating show:', error);
         
         // Provide more helpful error messages based on error code
         if (error.code === '42883') { // PostgreSQL operator does not exist
@@ -424,8 +424,8 @@ const AddShowScreen: React.FC = () => {
         'Your show has been created successfully',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
-    } catch (_error) {
-      console.error('[_AddShowScreen] Error creating show:', _error);
+    } catch (error) {
+      console.error('[_AddShowScreen] Error creating show:', error);
       Alert.alert(
         'Error Creating Show',
         error instanceof Error 
@@ -433,7 +433,7 @@ const AddShowScreen: React.FC = () => {
           : 'There was a problem creating your show. Please check your address and try again.'
       );
     } finally {
-      setIsSubmitting(_false);
+      setIsSubmitting(false);
     }
   };
 
@@ -585,7 +585,7 @@ const AddShowScreen: React.FC = () => {
                 placeholder="Start date (e.g., 2025-04-22)"
                 placeholderTextColor="#999"
               />
-              <TouchableOpacity onPress={() => setShowStartPicker(_true)}>
+              <TouchableOpacity onPress={() => setShowStartPicker(true)}>
                 <Ionicons name="chevron-down" size={_20} color="#0057B8" />
               </TouchableOpacity>
             </View>
@@ -631,7 +631,7 @@ const AddShowScreen: React.FC = () => {
                 placeholder="End date (e.g., 2025-04-24)"
                 placeholderTextColor="#999"
               />
-              <TouchableOpacity onPress={() => setShowEndPicker(_true)}>
+              <TouchableOpacity onPress={() => setShowEndPicker(true)}>
                 <Ionicons name="chevron-down" size={_20} color="#0057B8" />
               </TouchableOpacity>
             </View>
@@ -675,7 +675,7 @@ const AddShowScreen: React.FC = () => {
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
               onChange={(_, _selected) => {
-                setShowStartPicker(_false);
+                setShowStartPicker(false);
                 if (_selected) {
                   logDateSelection('start', _selected);
                   setStartDate(_selected);
@@ -693,7 +693,7 @@ const AddShowScreen: React.FC = () => {
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
               onChange={(_, _selected) => {
-                setShowEndPicker(_false);
+                setShowEndPicker(false);
                 if (_selected) {
                   logDateSelection('end', _selected);
                   // Create a new date object to ensure we don't have reference issues
