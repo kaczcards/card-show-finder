@@ -100,7 +100,7 @@ export const saveFilterPresetsToAsyncStorage = async (
   presets: FilterPreset[]
 ): Promise<void> => {
   try {
-    const _presetsToStore = presets.map((preset: FilterPreset) => ({
+    const presetsToStore = presets.map((preset: FilterPreset) => ({
       ...preset,
       filters: {
         ...preset.filters,
@@ -113,8 +113,8 @@ export const saveFilterPresetsToAsyncStorage = async (
       getFilterPresetsKey(userId), 
       JSON.stringify(presetsToStore)
     );
-  } catch (_error) {
-    console.error('Error saving filter presets to AsyncStorage:', _error);
+  } catch (error) {
+    console.error('Error saving filter presets to AsyncStorage:', error);
     throw new Error('Failed to save filter presets locally');
   }
 };
@@ -126,13 +126,13 @@ export const loadFilterPresetsFromAsyncStorage = async (
   userId: string
 ): Promise<FilterPreset[]> => {
   try {
-    const _storedPresets = await AsyncStorage.getItem(getFilterPresetsKey(userId));
+    const storedPresets = await AsyncStorage.getItem(getFilterPresetsKey(userId));
     
     if (!storedPresets) {
       return [];
     }
     
-    const _parsedPresets = JSON.parse(storedPresets);
+    const parsedPresets = JSON.parse(storedPresets);
     
     // Convert ISO date strings back to Date objects in filters
     return parsedPresets.map((preset: FilterPreset) => ({
@@ -143,8 +143,8 @@ export const loadFilterPresetsFromAsyncStorage = async (
         endDate: preset.filters.endDate ? new Date(preset.filters.endDate) : null,
       }
     }));
-  } catch (_error) {
-    console.error('Error loading filter presets from AsyncStorage:', _error);
+  } catch (error) {
+    console.error('Error loading filter presets from AsyncStorage:', error);
     return [];
   }
 };
@@ -162,7 +162,7 @@ export const createFilterPreset = async (
     }
     
     // Prepare the data for insertion
-    const _newPreset = {
+    const newPreset = {
       user_id: preset.userId,
       name: preset.name,
       filters: {
@@ -177,11 +177,11 @@ export const createFilterPreset = async (
     // Insert into Supabase
     const { data, error } = await supabase
       .from('filter_presets')
-      .insert([_newPreset])
+      .insert([newPreset])
       .select('*')
       .single();
     
-    if (_error) {
+    if (error) {
       throw error;
     }
     
@@ -206,12 +206,12 @@ export const createFilterPreset = async (
     };
     
     // Update local cache
-    const _localPresets = await loadFilterPresetsFromAsyncStorage(preset.userId);
+    const localPresets = await loadFilterPresetsFromAsyncStorage(preset.userId);
     await saveFilterPresetsToAsyncStorage(preset.userId, [...localPresets, createdPreset]);
     
     return createdPreset;
-  } catch (_error) {
-    console.error('Error creating filter preset:', _error);
+  } catch (error) {
+    console.error('Error creating filter preset:', error);
     throw new Error('Failed to create filter preset');
   }
 };
@@ -227,7 +227,7 @@ export const loadFilterPresetsFromSupabase = async (userId: string): Promise<Fil
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
-    if (_error) {
+    if (error) {
       throw error;
     }
     
@@ -252,11 +252,11 @@ export const loadFilterPresetsFromSupabase = async (userId: string): Promise<Fil
     }));
     
     // Update local cache
-    await saveFilterPresetsToAsyncStorage(userId, _presets);
+    await saveFilterPresetsToAsyncStorage(userId, presets);
     
     return presets;
-  } catch (_error) {
-    console.error('Error loading filter presets from Supabase:', _error);
+  } catch (error) {
+    console.error('Error loading filter presets from Supabase:', error);
     
     // Fall back to local cache if server request fails
     return await loadFilterPresetsFromAsyncStorage(userId);
@@ -299,7 +299,7 @@ export const updateFilterPreset = async (
       .select('*')
       .single();
     
-    if (_error) {
+    if (error) {
       throw error;
     }
     
@@ -324,15 +324,15 @@ export const updateFilterPreset = async (
     };
     
     // Update local cache
-    const _localPresets = await loadFilterPresetsFromAsyncStorage(updatedPreset.userId);
-    const _updatedLocalPresets = localPresets.map(preset => 
+    const localPresets = await loadFilterPresetsFromAsyncStorage(updatedPreset.userId);
+    const updatedLocalPresets = localPresets.map(preset => 
       preset.id === presetId ? updatedPreset : preset
     );
-    await saveFilterPresetsToAsyncStorage(updatedPreset.userId, _updatedLocalPresets);
+    await saveFilterPresetsToAsyncStorage(updatedPreset.userId, updatedLocalPresets);
     
     return updatedPreset;
-  } catch (_error) {
-    console.error('Error updating filter preset:', _error);
+  } catch (error) {
+    console.error('Error updating filter preset:', error);
     throw new Error('Failed to update filter preset');
   }
 };
@@ -343,12 +343,12 @@ export const updateFilterPreset = async (
 export const deleteFilterPreset = async (presetId: string): Promise<boolean> => {
   try {
     // Delete from Supabase
-    const { _error } = await supabase
+    const { error } = await supabase
       .from('filter_presets')
       .delete()
       .eq('id', presetId);
     
-    if (_error) {
+    if (error) {
       throw error;
     }
     
@@ -357,22 +357,22 @@ export const deleteFilterPreset = async (presetId: string): Promise<boolean> => 
      * 1. Try to find the preset in *any* cached preset list
      * 2. Use that userId for cache update
      */
-    const _allKeys = await AsyncStorage.getAllKeys();
-    const _presetKeys = allKeys.filter(k => k.startsWith('filterPresets_'));
+    const allKeys = await AsyncStorage.getAllKeys();
+    const presetKeys = allKeys.filter(k => k.startsWith('filterPresets_'));
     for (const key of presetKeys) {
-      const _presetsStr = await AsyncStorage.getItem(key);
+      const presetsStr = await AsyncStorage.getItem(key);
       if (!presetsStr) continue;
       const presets: FilterPreset[] = JSON.parse(presetsStr);
       if (presets.some(p => p.id === presetId)) {
-        const _remaining = presets.filter(p => p.id !== presetId);
+        const remaining = presets.filter(p => p.id !== presetId);
         await AsyncStorage.setItem(key, JSON.stringify(remaining));
         break;
       }
     }
     
     return true;
-  } catch (_error) {
-    console.error('Error deleting filter preset:', _error);
+  } catch (error) {
+    console.error('Error deleting filter preset:', error);
     throw new Error('Failed to delete filter preset');
   }
 };
@@ -389,22 +389,22 @@ export const setDefaultFilterPreset = async (userId: string, presetId: string): 
       .eq('user_id', userId);
     
     // Then set the new default
-    const { _error } = await supabase
+    const { error } = await supabase
       .from('filter_presets')
       .update({ is_default: true })
       .eq('id', presetId)
       .eq('user_id', userId);
     
-    if (_error) {
+    if (error) {
       throw error;
     }
     
     // Update local cache
-    const _presets = await loadFilterPresetsFromSupabase(userId);
+    const presets = await loadFilterPresetsFromSupabase(userId);
     
     return true;
-  } catch (_error) {
-    console.error('Error setting default filter preset:', _error);
+  } catch (error) {
+    console.error('Error setting default filter preset:', error);
     throw new Error('Failed to set default filter preset');
   }
 };
@@ -438,8 +438,8 @@ export const getDefaultFilterPreset = async (userId: string): Promise<FilterPres
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
-  } catch (_error) {
-    console.error('Error getting default filter preset:', _error);
+  } catch (error) {
+    console.error('Error getting default filter preset:', error);
     return null;
   }
 };
@@ -456,15 +456,15 @@ export const syncFilters = async (userId: string): Promise<void> => {
       .select('*')
       .eq('user_id', userId);
     
-    if (_error) {
+    if (error) {
       throw error;
     }
     
     // Get local presets
-    const _localPresets = await loadFilterPresetsFromAsyncStorage(userId);
+    const localPresets = await loadFilterPresetsFromAsyncStorage(userId);
     
     // Map server presets to our format
-    const _mappedServerPresets: FilterPreset[] = serverPresets.map(item => ({
+    const mappedServerPresets: FilterPreset[] = serverPresets.map(item => ({
       id: item.id,
       userId: item.user_id,
       name: item.name,
@@ -479,9 +479,9 @@ export const syncFilters = async (userId: string): Promise<void> => {
     }));
     
     // Update local cache with server data
-    await saveFilterPresetsToAsyncStorage(userId, _mappedServerPresets);
-  } catch (_error) {
-    console.error('Error syncing filters:', _error);
+    await saveFilterPresetsToAsyncStorage(userId, mappedServerPresets);
+  } catch (error) {
+    console.error('Error syncing filters:', error);
     throw new Error('Failed to sync filters');
   }
 };
@@ -497,8 +497,8 @@ export const isDefaultFilter = (filter: ShowFilters): boolean => {
   
   // Check start date (only compare date portion, not time)
   if (filter.startDate && DEFAULT_FILTERS.startDate) {
-    const _filterDate = new Date(filter.startDate);
-    const _defaultDate = new Date(DEFAULT_FILTERS.startDate);
+    const filterDate = new Date(filter.startDate);
+    const defaultDate = new Date(DEFAULT_FILTERS.startDate);
     
     if (
       filterDate.getFullYear() !== defaultDate.getFullYear() ||
@@ -514,8 +514,8 @@ export const isDefaultFilter = (filter: ShowFilters): boolean => {
   
   // Check end date (only compare date portion, not time)
   if (filter.endDate && DEFAULT_FILTERS.endDate) {
-    const _filterDate = new Date(filter.endDate);
-    const _defaultDate = new Date(DEFAULT_FILTERS.endDate);
+    const filterDate = new Date(filter.endDate);
+    const defaultDate = new Date(DEFAULT_FILTERS.endDate);
     
     if (
       filterDate.getFullYear() !== defaultDate.getFullYear() ||
@@ -535,8 +535,8 @@ export const isDefaultFilter = (filter: ShowFilters): boolean => {
   }
   
   // Check categories
-  const _filterCategories = filter.categories || [];
-  const _defaultCategories = DEFAULT_FILTERS.categories || [];
+  const filterCategories = filter.categories || [];
+  const defaultCategories = DEFAULT_FILTERS.categories || [];
   if (filterCategories.length !== defaultCategories.length) {
     return false;
   }
@@ -547,8 +547,8 @@ export const isDefaultFilter = (filter: ShowFilters): boolean => {
   }
   
   // Check features
-  const _filterFeatures = filter.features || [];
-  const _defaultFeatures = DEFAULT_FILTERS.features || [];
+  const filterFeatures = filter.features || [];
+  const defaultFeatures = DEFAULT_FILTERS.features || [];
   if (filterFeatures.length !== defaultFeatures.length) {
     return false;
   }
@@ -565,7 +565,7 @@ export const isDefaultFilter = (filter: ShowFilters): boolean => {
  * Count the number of active (non-default) filters
  */
 export const countActiveFilters = (filters: ShowFilters): number => {
-  let _count = 0;
+  let count = 0;
   
   // Check radius
   if (filters.radius !== DEFAULT_FILTERS.radius) {
@@ -573,16 +573,16 @@ export const countActiveFilters = (filters: ShowFilters): number => {
   }
   
   // Check dates (if either start or end date is different, count as one filter)
-  const _defaultStartDate = DEFAULT_FILTERS.startDate 
+  const defaultStartDate = DEFAULT_FILTERS.startDate 
     ? new Date(DEFAULT_FILTERS.startDate).toDateString() 
     : null;
-  const _defaultEndDate = DEFAULT_FILTERS.endDate 
+  const defaultEndDate = DEFAULT_FILTERS.endDate 
     ? new Date(DEFAULT_FILTERS.endDate).toDateString() 
     : null;
-  const _filterStartDate = filters.startDate 
+  const filterStartDate = filters.startDate 
     ? new Date(filters.startDate).toDateString() 
     : null;
-  const _filterEndDate = filters.endDate 
+  const filterEndDate = filters.endDate 
     ? new Date(filters.endDate).toDateString() 
     : null;
   
@@ -648,14 +648,14 @@ export const formatFilterForDisplay = (filter: ShowFilters): Record<string, stri
   
   // Format dates
   if (filter.startDate && filter.endDate) {
-    const _startDate = new Date(filter.startDate);
-    const _endDate = new Date(filter.endDate);
+    const startDate = new Date(filter.startDate);
+    const endDate = new Date(filter.endDate);
     display.dateRange = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
   } else if (filter.startDate) {
-    const _startDate = new Date(filter.startDate);
+    const startDate = new Date(filter.startDate);
     display.startDate = `From ${startDate.toLocaleDateString()}`;
   } else if (filter.endDate) {
-    const _endDate = new Date(filter.endDate);
+    const endDate = new Date(filter.endDate);
     display.endDate = `Until ${endDate.toLocaleDateString()}`;
   }
   

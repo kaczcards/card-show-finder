@@ -129,11 +129,12 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
  * @returns Date when the subscription will expire
  */
 export const _calculateExpiryDate = (plan: SubscriptionPlan): Date => {
-  const _now = new Date();
+  // Current time reference
+  const now = new Date();
 
   // We purposely ignore `trialDays` here; trials are applied in higher-level
   // payment logic.  This helper strictly converts *paid* duration → expiry.
-  const _MS_IN_DAY = 24 * 60 * 60 * 1000;
+  const MS_IN_DAY = 24 * 60 * 60 * 1000;
 
   let daysToAdd: number;
   switch (plan.duration) {

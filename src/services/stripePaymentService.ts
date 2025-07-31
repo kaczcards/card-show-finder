@@ -1,6 +1,12 @@
-import { _StripeProvider, _useStripe } from '@stripe/stripe-react-native';
+import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import { supabase } from '../supabase';
-import { SubscriptionPlan, SUBSCRIPTION_PLANS, calculateExpiryDate } from './subscriptionTypes';
+// The helper in `subscriptionTypes` was accidentally exported with an underscore –
+// alias it locally so we can keep the nice name in the rest of this file.
+import {
+  SubscriptionPlan,
+  SUBSCRIPTION_PLANS,
+  _calculateExpiryDate as calculateExpiryDate,
+} from './subscriptionTypes';
 import { UserRole } from './userRoleService';
 
 // --- Type Definitions ---
@@ -43,8 +49,8 @@ interface PaymentLog {
 // --- Constants ---
 
 // It's crucial to load this from environment variables and not hardcode it.
-const _STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const _SUPABASE_EDGE_FUNCTION_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-payment-intent`;
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const SUPABASE_EDGE_FUNCTION_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-payment-intent`;
 
 // --- Service Implementation ---
 
@@ -53,7 +59,7 @@ const _SUPABASE_EDGE_FUNCTION_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/fun
  * This should be called once at the root of your application.
  * @returns {_boolean} True if initialization was successful, false otherwise.
  */
-export const _initializeStripe = (): boolean => {
+export const initializeStripe = (): boolean => {
   if (!STRIPE_PUBLISHABLE_KEY) {
     console.error('Stripe publishable key is not set. Please check your environment variables.');
     return false;
@@ -72,13 +78,13 @@ export const _initializeStripe = (): boolean => {
  * @param presentPaymentSheet - The `presentPaymentSheet` function from the `useStripe` hook.
  * @returns {Promise<StripePaymentResult>} The result of the payment operation.
  */
-export const _createPaymentSheetForSubscription = async (
+export const createPaymentSheetForSubscription = async (
   userId: string,
   planId: string,
   initPaymentSheet: (params: any) => Promise<any>,
   presentPaymentSheet: () => Promise<any>
 ): Promise<StripePaymentResult> => {
-  const _plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
+  const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
   if (!plan) {
     return { success: false, error: 'Subscription plan not found.' };
   }
@@ -90,17 +96,17 @@ export const _createPaymentSheetForSubscription = async (
     // Retrieve the current access-token from Supabase auth session
     // -----------------------------------------------------------
     const {
-      data: { _session },
+      data: { session },
     } = await supabase.auth.getSession();
 
-    const _accessToken = session?.access_token;
+    const accessToken = session?.access_token;
 
-    const _response = await fetch(_SUPABASE_EDGE_FUNCTION_URL, {
+    const response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         // Pass the access token only if we actually have one
-        ...(accessToken ? { Authorization: `Bearer ${_accessToken}` } : {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
       body: JSON.stringify({
         amount: plan.price * 100, // Stripe expects amount in cents
@@ -111,11 +117,15 @@ export const _createPaymentSheetForSubscription = async (
     });
 
     if (!response.ok) {
-      const _errorBody = await response.json();
+      const errorBody = await response.json();
       throw new Error(errorBody.error || 'Failed to create payment intent.');
     }
 
-    const { paymentIntent, ephemeralKey, customer }: PaymentIntentResponse = await response.json();
+    const {
+      paymentIntent,
+      ephemeralKey,
+      customer,
+    }: PaymentIntentResponse = await response.json();
 
     // 2. Initialize the Payment Sheet
     const { error: initError } = await initPaymentSheet({
@@ -127,8 +137,8 @@ export const _createPaymentSheetForSubscription = async (
       returnURL: 'cardshowfinder://stripe-redirect', // Custom URL scheme
     });
 
-    if (_initError) {
-      console.error('Stripe initPaymentSheet error:', _initError);
+    if (initError) {
+      console.error('Stripe initPaymentSheet error:', initError);
       await logPayment({
         user_id: userId,
         plan_id: plan.id,
@@ -144,12 +154,12 @@ export const _createPaymentSheetForSubscription = async (
     // 3. Present the Payment Sheet
     const { error: presentError } = await presentPaymentSheet();
 
-    if (_presentError) {
+    if (presentError) {
       // User cancelled or payment failed
       if (presentError.code === 'Canceled') {
         return { success: false, error: 'Payment was canceled.' };
       }
-      console.error('Stripe presentPaymentSheet error:', _presentError);
+      console.error('Stripe presentPaymentSheet error:', presentError);
       await logPayment({
         user_id: userId,
         plan_id: plan.id,
@@ -163,12 +173,12 @@ export const _createPaymentSheetForSubscription = async (
     }
 
     // 4. Payment succeeded, process the subscription
-    await processSubscriptionUpdate(_userId, _plan, paymentIntent);
+    await processSubscriptionUpdate(userId, plan, paymentIntent);
 
     return { success: true, transactionId: paymentIntent };
 
   } catch (error: any) {
-    console.error('An unexpected error occurred during payment:', _error);
+    console.error('An unexpected error occurred during payment:', error);
     return { success: false, error: error.message || 'An unknown error occurred.' };
   }
 };
@@ -181,7 +191,7 @@ export const _createPaymentSheetForSubscription = async (
  * @param plan - The subscription plan that was purchased.
  * @param transactionId - The Stripe Payment Intent ID for logging.
  */
-export const _processSubscriptionUpdate = async (
+export const processSubscriptionUpdate = async (
   userId: string,
   plan: SubscriptionPlan,
   transactionId: string
@@ -195,13 +205,18 @@ export const _processSubscriptionUpdate = async (
      *   • Annual  → +365 days
      *   • Monthly → +30  days
      */
-    const _expiryDate = calculateExpiryDate(_plan);
+    const expiryDate = calculateExpiryDate(plan);
 
     // Determine the new role based on the subscription type
-    const _newRole = plan.type === 'dealer' ? UserRole.MVP_DEALER : UserRole.SHOW_ORGANIZER;
+    const newRole =
+      plan.type === 'dealer' ? UserRole.MVP_DEALER : UserRole.SHOW_ORGANIZER;
 
     // Update user profile in Supabase
-    await updateUserProfileWithSubscription(_userId, _newRole, expiryDate.toISOString());
+    await updateUserProfileWithSubscription(
+      userId,
+      newRole,
+      expiryDate.toISOString(),
+    );
 
     // Log the successful payment
     await logPayment({
@@ -213,8 +228,11 @@ export const _processSubscriptionUpdate = async (
       transaction_id: transactionId,
     });
 
-  } catch (_error) {
-    console.error('Failed to process subscription update after payment:', _error);
+  } catch (error: any) {
+    console.error(
+      'Failed to process subscription update after payment:',
+      error,
+    );
     // Even if post-payment processing fails, the payment was successful.
     // This should be handled with a reconciliation process or monitoring.
     // For now, we log the error.
@@ -237,12 +255,12 @@ export const _processSubscriptionUpdate = async (
  * @param newRole - The new role to assign to the user.
  * @param expiryDateISO - The ISO string of the subscription expiry date.
  */
-const _updateUserProfileWithSubscription = async (
+const updateUserProfileWithSubscription = async (
   userId: string,
   newRole: UserRole,
   expiryDateISO: string
 ): Promise<void> => {
-  const { _error } = await supabase
+  const { error } = await supabase
     .from('profiles')
     .update({
       role: newRole,
@@ -252,10 +270,10 @@ const _updateUserProfileWithSubscription = async (
       subscription_expiry: expiryDateISO,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', _userId);
+    .eq('id', userId);
 
-  if (_error) {
-    console.error('Error updating user profile with subscription:', _error);
+  if (error) {
+    console.error('Error updating user profile with subscription:', error);
     throw new Error('Failed to update user profile after payment.');
   }
 };
@@ -265,11 +283,11 @@ const _updateUserProfileWithSubscription = async (
  *
  * @param paymentData - The payment details to log.
  */
-const _logPayment = async (paymentData: PaymentLog): Promise<void> => {
-  const { _error } = await supabase.from('payments').insert(paymentData);
+const logPayment = async (paymentData: PaymentLog): Promise<void> => {
+  const { error } = await supabase.from('payments').insert(paymentData);
 
-  if (_error) {
-    console.error('Error logging payment transaction:', _error);
+  if (error) {
+    console.error('Error logging payment transaction:', error);
     // This is a non-critical error for the user flow, but important for analytics/debugging.
   }
 };

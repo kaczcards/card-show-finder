@@ -10,7 +10,11 @@
 
 import { supabase } from '../supabase';
 import { Show } from '../types';
-import { addOrganizerResponse, updateOrganizerResponse, removeOrganizerResponse } from './reviewService';
+import {
+  _addOrganizerResponse as addOrganizerResponse,
+  _updateOrganizerResponse as updateOrganizerResponse,
+  _removeOrganizerResponse as removeOrganizerResponse,
+} from './reviewService';
 import { showSeriesService } from './showSeriesService';
 
 /**
