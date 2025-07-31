@@ -148,8 +148,13 @@ function filterUrlsByState(urlList, stateFilter) {
 
 // Enhanced AI prompt for better extraction
 function buildAIPrompt(html, sourceUrl) {
+  // We add TODAY so the model knows what “future” means
+  const TODAY = new Date().toISOString().split('T')[0]; // e.g. 2025-07-31
+
   return `
 You are a specialized card show event extractor. Your task is to analyze the HTML content from ${sourceUrl} and extract all trading card show events into a valid JSON array.
+
+TODAY = ${TODAY}
 
 Each event object MUST have these keys (use null if information is missing):
 {
@@ -174,6 +179,21 @@ IMPORTANT RULES:
 5. Normalize state names to standard 2-letter codes when possible.
 6. Extract as much detail as possible, but it's better to return partial information than nothing.
 7. ONLY output the valid JSON array of events. No explanations or markdown.
+
+VERY IMPORTANT – AVOID BAD DATA:
+• DO NOT extract anything from comments, reviews, or testimonial sections.  
+• DO NOT extract events that happened BEFORE TODAY (${TODAY}).  
+• Focus on sections labelled “upcoming”, “future”, “scheduled”, “calendar”, “events”, etc.  
+• Skip sections titled “past events”, “archive”, “previous shows”, “results”, or similar.  
+• Ignore tables or paragraphs that clearly list year ranges ending before TODAY.  
+• Ignore discussion posts or user‐generated comments beneath articles.  
+
+EXAMPLES – DO NOT EXTRACT:
+❌ “Great show last year, can’t wait for 2023!” (comment)  
+❌ “June 12, 2022 – Card Show” (past date)  
+❌ Product review paragraphs, testimonials, or forum replies  
+
+Return ONLY events whose startDate is >= TODAY.
 
 HTML CONTENT:
 ${html}
