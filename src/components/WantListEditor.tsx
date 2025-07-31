@@ -24,7 +24,7 @@ interface WantListEditorProps {
 
 const WantListEditor: React.FC<WantListEditorProps> = ({
   wantList,
-  _userId,
+  userId,
   upcomingShows,
   onSave,
   isLoading = false,
@@ -36,13 +36,13 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
 
   // Initialize content when wantList changes
   useEffect(() => {
-    if (_wantList) {
+    if (wantList) {
       setContent(wantList.content);
     }
-  }, [_wantList]);
+  }, [wantList]);
 
   // Handle saving the want list
-  const _handleSave = async () => {
+  const handleSave = async () => {
     if (!content.trim()) {
       Alert.alert('Empty Want List', 'Please add some items to your want list before saving.');
       return;
@@ -52,12 +52,12 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
       setIsSaving(true);
       
       let result;
-      if (_wantList) {
+      if (wantList) {
         // Update existing want list
-        result = await updateWantList(wantList.id, _userId, content);
+        result = await updateWantList(wantList.id, userId, content);
       } else {
         // Create new want list
-        result = await createWantList(_userId, _content);
+        result = await createWantList(userId, content);
       }
 
       setIsSaving(false);
@@ -70,19 +70,19 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         onSave(result.data);
         Alert.alert('Success', 'Your want list has been saved successfully.');
       }
-    } catch (_error) {
+    } catch (error) {
       setIsSaving(false);
-      console.error('Error saving want list:', _error);
+      console.error('Error saving want list:', error);
       Alert.alert('Error', 'Failed to save your want list. Please try again.');
     }
   };
 
   // Handle sharing the want list with dealers at a show
-  const _handleShare = async (showId: string) => {
+  const handleShare = async (showId: string) => {
     try {
-      setSharingShowId(_showId);
+      setSharingShowId(showId);
       
-      const _result = await shareWantList(_userId, _showId);
+      const result = await shareWantList(userId, showId);
       
       setSharingShowId(null);
       
@@ -95,22 +95,22 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         setSharedShows(prev => [...prev, showId]);
         Alert.alert('Success', 'Your want list has been shared with MVP dealers at this show.');
       }
-    } catch (_error) {
+    } catch (error) {
       setSharingShowId(null);
-      console.error('Error sharing want list:', _error);
+      console.error('Error sharing want list:', error);
       Alert.alert('Error', 'Failed to share your want list. Please try again.');
     }
   };
 
   // Render an upcoming show item with share button
-  const _renderShowItem = ({ _item }: { item: Show }) => {
-    const _isShared = sharedShows.includes(item.id);
-    const _isSharing = sharingShowId === item.id;
+  const renderShowItem = ({ item }: { item: Show }) => {
+    const isShared = sharedShows.includes(item.id);
+    const isSharing = sharingShowId === item.id;
     
     // Format the date for display (timezone-safe)
-    const _date = new Date(item.startDate);
-    const _utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-    const _formattedDate = utcDate.toLocaleDateString('en-US', {
+    const date = new Date(item.startDate);
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const formattedDate = utcDate.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -120,7 +120,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
       <View style={styles.showItem}>
         <View style={styles.showInfo}>
           <Text style={styles.showTitle}>{item.title}</Text>
-          <Text style={styles.showDate}>{_formattedDate}</Text>
+          <Text style={styles.showDate}>{formattedDate}</Text>
           <Text style={styles.showLocation}>{item.location}</Text>
         </View>
         
@@ -138,7 +138,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
             <>
               <Ionicons
                 name={isShared ? "checkmark" : "share-outline"}
-                size={_18}
+                size={18}
                 color="white"
               />
               <Text style={styles.shareButtonText}>
@@ -172,8 +172,8 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
 2. Any Shohei Ohtani rookie cards
 3. 2020 Bowman 1st Chrome Luis Robert
 4. Looking for vintage HOF cards in EX+ condition"
-          value={_content}
-          onChangeText={_setContent}
+          value={content}
+          onChangeText={setContent}
           textAlignVertical="top"
           placeholderTextColor="#999"
           editable={!isLoading && !isSaving}
@@ -182,14 +182,14 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         {/* Save Button */}
         <TouchableOpacity
           style={styles.saveButton}
-          onPress={_handleSave}
+          onPress={handleSave}
           disabled={isLoading || isSaving}
         >
           {isSaving ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
             <>
-              <Ionicons name="save-outline" size={_20} color="white" />
+              <Ionicons name="save-outline" size={20} color="white" />
               <Text style={styles.saveButtonText}>Save Want List</Text>
             </>
           )}
@@ -205,9 +205,9 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
           </Text>
           
           <FlatList
-            data={_upcomingShows}
-            renderItem={_renderShowItem}
-            keyExtractor={(_item) => item.id}
+            data={upcomingShows}
+            renderItem={renderShowItem}
+            keyExtractor={(item) => item.id}
             scrollEnabled={false} // Prevent nested scrolling issues
             ListEmptyComponent={
               <Text style={styles.emptyText}>
@@ -225,7 +225,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',

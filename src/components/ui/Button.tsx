@@ -79,18 +79,18 @@ const Button: React.FC<ButtonProps> = ({
   
   // Setup animation handlers if animated is true
   // When animations are disabled, this will remain undefined
-  const _animationHandlers = animated 
+  const animationHandlers = animated 
     ? theme.animations.animation.buttonPress(scaleValue) 
     : undefined;
   
   // Determine final styles based on state
-  const _containerStyle = [
+  const containerStyle = [
     buttonStyle.container,
     disabled && buttonStyle.disabledContainer,
     style,
   ];
   
-  const _labelStyle = [
+  const labelStyle = [
     buttonStyle.text,
     disabled && buttonStyle.disabledText,
     textStyle,
@@ -102,7 +102,7 @@ const Button: React.FC<ButtonProps> = ({
         activeOpacity={0.8}
         onPress={onPress}
         disabled={disabled || loading}
-        style={_containerStyle}
+        style={containerStyle}
         {...(animated
           ? {
               onPressIn: animationHandlers?.onPressIn,
@@ -116,7 +116,7 @@ const Button: React.FC<ButtonProps> = ({
             size="small" 
           />
         ) : (
-          <Text style={_labelStyle}>{_label}</Text>
+          <Text style={labelStyle}>{label}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>

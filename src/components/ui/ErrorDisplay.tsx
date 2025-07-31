@@ -44,7 +44,7 @@ interface ErrorDisplayProps {
  */
 const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   type = 'inline',
-  _title = 'Error',
+  title = 'Error',
   message,
   onRetry,
   retryText = 'Retry',
@@ -90,7 +90,7 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
           size={60}
           style={fullScreenStyle.icon}
         />
-        <Text style={fullScreenStyle.title}>{_title}</Text>
+        <Text style={fullScreenStyle.title}>{title}</Text>
         <Text style={fullScreenStyle.message}>{message}</Text>
 
         {onRetry && (
