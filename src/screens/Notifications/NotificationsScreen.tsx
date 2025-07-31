@@ -316,9 +316,10 @@ const MyShowsScreen: React.FC = () => {
 
       {reviewFormVisible && selectedShow && (
         <ReviewForm
-          showId={selectedShow.id}
+          // Updated prop names to satisfy latest ReviewForm interface
+          _showId={selectedShow.id}
           /* ReviewForm prop also expects a non-undefined string */
-          seriesId={selectedShow.seriesId ?? ''}
+          _seriesId={selectedShow.seriesId ?? ''}
           onSubmit={submitReview}
           onCancel={() => {
             setReviewFormVisible(false);

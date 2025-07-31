@@ -105,13 +105,13 @@ console.warn('Sending message:', { senderId, recipientId, content, type, metadat
  */
 export const getUserMessages = async (
   userId: string,
-  limit: number = 20,
-  offset: number = 0
+  _limit: number = 20,
+  _offset: number = 0
 ): Promise<Message[]> => {
   try {
     // This is a placeholder implementation
      
-console.warn('Getting messages for user:', _userId);
+console.warn('Getting messages for user:', userId);
     
     // In a real implementation, we would fetch messages from Supabase
     // const { data, error } = await supabase

@@ -455,8 +455,8 @@ const MyShowsScreen: React.FC = () => {
 
       {reviewFormVisible && selectedShow && (
         <ReviewForm
-          showId={selectedShow.id}
-          seriesId={selectedShow.seriesId ?? ''}
+          _showId={selectedShow.id}
+          _seriesId={selectedShow.seriesId ?? ''}
           onSubmit={submitReview}
           onCancel={() => {
             setReviewFormVisible(false);

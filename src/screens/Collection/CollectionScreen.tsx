@@ -97,7 +97,7 @@ const CollectionScreen: React.FC = () => {
 
       // Find the one with the inventory prefix
       const inventoryItem = data?.find(_item => 
-        item.content && item.content.startsWith(INVENTORY_PREFIX)
+        _item.content && _item.content.startsWith(INVENTORY_PREFIX)
       );
       
       if (inventoryItem) {
@@ -187,7 +187,7 @@ const CollectionScreen: React.FC = () => {
       
       // Find the first want list that doesn't have the inventory prefix
       const regularWantList = data?.find(_item => 
-        !item.content || !item.content.startsWith(INVENTORY_PREFIX)
+        !_item.content || !_item.content.startsWith(INVENTORY_PREFIX)
       );
       
       if (regularWantList) {
@@ -443,7 +443,7 @@ const CollectionScreen: React.FC = () => {
         <FlatList
           data={flatListData}
           renderItem={renderItem}
-          keyExtractor={(_item) => item.id}
+          keyExtractor={(_item) => _item.id}
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.flatListContent}
           keyboardShouldPersistTaps="handled"

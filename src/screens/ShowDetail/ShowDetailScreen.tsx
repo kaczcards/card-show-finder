@@ -7,8 +7,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  Linking as _Linking,
-  Share as _Share
+  Linking,
+  Share
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CommonActions, useNavigation } from '@react-navigation/native';
@@ -259,7 +259,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       {parsedShow && (
         <ShowHeaderActions
         isFavorite={isFavorite}
-        isCurrentUserOrganizer={isCurrentUserOrganizer}
+        _isCurrentUserOrganizer={isCurrentUserOrganizer}
         onToggleFavorite={toggleFavorite}
         onOpenMap={openMapLocation}
         onShare={shareShow}
@@ -325,8 +325,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       
       {showReviewForm && showSeries && (
         <ReviewForm
-          showId={showId}
-          seriesId={showSeries.id}
+          _showId={showId}
+          _seriesId={showSeries.id}
           onSubmit={() => {}}
           onCancel={() => setShowReviewForm(false)}
         />

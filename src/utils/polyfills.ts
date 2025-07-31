@@ -35,7 +35,7 @@ if (typeof globalThis.structuredClone !== 'function') {
   globalThis.structuredClone = <T>(value: T): T => {
     try {
       return JSON.parse(JSON.stringify(value));
-    } catch (_err) {
+    } catch {
       throw new Error(
         '[_polyfills] structuredClone polyfill failed – input may ' +
           'contain non-serialisable values.',
