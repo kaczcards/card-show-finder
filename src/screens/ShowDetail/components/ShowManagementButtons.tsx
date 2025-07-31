@@ -12,17 +12,17 @@ interface ShowManagementButtonsProps {
 
 const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
   isShowOrganizer,
-  _isCurrentUserOrganizer,
+  isCurrentUserOrganizer,
   isClaimingShow,
-  _onClaimShow,
-  _onEditShow,
+  onClaimShow,
+  onEditShow,
 }) => {
   return (
     <View style={styles.container}>
       {isShowOrganizer && !isCurrentUserOrganizer && (
         <TouchableOpacity 
           style={styles.claimShowButton} 
-          onPress={_onClaimShow} 
+          onPress={onClaimShow} 
           disabled={_isClaimingShow}
         >
           {isClaimingShow ? (
@@ -37,7 +37,7 @@ const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
       )}
 
       {isCurrentUserOrganizer && (
-        <TouchableOpacity style={styles.editShowButton} onPress={_onEditShow}>
+        <TouchableOpacity style={styles.editShowButton} onPress={onEditShow}>
           <Ionicons name="create" size={_20} color="#FFFFFF" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Edit Show Details</Text>
         </TouchableOpacity>

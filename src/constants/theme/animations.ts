@@ -93,14 +93,14 @@ export const _animation = {
 
   // Button Press Animation
   buttonPress: (scaleValue: Animated.Value) => {
-    const _downScale = Animated.timing(scaleValue, {
+    const downScale = Animated.timing(scaleValue, {
       toValue: 0.95,
       duration: _duration.shortest,
       easing: _easing.easeOut,
       useNativeDriver: true,
     });
     
-    const _upScale = Animated.timing(scaleValue, {
+    const upScale = Animated.timing(scaleValue, {
       toValue: 1,
       duration: _duration.shortest,
       easing: _easing.easeOut,
@@ -109,10 +109,10 @@ export const _animation = {
     
     return {
       onPressIn: () => {
-        _downScale.start();
+        downScale.start();
       },
       onPressOut: () => {
-        _upScale.start();
+        upScale.start();
       },
       style: {
         transform: [{ scale: scaleValue }],

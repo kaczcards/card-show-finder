@@ -3,9 +3,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Import auth screens
 import {
-  _LoginScreen,
-  _RegisterScreen,
-  _ForgotPasswordScreen,
+  LoginScreen,
+  RegisterScreen,
+  ForgotPasswordScreen,
   ResetPasswordScreen,
 } from '../screens/Auth';
 
@@ -34,9 +34,9 @@ const AuthNavigator: React.FC = () => {
         animation: 'slide_from_right',
       }}
     >
-      <AuthStack.Screen name="Login" component={_LoginScreen} />
-      <AuthStack.Screen name="Register" component={_RegisterScreen} />
-      <AuthStack.Screen name="ForgotPassword" component={_ForgotPasswordScreen} />
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       {/* Use a render callback so TypeScript infers the correct prop types */}
       <AuthStack.Screen name="ResetPassword">
         {props => <ResetPasswordScreen {...props} />}
