@@ -23,13 +23,13 @@ const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
         <TouchableOpacity 
           style={styles.claimShowButton} 
           onPress={onClaimShow} 
-          disabled={_isClaimingShow}
+          disabled={isClaimingShow}
         >
           {isClaimingShow ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="flag" size={_20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Ionicons name="flag" size={20} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>Claim This Show</Text>
             </>
           )}
@@ -38,7 +38,7 @@ const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
 
       {isCurrentUserOrganizer && (
         <TouchableOpacity style={styles.editShowButton} onPress={onEditShow}>
-          <Ionicons name="create" size={_20} color="#FFFFFF" style={styles.buttonIcon} />
+          <Ionicons name="create" size={20} color="#FFFFFF" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Edit Show Details</Text>
         </TouchableOpacity>
       )}
@@ -46,7 +46,7 @@ const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     marginVertical: 8,
   },
