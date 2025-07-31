@@ -27,7 +27,7 @@ const stockImages = [
   require('../../../assets/stock/home_show_07.jpg'),
   require('../../../assets/stock/home_show_08.jpg'),
   require('../../../assets/stock/home_show_09.jpg'),
-  require('../../../assets/stock/home_show10.jpg'),
+  require('../../../assets/stock/home_show_10.jpg'),
 ];
 
 // Always-safe fallback
