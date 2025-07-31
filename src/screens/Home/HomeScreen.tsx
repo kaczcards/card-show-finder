@@ -2,7 +2,10 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, Alert, AppState, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import * as locationService from '../../services/locationService';
+import {
+  getZipCodeCoordinates,
+  calculateDistanceBetweenCoordinates,
+} from '../../services/locationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../contexts/AuthContext';
 import FilterSheet from '../../components/FilterSheet';
@@ -144,7 +147,9 @@ const HomeScreen = ({
     if (!id) return stockImages[index % stockImages.length];
     
     // Use a hash-like approach to consistently map show IDs to images
-    const hash = id.split('').reduce((_acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = id
+      .split('')
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return stockImages[hash % stockImages.length] || fallbackImage;
   };
 
@@ -174,7 +179,7 @@ console.warn('Using coordinates from props');
          
 console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         
-        const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
+        const zipData = await getZipCodeCoordinates(authState.user.homeZipCode);
         
         if (zipData && zipData.coordinates) {
           setCoordinates(zipData.coordinates);
@@ -273,7 +278,7 @@ console.warn('App has come to the foreground - refreshing data');
           console.warn(`[HomeScreen] Emergency fetch found ${data?.length || 0} shows`);
 
           if (data && data.length > 0) {
-            const _mappedShows = data.map(show => ({
+            const mappedShows = data.map(show => ({
               id: show.id,
               title: show.title,
               location: show.location,
@@ -292,24 +297,23 @@ console.warn('App has come to the foreground - refreshing data');
               imageUrl: show.image_url,
               // Safely derive coordinates – guard against missing/null fields
               coordinates: (() => {
-                const _lat = show?.coordinates?.coordinates?.[_1];
-                const _lng = show?.coordinates?.coordinates?.[_0];
-                return (
-                  typeof lat === 'number' &&
+                const lat = show?.coordinates?.coordinates?.[1];
+                const lng = show?.coordinates?.coordinates?.[0];
+
+                return typeof lat === 'number' &&
                   typeof lng === 'number' &&
                   Number.isFinite(lat) &&
                   Number.isFinite(lng)
-                )
                   ? { latitude: lat, longitude: lng }
                   : undefined;
               })()
             }));
 
-            setEmergencyShowList(_mappedShows);
+            setEmergencyShowList(mappedShows);
       setUseEmergencyList(true);
           }
-        } catch (_e) {
-          console.error('[HomeScreen] Failed to fetch emergency shows:', _e);
+        } catch (e) {
+          console.error('[HomeScreen] Failed to fetch emergency shows:', e);
         }
       };
 
@@ -445,8 +449,10 @@ console.warn('App has come to the foreground - refreshing data');
     if (!dateString) return '';
     // Parse the date string and adjust for timezone issues
     // This ensures the correct date is shown regardless of local timezone
-    const _date = new Date(_dateString);
-    const _utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const parsedDate = new Date(dateString);
+    const utcDate = new Date(
+      parsedDate.getTime() + parsedDate.getTimezoneOffset() * 60 * 1000
+    );
 
     return utcDate.toLocaleDateString('en-US', {
       weekday: 'short',
@@ -464,7 +470,7 @@ console.warn('App has come to the foreground - refreshing data');
     // Skip shows without coordinates
     if (!show.coordinates || !effectiveCoords) return false;
     
-    const distance = locationService.calculateDistanceBetweenCoordinates(
+    const distance = calculateDistanceBetweenCoordinates(
       effectiveCoords,
       show.coordinates
     );
@@ -477,7 +483,7 @@ console.warn('App has come to the foreground - refreshing data');
     // Skip shows without coordinates
     if (!show.coordinates || !effectiveCoords) return false;
     
-    const distance = locationService.calculateDistanceBetweenCoordinates(
+    const distance = calculateDistanceBetweenCoordinates(
       effectiveCoords,
       show.coordinates
     );
@@ -523,8 +529,8 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
              * so different times on the same day aren't treated as
              * separate dates.
              * ---------------------------------------------------------*/
-            const _startDay = new Date(item.startDate).toDateString();
-            const _endDay   = new Date(item.endDate).toDateString();
+            const startDay = new Date(item.startDate).toDateString();
+            const endDay   = new Date(item.endDate).toDateString();
             return startDay !== endDay ? ` - ${formatDate(String(item.endDate))}` : '';
           })()}
         </Text>
