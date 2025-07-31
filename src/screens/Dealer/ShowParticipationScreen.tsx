@@ -122,8 +122,8 @@ const ShowParticipationScreen: React.FC = () => {
       }
       
       setDealerShows(data || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load dealer shows');
+    } catch (_error) {
+      setError(_error.message || 'Failed to load dealer shows');
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

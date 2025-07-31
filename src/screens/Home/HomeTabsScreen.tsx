@@ -40,7 +40,10 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
   // Shared state
   const [filters, setFilters] = useState<ShowFilters>(defaultFilters);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
-  const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+  // `activeTab` is currently unused but kept for potential future
+  // analytics or state-driven styling; prefix with underscore to
+  // satisfy eslint-unused-vars rule.
+  const [_activeTab, setActiveTab] = useState<'list' | 'map'>('list');
 
   // Load persisted filters on mount
   useEffect(() => {
