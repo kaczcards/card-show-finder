@@ -77,7 +77,7 @@ export function handleSupabaseError(
     return {
       message: error.message || 'Database operation failed',
       code: error.code,
-      category: determineErrorCategory(_error),
+      category: determineErrorCategory(error),
       severity,
       originalError: error,
       context,
@@ -124,7 +124,7 @@ export function handleNetworkError(
     timestamp: new Date(),
   };
 
-  logError(_appError);
+  logError(appError);
   return appError;
 }
 
@@ -144,7 +144,7 @@ export function handleAuthError(
     timestamp: new Date(),
   };
 
-  logError(_appError);
+  logError(appError);
   return appError;
 }
 
@@ -163,7 +163,7 @@ export function createValidationError(
     timestamp: new Date(),
   };
 
-  logError(_appError);
+  logError(appError);
   return appError;
 }
 
@@ -182,7 +182,7 @@ export function createPermissionError(
     timestamp: new Date(),
   };
 
-  logError(_appError);
+  logError(appError);
   return appError;
 }
 
@@ -205,8 +205,8 @@ export function logError(error: AppError): void {
 
   // Store error in AsyncStorage for later retrieval
   if (currentConfig.enableStorageLogging) {
-    storeErrorInStorage(_error).catch(_e => 
-      console.error('Failed to store error in AsyncStorage:', _e)
+    storeErrorInStorage(error).catch(e => 
+      console.error('Failed to store error in AsyncStorage:', e)
     );
   }
 
@@ -223,7 +223,7 @@ export function logError(error: AppError): void {
 async function storeErrorInStorage(error: AppError): Promise<void> {
   try {
     // Get existing errors
-    const _storedErrorsJson = await AsyncStorage.getItem('app_errors');
+    const storedErrorsJson = await AsyncStorage.getItem('app_errors');
     let storedErrors: AppError[] = storedErrorsJson ? JSON.parse(storedErrorsJson) : [];
 
     // Add new error
@@ -247,7 +247,7 @@ async function storeErrorInStorage(error: AppError): Promise<void> {
  */
 export async function getStoredErrors(): Promise<AppError[]> {
   try {
-    const _storedErrorsJson = await AsyncStorage.getItem('app_errors');
+    const storedErrorsJson = await AsyncStorage.getItem('app_errors');
     return storedErrorsJson ? JSON.parse(storedErrorsJson) : [];
   } catch (_e) {
     console.error('Error retrieving errors from AsyncStorage:', _e);
@@ -347,11 +347,11 @@ function determineErrorCategory(error: PostgrestError | Error): ErrorCategory {
   }
 
   // Check error message for common patterns
-  const _message = error.message.toLowerCase();
-  if (message.includes('network') || message.includes('connection')) return ErrorCategory.NETWORK;
-  if (message.includes('auth') || message.includes('login') || message.includes('password')) return ErrorCategory.AUTHENTICATION;
-  if (message.includes('permission') || message.includes('access') || message.includes('denied')) return ErrorCategory.PERMISSION;
-  if (message.includes('valid') || message.includes('required')) return ErrorCategory.VALIDATION;
+  const msg = error.message.toLowerCase();
+  if (msg.includes('network') || msg.includes('connection')) return ErrorCategory.NETWORK;
+  if (msg.includes('auth') || msg.includes('login') || msg.includes('password')) return ErrorCategory.AUTHENTICATION;
+  if (msg.includes('permission') || msg.includes('access') || msg.includes('denied')) return ErrorCategory.PERMISSION;
+  if (msg.includes('valid') || msg.includes('required')) return ErrorCategory.VALIDATION;
 
   return ErrorCategory.UNKNOWN;
 }
@@ -363,7 +363,7 @@ function isUserFriendlyMessage(message: string): boolean {
   if (!message) return false;
   
   // Too technical or exposing implementation details
-  const _technicalTerms = [
+  const technicalTerms = [
     'undefined',
     'null',
     'NaN',
@@ -399,7 +399,7 @@ function isUserFriendlyMessage(message: string): boolean {
   ];
 
   // Check if message contains technical terms
-  const _lowercaseMsg = message.toLowerCase();
+  const lowercaseMsg = message.toLowerCase();
   return !technicalTerms.some(term => lowercaseMsg.includes(term.toLowerCase()));
 }
 
@@ -413,13 +413,13 @@ export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
   return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
     try {
       return await fn(...args);
-    } catch (_error) {
-      const _appError = handleSupabaseError(_error, { functionName: fn.name, args });
+    } catch (error) {
+      const appError = handleSupabaseError(error, { functionName: fn.name, args });
       
-      if (_errorHandler) {
-        errorHandler(_appError);
+      if (errorHandler) {
+        errorHandler(appError);
       } else {
-        logError(_appError);
+        logError(appError);
       }
       
       throw appError;

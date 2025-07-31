@@ -8,7 +8,7 @@ import {
   SubscriptionDuration,
   SUBSCRIPTION_PLANS,
   StripePaymentResult,
-  calculateExpiryDate
+  _calculateExpiryDate as calculateExpiryDate
 } from './subscriptionTypes';
 
 /**
