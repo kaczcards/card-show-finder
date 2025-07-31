@@ -7,12 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * Request location permissions from the user
  * @returns Promise with boolean indicating if permissions were granted
  */
-export const _requestLocationPermissions = async (): Promise<boolean> => {
+export const requestLocationPermissions = async (): Promise<boolean> => {
   try {
-    const { _status } = await Location.requestForegroundPermissionsAsync();
+    const { status } = await Location.requestForegroundPermissionsAsync();
     return status === 'granted';
   } catch (error: any) {
-    console.error('Error requesting location permissions:', _error);
+    console.error('Error requesting location permissions:', error);
     return false;
   }
 };
@@ -21,12 +21,12 @@ export const _requestLocationPermissions = async (): Promise<boolean> => {
  * Check if location permissions are granted
  * @returns Promise with boolean indicating if permissions are granted
  */
-export const _checkLocationPermissions = async (): Promise<boolean> => {
+export const checkLocationPermissions = async (): Promise<boolean> => {
   try {
-    const { _status } = await Location.getForegroundPermissionsAsync();
+    const { status } = await Location.getForegroundPermissionsAsync();
     return status === 'granted';
   } catch (error: any) {
-    console.error('Error checking location permissions:', _error);
+    console.error('Error checking location permissions:', error);
     return false;
   }
 };
@@ -35,18 +35,18 @@ export const _checkLocationPermissions = async (): Promise<boolean> => {
  * Get the current location of the device
  * @returns Promise with coordinates or null if location cannot be determined
  */
-export const _getCurrentLocation = async (): Promise<Coordinates | null> => {
+export const getCurrentLocation = async (): Promise<Coordinates | null> => {
   try {
-    const _hasPermission = await checkLocationPermissions();
+    const hasPermission = await checkLocationPermissions();
     
     if (!hasPermission) {
-      const _permissionGranted = await requestLocationPermissions();
+      const permissionGranted = await requestLocationPermissions();
       if (!permissionGranted) {
         return null;
       }
     }
     
-    const _location = await Location.getCurrentPositionAsync({
+    const location = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.Balanced,
     });
     
@@ -55,7 +55,7 @@ export const _getCurrentLocation = async (): Promise<Coordinates | null> => {
       longitude: location.coords.longitude,
     };
   } catch (error: any) {
-    console.error('Error getting current location:', _error);
+    console.error('Error getting current location:', error);
     return null;
   }
 };
@@ -65,20 +65,20 @@ export const _getCurrentLocation = async (): Promise<Coordinates | null> => {
  * @param address Full address string
  * @returns Promise with coordinates or null if geocoding fails
  */
-export const _geocodeAddress = async (address: string): Promise<Coordinates | null> => {
+export const geocodeAddress = async (address: string): Promise<Coordinates | null> => {
   try {
-    const _results = await Location.geocodeAsync(address);
+    const results = await Location.geocodeAsync(address);
     
     if (results.length === 0) {
       return null;
     }
     
     return {
-      latitude: results[_0].latitude,
-      longitude: results[_0].longitude,
+      latitude: results[0].latitude,
+      longitude: results[0].longitude,
     };
   } catch (error: any) {
-    console.error('Error geocoding address:', _error);
+    console.error('Error geocoding address:', error);
     return null;
   }
 };
@@ -88,11 +88,11 @@ export const _geocodeAddress = async (address: string): Promise<Coordinates | nu
  * @param coordinates Latitude and longitude
  * @returns Promise with address or null if reverse geocoding fails
  */
-export const _reverseGeocodeCoordinates = async (
+export const reverseGeocodeCoordinates = async (
   coordinates: Coordinates
 ): Promise<Location.LocationGeocodedAddress | null> => {
   try {
-    const _results = await Location.reverseGeocodeAsync({
+    const results = await Location.reverseGeocodeAsync({
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
     });
@@ -101,9 +101,9 @@ export const _reverseGeocodeCoordinates = async (
       return null;
     }
     
-    return results[_0];
+    return results[0];
   } catch (error: any) {
-    console.error('Error reverse geocoding coordinates:', _error);
+    console.error('Error reverse geocoding coordinates:', error);
     return null;
   }
 };
@@ -111,17 +111,17 @@ export const _reverseGeocodeCoordinates = async (
 /**
  * AsyncStorage key prefix for caching ZIP code lookups
  */
-const _ZIP_CACHE_KEY_PREFIX = '@zip_cache:';
+const ZIP_CACHE_KEY_PREFIX = '@zip_cache:';
 
 /**
  * Retrieve ZIP code data from AsyncStorage cache
  */
-const _getZipFromCache = async (_zipCode: string): Promise<ZipCodeData | null> => {
+const getZipFromCache = async (zipCode: string): Promise<ZipCodeData | null> => {
   try {
-    const _raw = await AsyncStorage.getItem(`${_ZIP_CACHE_KEY_PREFIX}${_zipCode}`);
+    const raw = await AsyncStorage.getItem(`${ZIP_CACHE_KEY_PREFIX}${zipCode}`);
     return raw ? (JSON.parse(raw) as ZipCodeData) : null;
-  } catch (_err) {
-    console.warn('[_locationService] Failed to read ZIP cache', _err);
+  } catch (err) {
+    console.warn('[locationService] Failed to read ZIP cache', err);
     return null;
   }
 };
@@ -129,14 +129,14 @@ const _getZipFromCache = async (_zipCode: string): Promise<ZipCodeData | null> =
 /**
  * Save ZIP code data to AsyncStorage cache
  */
-const _setZipCache = async (data: ZipCodeData): Promise<void> => {
+const setZipCache = async (data: ZipCodeData): Promise<void> => {
   try {
     await AsyncStorage.setItem(
-      `${_ZIP_CACHE_KEY_PREFIX}${data.zipCode}`,
+      `${ZIP_CACHE_KEY_PREFIX}${data.zipCode}`,
       JSON.stringify(data)
     );
-  } catch (_err) {
-    console.warn('[_locationService] Failed to write ZIP cache', _err);
+  } catch (err) {
+    console.warn('[locationService] Failed to write ZIP cache', err);
   }
 };
 
@@ -145,25 +145,25 @@ const _setZipCache = async (data: ZipCodeData): Promise<void> => {
  * @param zipCode Optional specific ZIP code to clear, if not provided all ZIP caches will be cleared
  * @returns Promise<void>
  */
-export const _clearZipCodeCache = async (_zipCode?: string): Promise<void> => {
+export const clearZipCodeCache = async (zipCode?: string): Promise<void> => {
   try {
-    if (_zipCode) {
+    if (zipCode) {
       // Clear specific ZIP code
-      await AsyncStorage.removeItem(`${_ZIP_CACHE_KEY_PREFIX}${_zipCode}`);
-      console.warn(`[_locationService] Cleared cache for ZIP code ${_zipCode}`);
+      await AsyncStorage.removeItem(`${ZIP_CACHE_KEY_PREFIX}${zipCode}`);
+      console.warn(`[locationService] Cleared cache for ZIP code ${zipCode}`);
     } else {
       // Get all keys and clear only ZIP code caches
-      const _keys = await AsyncStorage.getAllKeys();
-      const _zipKeys = keys.filter(key => key.startsWith(ZIP_CACHE_KEY_PREFIX));
+      const keys = await AsyncStorage.getAllKeys();
+      const zipKeys = keys.filter(key => key.startsWith(ZIP_CACHE_KEY_PREFIX));
       if (zipKeys.length > 0) {
         await AsyncStorage.multiRemove(zipKeys);
         console.warn(
-          `[_locationService] Cleared all ZIP code caches (${zipKeys.length} entries)`
+          `[locationService] Cleared all ZIP code caches (${zipKeys.length} entries)`
         );
       }
     }
   } catch (error: any) {
-    console.error('Error clearing ZIP code cache:', _error);
+    console.error('Error clearing ZIP code cache:', error);
   }
 };
 
@@ -172,13 +172,13 @@ export const _clearZipCodeCache = async (_zipCode?: string): Promise<void> => {
  * @param zipCode ZIP code string
  * @returns Promise with ZipCodeData or null if not found
  */
-export const _getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeData | null> => {
+export const getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeData | null> => {
   try {
     /* ---------------------------------
      * 1. Check client-side cache first
      * --------------------------------- */
-    const _cached = await getZipFromCache(_zipCode);
-    if (_cached) {
+    const cached = await getZipFromCache(zipCode);
+    if (cached) {
       return cached;
     }
 
@@ -186,14 +186,14 @@ export const _getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeDa
     const { data: zipCodeDataFromDb, error: fetchError } = await supabase
       .from('zip_codes') // Assuming a 'zip_codes' table
       .select('*')
-      .eq('zip_code', _zipCode)
+      .eq('zip_code', zipCode)
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
       throw fetchError;
     }
 
-    if (_zipCodeDataFromDb) {
+    if (zipCodeDataFromDb) {
       return {
         zipCode: zipCodeDataFromDb.zip_code,
         city: zipCodeDataFromDb.city,
@@ -206,15 +206,15 @@ export const _getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeDa
     }
 
     // If not found, geocode it and save to database
-    const _address = zipCode + ', USA'; // Simple address format for geocoding
-    const _coordinates = await geocodeAddress(_address);
+    const address = zipCode + ', USA'; // Simple address format for geocoding
+    const coordinates = await geocodeAddress(address);
 
     if (!coordinates) {
       return null;
     }
 
     // Get city and state from reverse geocoding
-    const _addressInfo = await reverseGeocodeCoordinates(_coordinates);
+    const addressInfo = await reverseGeocodeCoordinates(coordinates);
 
     if (!addressInfo) {
       return null;
@@ -235,15 +235,15 @@ export const _getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeDa
      * Trying to insert here would raise error 42501.
      */
     console.warn(
-      `[_locationService] ZIP code ${_zipCode} geocoded on-device – not cached in DB due to RLS.`
+      `[locationService] ZIP code ${zipCode} geocoded on-device – not cached in DB due to RLS.`
     );
 
     // Cache newly geocoded result for future requests
-    await setZipCache(_newZipCodeData);
+    await setZipCache(newZipCodeData);
 
     return newZipCodeData;
   } catch (error: any) {
-    console.error('Error getting ZIP code coordinates:', _error);
+    console.error('Error getting ZIP code coordinates:', error);
     return null;
   }
 };
@@ -256,22 +256,22 @@ export const _getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeDa
  * @param lon2 Longitude of second point
  * @returns Distance in miles
  */
-export const _calculateDistance = (
+export const calculateDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): number => {
-  const _R = 3958.8; // Earth's radius in miles
-  const _dLat = (lat2 - lat1) * (Math.PI / 180);
-  const _dLon = (lon2 - lon1) * (Math.PI / 180);
-  const _a =
+  const R = 3958.8; // Earth's radius in miles
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(lat1 * (Math.PI / 180)) *
       Math.cos(lat2 * (Math.PI / 180)) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
-  const _c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
 
@@ -281,7 +281,7 @@ export const _calculateDistance = (
  * @param point2 Second coordinate
  * @returns Distance in miles
  */
-export const _calculateDistanceBetweenCoordinates = (
+export const calculateDistanceBetweenCoordinates = (
   point1: Coordinates,
   point2: Coordinates
 ): number => {
@@ -299,16 +299,16 @@ export const _calculateDistanceBetweenCoordinates = (
  * @param radiusMiles Radius in miles
  * @returns Promise with array of nearby ZIP codes
  */
-export const _getNearbyZipCodes = async (
+export const getNearbyZipCodes = async (
   centerZipCode: string,
   radiusMiles: number
 ): Promise<string[]> => {
   try {
     // Get coordinates for the center ZIP code
-    const _centerData = await getZipCodeCoordinates(_centerZipCode);
+    const centerData = await getZipCodeCoordinates(centerZipCode);
     
     if (!centerData) {
-      throw new Error(`ZIP code ${_centerZipCode} not found`);
+      throw new Error(`ZIP code ${centerZipCode} not found`);
     }
     
     // Query for nearby ZIP codes using PostGIS
@@ -318,7 +318,7 @@ export const _getNearbyZipCodes = async (
       radius_miles: radiusMiles
     });
     
-    if (_error) throw error;
+    if (error) throw error;
     
     // The Postgres function `nearby_zip_codes` returns rows with a `zip_code`
     // column.  Provide a lightweight interface so the callback parameter is
@@ -329,7 +329,7 @@ export const _getNearbyZipCodes = async (
 
     return (data || []).map((item: NearbyZipRow) => item.zip_code);
   } catch (error: any) {
-    console.error('Error getting nearby ZIP codes:', _error);
+    console.error('Error getting nearby ZIP codes:', error);
     throw new Error(error.message || 'Failed to get nearby ZIP codes');
   }
 };
@@ -339,7 +339,7 @@ export const _getNearbyZipCodes = async (
  * @param coordinates Latitude and longitude
  * @returns Formatted string (e.g., "37.7749,-122.4194")
  */
-export const _formatCoordinates = (coordinates: Coordinates): string => {
+export const formatCoordinates = (coordinates: Coordinates): string => {
   return `${coordinates.latitude.toFixed(6)},${coordinates.longitude.toFixed(6)}`;
 };
 
@@ -349,14 +349,14 @@ export const _formatCoordinates = (coordinates: Coordinates): string => {
  * @param label Optional label for the destination
  * @returns URL string that can be opened with Linking
  */
-export const _getDirectionsUrl = (
+export const getDirectionsUrl = (
   destination: Coordinates,
   label?: string
 ): string => {
-  const _query = label 
-    ? `${_label}@${destination.latitude},${destination.longitude}`
+  const query = label 
+    ? `${label}@${destination.latitude},${destination.longitude}`
     : `${destination.latitude},${destination.longitude}`;
     
   // This URL format works with both iOS and Android
-  return `https://www.google.com/maps/dir/?api=1&destination=${_query}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${query}`;
 };
