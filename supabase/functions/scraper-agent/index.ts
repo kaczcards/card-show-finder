@@ -23,15 +23,28 @@ const getSupabaseAdmin = () => createClient(
 )
 
 // Function to get the highest priority URLs to process
-async function getUrlsToProcess(supabase: any, batchSize: number): Promise<string[]> {
+// If `stateFilter` is provided, only return sources matching that state
+async function getUrlsToProcess(
+  supabase: any,
+  batchSize: number,
+  stateFilter?: string
+): Promise<string[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('scraping_sources')
       .select('url')
       .eq('enabled', true)
       .order('priority_score', { ascending: false })
       .order('last_success_at', { ascending: true, nullsFirst: true })
       .limit(batchSize);
+
+    // Apply state filtering if provided
+    if (stateFilter) {
+      // use ilike for case-insensitive match; assume column `state` stores 2-letter codes
+      query = query.ilike('state', stateFilter);
+    }
+
+    const { data, error } = await query;
     
     if (error) {
       console.error('Error fetching URLs:', error.message);
@@ -372,19 +385,36 @@ serve(async (req) => {
     console.log('Card show scraper-agent starting...');
     const startTime = Date.now();
     
+    // Extract optional state query param (e.g., ?state=IN)
+    const urlObj = new URL(req.url);
+    const rawState = urlObj.searchParams.get('state') || undefined;
+    // Normalize: keep 2-letter uppercase code if provided, otherwise undefined
+    const stateFilter = rawState
+      ? rawState.trim().toUpperCase().slice(0, 2)
+      : undefined;
+    
     const supabaseAdmin = getSupabaseAdmin();
-    const urlsToProcess = await getUrlsToProcess(supabaseAdmin, BATCH_SIZE);
+    const urlsToProcess = await getUrlsToProcess(
+      supabaseAdmin,
+      BATCH_SIZE,
+      stateFilter
+    );
     
     if (urlsToProcess.length === 0) {
       return new Response(JSON.stringify({ 
-        message: 'No URLs to process. Check scraping_sources table.' 
+        message: stateFilter
+          ? `No URLs found for state ${stateFilter}.`
+          : 'No URLs to process. Check scraping_sources table.'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
     }
-    
-    console.log(`Processing ${urlsToProcess.length} URLs: ${urlsToProcess.join(', ')}`);
+    console.log(
+      `Processing ${urlsToProcess.length} URLs${
+        stateFilter ? ` for state ${stateFilter}` : ''
+      }: ${urlsToProcess.join(', ')}`
+    );
     
     const results = [];
     let totalShowsFound = 0;
@@ -418,6 +448,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       message: `Scraper completed in ${elapsedSeconds}s. Processed ${urlsToProcess.length} URLs with ${successfulScrapes} successful scrapes. Found ${totalShowsFound} shows.`,
+      ...(stateFilter ? { state: stateFilter } : {}),
       results
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
