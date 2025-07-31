@@ -135,8 +135,8 @@ const MyShowsScreen: React.FC = () => {
 
   /* ------------------------------------------------------------------ */
   const [currentTab, setCurrentTab] = useState<'upcoming' | 'past'>('upcoming');
-  const [_upcomingShows, setUpcomingShows] = useState<Show[]>(dummyUpcoming);
-  const [_pastShows] = useState<Show[]>(dummyPast);
+  const [upcomingShows, setUpcomingShows] = useState<Show[]>(dummyUpcoming);
+  const [pastShows] = useState<Show[]>(dummyPast);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   const [reviewFormVisible, setReviewFormVisible] = useState(false);
@@ -146,9 +146,9 @@ const MyShowsScreen: React.FC = () => {
    * Sort upcoming shows by the soonest startDate first
    * (i.e., closest to today at the top of the list).
    */
-  const _sortUpcomingShows = (shows: Show[]) =>
+  const sortUpcomingShows = (shows: Show[]) =>
     [...shows].sort(
-      (_a, _b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     );
 
   /**
@@ -156,31 +156,31 @@ const MyShowsScreen: React.FC = () => {
    * (i.e., latest endDate at the top).  If endDate is missing,
    * startDate is used as a fallback so the list still orders correctly.
    */
-  const _sortPastShows = (shows: Show[]) =>
+  const sortPastShows = (shows: Show[]) =>
     [...shows].sort(
-      (_a, _b) =>
+      (a, b) =>
         new Date(b.endDate || b.startDate).getTime() -
         new Date(a.endDate || a.startDate).getTime()
     );
 
-  const _renderEmptyState = (_message: string, _icon: keyof typeof Ionicons.glyphMap) => (
+  const renderEmptyState = (message: string, icon: keyof typeof Ionicons.glyphMap) => (
     <View style={styles.emptyContainer}>
-      <Ionicons name={_icon} size={_64} color="#ccc" />
+      <Ionicons name={icon} size={64} color="#ccc" />
       <Text style={styles.emptyTitle}>No Shows Found</Text>
-      <Text style={styles.emptyText}>{_message}</Text>
+      <Text style={styles.emptyText}>{message}</Text>
     </View>
   );
 
-  const _removeUpcoming = (id: string) =>
-    setUpcomingShows((_prev) => prev.filter((_s) => s.id !== id));
+  const removeUpcoming = (id: string) =>
+    setUpcomingShows((prev) => prev.filter((s) => s.id !== id));
 
-  const _openReviewForm = (_show: Show) => {
-    setSelectedShow(_show);
+  const openReviewForm = (show: Show) => {
+    setSelectedShow(show);
     setReviewFormVisible(true);
   };
 
-  const _submitReview = (rating: number, comment: string) => {
-    if (_selectedShow) {
+  const submitReview = (rating: number, comment: string) => {
+    if (selectedShow) {
       const newReview: Review = {
         id: Date.now().toString(),
         showId: selectedShow.id,
@@ -192,31 +192,31 @@ const MyShowsScreen: React.FC = () => {
         comment,
         date: new Date().toISOString(),
       };
-      setReviews((_prev) => [...prev, newReview]);
+      setReviews((prev) => [...prev, newReview]);
       setReviewFormVisible(false);
       setSelectedShow(null);
     }
   };
 
   // Format date with timezone adjustment to ensure correct date display
-  const _formatDate = (dateString: string | Date) => {
+  const formatDate = (dateString: string | Date) => {
     if (!dateString) return '';
 
-    const _date = new Date(_dateString);
+    const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
 
     // Shift by the local TZ offset so the calendar day matches the stored value
-    const _utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
     return utcDate.toLocaleDateString();
   };
 
   /* --------------------  FlatList Item Renderers  ------------------- */
-  const _renderUpcomingItem = ({ _item }: { item: Show }) => (
+  const renderUpcomingItem = ({ item }: { item: Show }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{item.title}</Text>
         <TouchableOpacity onPress={() => removeUpcoming(item.id)}>
-          <Ionicons name="remove-circle-outline" size={_22} color="#FF3B30" />
+          <Ionicons name="remove-circle-outline" size={22} color="#FF3B30" />
         </TouchableOpacity>
       </View>
       <Text style={styles.cardSubtitle}>
@@ -225,15 +225,15 @@ const MyShowsScreen: React.FC = () => {
     </View>
   );
 
-  const _renderPastItem = ({ _item }: { item: Show }) => {
-    const _alreadyReviewed = reviews.some((_r) => r.showId === item.id);
+  const renderPastItem = ({ item }: { item: Show }) => {
+    const alreadyReviewed = reviews.some((r) => r.showId === item.id);
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>{item.title}</Text>
           {!alreadyReviewed && (
-            <TouchableOpacity onPress={() => openReviewForm(_item)}>
-              <Ionicons name="create-outline" size={_22} color="#007AFF" />
+            <TouchableOpacity onPress={() => openReviewForm(item)}>
+              <Ionicons name="create-outline" size={22} color="#007AFF" />
             </TouchableOpacity>
           )}
         </View>
@@ -242,7 +242,7 @@ const MyShowsScreen: React.FC = () => {
         </Text>
         {alreadyReviewed && (
           <ReviewsList
-            reviews={reviews.filter((_r) => r.showId === item.id)}
+            reviews={reviews.filter((r) => r.showId === item.id)}
             emptyMessage="No reviews yet."
           />
         )}
@@ -296,10 +296,10 @@ const MyShowsScreen: React.FC = () => {
            automatically after any CRUD operations (e.g. removal). */
         data={
           currentTab === 'upcoming'
-            ? sortUpcomingShows(_upcomingShows)
-            : sortPastShows(_pastShows)
+            ? sortUpcomingShows(upcomingShows)
+            : sortPastShows(pastShows)
         }
-        keyExtractor={(_item) => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={currentTab === 'upcoming' ? renderUpcomingItem : renderPastItem}
         ListEmptyComponent={
           currentTab === 'upcoming'
@@ -319,7 +319,7 @@ const MyShowsScreen: React.FC = () => {
           showId={selectedShow.id}
           /* ReviewForm prop also expects a non-undefined string */
           seriesId={selectedShow.seriesId ?? ''}
-          onSubmit={_submitReview}
+          onSubmit={submitReview}
           onCancel={() => {
             setReviewFormVisible(false);
             setSelectedShow(null);
@@ -330,7 +330,7 @@ const MyShowsScreen: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
