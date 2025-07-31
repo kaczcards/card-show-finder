@@ -29,7 +29,7 @@ import {
 import { Show, UserRole } from '../../types';
 
 // Card type options for dealers to select
-const _CARD_TYPE_OPTIONS = [
+const CARD_TYPE_OPTIONS = [
   'Vintage Cards',
   'Modern Cards',
   'Baseball',
@@ -49,7 +49,7 @@ const _CARD_TYPE_OPTIONS = [
 ];
 
 // Payment method options
-const _PAYMENT_METHOD_OPTIONS = [
+const PAYMENT_METHOD_OPTIONS = [
   'Cash',
   'Credit Card',
   'Debit Card',
@@ -64,16 +64,16 @@ const _PAYMENT_METHOD_OPTIONS = [
 ];
 
 // Price range options
-const _PRICE_RANGE_OPTIONS = [
+const PRICE_RANGE_OPTIONS = [
   { label: 'Budget-Friendly', value: 'budget' },
   { label: 'Mid-Range', value: 'mid-range' },
   { label: 'High-End', value: 'high-end' }
 ];
 
 const ShowParticipationScreen: React.FC = () => {
-  const { _authState } = useAuth();
-  const { _user } = authState;
-  const _navigation = useNavigation();
+  const { authState } = useAuth();
+  const { user } = authState;
+  const navigation = useNavigation();
   
   // State for tab selection
   const [activeTab, setActiveTab] = useState<'myShows' | 'availableShows'>('myShows');
@@ -83,14 +83,14 @@ const ShowParticipationScreen: React.FC = () => {
   const [availableShows, setAvailableShows] = useState<Array<Show>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [_error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   // State for registration modal
-  const [_registrationModalVisible, setRegistrationModalVisible] = useState<boolean>(false);
+  const [registrationModalVisible, setRegistrationModalVisible] = useState<boolean>(false);
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   
   // State for edit modal
-  const [_editModalVisible, setEditModalVisible] = useState<boolean>(false);
+  const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [selectedParticipation, setSelectedParticipation] = useState<any>(null);
   
   // Form state for registration and editing
@@ -107,17 +107,17 @@ const ShowParticipationScreen: React.FC = () => {
   });
   
   // Function to load dealer shows
-  const _loadDealerShows = useCallback(async () => {
+  const loadDealerShows = useCallback(async () => {
     if (!user) return;
     
     try {
-      setIsLoading(_true);
-      setError(_null);
+      setIsLoading(true);
+      setError(null);
       
-      const { data, _error } = await getDealerShows(user.id);
+      const { data, error } = await getDealerShows(user.id);
       
-      if (_error) {
-        setError(_error);
+      if (error) {
+        setError(error);
         return;
       }
       
@@ -125,23 +125,23 @@ const ShowParticipationScreen: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Failed to load dealer shows');
     } finally {
-      setIsLoading(_false);
-      setIsRefreshing(_false);
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, [_user]);
+  }, [user]);
   
   // Function to load available shows
-  const _loadAvailableShows = useCallback(async () => {
+  const loadAvailableShows = useCallback(async () => {
     if (!user) return;
     
     try {
-      setIsLoading(_true);
-      setError(_null);
+      setIsLoading(true);
+      setError(null);
       
-      const { data, _error } = await getAvailableShowsForDealer(user.id);
+      const { data, error } = await getAvailableShowsForDealer(user.id);
       
-      if (_error) {
-        setError(_error);
+      if (error) {
+        setError(error);
         return;
       }
       
@@ -149,10 +149,10 @@ const ShowParticipationScreen: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Failed to load available shows');
     } finally {
-      setIsLoading(_false);
-      setIsRefreshing(_false);
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, [_user]);
+  }, [user]);
   
   /* ------------------------------------------------------------------
    * Sorting Helpers
@@ -162,27 +162,27 @@ const ShowParticipationScreen: React.FC = () => {
    *                       startDate fallback)
    * The combined array always renders upcoming first, then past shows.
    * ------------------------------------------------------------------ */
-  const _sortShowsByDate = useCallback(
+  const sortShowsByDate = useCallback(
     <T extends Show>(shows: Array<T>): Array<T> => {
-      const _now = Date.now();
+      const now = Date.now();
 
       // Partition upcoming vs past
-      const _upcoming = shows.filter(
-        (_s) => new Date(s.startDate).getTime() >= now
+      const upcoming = shows.filter(
+        (s) => new Date(s.startDate).getTime() >= now
       );
-      const _past = shows.filter(
-        (_s) => new Date(s.startDate).getTime() < now
+      const past = shows.filter(
+        (s) => new Date(s.startDate).getTime() < now
       );
 
       // Ascending for upcoming (soonest first)
       upcoming.sort(
-        (_a, _b) =>
+        (a, b) =>
           new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
       );
 
       // Descending for past (most recent first)
       past.sort(
-        (_a, _b) =>
+        (a, b) =>
           new Date(b.endDate || b.startDate).getTime() -
           new Date(a.endDate || a.startDate).getTime()
       );
@@ -204,8 +204,8 @@ const ShowParticipationScreen: React.FC = () => {
   );
   
   // Handle refresh
-  const _handleRefresh = () => {
-    setIsRefreshing(_true);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
     if (activeTab === 'myShows') {
       loadDealerShows();
     } else {
@@ -214,14 +214,14 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Handle tab change
-  const _handleTabChange = (_tab: 'myShows' | 'availableShows') => {
-    setActiveTab(_tab);
-    setIsLoading(_true);
+  const handleTabChange = (tab: 'myShows' | 'availableShows') => {
+    setActiveTab(tab);
+    setIsLoading(true);
   };
   
   // Open registration modal
-  const _handleOpenRegistration = (show: Show) => {
-    setSelectedShow(_show);
+  const handleOpenRegistration = (show: Show) => {
+    setSelectedShow(show);
     setFormData({
       showId: show.id,
       cardTypes: [],
@@ -233,12 +233,12 @@ const ShowParticipationScreen: React.FC = () => {
       openToTrades: false,
       buyingCards: false
     });
-    setRegistrationModalVisible(_true);
+    setRegistrationModalVisible(true);
   };
   
   // Open edit modal
-  const _handleOpenEdit = (show: Show & { participation?: any }) => {
-    setSelectedShow(_show);
+  const handleOpenEdit = (show: Show & { participation?: any }) => {
+    setSelectedShow(show);
     setSelectedParticipation(show.participation);
     setFormData({
       showId: show.id,
@@ -251,22 +251,22 @@ const ShowParticipationScreen: React.FC = () => {
       openToTrades: show.participation?.openToTrades || false,
       buyingCards: show.participation?.buyingCards || false
     });
-    setEditModalVisible(_true);
+    setEditModalVisible(true);
   };
   
   // Handle form field changes
-  const _handleFormChange = (field: keyof DealerParticipationInput, value: any) => {
-    setFormData(prev => ({ ...prev, [_field]: value }));
+  const handleFormChange = (field: keyof DealerParticipationInput, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
   
   // Toggle card type selection
-  const _toggleCardType = (type: string) => {
+  const toggleCardType = (type: string) => {
     setFormData(prev => {
-      const _cardTypes = [...(prev.cardTypes || [])];
-      const _index = cardTypes.indexOf(type);
+      const cardTypes = [...(prev.cardTypes || [])];
+      const index = cardTypes.indexOf(type);
       
       if (index > -1) {
-        cardTypes.splice(index, _1);
+        cardTypes.splice(index, 1);
       } else {
         cardTypes.push(type);
       }
@@ -276,13 +276,13 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Toggle payment method selection
-  const _togglePaymentMethod = (method: string) => {
+  const togglePaymentMethod = (method: string) => {
     setFormData(prev => {
-      const _paymentMethods = [...(prev.paymentMethods || [])];
-      const _index = paymentMethods.indexOf(method);
+      const paymentMethods = [...(prev.paymentMethods || [])];
+      const index = paymentMethods.indexOf(method);
       
       if (index > -1) {
-        paymentMethods.splice(index, _1);
+        paymentMethods.splice(index, 1);
       } else {
         paymentMethods.push(method);
       }
@@ -292,7 +292,7 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Submit registration
-  const _handleRegister = async () => {
+  const handleRegister = async () => {
     if (!user || !selectedShow) return;
     
     try {
@@ -308,15 +308,15 @@ const ShowParticipationScreen: React.FC = () => {
         return;
       }
       
-      const { _data, _error } = await registerForShow(user.id, _formData);
+      const { data, error } = await registerForShow(user.id, formData);
       
-      if (_error) {
-        Alert.alert('Registration Failed', _error);
+      if (error) {
+        Alert.alert('Registration Failed', error);
         return;
       }
       
       Alert.alert('Success', 'You have successfully registered for this show');
-      setRegistrationModalVisible(_false);
+      setRegistrationModalVisible(false);
       loadDealerShows();
       loadAvailableShows();
     } catch (err: any) {
@@ -325,7 +325,7 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Submit edit
-  const _handleUpdateParticipation = async () => {
+  const handleUpdateParticipation = async () => {
     if (!user || !selectedShow || !selectedParticipation) return;
     
     try {
@@ -340,19 +340,19 @@ const ShowParticipationScreen: React.FC = () => {
         return;
       }
       
-      const { _data, _error } = await updateShowParticipation(
+      const { data, error } = await updateShowParticipation(
         user.id,
         selectedParticipation.id,
         formData
       );
       
-      if (_error) {
-        Alert.alert('Update Failed', _error);
+      if (error) {
+        Alert.alert('Update Failed', error);
         return;
       }
       
       Alert.alert('Success', 'Your booth information has been updated');
-      setEditModalVisible(_false);
+      setEditModalVisible(false);
       loadDealerShows();
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to update booth information');
@@ -360,7 +360,7 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Handle cancellation
-  const _handleCancelParticipation = async (_participationId: string) => {
+  const handleCancelParticipation = async (participationId: string) => {
     if (!user) return;
     
     Alert.alert(
@@ -373,10 +373,10 @@ const ShowParticipationScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const { _success, _error } = await cancelShowParticipation(user.id, _participationId);
+              const { success, error } = await cancelShowParticipation(user.id, participationId);
               
-              if (_error) {
-                Alert.alert('Cancellation Failed', _error);
+              if (error) {
+                Alert.alert('Cancellation Failed', error);
                 return;
               }
               
@@ -393,22 +393,22 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Format date range for display
-  const _formatDateRange = (_startDate: Date | string, _endDate: Date | string) => {
-    const _start = new Date(_startDate);
-    const _end = new Date(_endDate);
+  const formatDateRange = (startDate: Date | string, endDate: Date | string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
     
-    const _startMonth = start.toLocaleString('default', { month: 'short' });
-    const _endMonth = end.toLocaleString('default', { month: 'short' });
+    const startMonth = start.toLocaleString('default', { month: 'short' });
+    const endMonth = end.toLocaleString('default', { month: 'short' });
     
     if (startMonth === endMonth && start.getDate() === end.getDate()) {
       // Same day
-      return `${_startMonth} ${start.getDate()}, ${start.getFullYear()}`;
+      return `${startMonth} ${start.getDate()}, ${start.getFullYear()}`;
     } else if (startMonth === endMonth) {
       // Same month
-      return `${_startMonth} ${start.getDate()}-${end.getDate()}, ${start.getFullYear()}`;
+      return `${startMonth} ${start.getDate()}-${end.getDate()}, ${start.getFullYear()}`;
     } else {
       // Different months
-      return `${_startMonth} ${start.getDate()} - ${_endMonth} ${end.getDate()}, ${start.getFullYear()}`;
+      return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}, ${start.getFullYear()}`;
     }
   };
   
@@ -419,7 +419,7 @@ const ShowParticipationScreen: React.FC = () => {
    *   • MVP dealers
    *   • Show organizers (who may also sell as dealers)
    */
-  const _isDealer =
+  const isDealer =
     user &&
     (user.role === UserRole.DEALER ||
       user.role === UserRole.MVP_DEALER ||
@@ -429,7 +429,7 @@ const ShowParticipationScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.notDealerContainer}>
-          <Ionicons name="alert-circle-outline" size={_64} color="#FF6A00" />
+          <Ionicons name="alert-circle-outline" size={64} color="#FF6A00" />
           <Text style={styles.notDealerTitle}>Dealer Access Only</Text>
           <Text style={styles.notDealerText}>
             This section is only available to users with a dealer subscription.
@@ -446,18 +446,18 @@ const ShowParticipationScreen: React.FC = () => {
   }
   
   // Render a show item in the list
-  const _renderShowItem = ({ _item }: { item: Show & { participation?: any } }) => {
-    const _isRegistered = activeTab === 'myShows';
+  const renderShowItem = ({ item }: { item: Show & { participation?: any } }) => {
+    const isRegistered = activeTab === 'myShows';
     
     // Determine status for badge display - default to 'registered' if undefined
-    const _participationStatus = item.participation?.status || 'registered';
+    const participationStatus = item.participation?.status || 'registered';
     
     return (
       <View style={styles.showCard}>
         <View style={styles.showHeader}>
           <Text style={styles.showTitle}>{item.title}</Text>
           <View style={styles.showDateContainer}>
-            <Ionicons name="calendar-outline" size={_16} color="#666" />
+            <Ionicons name="calendar-outline" size={16} color="#666" />
             <Text style={styles.showDate}>
               {formatDateRange(item.startDate, item.endDate)}
             </Text>
@@ -466,7 +466,7 @@ const ShowParticipationScreen: React.FC = () => {
         
         <View style={styles.showInfo}>
           <View style={styles.showInfoRow}>
-            <Ionicons name="location-outline" size={_16} color="#666" />
+            <Ionicons name="location-outline" size={16} color="#666" />
             <Text style={styles.showLocation}>{item.location}</Text>
           </View>
           <Text style={styles.showAddress}>{item.address}</Text>
@@ -521,10 +521,10 @@ const ShowParticipationScreen: React.FC = () => {
             <View style={styles.actionButtons}>
               <TouchableOpacity 
                 style={styles.editButton}
-                onPress={() => handleOpenEdit(_item)}
+                onPress={() => handleOpenEdit(item)}
                 disabled={participationStatus === 'cancelled'}
               >
-                <Ionicons name="create-outline" size={_16} color="white" />
+                <Ionicons name="create-outline" size={16} color="white" />
                 <Text style={styles.buttonText}>Edit Info</Text>
               </TouchableOpacity>
               
@@ -533,7 +533,7 @@ const ShowParticipationScreen: React.FC = () => {
                   style={styles.cancelButton}
                   onPress={() => handleCancelParticipation(item.participation.id)}
                 >
-                  <Ionicons name="close-circle-outline" size={_16} color="white" />
+                  <Ionicons name="close-circle-outline" size={16} color="white" />
                   <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
               )}
@@ -544,9 +544,9 @@ const ShowParticipationScreen: React.FC = () => {
         {!isRegistered && (
           <TouchableOpacity 
             style={styles.registerButton}
-            onPress={() => handleOpenRegistration(_item)}
+            onPress={() => handleOpenRegistration(item)}
           >
-            <Ionicons name="add-circle-outline" size={_18} color="white" />
+            <Ionicons name="add-circle-outline" size={18} color="white" />
             <Text style={styles.registerButtonText}>Register as Dealer</Text>
           </TouchableOpacity>
         )}
@@ -588,15 +588,15 @@ const ShowParticipationScreen: React.FC = () => {
           {activeTab === 'myShows' && (
             <FlatList
               data={sortShowsByDate(dealerShows)}
-              renderItem={_renderShowItem}
-              keyExtractor={(_item) => item.id}
+              renderItem={renderShowItem}
+              keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContainer}
               refreshControl={
-                <RefreshControl refreshing={_isRefreshing} onRefresh={_handleRefresh} />
+                <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
               }
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                  <Ionicons name="calendar-outline" size={_64} color="#ccc" />
+                  <Ionicons name="calendar-outline" size={64} color="#ccc" />
                   <Text style={styles.emptyText}>
                     You haven't registered for any shows yet.
                   </Text>
@@ -614,15 +614,15 @@ const ShowParticipationScreen: React.FC = () => {
           {activeTab === 'availableShows' && (
             <FlatList
               data={sortShowsByDate(availableShows)}
-              renderItem={_renderShowItem}
-              keyExtractor={(_item) => item.id}
+              renderItem={renderShowItem}
+              keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContainer}
               refreshControl={
-                <RefreshControl refreshing={_isRefreshing} onRefresh={_handleRefresh} />
+                <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
               }
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                  <Ionicons name="calendar-outline" size={_64} color="#ccc" />
+                  <Ionicons name="calendar-outline" size={64} color="#ccc" />
                   <Text style={styles.emptyText}>
                     No upcoming shows available for registration.
                   </Text>
@@ -636,9 +636,9 @@ const ShowParticipationScreen: React.FC = () => {
       {/* Registration Modal */}
       <Modal
         animationType="slide"
-        transparent={_true}
-        visible={_registrationModalVisible}
-        onRequestClose={() => setRegistrationModalVisible(_false)}
+        transparent={true}
+        visible={registrationModalVisible}
+        onRequestClose={() => setRegistrationModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -646,9 +646,9 @@ const ShowParticipationScreen: React.FC = () => {
               <Text style={styles.modalTitle}>Register as Dealer</Text>
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => setRegistrationModalVisible(_false)}
+                onPress={() => setRegistrationModalVisible(false)}
               >
-                <Ionicons name="close" size={_24} color="#666" />
+                <Ionicons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
             
@@ -674,7 +674,7 @@ const ShowParticipationScreen: React.FC = () => {
                   <TouchableOpacity
                     style={styles.infoUpgradeButton}
                     onPress={() => {
-                      setRegistrationModalVisible(_false); // Close current modal
+                      setRegistrationModalVisible(false); // Close current modal
                       navigation.navigate('SubscriptionScreen' as never); // Navigate to subscription
                     }}
                   >
@@ -690,7 +690,7 @@ const ShowParticipationScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.boothLocation}
-                  onChangeText={(_text) => handleFormChange('boothLocation', _text)}
+                  onChangeText={(text) => handleFormChange('boothLocation', text)}
                   placeholder="e.g., Table 12, Corner booth, etc."
                 />
               </View>
@@ -700,20 +700,20 @@ const ShowParticipationScreen: React.FC = () => {
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Card Types You Sell *</Text>
                 <View style={styles.checkboxGroup}>
-                  {CARD_TYPE_OPTIONS.map((_type) => (
+                  {CARD_TYPE_OPTIONS.map((type) => (
                     <TouchableOpacity
-                      key={_type}
+                      key={type}
                       style={[
                         styles.checkbox,
                         formData.cardTypes?.includes(type) && styles.checkboxSelected
                       ]}
-                      onPress={() => toggleCardType(_type)}
+                      onPress={() => toggleCardType(type)}
                     >
                       <Text style={[
                         styles.checkboxText,
                         formData.cardTypes?.includes(type) && styles.checkboxTextSelected
                       ]}>
-                        {_type}
+                        {type}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -725,7 +725,7 @@ const ShowParticipationScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.specialty}
-                  onChangeText={(_text) => handleFormChange('specialty', _text)}
+                  onChangeText={(text) => handleFormChange('specialty', text)}
                   placeholder="e.g., Pre-war baseball, Basketball rookies, etc."
                 />
               </View>
@@ -733,7 +733,7 @@ const ShowParticipationScreen: React.FC = () => {
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Price Range</Text>
                 <View style={styles.radioGroup}>
-                  {PRICE_RANGE_OPTIONS.map((_option) => (
+                  {PRICE_RANGE_OPTIONS.map((option) => (
                     <TouchableOpacity
                       key={option.value}
                       style={[
@@ -758,10 +758,10 @@ const ShowParticipationScreen: React.FC = () => {
                 <TextInput
                   style={[styles.input, styles.textArea]}
                   value={formData.notableItems}
-                  onChangeText={(_text) => handleFormChange('notableItems', _text)}
+                  onChangeText={(text) => handleFormChange('notableItems', text)}
                   placeholder="Describe any hot or hard-to-find items you'll have"
-                  multiline={_true}
-                  numberOfLines={_3}
+                  multiline={true}
+                  numberOfLines={3}
                 />
               </View>
               
@@ -770,20 +770,20 @@ const ShowParticipationScreen: React.FC = () => {
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Payment Methods Accepted *</Text>
                 <View style={styles.checkboxGroup}>
-                  {PAYMENT_METHOD_OPTIONS.map((_method) => (
+                  {PAYMENT_METHOD_OPTIONS.map((method) => (
                     <TouchableOpacity
-                      key={_method}
+                      key={method}
                       style={[
                         styles.checkbox,
                         formData.paymentMethods?.includes(method) && styles.checkboxSelected
                       ]}
-                      onPress={() => togglePaymentMethod(_method)}
+                      onPress={() => togglePaymentMethod(method)}
                     >
                       <Text style={[
                         styles.checkboxText,
                         formData.paymentMethods?.includes(method) && styles.checkboxTextSelected
                       ]}>
-                        {_method}
+                        {method}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -795,7 +795,7 @@ const ShowParticipationScreen: React.FC = () => {
                   <Text style={styles.switchLabel}>Open to Trades</Text>
                   <Switch
                     value={formData.openToTrades}
-                    onValueChange={(_value) => handleFormChange('openToTrades', _value)}
+                    onValueChange={(value) => handleFormChange('openToTrades', value)}
                     trackColor={{ false: '#d3d3d3', true: '#0057B8' }}
                     thumbColor={Platform.OS === 'android' ? '#ffffff' : undefined}
                   />
@@ -805,7 +805,7 @@ const ShowParticipationScreen: React.FC = () => {
                   <Text style={styles.switchLabel}>Buying Cards</Text>
                   <Switch
                     value={formData.buyingCards}
-                    onValueChange={(_value) => handleFormChange('buyingCards', _value)}
+                    onValueChange={(value) => handleFormChange('buyingCards', value)}
                     trackColor={{ false: '#d3d3d3', true: '#0057B8' }}
                     thumbColor={Platform.OS === 'android' ? '#ffffff' : undefined}
                   />
@@ -814,7 +814,7 @@ const ShowParticipationScreen: React.FC = () => {
               
               <TouchableOpacity
                 style={styles.submitButton}
-                onPress={_handleRegister}
+                onPress={handleRegister}
               >
                 <Text style={styles.submitButtonText}>Register for Show</Text>
               </TouchableOpacity>
@@ -826,9 +826,9 @@ const ShowParticipationScreen: React.FC = () => {
       {/* Edit Modal */}
       <Modal
         animationType="slide"
-        transparent={_true}
-        visible={_editModalVisible}
-        onRequestClose={() => setEditModalVisible(_false)}
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -836,9 +836,9 @@ const ShowParticipationScreen: React.FC = () => {
               <Text style={styles.modalTitle}>Edit Booth Information</Text>
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => setEditModalVisible(_false)}
+                onPress={() => setEditModalVisible(false)}
               >
-                <Ionicons name="close" size={_24} color="#666" />
+                <Ionicons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
             
@@ -860,7 +860,7 @@ const ShowParticipationScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.boothLocation}
-                  onChangeText={(_text) => handleFormChange('boothLocation', _text)}
+                  onChangeText={(text) => handleFormChange('boothLocation', text)}
                   placeholder="e.g., Table 12, Corner booth, etc."
                 />
               </View>
@@ -870,20 +870,20 @@ const ShowParticipationScreen: React.FC = () => {
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Card Types You Sell *</Text>
                 <View style={styles.checkboxGroup}>
-                  {CARD_TYPE_OPTIONS.map((_type) => (
+                  {CARD_TYPE_OPTIONS.map((type) => (
                     <TouchableOpacity
-                      key={_type}
+                      key={type}
                       style={[
                         styles.checkbox,
                         formData.cardTypes?.includes(type) && styles.checkboxSelected
                       ]}
-                      onPress={() => toggleCardType(_type)}
+                      onPress={() => toggleCardType(type)}
                     >
                       <Text style={[
                         styles.checkboxText,
                         formData.cardTypes?.includes(type) && styles.checkboxTextSelected
                       ]}>
-                        {_type}
+                        {type}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -895,7 +895,7 @@ const ShowParticipationScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.specialty}
-                  onChangeText={(_text) => handleFormChange('specialty', _text)}
+                  onChangeText={(text) => handleFormChange('specialty', text)}
                   placeholder="e.g., Pre-war baseball, Basketball rookies, etc."
                 />
               </View>
@@ -903,7 +903,7 @@ const ShowParticipationScreen: React.FC = () => {
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Price Range</Text>
                 <View style={styles.radioGroup}>
-                  {PRICE_RANGE_OPTIONS.map((_option) => (
+                  {PRICE_RANGE_OPTIONS.map((option) => (
                     <TouchableOpacity
                       key={option.value}
                       style={[
@@ -928,10 +928,10 @@ const ShowParticipationScreen: React.FC = () => {
                 <TextInput
                   style={[styles.input, styles.textArea]}
                   value={formData.notableItems}
-                  onChangeText={(_text) => handleFormChange('notableItems', _text)}
+                  onChangeText={(text) => handleFormChange('notableItems', text)}
                   placeholder="Describe any hot or hard-to-find items you'll have"
-                  multiline={_true}
-                  numberOfLines={_3}
+                  multiline={true}
+                  numberOfLines={3}
                 />
               </View>
               
@@ -940,20 +940,20 @@ const ShowParticipationScreen: React.FC = () => {
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Payment Methods Accepted *</Text>
                 <View style={styles.checkboxGroup}>
-                  {PAYMENT_METHOD_OPTIONS.map((_method) => (
+                  {PAYMENT_METHOD_OPTIONS.map((method) => (
                     <TouchableOpacity
-                      key={_method}
+                      key={method}
                       style={[
                         styles.checkbox,
                         formData.paymentMethods?.includes(method) && styles.checkboxSelected
                       ]}
-                      onPress={() => togglePaymentMethod(_method)}
+                      onPress={() => togglePaymentMethod(method)}
                     >
                       <Text style={[
                         styles.checkboxText,
                         formData.paymentMethods?.includes(method) && styles.checkboxTextSelected
                       ]}>
-                        {_method}
+                        {method}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -965,7 +965,7 @@ const ShowParticipationScreen: React.FC = () => {
                   <Text style={styles.switchLabel}>Open to Trades</Text>
                   <Switch
                     value={formData.openToTrades}
-                    onValueChange={(_value) => handleFormChange('openToTrades', _value)}
+                    onValueChange={(value) => handleFormChange('openToTrades', value)}
                     trackColor={{ false: '#d3d3d3', true: '#0057B8' }}
                     thumbColor={Platform.OS === 'android' ? '#ffffff' : undefined}
                   />
@@ -975,7 +975,7 @@ const ShowParticipationScreen: React.FC = () => {
                   <Text style={styles.switchLabel}>Buying Cards</Text>
                   <Switch
                     value={formData.buyingCards}
-                    onValueChange={(_value) => handleFormChange('buyingCards', _value)}
+                    onValueChange={(value) => handleFormChange('buyingCards', value)}
                     trackColor={{ false: '#d3d3d3', true: '#0057B8' }}
                     thumbColor={Platform.OS === 'android' ? '#ffffff' : undefined}
                   />
@@ -984,7 +984,7 @@ const ShowParticipationScreen: React.FC = () => {
               
               <TouchableOpacity
                 style={styles.submitButton}
-                onPress={_handleUpdateParticipation}
+                onPress={handleUpdateParticipation}
               >
                 <Text style={styles.submitButtonText}>Update Information</Text>
               </TouchableOpacity>
@@ -996,7 +996,7 @@ const ShowParticipationScreen: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
@@ -1234,7 +1234,7 @@ const _styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, _0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: 'white',

@@ -17,8 +17,8 @@ import { ShowFilters, CardCategory, ShowFeature } from '../types';
  * filters/presets saved by one user are never shown to another
  * user on the same device.
  * ------------------------------------------------------------*/
-const _getTempFiltersKey = (_userId: string) => `homeFilters_${_userId}`;
-const _getFilterPresetsKey = (_userId: string) => `filterPresets_${_userId}`;
+const getTempFiltersKey = (userId: string) => `homeFilters_${userId}`;
+const getFilterPresetsKey = (userId: string) => `filterPresets_${userId}`;
 
 // Default filters
 export const DEFAULT_FILTERS: ShowFilters = {
@@ -43,26 +43,26 @@ export interface FilterPreset {
 /**
  * Save temporary filters to AsyncStorage
  */
-export const _saveTemporaryFilters = async (
+export const saveTemporaryFilters = async (
   userId: string,
   filters: ShowFilters
 ): Promise<void> => {
   try {
     // Convert dates to ISO strings for storage
-    const _filtersToStore = {
+    const filtersToStore = {
       ...filters,
       startDate: filters.startDate ? new Date(filters.startDate).toISOString() : null,
       endDate: filters.endDate ? new Date(filters.endDate).toISOString() : null,
     };
     
     await AsyncStorage.setItem(
-      getTempFiltersKey(_userId), 
+      getTempFiltersKey(userId), 
       JSON.stringify(filtersToStore)
     );
      
 console.warn('Temporary filters saved to AsyncStorage');
-  } catch (_error) {
-    console.error('Error saving temporary filters:', _error);
+  } catch (error) {
+    console.error('Error saving temporary filters:', error);
     throw new Error('Failed to save temporary filters');
   }
 };
@@ -70,15 +70,15 @@ console.warn('Temporary filters saved to AsyncStorage');
 /**
  * Load temporary filters from AsyncStorage
  */
-export const _loadTemporaryFilters = async (userId: string): Promise<ShowFilters | null> => {
+export const loadTemporaryFilters = async (userId: string): Promise<ShowFilters | null> => {
   try {
-    const _storedFilters = await AsyncStorage.getItem(getTempFiltersKey(userId));
+    const storedFilters = await AsyncStorage.getItem(getTempFiltersKey(userId));
     
     if (!storedFilters) {
       return null;
     }
     
-    const _parsedFilters = JSON.parse(storedFilters);
+    const parsedFilters = JSON.parse(storedFilters);
     
     // Convert ISO date strings back to Date objects
     return {
@@ -86,8 +86,8 @@ export const _loadTemporaryFilters = async (userId: string): Promise<ShowFilters
       startDate: parsedFilters.startDate ? new Date(parsedFilters.startDate) : null,
       endDate: parsedFilters.endDate ? new Date(parsedFilters.endDate) : null,
     };
-  } catch (_error) {
-    console.error('Error loading temporary filters:', _error);
+  } catch (error) {
+    console.error('Error loading temporary filters:', error);
     return null;
   }
 };
@@ -95,7 +95,7 @@ export const _loadTemporaryFilters = async (userId: string): Promise<ShowFilters
 /**
  * Save filter presets to AsyncStorage (for offline access)
  */
-export const _saveFilterPresetsToAsyncStorage = async (
+export const saveFilterPresetsToAsyncStorage = async (
   userId: string,
   presets: FilterPreset[]
 ): Promise<void> => {
@@ -110,7 +110,7 @@ export const _saveFilterPresetsToAsyncStorage = async (
     }));
     
     await AsyncStorage.setItem(
-      getFilterPresetsKey(_userId), 
+      getFilterPresetsKey(userId), 
       JSON.stringify(presetsToStore)
     );
   } catch (_error) {
@@ -122,7 +122,7 @@ export const _saveFilterPresetsToAsyncStorage = async (
 /**
  * Load filter presets from AsyncStorage
  */
-export const _loadFilterPresetsFromAsyncStorage = async (
+export const loadFilterPresetsFromAsyncStorage = async (
   userId: string
 ): Promise<FilterPreset[]> => {
   try {
@@ -152,7 +152,7 @@ export const _loadFilterPresetsFromAsyncStorage = async (
 /**
  * Create a new filter preset in Supabase
  */
-export const _createFilterPreset = async (
+export const createFilterPreset = async (
   preset: Omit<FilterPreset, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<FilterPreset | null> => {
   try {
@@ -219,12 +219,12 @@ export const _createFilterPreset = async (
 /**
  * Load all filter presets for a user from Supabase
  */
-export const _loadFilterPresetsFromSupabase = async (_userId: string): Promise<FilterPreset[]> => {
+export const loadFilterPresetsFromSupabase = async (userId: string): Promise<FilterPreset[]> => {
   try {
     const { data, error } = await supabase
       .from('filter_presets')
       .select('*')
-      .eq('user_id', _userId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
     if (_error) {
@@ -252,21 +252,21 @@ export const _loadFilterPresetsFromSupabase = async (_userId: string): Promise<F
     }));
     
     // Update local cache
-    await saveFilterPresetsToAsyncStorage(_userId, _presets);
+    await saveFilterPresetsToAsyncStorage(userId, _presets);
     
     return presets;
   } catch (_error) {
     console.error('Error loading filter presets from Supabase:', _error);
     
     // Fall back to local cache if server request fails
-    return await loadFilterPresetsFromAsyncStorage(_userId);
+    return await loadFilterPresetsFromAsyncStorage(userId);
   }
 };
 
 /**
  * Update an existing filter preset in Supabase
  */
-export const _updateFilterPreset = async (
+export const updateFilterPreset = async (
   presetId: string,
   updates: Partial<Omit<FilterPreset, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
 ): Promise<FilterPreset | null> => {
@@ -295,7 +295,7 @@ export const _updateFilterPreset = async (
     const { data, error } = await supabase
       .from('filter_presets')
       .update(updateData)
-      .eq('id', _presetId)
+      .eq('id', presetId)
       .select('*')
       .single();
     
@@ -340,13 +340,13 @@ export const _updateFilterPreset = async (
 /**
  * Delete a filter preset from Supabase
  */
-export const _deleteFilterPreset = async (presetId: string): Promise<boolean> => {
+export const deleteFilterPreset = async (presetId: string): Promise<boolean> => {
   try {
     // Delete from Supabase
     const { _error } = await supabase
       .from('filter_presets')
       .delete()
-      .eq('id', _presetId);
+      .eq('id', presetId);
     
     if (_error) {
       throw error;
@@ -380,27 +380,27 @@ export const _deleteFilterPreset = async (presetId: string): Promise<boolean> =>
 /**
  * Set a filter preset as the default
  */
-export const _setDefaultFilterPreset = async (_userId: string, _presetId: string): Promise<boolean> => {
+export const setDefaultFilterPreset = async (userId: string, presetId: string): Promise<boolean> => {
   try {
     // First, clear any existing default
     await supabase
       .from('filter_presets')
       .update({ is_default: false })
-      .eq('user_id', _userId);
+      .eq('user_id', userId);
     
     // Then set the new default
     const { _error } = await supabase
       .from('filter_presets')
       .update({ is_default: true })
-      .eq('id', _presetId)
-      .eq('user_id', _userId);
+      .eq('id', presetId)
+      .eq('user_id', userId);
     
     if (_error) {
       throw error;
     }
     
     // Update local cache
-    const _presets = await loadFilterPresetsFromSupabase(_userId);
+    const _presets = await loadFilterPresetsFromSupabase(userId);
     
     return true;
   } catch (_error) {
@@ -412,13 +412,13 @@ export const _setDefaultFilterPreset = async (_userId: string, _presetId: string
 /**
  * Get the default filter preset for a user
  */
-export const _getDefaultFilterPreset = async (_userId: string): Promise<FilterPreset | null> => {
+export const getDefaultFilterPreset = async (userId: string): Promise<FilterPreset | null> => {
   try {
     const { data, error } = await supabase
       .from('filter_presets')
       .select('*')
-      .eq('user_id', _userId)
-      .eq('is_default', _true)
+      .eq('user_id', userId)
+      .eq('is_default', true)
       .single();
     
     if (error || !data) {
@@ -448,20 +448,20 @@ export const _getDefaultFilterPreset = async (_userId: string): Promise<FilterPr
  * Synchronize filters between local storage and server
  * This is useful when coming back online after being offline
  */
-export const _syncFilters = async (_userId: string): Promise<void> => {
+export const syncFilters = async (userId: string): Promise<void> => {
   try {
     // Get server presets
     const { data: serverPresets, error } = await supabase
       .from('filter_presets')
       .select('*')
-      .eq('user_id', _userId);
+      .eq('user_id', userId);
     
     if (_error) {
       throw error;
     }
     
     // Get local presets
-    const _localPresets = await loadFilterPresetsFromAsyncStorage(_userId);
+    const _localPresets = await loadFilterPresetsFromAsyncStorage(userId);
     
     // Map server presets to our format
     const _mappedServerPresets: FilterPreset[] = serverPresets.map(item => ({
@@ -479,7 +479,7 @@ export const _syncFilters = async (_userId: string): Promise<void> => {
     }));
     
     // Update local cache with server data
-    await saveFilterPresetsToAsyncStorage(_userId, _mappedServerPresets);
+    await saveFilterPresetsToAsyncStorage(userId, _mappedServerPresets);
   } catch (_error) {
     console.error('Error syncing filters:', _error);
     throw new Error('Failed to sync filters');
@@ -489,7 +489,7 @@ export const _syncFilters = async (_userId: string): Promise<void> => {
 /**
  * Check if a filter matches the default filter values
  */
-export const _isDefaultFilter = (filter: ShowFilters): boolean => {
+export const isDefaultFilter = (filter: ShowFilters): boolean => {
   // Check radius
   if (filter.radius !== DEFAULT_FILTERS.radius) {
     return false;
@@ -564,7 +564,7 @@ export const _isDefaultFilter = (filter: ShowFilters): boolean => {
 /**
  * Count the number of active (non-default) filters
  */
-export const _countActiveFilters = (filters: ShowFilters): number => {
+export const countActiveFilters = (filters: ShowFilters): number => {
   let _count = 0;
   
   // Check radius
@@ -611,7 +611,7 @@ export const _countActiveFilters = (filters: ShowFilters): number => {
 /**
  * Merge two filter objects, with the second taking precedence
  */
-export const _mergeFilters = (base: ShowFilters, override: Partial<ShowFilters>): ShowFilters => {
+export const mergeFilters = (base: ShowFilters, override: Partial<ShowFilters>): ShowFilters => {
   return {
     ...base,
     ...override,
@@ -624,21 +624,21 @@ export const _mergeFilters = (base: ShowFilters, override: Partial<ShowFilters>)
 /**
  * Get a list of all available card categories
  */
-export const _getAllCardCategories = (): string[] => {
+export const getAllCardCategories = (): string[] => {
   return Object.values(CardCategory);
 };
 
 /**
  * Get a list of all available show features
  */
-export const _getAllShowFeatures = (): string[] => {
+export const getAllShowFeatures = (): string[] => {
   return Object.values(ShowFeature);
 };
 
 /**
  * Format a filter for display (e.g., for filter chips or summaries)
  */
-export const _formatFilterForDisplay = (filter: ShowFilters): Record<string, string> => {
+export const formatFilterForDisplay = (filter: ShowFilters): Record<string, string> => {
   const display: Record<string, string> = {};
   
   // Format radius
