@@ -27,7 +27,7 @@ const stockImages = [
   require('../../../assets/stock/home_show_07.jpg'),
   require('../../../assets/stock/home_show_08.jpg'),
   require('../../../assets/stock/home_show_09.jpg'),
-  require('../../../assets/stock/home_show_10.jpg'),
+  require('../../../assets/stock/home_show10.jpg'),
 ];
 
 // Always-safe fallback
@@ -115,7 +115,7 @@ const HomeScreen = ({
 
   // Load persisted filters on mount - only if customFilters is not provided
   useEffect(() => {
-    if (_customFilters) return; // Skip if customFilters is provided
+    if (customFilters) return; // Skip if customFilters is provided
     
     (async () => {
       try {
@@ -144,7 +144,7 @@ const HomeScreen = ({
     if (!id) return stockImages[index % stockImages.length];
     
     // Use a hash-like approach to consistently map show IDs to images
-    const hash = id.split('').reduce((_acc, _char) => acc + char.charCodeAt(0), 0);
+    const hash = id.split('').reduce((_acc, char) => acc + char.charCodeAt(0), 0);
     return stockImages[hash % stockImages.length] || fallbackImage;
   };
 
@@ -185,8 +185,8 @@ console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
       }
       
       throw new Error('No location coordinates available. Please set your home ZIP code in your profile.');
-    } catch (_error) {
-      console.error('Error getting user coordinates:', _error);
+    } catch (error) {
+      console.error('Error getting user coordinates:', error);
       return null;
     }
   };
@@ -257,16 +257,16 @@ console.warn('App has come to the foreground - refreshing data');
   useEffect(() => {
     if (!isLoading && shows.length === 0 && totalCount > 0 && !useEmergencyList) {
       console.warn('[HomeScreen] Main query returned 0 shows but totalCount > 0 - doing emergency fetch');
-      const _fetchAllActiveShows = async () => {
+      const fetchAllActiveShows = async () => {
         try {
-          const { data, _error } = await supabase
+          const { data, error } = await supabase
             .from('shows')
             .select('*')
             .eq('status', 'ACTIVE')
             .gte('end_date', new Date().toISOString());
 
-          if (_error) {
-            console.error('[HomeScreen] Emergency fetch error:', _error);
+          if (error) {
+            console.error('[HomeScreen] Emergency fetch error:', error);
             return;
           }
 
@@ -280,7 +280,7 @@ console.warn('App has come to the foreground - refreshing data');
               address: show.address,
               startDate: show.start_date,
               endDate: show.end_date,
-              entryFee: show.entry_fee || 0,
+              entryFee: show.entryfee || 0,
               description: show.description,
               status: show.status,
               organizerId: show.organizer_id,
@@ -340,46 +340,46 @@ console.warn('App has come to the foreground - refreshing data');
   );
 
   // Handle pull-to-refresh
-  const _onRefresh = async () => {
+  const onRefresh = async () => {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
   };
 
   // Navigate to show detail screen or use provided callback
-  const _handleShowPress = (_showId: string) => {
-    if (_onShowPress) {
-      onShowPress(_showId);
+  const handleShowPress = (showId: string) => {
+    if (onShowPress) {
+      onShowPress(showId);
     } else {
       // Pass the required route params so ShowDetailScreen can access `route.params.showId`
       // Cast `navigation` to `any` to bypass strict type checks safely
-      (navigation as any).navigate('ShowDetail', { _showId });
+      (navigation as any).navigate('ShowDetail', { showId });
     }
   };
 
   // Open filter sheet
-  const _handleFilterPress = () => {
-    setFilterSheetVisible(_true);
+  const handleFilterPress = () => {
+    setFilterSheetVisible(true);
   };
 
   // Apply filters callback
-  const _handleApplyFilters = (_newFilters: ShowFilters) => {
+  const handleApplyFilters = (newFilters: ShowFilters) => {
     if (onFilterChange) {
       // If parent is managing filters, call the callback
-      onFilterChange(_newFilters);
+      onFilterChange(newFilters);
     } else {
       // Otherwise, update local state
-      setLocalFilters(_newFilters);
+      setLocalFilters(newFilters);
     }
-    setFilterSheetVisible(_false);
+    setFilterSheetVisible(false);
     // Fetch data with new filters (will happen automatically via useEffect)
   };
 
   // Remove a single filter (chip press)
-  const _handleRemoveFilter = (key: string, value?: string) => {
-    const _updateFilters = (prev: ShowFilters) => {
+  const handleRemoveFilter = (key: string, value?: string) => {
+    const updateFilters = (prev: ShowFilters) => {
       const updated: ShowFilters = { ...prev };
-      switch (_key) {
+      switch (key) {
         case 'radius':
           updated.radius = defaultFilters.radius;
           break;
@@ -391,10 +391,10 @@ console.warn('App has come to the foreground - refreshing data');
           delete updated.maxEntryFee;
           break;
         case 'category':
-          updated.categories = (updated.categories || []).filter((_c) => c !== value);
+          updated.categories = (updated.categories || []).filter((c) => c !== value);
           break;
         case 'feature':
-          updated.features = (updated.features || []).filter((_f) => f !== value);
+          updated.features = (updated.features || []).filter((f) => f !== value);
           break;
         default:
           break;
@@ -407,23 +407,23 @@ console.warn('App has come to the foreground - refreshing data');
       onFilterChange(updateFilters(filters));
     } else {
       // Otherwise, update local state
-      setLocalFilters(_prev => updateFilters(_prev));
+      setLocalFilters(prev => updateFilters(prev));
     }
   };
 
   // Reset filters to defaults
-  const _resetFilters = () => {
+  const resetFilters = () => {
     if (onFilterChange) {
-      onFilterChange(_defaultFilters);
+      onFilterChange(defaultFilters);
     } else {
-      setLocalFilters(_defaultFilters);
+      setLocalFilters(defaultFilters);
     }
     // Fetch data with default filters (will happen automatically via useEffect)
   };
 
   // Get active filter count
-  const _activeFilterCount = () => {
-    let _count = 0;
+  const activeFilterCount = () => {
+    let count = 0;
     if (filters.radius !== defaultFilters.radius) count++;
     if (
       (filters.startDate &&
@@ -441,7 +441,7 @@ console.warn('App has come to the foreground - refreshing data');
   };
 
   // Format date for display
-  const _formatDate = (dateString: string) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return '';
     // Parse the date string and adjust for timezone issues
     // This ensures the correct date is shown regardless of local timezone
@@ -458,13 +458,13 @@ console.warn('App has come to the foreground - refreshing data');
   // Client-side distance filtering as an additional safety measure
   // This ensures that even if the backend filtering fails, shows outside the radius won't be displayed
   // Fallback to default radius (_25) if the filter is undefined
-  const _currentRadius = filters.radius ?? defaultFilters.radius ?? 25;
+  const currentRadius = filters.radius ?? defaultFilters.radius ?? 25;
 
-  const _safeShows = shows.filter(show => {
+  const safeShows = shows.filter(show => {
     // Skip shows without coordinates
     if (!show.coordinates || !effectiveCoords) return false;
     
-    const _distance = locationService.calculateDistanceBetweenCoordinates(
+    const distance = locationService.calculateDistanceBetweenCoordinates(
       effectiveCoords,
       show.coordinates
     );
@@ -473,11 +473,11 @@ console.warn('App has come to the foreground - refreshing data');
   });
 
   // Also apply the same filtering to emergency show list if needed
-  const _safeEmergencyShows = emergencyShowList.filter(show => {
+  const safeEmergencyShows = emergencyShowList.filter(show => {
     // Skip shows without coordinates
     if (!show.coordinates || !effectiveCoords) return false;
     
-    const _distance = locationService.calculateDistanceBetweenCoordinates(
+    const distance = locationService.calculateDistanceBetweenCoordinates(
       effectiveCoords,
       show.coordinates
     );
@@ -492,13 +492,13 @@ console.warn('App has come to the foreground - refreshing data');
 console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
       
       if (shows.length !== safeShows.length) {
-        console.warn(`[HomeScreen] Filtered out ${shows.length - safeShows.length} shows that were outside the ${_currentRadius} mile radius!`);
+        console.warn(`[HomeScreen] Filtered out ${shows.length - safeShows.length} shows that were outside the ${currentRadius} mile radius!`);
       }
     }
   }, [shows.length, safeShows.length, currentRadius]);
 
   // Render show item
-  const renderShowItem = ({ item, _index }: { item: Show; _index: number }) => (
+  const renderShowItem = ({ item, index }: { item: Show; index: number }) => (
     <TouchableOpacity
       style={styles.showCard}
       onPress={() => handleShowPress(item.id)}
@@ -507,7 +507,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
         source={
           item.imageUrl && typeof item.imageUrl === 'string'
             ? { uri: item.imageUrl }
-            : getStockImage(_index, item.id)
+            : getStockImage(index, item.id)
         }
         style={styles.showImage}
         defaultSource={fallbackImage}
@@ -554,7 +554,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
   };
 
   // Handle end reached (for infinite scrolling)
-  const _handleEndReached = () => {
+  const handleEndReached = () => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
@@ -568,7 +568,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
           <View style={styles.filterOptions}>
             <TouchableOpacity
               style={[styles.filterButton, { backgroundColor: SECONDARY_COLOR }]}
-              onPress={_handleFilterPress}
+              onPress={handleFilterPress}
             >
               <Ionicons name="options" size={18} color="white" />
               <Text style={styles.filterButtonText}>Filters</Text>
@@ -611,7 +611,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
           {/* Active Filter Chips */}
           <FilterChips
             filters={filters}
-            onRemoveFilter={_handleRemoveFilter}
+            onRemoveFilter={handleRemoveFilter}
             style={{ marginTop: 10 }}
           />
         </View>
@@ -620,7 +620,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
         {error && (
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle" size={20} color="#D32F2F" />
-            <Text style={styles.errorText}>{_error}</Text>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
@@ -629,7 +629,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Upcoming Shows</Text>
             <Text style={styles.showCountText}>
-              {totalCount > 0 ? `${_totalCount} found` : 'No shows found'}
+              {totalCount > 0 ? `${totalCount} found` : 'No shows found'}
             </Text>
           </View>
 
@@ -645,7 +645,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
               <Text style={styles.emptyStateSubtext}>Try adjusting your filters or expanding your search radius</Text>
               <TouchableOpacity 
                 style={styles.resetFiltersButton}
-                onPress={_resetFilters}
+                onPress={resetFilters}
               >
                 <Text style={styles.resetFiltersButtonText}>Reset Filters</Text>
               </TouchableOpacity>
@@ -655,17 +655,17 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
               ref={flatListRef}
               data={useEmergencyList ? safeEmergencyShows : safeShows}
               renderItem={renderShowItem}
-              keyExtractor={(_item) => item.id}
+              keyExtractor={(item) => item.id}
               contentContainerStyle={styles.showsList}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={_onRefresh} />
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
-              onEndReached={_handleEndReached}
+              onEndReached={handleEndReached}
               onEndReachedThreshold={0.5}
               ListFooterComponent={renderFooter}
-              initialNumToRender={_10}
-              maxToRenderPerBatch={_10}
-              windowSize={_10}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={10}
             />
           )}
         </View>
@@ -676,7 +676,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
         visible={filterSheetVisible}
         onClose={() => setFilterSheetVisible(false)}
         filters={filters}
-        onApplyFilters={_handleApplyFilters}
+        onApplyFilters={handleApplyFilters}
       />
       
       {/* Preset Modal */}
@@ -684,13 +684,13 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
         visible={presetModalVisible}
         onClose={() => setPresetModalVisible(false)}
         currentFilters={filters}
-        onApplyPreset={(_presetFilters) => {
+        onApplyPreset={(presetFilters) => {
           if (onFilterChange) {
-            onFilterChange(_presetFilters);
+            onFilterChange(presetFilters);
           } else {
-            setLocalFilters(_presetFilters);
+            setLocalFilters(presetFilters);
           }
-          setPresetModalVisible(_false);
+          setPresetModalVisible(false);
         }}
         userId={authState.user?.id || ''}
       />
