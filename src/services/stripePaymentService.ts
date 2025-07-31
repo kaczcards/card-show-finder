@@ -1,4 +1,4 @@
-import { StripeProvider as _StripeProvider, useStripe } from '@stripe/stripe-react-native';
+import { StripeProvider as _StripeProvider, useStripe as _useStripe } from '@stripe/stripe-react-native';
 import { supabase } from '../supabase';
 // The helper in `subscriptionTypes` was accidentally exported with an underscore –
 // alias it locally so we can keep the nice name in the rest of this file.

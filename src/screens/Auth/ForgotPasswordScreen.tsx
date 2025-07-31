@@ -65,7 +65,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );
     } catch (err: any) {
-      Alert.alert('Reset Failed', error || 'Please try again');
+      Alert.alert('Reset Failed', err?.message || 'Please try again');
     }
   };
 

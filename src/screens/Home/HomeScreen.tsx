@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, Alert as _Alert, AppState, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, Image, ActivityIndicator, Alert as _Alert, AppState, Platform as _Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import {

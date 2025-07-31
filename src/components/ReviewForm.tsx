@@ -11,17 +11,17 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 interface ReviewFormProps {
-  /** Foreign-key to the individual show being reviewed */
-  showId: string;
-  /** Foreign-key to the parent show series being reviewed */
-  seriesId: string;
+  /** Foreign-key to the individual show being reviewed (currently unused in component) */
+  _showId: string;
+  /** Foreign-key to the parent show series being reviewed (currently unused in component) */
+  _seriesId: string;
   onSubmit: (rating: number, comment: string) => void;
   onCancel: () => void;
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
-  showId, // currently unused but required for type-safety
-  seriesId,
+  _showId, // currently unused but required for type-safety
+  _seriesId,
   onSubmit,
   onCancel,
 }) => {

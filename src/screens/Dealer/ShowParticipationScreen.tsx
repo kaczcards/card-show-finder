@@ -114,10 +114,10 @@ const ShowParticipationScreen: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      const { data, error } = await getDealerShows(user.id);
+      const { data, error: _error } = await getDealerShows(user.id);
       
-      if (error) {
-        setError(error);
+      if (_error) {
+        setError(_error);
         return;
       }
       
@@ -138,10 +138,10 @@ const ShowParticipationScreen: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      const { data, error } = await getAvailableShowsForDealer(user.id);
+      const { data, error: _error } = await getAvailableShowsForDealer(user.id);
       
-      if (error) {
-        setError(error);
+      if (_error) {
+        setError(_error);
         return;
       }
       
@@ -308,10 +308,10 @@ const ShowParticipationScreen: React.FC = () => {
         return;
       }
       
-      const { data: _data, error } = await registerForShow(user.id, formData);
+      const { data: _data, error: _error } = await registerForShow(user.id, formData);
       
-      if (error) {
-        Alert.alert('Registration Failed', error);
+      if (_error) {
+        Alert.alert('Registration Failed', _error);
         return;
       }
       
@@ -340,14 +340,14 @@ const ShowParticipationScreen: React.FC = () => {
         return;
       }
       
-      const { data: _data, error } = await updateShowParticipation(
+      const { data: _data, error: _error } = await updateShowParticipation(
         user.id,
         selectedParticipation.id,
         formData
       );
       
-      if (error) {
-        Alert.alert('Update Failed', error);
+      if (_error) {
+        Alert.alert('Update Failed', _error);
         return;
       }
       
@@ -373,10 +373,10 @@ const ShowParticipationScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const { success: _success, error } = await cancelShowParticipation(user.id, participationId);
+              const { success: _success, error: _error } = await cancelShowParticipation(user.id, participationId);
               
-              if (error) {
-                Alert.alert('Cancellation Failed', error);
+              if (_error) {
+                Alert.alert('Cancellation Failed', _error);
                 return;
               }
               

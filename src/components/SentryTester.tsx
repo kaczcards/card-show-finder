@@ -14,7 +14,7 @@ import {
   captureMessage,
   addBreadcrumb,
   startTransaction,
-  SentryRaw
+  SentryRaw as _SentryRaw
 } from '../services/sentryConfig';
 
 /**

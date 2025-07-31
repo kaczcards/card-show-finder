@@ -105,8 +105,8 @@ console.warn('Sending message:', { senderId, recipientId, content, type, metadat
  */
 export const getUserMessages = async (
   userId: string,
-  limit: number = 20,
-  offset: number = 0
+  _limit: number = 20,
+  _offset: number = 0
 ): Promise<Message[]> => {
   try {
     // This is a placeholder implementation
@@ -163,7 +163,7 @@ console.warn('Marking message as read:', messageId);
  * @param userId ID of the user (for verification)
  * @returns Success status
  */
-export const deleteMessage = async (messageId: string, userId: string): Promise<boolean> => {
+export const deleteMessage = async (messageId: string, _userId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
      

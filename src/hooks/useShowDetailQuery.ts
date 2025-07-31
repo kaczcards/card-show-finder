@@ -187,7 +187,7 @@ export const useShowDetailQuery = (showId: string) => {
   // Use a query to check if the show is a favorite
   const { 
     data: isFavorite = false,
-    refetch: refetchFavorite
+    refetch: _refetchFavorite
   } = useQuery({
     queryKey: ['showFavorite', showId, user?.id],
     queryFn: checkIfFavorite,
