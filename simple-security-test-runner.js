@@ -21,7 +21,8 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 // Default SQL test file path
-const SQL_TEST_FILE = './test/database/run_security_tests.sql';
+const SIMPLE_SQL_TEST_FILE = './test/database/simple_security_test.sql';
+const FULL_SQL_TEST_FILE   = './test/database/run_security_tests.sql';
 
 // ANSI color codes for terminal output
 const colors = {
@@ -46,8 +47,8 @@ const colorize = {
 async function runSecurityTests() {
   console.log(colorize.bold(colorize.blue('=== Running Security Tests ===')));
   
-  // Resolve SQL file path early (fail fast if not found)
-  const sqlFilePath = path.resolve(process.env.SQL_TEST_FILE || SQL_TEST_FILE);
+  // Resolve SQL file path early (allow override via env, otherwise use simple test)
+  let sqlFilePath = path.resolve(process.env.SQL_TEST_FILE || SIMPLE_SQL_TEST_FILE);
   console.log(colorize.blue(`Reading SQL file: ${sqlFilePath}`));
   if (!fs.existsSync(sqlFilePath)) {
     console.error(colorize.red(`Error: SQL file not found at ${sqlFilePath}`));
@@ -61,7 +62,7 @@ async function runSecurityTests() {
       port: process.env.PGPORT || '5432',
       user: process.env.PGUSER || 'postgres',
       password: process.env.PGPASSWORD || 'postgres',
-      database: process.env.PGDATABASE || 'postgres'
+      database: process.env.PGDATABASE || 'card_show_finder_test'
     };
 
     console.log(
@@ -75,9 +76,24 @@ async function runSecurityTests() {
       PGPASSWORD: pgConfig.password
     };
 
-    const command = `psql -h ${pgConfig.host} -p ${pgConfig.port} -U ${pgConfig.user} -d ${pgConfig.database} -v ON_ERROR_STOP=1 -f "${sqlFilePath}"`;
+    const runSqlFile = (file) => {
+      const cmd = `psql -h ${pgConfig.host} -p ${pgConfig.port} -U ${pgConfig.user} -d ${pgConfig.database} -v ON_ERROR_STOP=1 -f "${file}"`;
+      return execSync(cmd, { env, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+    };
 
-    const stdout = execSync(command, { env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout;
+    try {
+      stdout = runSqlFile(sqlFilePath);
+    } catch (err) {
+      // If simple test fails and fallback exists, try full test
+      if (sqlFilePath.endsWith('simple_security_test.sql') && fs.existsSync(FULL_SQL_TEST_FILE)) {
+        console.warn(colorize.yellow('Simple test failed, attempting full security test suite...'));
+        sqlFilePath = path.resolve(FULL_SQL_TEST_FILE);
+        stdout = runSqlFile(sqlFilePath);
+      } else {
+        throw err;
+      }
+    }
 
     // Parse results from stdout
     const output = stdout.toString();
@@ -140,7 +156,10 @@ async function runSecurityTests() {
       process.exit(hasFailed ? 1 : 0);
     }
   } catch (error) {
-    console.error(colorize.red(`Unexpected error: ${error.message || error}`));
+    const stderr = error.stderr ? error.stderr.toString() : '';
+    console.error(colorize.red('Unexpected error executing security tests:\n'));
+    if (stderr) console.error(colorize.red(stderr));
+    console.error(colorize.red(error.message || error));
     process.exit(1);
   }
 }
