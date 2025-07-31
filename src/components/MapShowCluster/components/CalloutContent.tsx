@@ -27,15 +27,16 @@ interface CalloutContentProps {
 }
 
 // Utility functions
-const _formatDate = (_dateValue: Date | string) => {
+const formatDate = (value: Date | string) => {
   try {
-    const _date = new Date(_dateValue);
-    if (isNaN(date.getTime())) {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
       return 'Unknown date';
     }
-    const _utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
-    return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  } catch (_err) {
+    // convert to UTC for consistent display
+    const utc = new Date(parsed.getTime() + parsed.getTimezoneOffset() * 60 * 1000);
+    return utc.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch {
     return 'Unknown date';
   }
 };
@@ -45,42 +46,42 @@ const _formatDate = (_dateValue: Date | string) => {
 // -------------------------------------------------
 
 const CalloutContent: React.FC<CalloutContentProps> = ({
-  _showId,
-  _title,
+  showId,
+  title,
   startDate,
   endDate,
-  _address,
+  address,
   entryFee,
   organizer,
   onPressViewDetails,
 }) => {
-  const _navigation = useNavigation<any>();
+  const navigation = useNavigation<any>();
 
-  const _handleViewDetails = () => {
-    if (_onPressViewDetails) {
-      onPressViewDetails(_showId);
+  const handleViewDetails = () => {
+    if (onPressViewDetails) {
+      onPressViewDetails(showId);
     } else {
       // Fallback navigation if consumer didn't supply a handler
-      navigation.navigate('ShowDetail', { _showId });
+      navigation.navigate('ShowDetail', { showId });
     }
   };
 
-  const _openLink = (url?: string) => {
+  const openLink = (url?: string) => {
     if (!url) return;
     Linking.openURL(url).catch(() =>
-      Alert.alert('Unable to open link', _url),
+      Alert.alert('Unable to open link', url),
     );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{_title}</Text>
+      <Text style={styles.title}>{title}</Text>
       <Text style={styles.dates}>
         {formatDate(startDate)} – {formatDate(endDate)}
       </Text>
-      <Text style={styles.address}>{_address}</Text>
+      <Text style={styles.address}>{address}</Text>
       {entryFee ? (
-        <Text style={styles.entryFee}>Entry: ${_entryFee}</Text>
+        <Text style={styles.entryFee}>Entry: ${entryFee}</Text>
       ) : null}
 
       {/* Social links */}
@@ -88,23 +89,23 @@ const CalloutContent: React.FC<CalloutContentProps> = ({
         <View style={styles.socialRow}>
           {organizer.facebookUrl && (
             <TouchableOpacity onPress={() => openLink(organizer.facebookUrl)}>
-              <Ionicons name="logo-facebook" size={_20} color="#4267B2" />
+              <Ionicons name="logo-facebook" size={20} color="#4267B2" />
             </TouchableOpacity>
           )}
           {organizer.instagramUrl && (
             <TouchableOpacity onPress={() => openLink(organizer.instagramUrl)}>
-              <Ionicons name="logo-instagram" size={_20} color="#C13584" />
+              <Ionicons name="logo-instagram" size={20} color="#C13584" />
             </TouchableOpacity>
           )}
           {organizer.twitterUrl && (
             <TouchableOpacity onPress={() => openLink(organizer.twitterUrl)}>
-              <Ionicons name="logo-twitter" size={_20} color="#1DA1F2" />
+              <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
             </TouchableOpacity>
           )}
         </View>
       ) : null}
 
-      <TouchableOpacity style={styles.button} onPress={_handleViewDetails}>
+      <TouchableOpacity style={styles.button} onPress={handleViewDetails}>
         <Text style={styles.buttonText}>View Details</Text>
       </TouchableOpacity>
     </View>
@@ -115,7 +116,7 @@ const CalloutContent: React.FC<CalloutContentProps> = ({
 // Styles
 // -------------------------------------------------
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     maxWidth: 260,
   },

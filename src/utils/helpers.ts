@@ -10,15 +10,15 @@
  * @param delay The delay in milliseconds
  * @returns A debounced version of the function
  */
-export const _debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) => {
-  let _timeoutId: NodeJS.Timeout | null = null;
+  let timeoutId: NodeJS.Timeout | null = null;
 
   return (...args: Parameters<T>) => {
-    if (_timeoutId) {
-      clearTimeout(_timeoutId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
     }
     
     // Cast the `setTimeout` return value to `any` to satisfy the Node/browser

@@ -28,7 +28,7 @@ interface CardDetailModalProps {
 
 const CardDetailModal: React.FC<CardDetailModalProps> = ({
   visible,
-  _card,
+  card,
   onClose,
   onSave,
   isNewCard = false,
@@ -39,11 +39,11 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
   const [category, setCategory] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [_imagePickerVisible, setImagePickerVisible] = useState(false);
+  const [imagePickerVisible, setImagePickerVisible] = useState(false);
 
   // Initialize form with card data when modal opens
   useEffect(() => {
-    if (_card) {
+    if (card) {
       setTitle(card.title || '');
       setDescription(card.description || '');
       setCategory(card.category || '');
@@ -76,10 +76,10 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
   }, []);
 
   // Handle image selection from camera
-  const _takePhoto = async () => {
+  const takePhoto = async () => {
     try {
       setImagePickerVisible(false);
-      const _result = await ImagePicker.launchCameraAsync({
+      const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [3, 4],
@@ -87,8 +87,8 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
         base64: true,
       });
 
-      if (!result.canceled && result.assets && result.assets[_0]) {
-        const _asset = result.assets[_0];
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
         // Use base64 data for preview and upload
         if (asset.base64) {
           setImageUrl(`data:image/jpeg;base64,${asset.base64}`);
@@ -96,17 +96,17 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
           setImageUrl(asset.uri);
         }
       }
-    } catch (_error) {
-      console.error('Error taking photo:', _error);
+    } catch (error) {
+      console.error('Error taking photo:', error);
       Alert.alert('Error', 'Failed to take photo. Please try again.');
     }
   };
 
   // Handle image selection from gallery
-  const _pickImage = async () => {
+  const pickImage = async () => {
     try {
       setImagePickerVisible(false);
-      const _result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [3, 4],
@@ -114,8 +114,8 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
         base64: true,
       });
 
-      if (!result.canceled && result.assets && result.assets[_0]) {
-        const _asset = result.assets[_0];
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
         // Use base64 data for preview and upload
         if (asset.base64) {
           setImageUrl(`data:image/jpeg;base64,${asset.base64}`);
@@ -123,14 +123,14 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
           setImageUrl(asset.uri);
         }
       }
-    } catch (_error) {
-      console.error('Error picking image:', _error);
+    } catch (error) {
+      console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to select image. Please try again.');
     }
   };
 
   // Handle form submission
-  const _handleSave = async () => {
+  const handleSave = async () => {
     if (!imageUrl) {
       Alert.alert('Image Required', 'Please add an image of your card.');
       return;
@@ -139,46 +139,46 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
     try {
       setIsLoading(true);
       
-      const _updatedCard: Partial<UserCard> = {
+      const updatedCard: Partial<UserCard> = {
         imageUrl,
         title,
         description,
         category,
       };
 
-      await onSave(_updatedCard);
+      await onSave(updatedCard);
       setIsLoading(false);
       onClose();
-    } catch (_error) {
-      console.error('Error saving card:', _error);
+    } catch (error) {
+      console.error('Error saving card:', error);
       setIsLoading(false);
       Alert.alert('Error', 'Failed to save card. Please try again.');
     }
   };
 
   // Render image picker options
-  const _renderImagePickerOptions = () => (
+  const renderImagePickerOptions = () => (
     <Modal
-      visible={_imagePickerVisible}
+      visible={imagePickerVisible}
       transparent={true}
       animationType="fade"
       onRequestClose={() => setImagePickerVisible(false)}
     >
       <TouchableOpacity
         style={styles.imagePickerOverlay}
-        activeOpacity={_1}
+        activeOpacity={1}
         onPress={() => setImagePickerVisible(false)}
       >
         <View style={styles.imagePickerContainer}>
-          <TouchableOpacity style={styles.imagePickerOption} onPress={_takePhoto}>
-            <Ionicons name="camera-outline" size={_24} color="#007AFF" />
+          <TouchableOpacity style={styles.imagePickerOption} onPress={takePhoto}>
+            <Ionicons name="camera-outline" size={24} color="#007AFF" />
             <Text style={styles.imagePickerOptionText}>Take Photo</Text>
           </TouchableOpacity>
           
           <View style={styles.imagePickerDivider} />
           
-          <TouchableOpacity style={styles.imagePickerOption} onPress={_pickImage}>
-            <Ionicons name="images-outline" size={_24} color="#007AFF" />
+          <TouchableOpacity style={styles.imagePickerOption} onPress={pickImage}>
+            <Ionicons name="images-outline" size={24} color="#007AFF" />
             <Text style={styles.imagePickerOptionText}>Choose from Library</Text>
           </TouchableOpacity>
           
@@ -197,10 +197,10 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
 
   return (
     <Modal
-      visible={_visible}
+      visible={visible}
       animationType="slide"
       transparent={false}
-      onRequestClose={_onClose}
+      onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         style={styles.container}
@@ -209,16 +209,16 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={_onClose}>
-            <Ionicons name="close-outline" size={_28} color="#007AFF" />
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Ionicons name="close-outline" size={28} color="#007AFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
             {isNewCard ? 'Add New Card' : 'Edit Card'}
           </Text>
           <TouchableOpacity
             style={styles.saveButton}
-            onPress={_handleSave}
-            disabled={_isLoading}
+            onPress={handleSave}
+            disabled={isLoading}
           >
             {isLoading ? (
               <ActivityIndicator size="small" color="#007AFF" />
@@ -235,7 +235,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
               <Image source={{ uri: imageUrl }} style={styles.cardImage} resizeMode="contain" />
             ) : (
               <View style={styles.imagePlaceholder}>
-                <Ionicons name="image-outline" size={_64} color="#ccc" />
+                <Ionicons name="image-outline" size={64} color="#ccc" />
                 <Text style={styles.imagePlaceholderText}>Add Card Image</Text>
               </View>
             )}
@@ -245,7 +245,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
             >
               <Ionicons
                 name={imageUrl ? "camera" : "add-circle"}
-                size={_24}
+                size={24}
                 color="white"
               />
             </TouchableOpacity>
@@ -257,11 +257,11 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
               <Text style={styles.label}>Card Title</Text>
               <TextInput
                 style={styles.input}
-                value={_title}
-                onChangeText={_setTitle}
+                value={title}
+                onChangeText={setTitle}
                 placeholder="e.g., 2018 Topps Mike Trout #1"
                 placeholderTextColor="#999"
-                maxLength={_100}
+                maxLength={100}
               />
             </View>
 
@@ -269,14 +269,14 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
               <Text style={styles.label}>Description</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                value={_description}
-                onChangeText={_setDescription}
-                placeholder="Add details about your card (_condition, special features, etc.)"
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Add details about your card (condition, special features, etc.)"
                 placeholderTextColor="#999"
                 multiline
-                numberOfLines={_4}
+                numberOfLines={4}
                 textAlignVertical="top"
-                maxLength={_500}
+                maxLength={500}
               />
             </View>
 
@@ -284,13 +284,13 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
               <Text style={styles.label}>Category</Text>
               <View style={styles.pickerContainer}>
                 <Picker
-                  selectedValue={_category}
-                  onValueChange={(_itemValue) => setCategory(_itemValue)}
+                  selectedValue={category}
+                  onValueChange={(itemValue) => setCategory(itemValue)}
                   style={styles.picker}
                 >
                   <Picker.Item label="Select a category" value="" />
-                  {Object.values(CardCategory).map((_cat) => (
-                    <Picker.Item key={_cat} label={_cat} value={_cat} />
+                  {Object.values(CardCategory).map((cat) => (
+                    <Picker.Item key={cat} label={cat} value={cat} />
                   ))}
                 </Picker>
               </View>
@@ -305,7 +305,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
@@ -416,7 +416,7 @@ const _styles = StyleSheet.create({
   },
   imagePickerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,_0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   imagePickerContainer: {

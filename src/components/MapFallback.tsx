@@ -8,6 +8,7 @@ import {
   Platform,
   TouchableOpacity,
   ScrollView,
+  NativeModules,
 } from 'react-native';
 
 /**
@@ -86,23 +87,23 @@ export const isNativeMapsAvailable = (): boolean => {
   
   try {
     // Attempt to access TurboModuleRegistry without importing it directly
-    const _TurboModuleRegistry = require('react-native').TurboModuleRegistry;
+    const TurboModuleRegistry = require('react-native').TurboModuleRegistry;
     
     // Check if the native module exists
-    const _hasModule = 
+    const hasModule = 
       TurboModuleRegistry &&
       typeof TurboModuleRegistry.getEnforcing === 'function' &&
       (() => {
         try {
           TurboModuleRegistry.getEnforcing('RNMapsAirModule');
           return true;
-        } catch (_e) {
+        } catch (e) {
           return false;
         }
       })();
       
     return !!hasModule;
-  } catch (_error) {
+  } catch (error) {
     // If any error occurs, assume the module is not available
     return false;
   }
@@ -111,7 +112,7 @@ export const isNativeMapsAvailable = (): boolean => {
 // ---------------------------------------------------------------------------
 // Styles for fallback components
 // ---------------------------------------------------------------------------
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   mapFallbackContainer: {
     flex: 1,
     backgroundColor: '#e0e0e0',
@@ -220,8 +221,8 @@ console.warn('MapView.animateToRegion called in fallback mode', { region, durati
       const RealMapView = RNMaps.default || RNMaps.MapView;
       
       return <RealMapView ref={ref} {...restProps}>{children}</RealMapView>;
-    } catch (_error) {
-      console.error('Failed to load react-native-maps even though native module was detected:', _error);
+    } catch (error) {
+      console.error('Failed to load react-native-maps even though native module was detected:', error);
       // Fall through to fallback if dynamic require fails
     }
   }
@@ -255,10 +256,10 @@ export const Marker: React.FC<MarkerProps> = (props) => {
   if (isNativeMapsAvailable()) {
     try {
       const RNMaps = require('react-native-maps');
-      const _RealMarker = RNMaps.Marker;
+      const RealMarker = RNMaps.Marker;
       
       return <RealMarker {...props} />;
-    } catch (_error) {
+    } catch (error) {
       // Fall through to fallback
     }
   }
@@ -275,10 +276,10 @@ export const Callout: React.FC<CalloutProps> = (props) => {
   if (isNativeMapsAvailable()) {
     try {
       const RNMaps = require('react-native-maps');
-      const _RealCallout = RNMaps.Callout;
+      const RealCallout = RNMaps.Callout;
       
       return <RealCallout {...props} />;
-    } catch (_error) {
+    } catch (error) {
       // Fall through to fallback
     }
   }
@@ -320,7 +321,7 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
     fallbackTextStyle,
     data,
     renderMarker,
-    _renderCluster,
+    renderCluster,
     ...restProps
   } = props;
 
@@ -353,15 +354,15 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
         return (
           <RNMapsCluster
             ref={ref}
-            data={_data}
-            renderMarker={_renderMarker}
-            renderCluster={_renderCluster}
+            data={data}
+            renderMarker={renderMarker}
+            renderCluster={renderCluster}
             {...restProps}
           />
         );
       }
-    } catch (_error) {
-      console.error('Failed to load react-native-maps-super-cluster:', _error);
+    } catch (error) {
+      console.error('Failed to load react-native-maps-super-cluster:', error);
       // Fall through to fallback
     }
   }
@@ -393,50 +394,50 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
           style={{ maxHeight: 300, alignSelf: 'stretch', marginTop: 12 }}
           contentContainerStyle={{ paddingBottom: 16 }}
         >
-          {data.map((_item, _idx) => {
+          {data.map((item, idx) => {
             // Attempt to pull a few common fields that show objects use
-            const _title =
+            const title =
               item.title ??
               item.properties?.title ??
               `Item #${idx + 1}`;
 
-            const _startDate =
+            const startDate =
               item.startDate ??
               item.properties?.startDate ??
               item.start_date;
-            const _endDate =
+            const endDate =
               item.endDate ??
               item.properties?.endDate ??
               item.end_date;
 
-            const _dateLabel = startDate
-              ? `${new Date(_startDate).toLocaleDateString()}${
+            const dateLabel = startDate
+              ? `${new Date(startDate).toLocaleDateString()}${
                   endDate &&
-                  new Date(_startDate).toDateString() !==
-                    new Date(_endDate).toDateString()
-                    ? ` – ${new Date(_endDate).toLocaleDateString()}`
+                  new Date(startDate).toDateString() !==
+                    new Date(endDate).toDateString()
+                    ? ` – ${new Date(endDate).toLocaleDateString()}`
                     : ''
                 }`
               : 'Date N/A';
 
-            const _handlePress = () => {
+            const handlePress = () => {
               try {
                 // Allow devs to invoke their marker renderer to inspect data
-                if (_renderMarker) {
-                  renderMarker(_item);
+                if (renderMarker) {
+                  renderMarker(item);
                 }
-              } catch (_e) {
+              } catch (e) {
                 console.warn(
-                  '[_MapFallback] Error invoking renderMarker from fallback list:',
-                  _e
+                  '[MapFallback] Error invoking renderMarker from fallback list:',
+                  e
                 );
               }
             };
 
             return (
               <TouchableOpacity
-                key={_idx}
-                onPress={_handlePress}
+                key={idx}
+                onPress={handlePress}
                 style={{
                   backgroundColor: 'white',
                   padding: 12,
@@ -450,10 +451,10 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
                 }}
               >
                 <Text style={{ fontWeight: '600', marginBottom: 4 }}>
-                  {_title}
+                  {title}
                 </Text>
                 <Text style={{ fontSize: 12, color: '#555' }}>
-                  {_dateLabel}
+                  {dateLabel}
                 </Text>
               </TouchableOpacity>
             );

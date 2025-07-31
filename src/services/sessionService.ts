@@ -10,16 +10,16 @@ import { supabase } from '../supabase';
  * This function is extracted to its own service to avoid circular dependencies
  * between AuthContext, userRoleService, and supabaseAuthService.
  */
-export const _refreshUserSession = async (): Promise<{ success: boolean; error?: any }> => {
+export const refreshUserSession = async (): Promise<{ success: boolean; error?: any }> => {
   try {
-    const { _error } = await supabase.auth.refreshSession();
-    if (_error) {
-      console.error('Error refreshing Supabase session:', _error);
+    const { error } = await supabase.auth.refreshSession();
+    if (error) {
+      console.error('Error refreshing Supabase session:', error);
       return { success: false, error };
     }
     return { success: true };
-  } catch (_err) {
-    console.error('Unexpected error in refreshUserSession:', _err);
+  } catch (err) {
+    console.error('Unexpected error in refreshUserSession:', err);
     return { success: false, error: err };
   }
 };
@@ -28,12 +28,12 @@ export const _refreshUserSession = async (): Promise<{ success: boolean; error?:
  * Checks if the current user session is valid
  * @returns Boolean indicating if the session is valid
  */
-export const _isSessionValid = async (): Promise<boolean> => {
+export const isSessionValid = async (): Promise<boolean> => {
   try {
-    const { _data } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getSession();
     return !!data.session;
-  } catch (_err) {
-    console.error('Error checking session validity:', _err);
+  } catch (err) {
+    console.error('Error checking session validity:', err);
     return false;
   }
 };
@@ -42,12 +42,12 @@ export const _isSessionValid = async (): Promise<boolean> => {
  * Gets the current user ID from the session
  * @returns User ID string or null if not authenticated
  */
-export const _getCurrentUserId = async (): Promise<string | null> => {
+export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    const { _data } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getSession();
     return data.session?.user?.id || null;
-  } catch (_err) {
-    console.error('Error getting current user ID:', _err);
+  } catch (err) {
+    console.error('Error getting current user ID:', err);
     return null;
   }
 };

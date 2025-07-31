@@ -173,7 +173,9 @@ console.warn('Sentry event ID:', eventId);
   return (
     <ErrorBoundary 
       /* `fallback` must be a render function that returns the element */
-      fallback={(errorProps) => <FallbackComponent {...errorProps} />}
+      fallback={(errorProps: ErrorFallbackProps) => (
+        <FallbackComponent {...errorProps} />
+      )}
       onError={handleError}
     >
       {children}

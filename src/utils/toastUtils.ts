@@ -175,13 +175,15 @@ export default {
 /* Back-compat named exports (non-underscore aliases)                         */
 /* -------------------------------------------------------------------------- */
 
+// ---------------------------------------------------------------------------
+// Additional named exports for backward compatibility with existing imports
+// ---------------------------------------------------------------------------
 export const showSuccessToast = _showSuccessToast;
-export const showInfoToast = showInfoToast;
-export const showErrorToast = showErrorToast;
-export const showWarningToast = showWarningToast;
 export const showLocationChangedToast = _showLocationChangedToast;
 export const showGpsLocationToast = _showGpsLocationToast;
 export const showLocationFailedToast = _showLocationFailedToast;
 export const hideToast = _hideToast;
 
-export const DURATIONS = DURATIONS;
+// Note: explicit re-exports are unnecessary; the functions are already
+// exported above (either directly or via default export). Removing the
+// duplicates prevents identifier conflicts.

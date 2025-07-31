@@ -8,13 +8,13 @@ import {
   SafeAreaView,
   Alert
 } from 'react-native';
-import * as _Sentry from 'sentry-expo';
+import * as Sentry from 'sentry-expo';
 import {
   captureException,
   captureMessage,
   addBreadcrumb,
   startTransaction,
-  _SentryRaw
+  SentryRaw
 } from '../services/sentryConfig';
 
 /**
@@ -26,24 +26,24 @@ const SentryTester: React.FC = () => {
   const [lastAction, setLastAction] = useState<string>('');
   
   // Function to trigger a JavaScript error
-  const _triggerError = () => {
+  const triggerError = () => {
     try {
       // Intentionally cause an error
       const nullObject: any = null;
       nullObject.nonExistentMethod();
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof Error) {
-        captureException(_error);
+        captureException(error);
         setLastAction(`Error captured: ${error.message}`);
       }
     }
   };
 
   // Function to trigger an unhandled promise rejection
-  const _triggerUnhandledPromiseRejection = () => {
+  const triggerUnhandledPromiseRejection = () => {
     setLastAction('Triggering unhandled promise rejection...');
     // This will cause an unhandled promise rejection
-    new Promise((_, _reject) => {
+    new Promise((_, reject) => {
       setTimeout(() => {
         reject(new Error('This is an unhandled promise rejection'));
       }, 100);
@@ -51,7 +51,7 @@ const SentryTester: React.FC = () => {
   };
 
   // Function to trigger a fatal JavaScript error
-  const _triggerFatalError = () => {
+  const triggerFatalError = () => {
     setLastAction('Triggering fatal error...');
     Alert.alert(
       'Trigger Fatal Error',
@@ -67,7 +67,7 @@ const SentryTester: React.FC = () => {
             // This will cause a fatal error and crash the app
             const badArray: any[] = [];
             // @ts-ignore - Intentionally causing an error
-            badArray[_999999].nonExistentProperty.nonExistentMethod();
+            badArray[999999].nonExistentProperty.nonExistentMethod();
           },
         },
       ],
@@ -75,9 +75,9 @@ const SentryTester: React.FC = () => {
   };
 
   // Function to send a custom message with different severity levels
-  const _sendMessage = (level: 'debug' | 'info' | 'warning' | 'error') => {
+  const sendMessage = (level: 'debug' | 'info' | 'warning' | 'error') => {
     // Using type assertion to fix TypeScript error with ScopeContext
-    captureMessage(`Test ${_level} message from SentryTester`, _level, {
+    captureMessage(`Test ${level} message from SentryTester`, level, {
       tags: {
         source: 'SentryTester',
         testType: 'message',
@@ -93,11 +93,11 @@ const SentryTester: React.FC = () => {
       user: {} as any, // providing empty user object to satisfy User type
       requestSession: {},
     });
-    setLastAction(`${_level} message sent to Sentry`);
+    setLastAction(`${level} message sent to Sentry`);
   };
 
   // Function to test breadcrumbs
-  const _testBreadcrumbs = () => {
+  const testBreadcrumbs = () => {
     // Add a series of breadcrumbs
     addBreadcrumb({
       category: 'test',
@@ -127,9 +127,9 @@ const SentryTester: React.FC = () => {
       // Trigger an error after breadcrumbs are set
       try {
         throw new Error('Error after breadcrumbs');
-      } catch (_error) {
+      } catch (error) {
         if (error instanceof Error) {
-          captureException(_error);
+          captureException(error);
           setLastAction('Breadcrumbs test completed with error');
         }
       }
@@ -139,31 +139,31 @@ const SentryTester: React.FC = () => {
   };
 
   // Function to test performance monitoring
-  const _testPerformance = async () => {
-    const _transaction = startTransaction('test-transaction', 'test');
+  const testPerformance = async () => {
+    const transaction = startTransaction('test-transaction', 'test');
     
     setLastAction('Starting performance test...');
     
     // Add a span to measure a specific operation
-    const _span = transaction.startChild({
+    const span = transaction.startChild({
       op: 'test-operation',
       description: 'Test operation for Sentry performance monitoring',
     });
     
     // Simulate some work
-    await new Promise(_resolve => setTimeout(_resolve, _1500));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     // Finish the span
     span.finish();
     
     // Add another span
-    const _span2 = transaction.startChild({
+    const span2 = transaction.startChild({
       op: 'another-operation',
       description: 'Another test operation',
     });
     
     // Simulate more work
-    await new Promise(_resolve => setTimeout(_resolve, _800));
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     // Finish the second span
     span2.finish();
@@ -175,13 +175,13 @@ const SentryTester: React.FC = () => {
   };
 
   // Function to test user feedback
-  const _testUserFeedback = () => {
+  const testUserFeedback = () => {
     try {
       throw new Error('Error for user feedback');
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof Error) {
         // Capture the error and get the event ID
-        const _eventId = captureException(_error);
+        const eventId = captureException(error);
         
         // Removed Sentry.showReportDialog call to fix TypeScript error
         
@@ -191,7 +191,7 @@ const SentryTester: React.FC = () => {
   };
 
   // Function to test setting context
-  const _testSetContext = () => {
+  const testSetContext = () => {
     // Removed Sentry.Native.setContext call to fix TypeScript error
     
     setLastAction('Context test - will be included with next error');
@@ -200,9 +200,9 @@ const SentryTester: React.FC = () => {
     setTimeout(() => {
       try {
         throw new Error('Error with custom context');
-      } catch (_error) {
+      } catch (error) {
         if (error instanceof Error) {
-          captureException(_error);
+          captureException(error);
           setLastAction('Error with custom context captured');
         }
       }
@@ -225,21 +225,21 @@ const SentryTester: React.FC = () => {
           
           <TouchableOpacity 
             style={styles.button} 
-            onPress={_triggerError}
+            onPress={triggerError}
           >
             <Text style={styles.buttonText}>Trigger Handled Error</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.button} 
-            onPress={_triggerUnhandledPromiseRejection}
+            onPress={triggerUnhandledPromiseRejection}
           >
             <Text style={styles.buttonText}>Trigger Unhandled Promise Rejection</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[styles.button, styles.dangerButton]} 
-            onPress={_triggerFatalError}
+            onPress={triggerFatalError}
           >
             <Text style={styles.buttonText}>Trigger Fatal Error (App Crash)</Text>
           </TouchableOpacity>
@@ -275,28 +275,28 @@ const SentryTester: React.FC = () => {
           
           <TouchableOpacity 
             style={styles.button} 
-            onPress={_testBreadcrumbs}
+            onPress={testBreadcrumbs}
           >
             <Text style={styles.buttonText}>Test Breadcrumbs</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.button} 
-            onPress={_testPerformance}
+            onPress={testPerformance}
           >
             <Text style={styles.buttonText}>Test Performance Monitoring</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.button} 
-            onPress={_testSetContext}
+            onPress={testSetContext}
           >
             <Text style={styles.buttonText}>Test Custom Context</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.button} 
-            onPress={_testUserFeedback}
+            onPress={testUserFeedback}
           >
             <Text style={styles.buttonText}>Test User Feedback</Text>
           </TouchableOpacity>
@@ -305,7 +305,7 @@ const SentryTester: React.FC = () => {
         {lastAction ? (
           <View style={styles.resultContainer}>
             <Text style={styles.resultLabel}>Last Action:</Text>
-            <Text style={styles.resultText}>{_lastAction}</Text>
+            <Text style={styles.resultText}>{lastAction}</Text>
           </View>
         ) : null}
       </ScrollView>
@@ -313,7 +313,7 @@ const SentryTester: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
