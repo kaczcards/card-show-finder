@@ -38,48 +38,51 @@ interface SharedWantList {
   } | null;
 }
 
-const SharedWantLists: React.FC<SharedWantListsProps> = ({ _showId }) => {
-  const { _user } = useAuth().authState;
+const SharedWantLists: React.FC<SharedWantListsProps> = ({ showId }) => {
+  const { user } = useAuth().authState;
   const [lists, setLists] = useState<SharedWantList[]>([]);
-  const [_loading, setLoading] = useState(_true);
-  const [_error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const _fetchWantLists = useCallback(async () => {
+  const fetchWantLists = useCallback(async () => {
     if (!user) {
       setError('You must be logged in to view want lists.');
-      setLoading(_false);
+      setLoading(false);
       return;
     }
 
     try {
-      setLoading(_true);
-      setError(_null);
-      const { data, error: fetchError } = await getSharedWantListsForDealer(user.id, _showId);
+      setLoading(true);
+      setError(null);
+      const { data, error: fetchError } = await getSharedWantListsForDealer(
+        user.id,
+        showId
+      );
 
-      if (_fetchError) {
+      if (fetchError) {
         throw fetchError;
       }
 
-      setLists(data || []);
+      setLists(data ?? []);
     } catch (err: any) {
-      console.error('Error fetching shared want lists:', _err);
+      console.error('Error fetching shared want lists:', err);
       setError('Failed to load want lists. Please try again.');
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   }, [user, showId]);
 
   useEffect(() => {
     fetchWantLists();
-  }, [_fetchWantLists]);
+  }, [fetchWantLists]);
 
-  const _handleToggleExpand = (listId: string) => {
+  const handleToggleExpand = (listId: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedId(prevId => (prevId === listId ? null : listId));
   };
 
-  const _handlePrintAll = () => {
+  const handlePrintAll = () => {
     Alert.alert(
       'Print All Want Lists',
       'This feature would compile all want lists into a single printable document. (This is a placeholder for future implementation).',
@@ -87,28 +90,37 @@ const SharedWantLists: React.FC<SharedWantListsProps> = ({ _showId }) => {
     );
   };
   
-  const _formatDate = (_dateString: string) => {
-    return new Date(_dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
   };
 
-  const _renderListItem = ({ _item }: { item: SharedWantList }) => {
-    const _isExpanded = expandedId === item.id;
-    const _userName = `${item.user.firstName} ${item.user.lastName ? item.user.lastName[_0] + '.' : ''}`;
+  const renderListItem = ({ item }: { item: SharedWantList }) => {
+    const isExpanded = expandedId === item.id;
+    const userName = `${item.user.firstName} ${
+      item.user.lastName ? item.user.lastName[0] + '.' : ''
+    }`;
 
     return (
       <View style={styles.listItemContainer}>
-        <TouchableOpacity style={styles.listItemHeader} onPress={() => handleToggleExpand(item.id)}>
+        <TouchableOpacity
+          style={styles.listItemHeader}
+          onPress={() => handleToggleExpand(item.id)}
+        >
           <View style={styles.userInfo}>
-            <Ionicons name="person-circle-outline" size={_24} color="#0057B8" />
-            <Text style={styles.userName}>{_userName}</Text>
+            <Ionicons name="person-circle-outline" size={24} color="#0057B8" />
+            <Text style={styles.userName}>{userName}</Text>
           </View>
           <View style={styles.metaInfo}>
             <Text style={styles.dateText}>Shared: {formatDate(item.sharedAt)}</Text>
-            <Ionicons name={isExpanded ? 'chevron-up-outline' : 'chevron-down-outline'} size={_22} color="#666" />
+            <Ionicons
+              name={isExpanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+              size={22}
+              color="#666"
+            />
           </View>
         </TouchableOpacity>
 
@@ -121,7 +133,7 @@ const SharedWantLists: React.FC<SharedWantListsProps> = ({ _showId }) => {
     );
   };
 
-  if (_loading) {
+  if (loading) {
     return (
       <View style={styles.centeredContainer}>
         <ActivityIndicator size="large" color="#FF6A00" />
@@ -130,12 +142,12 @@ const SharedWantLists: React.FC<SharedWantListsProps> = ({ _showId }) => {
     );
   }
 
-  if (_error) {
+  if (error) {
     return (
       <View style={styles.centeredContainer}>
-        <Ionicons name="alert-circle-outline" size={_48} color="red" />
-        <Text style={styles.errorText}>{_error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={_fetchWantLists}>
+        <Ionicons name="alert-circle-outline" size={48} color="red" />
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchWantLists}>
           <Text style={styles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
@@ -146,23 +158,24 @@ const SharedWantLists: React.FC<SharedWantListsProps> = ({ _showId }) => {
     <View style={styles.container}>
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryText}>
-          <Text style={styles.summaryCount}>{lists.length}</Text> collector(_s) have shared their want lists.
+          <Text style={styles.summaryCount}>{lists.length}</Text>{' '}
+          {lists.length === 1 ? 'collector has' : 'collectors have'} shared their want lists.
         </Text>
-        <TouchableOpacity style={styles.printButton} onPress={_handlePrintAll}>
-          <Ionicons name="print-outline" size={_20} color="white" />
+        <TouchableOpacity style={styles.printButton} onPress={handlePrintAll}>
+          <Ionicons name="print-outline" size={20} color="white" />
           <Text style={styles.printButtonText}>Print All</Text>
         </TouchableOpacity>
       </View>
 
       {lists.length === 0 ? (
         <View style={styles.centeredContainer}>
-          <Ionicons name="document-text-outline" size={_48} color="#ccc" />
+          <Ionicons name="document-text-outline" size={48} color="#ccc" />
           <Text style={styles.emptyText}>No want lists have been shared for this show yet.</Text>
         </View>
       ) : (
         <FlatList
-          data={_lists}
-          renderItem={_renderListItem}
+          data={lists}
+          renderItem={renderListItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
         />
@@ -171,7 +184,7 @@ const SharedWantLists: React.FC<SharedWantListsProps> = ({ _showId }) => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',

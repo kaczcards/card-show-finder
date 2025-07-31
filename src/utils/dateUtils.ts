@@ -9,9 +9,9 @@
  * @param options Intl.DateTimeFormatOptions to customize the format
  * @returns Formatted date string
  */
-export const _formatDate = (
+export const formatDate = (
   date: Date | string | undefined | null,
-  _options: Intl.DateTimeFormatOptions = { 
+  options: Intl.DateTimeFormatOptions = { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
@@ -21,10 +21,10 @@ export const _formatDate = (
   if (!date) return '';
   
   try {
-    const _dateObj = typeof date === 'string' ? new Date(_date) : date;
-    return dateObj.toLocaleDateString('en-US', _options);
-  } catch (_error) {
-    console.error('Error formatting date:', _error);
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', options);
+  } catch (err) {
+    console.error('Error formatting date:', err);
     return typeof date === 'string' ? date : '';
   }
 };
@@ -35,23 +35,23 @@ export const _formatDate = (
  * @param date2 Second date
  * @returns True if both dates are on the same day
  */
-export const _isSameDay = (
+export const isSameDay = (
   date1: Date | string | undefined | null,
   date2: Date | string | undefined | null
 ): boolean => {
   if (!date1 || !date2) return false;
   
   try {
-    const _d1 = typeof date1 === 'string' ? new Date(_date1) : date1;
-    const _d2 = typeof date2 === 'string' ? new Date(_date2) : date2;
+    const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+    const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
     
     return (
       d1.getFullYear() === d2.getFullYear() &&
       d1.getMonth() === d2.getMonth() &&
       d1.getDate() === d2.getDate()
     );
-  } catch (_error) {
-    console.error('Error comparing dates:', _error);
+  } catch (err) {
+    console.error('Error comparing dates:', err);
     return false;
   }
 };
@@ -63,10 +63,10 @@ export const _isSameDay = (
  * @param options Intl.DateTimeFormatOptions to customize the format
  * @returns Formatted date range string
  */
-export const _formatDateRange = (
+export const formatDateRange = (
   startDate: Date | string | undefined | null,
   endDate: Date | string | undefined | null,
-  _options: Intl.DateTimeFormatOptions = { 
+  options: Intl.DateTimeFormatOptions = { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
@@ -76,12 +76,12 @@ export const _formatDateRange = (
   if (!startDate) return '';
   
   // If no end date or same as start date, just show the start date
-  if (!endDate || isSameDay(_startDate, _endDate)) {
-    return formatDate(_startDate, _options);
+  if (!endDate || isSameDay(startDate, endDate)) {
+    return formatDate(startDate, options);
   }
   
   // Otherwise, show the range
-  return `${formatDate(startDate, _options)} to ${formatDate(endDate, _options)}`;
+  return `${formatDate(startDate, options)} to ${formatDate(endDate, options)}`;
 };
 
 /**
@@ -89,17 +89,17 @@ export const _formatDateRange = (
  * @param date Date object or parsable date string
  * @returns Human-readable relative time
  */
-export const _formatRelativeTime = (
+export const formatRelativeTime = (
   date: Date | string | number | null | undefined
 ): string => {
   if (!date) return '';
 
   const dateObj: Date =
     typeof date === 'string' || typeof date === 'number'
-      ? new Date(_date)
+      ? new Date(date)
       : date;
 
-  const _secondsDiff = Math.floor((Date.now() - dateObj.getTime()) / 1000);
+  const secondsDiff = Math.floor((Date.now() - dateObj.getTime()) / 1000);
 
   // Handle future dates – return empty string instead of negative values
   if (secondsDiff < 0) return '';
@@ -113,7 +113,7 @@ export const _formatRelativeTime = (
     [12, 'month'],             // up to 11 months
   ];
 
-  let _value = secondsDiff;
+  let value = secondsDiff;
   let unit: Intl.RelativeTimeFormatUnit = 'second';
 
   // Iterate through unit thresholds to find the most appropriate one
@@ -134,11 +134,11 @@ export const _formatRelativeTime = (
 
   // Use Intl.RelativeTimeFormat when available for better i18n
   if (typeof Intl !== 'undefined' && (Intl as any).RelativeTimeFormat) {
-    const _rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-    return rtf.format(-value, _unit);
+    const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+    return rtf.format(-value, unit);
   }
 
   // Fallback manual formatting
-  const _plural = Math.abs(value) === 1 ? '' : 's';
-  return `${_value} ${_unit}${_plural} ago`;
+  const plural = Math.abs(value) === 1 ? '' : 's';
+  return `${value} ${unit}${plural} ago`;
 };

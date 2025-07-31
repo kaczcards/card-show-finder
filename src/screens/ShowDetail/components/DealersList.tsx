@@ -27,12 +27,12 @@ interface DealersListProps {
 }
 
 // Section header helper for consistent typography
-const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ _children }) => (
-  <Text style={styles.sectionTitle}>{_children}</Text>
+const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Text style={styles.sectionTitle}>{children}</Text>
 );
 
 // Social media icons component for MVP Dealers
-const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ _dealer }) => {
+const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
   // Show social icons for MVP Dealers **and** Show Organizers acting as dealers
   if (dealer.role !== 'MVP_DEALER' && dealer.role !== 'SHOW_ORGANIZER') return null;
   
@@ -41,20 +41,20 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ _dealer }) => {
    * (e.g. "www.example.com") we prepend `https://` so React-Native treats it
    * as a web URL instead of a local file path.
    */
-  const _handleOpenLink = (url?: string) => {
+  const handleOpenLink = (url?: string) => {
     if (!url) return;
 
     // Ensure protocol prefix exists
-    let _formattedUrl = url.trim();
+    let formattedUrl = url.trim();
     if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = `https://${_formattedUrl}`;
+      formattedUrl = `https://${formattedUrl}`;
     }
 
      
-console.warn('[_DealersList] Opening URL:', _formattedUrl);
+console.warn('[DealersList] Opening URL:', formattedUrl);
 
-    Linking.openURL(formattedUrl).catch(_err => {
-      console.error('Error opening URL:', _err);
+    Linking.openURL(formattedUrl).catch(err => {
+      console.error('Error opening URL:', err);
       Alert.alert(
         'Cannot Open Link',
         'The link could not be opened. Please check that it is a valid URL.',
@@ -71,7 +71,7 @@ console.warn('[_DealersList] Opening URL:', _formattedUrl);
           onPress={() => handleOpenLink(dealer.facebookUrl)}
           activeOpacity={0.7}
         >
-          <FontAwesome name="facebook-square" size={_22} color="#4267B2" />
+          <FontAwesome name="facebook-square" size={22} color="#4267B2" />
         </TouchableOpacity>
       )}
       
@@ -81,7 +81,7 @@ console.warn('[_DealersList] Opening URL:', _formattedUrl);
           onPress={() => handleOpenLink(dealer.instagramUrl)}
           activeOpacity={0.7}
         >
-          <FontAwesome name="instagram" size={_22} color="#E1306C" />
+          <FontAwesome name="instagram" size={22} color="#E1306C" />
         </TouchableOpacity>
       )}
       
@@ -91,7 +91,7 @@ console.warn('[_DealersList] Opening URL:', _formattedUrl);
           onPress={() => handleOpenLink(dealer.twitterUrl)}
           activeOpacity={0.7}
         >
-          <FontAwesome name="twitter-square" size={_22} color="#1DA1F2" />
+          <FontAwesome name="twitter-square" size={22} color="#1DA1F2" />
         </TouchableOpacity>
       )}
       
@@ -114,40 +114,40 @@ console.warn('[_DealersList] Opening URL:', _formattedUrl);
 
 const DealersList: React.FC<DealersListProps> = ({
   dealers,
-  _isLoading,
+  isLoading,
   onViewDealerDetails
 }) => {
   // State to track which dealer is currently being pressed and navigation status
   const [pressedDealerId, setPressedDealerId] = useState<string | null>(null);
-  const [isNavigating, setIsNavigating] = useState(_false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Debounced handler for dealer detail navigation
-  const _handleViewDealerDetails = useCallback((dealerId: string, dealerName: string) => {
+  const handleViewDealerDetails = useCallback((dealerId: string, dealerName: string) => {
     // Prevent multiple rapid clicks
-    if (_isNavigating) {
+    if (isNavigating) {
        
-console.warn('[_DealersList] Navigation already in progress, ignoring click');
+console.warn('[DealersList] Navigation already in progress, ignoring click');
       return;
     }
 
      
-console.warn('[_DealersList] Dealer pressed:', _dealerId, dealerName);
+console.warn('[DealersList] Dealer pressed:', dealerId, dealerName);
     
     // Set visual feedback and prevent double-clicks
-    setIsNavigating(_true);
-    setPressedDealerId(_dealerId);
+    setIsNavigating(true);
+    setPressedDealerId(dealerId);
     
     // Add a small delay for visual feedback before navigation
     setTimeout(() => {
       try {
-        onViewDealerDetails(_dealerId, _dealerName);
-      } catch (_err) {
-        console.error('[_DealersList] Error during navigation:', _err);
+        onViewDealerDetails(dealerId, dealerName);
+      } catch (err) {
+        console.error('[DealersList] Error during navigation:', err);
       } finally {
         // Reset state after navigation (with slight delay to prevent rapid re-clicks)
         setTimeout(() => {
-          setIsNavigating(_false);
-          setPressedDealerId(_null);
+          setIsNavigating(false);
+          setPressedDealerId(null);
         }, 300);
       }
     }, 50); // Small delay for visual feedback
@@ -163,7 +163,7 @@ console.warn('[_DealersList] Dealer pressed:', _dealerId, dealerName);
         <View style={styles.dealersList}>
           {dealers.map(dealer => {
             // Check if this dealer's button is currently pressed
-            const _isPressed = pressedDealerId === dealer.id;
+            const isPressed = pressedDealerId === dealer.id;
             
             return (
               <View key={dealer.id} style={styles.dealerItem}>
@@ -176,7 +176,7 @@ console.warn('[_DealersList] Dealer pressed:', _dealerId, dealerName);
                     ]} 
                     onPress={() => handleViewDealerDetails(dealer.id, dealer.name)}
                     activeOpacity={0.7}
-                    disabled={_isNavigating}
+                    disabled={isNavigating}
                   >
                     <View style={styles.dealerInfoContainer}>
                       <Text style={[
@@ -191,7 +191,7 @@ console.warn('[_DealersList] Dealer pressed:', _dealerId, dealerName);
                     </View>
                     
                     {/* Display social media icons only for MVP Dealers */}
-                    <SocialMediaIcons dealer={_dealer} />
+                    <SocialMediaIcons dealer={dealer} />
                   </TouchableOpacity>
                 ) : (
                   // Non-MVP dealers aren't clickable
@@ -219,7 +219,7 @@ console.warn('[_DealersList] Dealer pressed:', _dealerId, dealerName);
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   mvpDealersContainer: {
     marginTop: 24,
     padding: 12,

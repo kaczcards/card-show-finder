@@ -8,7 +8,7 @@
 import Toast from 'react-native-toast-message';
 
 // Default durations in milliseconds
-const _DURATIONS = {
+const DURATIONS = {
   SHORT: 2000,
   NORMAL: 3500,
   LONG: 5000
@@ -24,7 +24,7 @@ const _DURATIONS = {
 export const _showSuccessToast = (
   message: string, 
   subText?: string, 
-  duration: number = _DURATIONS.NORMAL
+  duration: number = DURATIONS.NORMAL
 ) => {
   Toast.show({
     type: 'success',
@@ -42,10 +42,10 @@ export const _showSuccessToast = (
  * @param subText Optional secondary text
  * @param duration Time in ms to show the toast
  */
-export const _showInfoToast = (
+export const showInfoToast = (
   message: string, 
   subText?: string, 
-  duration: number = _DURATIONS.NORMAL
+  duration: number = DURATIONS.NORMAL
 ) => {
   Toast.show({
     type: 'info',
@@ -63,10 +63,10 @@ export const _showInfoToast = (
  * @param subText Optional secondary text
  * @param duration Time in ms to show the toast
  */
-export const _showErrorToast = (
+export const showErrorToast = (
   message: string, 
   subText?: string, 
-  duration: number = _DURATIONS.LONG
+  duration: number = DURATIONS.LONG
 ) => {
   Toast.show({
     type: 'error',
@@ -84,10 +84,10 @@ export const _showErrorToast = (
  * @param subText Optional secondary text
  * @param duration Time in ms to show the toast
  */
-export const _showWarningToast = (
+export const showWarningToast = (
   message: string, 
   subText?: string, 
-  duration: number = _DURATIONS.NORMAL
+  duration: number = DURATIONS.NORMAL
 ) => {
   Toast.show({
     type: 'warning',
@@ -108,10 +108,10 @@ export const _showWarningToast = (
  * @param zipCode The ZIP code the map has centered on
  */
 export const _showLocationChangedToast = (_zipCode: string) => {
-  _showInfoToast(
+  showInfoToast(
     `Map centered on ${_zipCode}`,
     'Your location has been updated',
-    _DURATIONS.SHORT
+    DURATIONS.SHORT
   );
 };
 
@@ -121,12 +121,12 @@ export const _showLocationChangedToast = (_zipCode: string) => {
  * @param locationName Optional name of the location (_city, _neighborhood)
  */
 export const _showGpsLocationToast = (locationName?: string) => {
-  _showInfoToast(
+  showInfoToast(
     locationName 
       ? `Using current location: ${locationName}`
       : 'Using your current location',
     'Shows within your selected radius will appear',
-    _DURATIONS.SHORT
+    DURATIONS.SHORT
   );
 };
 
@@ -137,16 +137,16 @@ export const _showGpsLocationToast = (locationName?: string) => {
  */
 export const _showLocationFailedToast = (_fallbackZip?: string) => {
   if (_fallbackZip) {
-    _showWarningToast(
+    showWarningToast(
       'Location services unavailable',
       `Using your home ZIP code (${_fallbackZip}) instead`,
-      _DURATIONS.NORMAL
+      DURATIONS.NORMAL
     );
   } else {
-    _showErrorToast(
+    showErrorToast(
       'Location services unavailable',
       'Please set your home ZIP code in your profile',
-      _DURATIONS.LONG
+      DURATIONS.LONG
     );
   }
 };
@@ -161,27 +161,29 @@ export const _hideToast = () => {
 // Export all toast functions
 export default {
   showSuccessToast: _showSuccessToast,
-  showInfoToast: _showInfoToast,
-  showErrorToast: _showErrorToast,
-  showWarningToast: _showWarningToast,
+  showInfoToast: showInfoToast,
+  showErrorToast: showErrorToast,
+  showWarningToast: showWarningToast,
   showLocationChangedToast: _showLocationChangedToast,
   showGpsLocationToast: _showGpsLocationToast,
   showLocationFailedToast: _showLocationFailedToast,
   hideToast: _hideToast,
-  durations: _DURATIONS
+  durations: DURATIONS
 };
 
 /* -------------------------------------------------------------------------- */
 /* Back-compat named exports (non-underscore aliases)                         */
 /* -------------------------------------------------------------------------- */
 
+// ---------------------------------------------------------------------------
+// Additional named exports for backward compatibility with existing imports
+// ---------------------------------------------------------------------------
 export const showSuccessToast = _showSuccessToast;
-export const showInfoToast = _showInfoToast;
-export const showErrorToast = _showErrorToast;
-export const showWarningToast = _showWarningToast;
 export const showLocationChangedToast = _showLocationChangedToast;
 export const showGpsLocationToast = _showGpsLocationToast;
 export const showLocationFailedToast = _showLocationFailedToast;
 export const hideToast = _hideToast;
 
-export const DURATIONS = _DURATIONS;
+// Note: explicit re-exports are unnecessary; the functions are already
+// exported above (either directly or via default export). Removing the
+// duplicates prevents identifier conflicts.

@@ -14,25 +14,25 @@ interface OrganizerInfoProps {
 }
 
 // Section header helper for consistent typography
-const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ _children }) => (
-  <Text style={styles.sectionTitle}>{_children}</Text>
+const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Text style={styles.sectionTitle}>{children}</Text>
 );
 
-const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ _organizer }) => {
+const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ organizer }) => {
   if (!organizer) return null;
 
   // Get avatar URL from either avatar_url or profile_image_url
-  const _avatarUrl = organizer.avatar_url || organizer.profile_image_url;
+  const avatarUrl = organizer.avatar_url || organizer.profile_image_url;
   
   // Get display name from full_name, or first_name + last_name, or username, or fallback
-  const _displayName = 
+  const displayName = 
     organizer.full_name || 
     ((organizer.first_name || organizer.last_name) ? 
       `${organizer.first_name || ''} ${organizer.last_name || ''}`.trim() : 
       organizer.username || 'Show Organizer');
   
   // Get first letter for avatar placeholder
-  const _firstLetter = displayName[_0] || 'O';
+  const firstLetter = displayName[0] || 'O';
 
   return (
     <View style={styles.organizerContainer}>
@@ -42,16 +42,16 @@ const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ _organizer }) => {
           <Image source={{ uri: avatarUrl }} style={styles.organizerAvatar} />
         ) : (
           <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>{_firstLetter}</Text>
+            <Text style={styles.avatarText}>{firstLetter}</Text>
           </View>
         )}
-        <Text style={styles.organizerName}>{_displayName}</Text>
+        <Text style={styles.organizerName}>{displayName}</Text>
       </View>
     </View>
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   organizerContainer: {
     marginTop: 16,
     padding: 12,

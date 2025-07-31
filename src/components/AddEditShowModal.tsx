@@ -33,13 +33,13 @@ interface AddEditShowModalProps {
 
 const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
   visible,
-  _onClose,
+  onClose,
   onSave,
   show,
   seriesId
 }) => {
   // Determine if we're in edit mode
-  const _isEditMode = !!show;
+  const isEditMode = !!show;
   
   // State for form fields
   const [title, setTitle] = useState('');
@@ -50,21 +50,21 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
   const [endDate, setEndDate] = useState(new Date());
   const [entryFee, setEntryFee] = useState('0');
   const [imageUrl, setImageUrl] = useState('');
-  const [isRecurring, setIsRecurring] = useState(_false);
+  const [isRecurring, setIsRecurring] = useState(false);
   const [recurringInterval, setRecurringInterval] = useState('monthly');
-  const [_recurringCount, setRecurringCount] = useState('3');
+  const [recurringCount, setRecurringCount] = useState('3');
   
   // UI state
-  const [showStartDatePicker, setShowStartDatePicker] = useState(_false);
-  const [showStartTimePicker, setShowStartTimePicker] = useState(_false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(_false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(_false);
-  const [isLoading, setIsLoading] = useState(_false);
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Series information (if adding to a series)
   const [series, setSeries] = useState<ShowSeries | null>(null);
-  const [loadingSeries, setLoadingSeries] = useState(_false);
+  const [loadingSeries, setLoadingSeries] = useState(false);
   
   // Initialize form with show data if in edit mode
   useEffect(() => {
@@ -86,16 +86,16 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
   // Fetch series details if seriesId is provided
   useEffect(() => {
     if (seriesId && visible) {
-      fetchSeriesDetails(_seriesId);
+      fetchSeriesDetails(seriesId);
     }
   }, [seriesId, visible]);
   
   // Fetch series details
-  const _fetchSeriesDetails = async (id: string) => {
+  const fetchSeriesDetails = async (id: string) => {
     try {
-      setLoadingSeries(_true);
-      const _seriesData = await showSeriesService.getShowSeriesById(id);
-      setSeries(_seriesData);
+      setLoadingSeries(true);
+      const seriesData = await showSeriesService.getShowSeriesById(id);
+      setSeries(seriesData);
       
       // Pre-fill some fields from series
       if (seriesData && !isEditMode) {
@@ -103,15 +103,15 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
         // If there are other fields that should be consistent across the series,
         // pre-fill them here
       }
-    } catch (_error) {
-      console.error('Error fetching series details:', _error);
+    } catch (error) {
+      console.error('Error fetching series details:', error);
     } finally {
-      setLoadingSeries(_false);
+      setLoadingSeries(false);
     }
   };
   
   // Reset form to default values
-  const _resetForm = () => {
+  const resetForm = () => {
     setTitle('');
     setDescription('');
     setLocation('');
@@ -120,14 +120,14 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
     setEndDate(new Date());
     setEntryFee('0');
     setImageUrl('');
-    setIsRecurring(_false);
+    setIsRecurring(false);
     setRecurringInterval('monthly');
     setRecurringCount('3');
     setErrors({});
   };
   
   // Validate form fields
-  const _validateForm = (): boolean => {
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
     if (!title.trim()) {
@@ -142,7 +142,7 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
       newErrors.address = 'Address is required';
     }
     
-    if (isNaN(parseFloat(entryFee)) || parseFloat(_entryFee) < 0) {
+    if (isNaN(parseFloat(entryFee)) || parseFloat(entryFee) < 0) {
       newErrors.entryFee = 'Entry fee must be a valid number';
     }
     
@@ -150,25 +150,25 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
       newErrors.endDate = 'End date must be after start date';
     }
     
-    if (_isRecurring) {
-      const _count = parseInt(_recurringCount);
+    if (isRecurring) {
+      const count = parseInt(recurringCount);
       if (isNaN(count) || count < 1 || count > 12) {
         newErrors.recurringCount = 'Please enter a number between 1 and 12';
       }
     }
     
-    setErrors(_newErrors);
+    setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
   
   // Handle form submission
-  const _handleSubmit = async () => {
+  const handleSubmit = async () => {
     if (!validateForm()) {
       return;
     }
     
     try {
-      setIsLoading(_true);
+      setIsLoading(true);
       
       // Prepare show data
       const showData: Partial<Show> = {
@@ -178,26 +178,26 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
         address,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
-        entryFee: parseFloat(_entryFee),
+        entryFee: parseFloat(entryFee),
         imageUrl: imageUrl || undefined,
       };
       
-      if (_seriesId) {
+      if (seriesId) {
         showData.seriesId = seriesId;
       }
       
       // If we're creating a recurring series of shows
       if (!isEditMode && isRecurring) {
-        const _count = parseInt(_recurringCount);
-        const _interval = recurringInterval;
+        const count = parseInt(recurringCount);
+        const interval = recurringInterval;
         
         // Create an array to hold all shows
-        const shows: Partial<Show>[] = [_showData];
+        const shows: Partial<Show>[] = [showData];
         
         // Generate additional occurrences
-        for (let _i = 1; i < count; i++) {
-          const _nextStartDate = new Date(_startDate);
-          const _nextEndDate = new Date(_endDate);
+        for (let i = 1; i < count; i++) {
+          const nextStartDate = new Date(startDate);
+          const nextEndDate = new Date(endDate);
           
           if (interval === 'weekly') {
             nextStartDate.setDate(nextStartDate.getDate() + (7 * i));
@@ -227,54 +227,54 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
         });
       } else {
         // Single show or edit mode
-        onSave(_showData);
+        onSave(showData);
       }
-    } catch (_error) {
-      console.error('Error saving show:', _error);
+    } catch (error) {
+      console.error('Error saving show:', error);
       Alert.alert('Error', 'Failed to save show. Please try again.');
     } finally {
-      setIsLoading(_false);
+      setIsLoading(false);
     }
   };
   
   // Handle date/time changes
-  const _handleDateChange = (event: any, selectedDate?: Date, type?: string) => {
+  const handleDateChange = (event: any, selectedDate?: Date, type?: string) => {
     if (Platform.OS === 'android') {
-      setShowStartDatePicker(_false);
-      setShowStartTimePicker(_false);
-      setShowEndDatePicker(_false);
-      setShowEndTimePicker(_false);
+      setShowStartDatePicker(false);
+      setShowStartTimePicker(false);
+      setShowEndDatePicker(false);
+      setShowEndTimePicker(false);
     }
     
-    if (_selectedDate) {
+    if (selectedDate) {
       if (type === 'startDate') {
-        const _newDate = new Date(_startDate);
+        const newDate = new Date(startDate);
         newDate.setFullYear(selectedDate.getFullYear());
         newDate.setMonth(selectedDate.getMonth());
         newDate.setDate(selectedDate.getDate());
-        setStartDate(_newDate);
+        setStartDate(newDate);
       } else if (type === 'startTime') {
-        const _newDate = new Date(_startDate);
+        const newDate = new Date(startDate);
         newDate.setHours(selectedDate.getHours());
         newDate.setMinutes(selectedDate.getMinutes());
-        setStartDate(_newDate);
+        setStartDate(newDate);
       } else if (type === 'endDate') {
-        const _newDate = new Date(_endDate);
+        const newDate = new Date(endDate);
         newDate.setFullYear(selectedDate.getFullYear());
         newDate.setMonth(selectedDate.getMonth());
         newDate.setDate(selectedDate.getDate());
-        setEndDate(_newDate);
+        setEndDate(newDate);
       } else if (type === 'endTime') {
-        const _newDate = new Date(_endDate);
+        const newDate = new Date(endDate);
         newDate.setHours(selectedDate.getHours());
         newDate.setMinutes(selectedDate.getMinutes());
-        setEndDate(_newDate);
+        setEndDate(newDate);
       }
     }
   };
   
   // Format date for display
-  const _formatDate = (date: Date): string => {
+  const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -284,7 +284,7 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
   };
   
   // Format time for display
-  const _formatTime = (date: Date): string => {
+  const formatTime = (date: Date): string => {
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -294,10 +294,10 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
   
   return (
     <Modal
-      visible={_visible}
+      visible={visible}
       animationType="slide"
-      transparent={_true}
-      onRequestClose={_onClose}
+      transparent={true}
+      onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         style={styles.container}
@@ -309,8 +309,8 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
             <Text style={styles.headerTitle}>
               {isEditMode ? 'Edit Show' : 'Add New Show'}
             </Text>
-            <TouchableOpacity style={styles.closeButton} onPress={_onClose}>
-              <Ionicons name="close" size={_24} color="#333333" />
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color="#333333" />
             </TouchableOpacity>
           </View>
           
@@ -337,8 +337,8 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
               <Text style={styles.label}>Show Title *</Text>
               <TextInput
                 style={[styles.input, errors.title && styles.inputError]}
-                value={_title}
-                onChangeText={_setTitle}
+                value={title}
+                onChangeText={setTitle}
                 placeholder="Enter show title"
               />
               {errors.title && (
@@ -351,11 +351,11 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
               <Text style={styles.label}>Description</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                value={_description}
-                onChangeText={_setDescription}
+                value={description}
+                onChangeText={setDescription}
                 placeholder="Enter show description"
                 multiline
-                numberOfLines={_4}
+                numberOfLines={4}
                 textAlignVertical="top"
               />
             </View>
@@ -365,8 +365,8 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
               <Text style={styles.label}>Location Name *</Text>
               <TextInput
                 style={[styles.input, errors.location && styles.inputError]}
-                value={_location}
-                onChangeText={_setLocation}
+                value={location}
+                onChangeText={setLocation}
                 placeholder="Enter venue name"
               />
               {errors.location && (
@@ -379,8 +379,8 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
               <Text style={styles.label}>Address *</Text>
               <TextInput
                 style={[styles.input, errors.address && styles.inputError]}
-                value={_address}
-                onChangeText={_setAddress}
+                value={address}
+                onChangeText={setAddress}
                 placeholder="Enter full address"
               />
               {errors.address && (
@@ -394,36 +394,36 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
               <View style={styles.dateTimeContainer}>
                 <TouchableOpacity
                   style={styles.dateTimeButton}
-                  onPress={() => setShowStartDatePicker(_true)}
+                  onPress={() => setShowStartDatePicker(true)}
                 >
-                  <Ionicons name="calendar" size={_18} color="#0057B8" style={styles.dateTimeIcon} />
+                  <Ionicons name="calendar" size={18} color="#0057B8" style={styles.dateTimeIcon} />
                   <Text style={styles.dateTimeText}>{formatDate(startDate)}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
                   style={styles.dateTimeButton}
-                  onPress={() => setShowStartTimePicker(_true)}
+                  onPress={() => setShowStartTimePicker(true)}
                 >
-                  <Ionicons name="time" size={_18} color="#0057B8" style={styles.dateTimeIcon} />
+                  <Ionicons name="time" size={18} color="#0057B8" style={styles.dateTimeIcon} />
                   <Text style={styles.dateTimeText}>{formatTime(startDate)}</Text>
                 </TouchableOpacity>
               </View>
               
               {showStartDatePicker && (
                 <DateTimePicker
-                  value={_startDate}
+                  value={startDate}
                   mode="date"
                   display="default"
-                  onChange={(_event, _date) => handleDateChange(_event, _date, 'startDate')}
+                  onChange={(event, date) => handleDateChange(event, date, 'startDate')}
                 />
               )}
               
               {showStartTimePicker && (
                 <DateTimePicker
-                  value={_startDate}
+                  value={startDate}
                   mode="time"
                   display="default"
-                  onChange={(_event, _date) => handleDateChange(_event, _date, 'startTime')}
+                  onChange={(event, date) => handleDateChange(event, date, 'startTime')}
                 />
               )}
             </View>
@@ -434,36 +434,36 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
               <View style={styles.dateTimeContainer}>
                 <TouchableOpacity
                   style={styles.dateTimeButton}
-                  onPress={() => setShowEndDatePicker(_true)}
+                  onPress={() => setShowEndDatePicker(true)}
                 >
-                  <Ionicons name="calendar" size={_18} color="#0057B8" style={styles.dateTimeIcon} />
+                  <Ionicons name="calendar" size={18} color="#0057B8" style={styles.dateTimeIcon} />
                   <Text style={styles.dateTimeText}>{formatDate(endDate)}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
                   style={styles.dateTimeButton}
-                  onPress={() => setShowEndTimePicker(_true)}
+                  onPress={() => setShowEndTimePicker(true)}
                 >
-                  <Ionicons name="time" size={_18} color="#0057B8" style={styles.dateTimeIcon} />
+                  <Ionicons name="time" size={18} color="#0057B8" style={styles.dateTimeIcon} />
                   <Text style={styles.dateTimeText}>{formatTime(endDate)}</Text>
                 </TouchableOpacity>
               </View>
               
               {showEndDatePicker && (
                 <DateTimePicker
-                  value={_endDate}
+                  value={endDate}
                   mode="date"
                   display="default"
-                  onChange={(_event, _date) => handleDateChange(_event, _date, 'endDate')}
+                  onChange={(event, date) => handleDateChange(event, date, 'endDate')}
                 />
               )}
               
               {showEndTimePicker && (
                 <DateTimePicker
-                  value={_endDate}
+                  value={endDate}
                   mode="time"
                   display="default"
-                  onChange={(_event, _date) => handleDateChange(_event, _date, 'endTime')}
+                  onChange={(event, date) => handleDateChange(event, date, 'endTime')}
                 />
               )}
               
@@ -477,8 +477,8 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
               <Text style={styles.label}>Entry Fee ($)</Text>
               <TextInput
                 style={[styles.input, errors.entryFee && styles.inputError]}
-                value={_entryFee}
-                onChangeText={_setEntryFee}
+                value={entryFee}
+                onChangeText={setEntryFee}
                 placeholder="0.00"
                 keyboardType="decimal-pad"
               />
@@ -489,11 +489,11 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
             
             {/* Image URL */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Image URL (_optional)</Text>
+              <Text style={styles.label}>Image URL (optional)</Text>
               <TextInput
                 style={styles.input}
-                value={_imageUrl}
-                onChangeText={_setImageUrl}
+                value={imageUrl}
+                onChangeText={setImageUrl}
                 placeholder="https://example.com/image.jpg"
               />
             </View>
@@ -504,8 +504,8 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
                 <View style={styles.switchContainer}>
                   <Text style={styles.label}>Create Recurring Shows</Text>
                   <Switch
-                    value={_isRecurring}
-                    onValueChange={_setIsRecurring}
+                    value={isRecurring}
+                    onValueChange={setIsRecurring}
                     trackColor={{ false: '#D1D1D6', true: '#A2C4FF' }}
                     thumbColor={isRecurring ? '#0057B8' : '#F4F3F4'}
                   />
@@ -517,12 +517,12 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
                     <View style={styles.intervalButtons}>
                       {['weekly', 'biweekly', 'monthly', 'quarterly'].map(interval => (
                         <TouchableOpacity
-                          key={_interval}
+                          key={interval}
                           style={[
                             styles.intervalButton,
                             recurringInterval === interval && styles.intervalButtonSelected
                           ]}
-                          onPress={() => setRecurringInterval(_interval)}
+                          onPress={() => setRecurringInterval(interval)}
                         >
                           <Text style={[
                             styles.intervalButtonText,
@@ -541,10 +541,10 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
                           styles.countInput,
                           errors.recurringCount && styles.inputError
                         ]}
-                        value={_recurringCount}
-                        onChangeText={_setRecurringCount}
+                        value={recurringCount}
+                        onChangeText={setRecurringCount}
                         keyboardType="number-pad"
-                        maxLength={_2}
+                        maxLength={2}
                       />
                     </View>
                     
@@ -561,16 +561,16 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={styles.cancelButton}
-              onPress={_onClose}
-              disabled={_isLoading}
+              onPress={onClose}
+              disabled={isLoading}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.saveButton}
-              onPress={_handleSubmit}
-              disabled={_isLoading}
+              onPress={handleSubmit}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
@@ -587,12 +587,12 @@ const AddEditShowModal: React.FC<AddEditShowModalProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, _0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     width: '90%',

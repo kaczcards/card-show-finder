@@ -114,7 +114,7 @@ export const _signUp = async (
       password: credentials.password,
     });
 
-    if (_error) {
+    if (error) {
       throw error;
     }
 
@@ -122,10 +122,10 @@ export const _signUp = async (
       throw new Error('Failed to create user');
     }
 
-    const _userId = data.user.id;
+    const userId = data.user.id;
 
     // Then add their profile information to the profiles table
-    const { error: _profileError } = await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
         id: userId,
@@ -138,10 +138,10 @@ export const _signUp = async (
         updated_at: new Date().toISOString(),
       });
 
-    if (_profileError) {
+    if (profileError) {
       // If profile creation fails, we should still be OK since the auth
       // trigger should create a minimal profile
-      console.warn('Error creating profile:', _profileError);
+      console.warn('Error creating profile:', profileError);
     }
 
     // Construct user object
@@ -171,7 +171,7 @@ export const _signUp = async (
 /**
  * Register a new user with email, password, and profile information.
  * This mirrors the `signUp` flow but lets callers explicitly choose the
- * initial role (_Dealer, MVP Dealer, Organizer, etc.).
+ * initial role (Dealer, MVP Dealer, Organizer, etc.).
  *
  * NOTE: `AuthContext` relies on this helper, so the return shape must be a
  * complete `User` object – NOT the `{ user, error }` shape used by `signIn`.
@@ -198,17 +198,17 @@ export const _registerUser = async (
 
     // ---- Create Auth user -------------------------------------------------------
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (_error) {
+    if (error) {
       throw error;
     }
     if (!data?.user) {
       throw new Error('Failed to create user');
     }
 
-    const _userId = data.user.id;
+    const userId = data.user.id;
 
     // Determine account_type based on role
-    const _accountType =
+    const accountType =
       role === UserRole.SHOW_ORGANIZER
         ? 'organizer'
         : role === UserRole.DEALER || role === UserRole.MVP_DEALER
@@ -216,7 +216,7 @@ export const _registerUser = async (
         : 'collector';
 
     // ---- Insert / update profile row -------------------------------------------
-    const { error: _profileError } = await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
         id: userId,
@@ -229,13 +229,13 @@ export const _registerUser = async (
         updated_at: new Date().toISOString(),
       });
 
-    if (_profileError) {
+    if (profileError) {
       // RLS triggers should still create a minimal row, but log just in case.
-      console.warn('Error creating profile:', _profileError);
+      console.warn('Error creating profile:', profileError);
     }
 
     // ---- Build & return User object --------------------------------------------
-    const _nowIso = new Date().toISOString();
+    const nowIso = new Date().toISOString();
     const user: User = {
       id: userId,
       email,
@@ -270,13 +270,13 @@ export const _signIn = async (
   credentials: AuthCredentials,
 ): Promise<{ user?: User; error?: Error }> => {
   try {
-    const { data, _error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
 
-    if (_error) {
-      return { _error };
+    if (error) {
+      return { error };
     }
 
     if (!data?.user) {
@@ -290,7 +290,7 @@ export const _signIn = async (
       .eq('id', data.user.id)
       .single();
 
-    if (_profileError) {
+    if (profileError) {
       return {
         error: new Error(`Error fetching user profile: ${profileError.message}`),
       };
@@ -301,11 +301,11 @@ export const _signIn = async (
     }
 
     // Map to our User type
-    const _user = mapProfileToUser(data.user, _profileData);
-    return { _user };
+    const user = mapProfileToUser(data.user, profileData);
+    return { user };
   } catch (error: any) {
     console.error('Error in signin:', error.message);
-    return { _error };
+    return { error };
   }
 };
 
@@ -313,8 +313,8 @@ export const _signIn = async (
  * Sign out the current user
  */
 export const _signOut = async (): Promise<void> => {
-  const { _error } = await supabase.auth.signOut();
-  if (_error) {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
     throw error;
   }
 };
@@ -327,7 +327,7 @@ export const _getSession = async (): Promise<User | null> => {
   try {
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
-    if (_sessionError) {
+    if (sessionError) {
       throw sessionError;
     }
     
@@ -335,7 +335,7 @@ export const _getSession = async (): Promise<User | null> => {
       return null;
     }
     
-    const _authUser = sessionData.session.user;
+    const authUser = sessionData.session.user;
     
     // Fetch profile from the profiles table
     const { data: profileData, error: profileError } = await supabase
@@ -346,7 +346,7 @@ export const _getSession = async (): Promise<User | null> => {
     
     if (profileError && profileError.code !== 'PGRST116') {
       // PGRST116 means no rows returned
-      console.error('Error getting profile:', _profileError);
+      console.error('Error getting profile:', profileError);
       throw profileError;
     }
     
@@ -356,11 +356,11 @@ export const _getSession = async (): Promise<User | null> => {
     }
     
     // Map to our User type
-    const _user = mapProfileToUser(_authUser, _profileData);
+    const user = mapProfileToUser(authUser, profileData);
     
     return user;
-  } catch (_error) {
-    console.error('Error getting current session:', _error);
+  } catch (error) {
+    console.error('Error getting current session:', error);
     return null;
   }
 };
@@ -378,24 +378,24 @@ export const _getCurrentUser = async (userId: string): Promise<User | null> => {
     }
 
      
-console.warn('[_supabaseAuthService] Fetching user profile for ID:', _userId);
+console.warn('[_supabaseAuthService] Fetching user profile for ID:', userId);
 
     /* -----------------------------------------------------------
      * 1) Fetch the user's profile row from `profiles`
      * --------------------------------------------------------- */
-    const { data: profileData, error: _profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', _userId)
+      .eq('id', userId)
       .single();
 
-    if (_profileError) {
-      console.error('[_supabaseAuthService] Error fetching profile:', _profileError);
+    if (profileError) {
+      console.error('[_supabaseAuthService] Error fetching profile:', profileError);
       return null;
     }
 
     if (!profileData) {
-      console.warn('[_supabaseAuthService] No profile found for user:', _userId);
+      console.warn('[_supabaseAuthService] No profile found for user:', userId);
       return null;
     }
 
@@ -403,15 +403,15 @@ console.warn('[_supabaseAuthService] Fetching user profile for ID:', _userId);
      * 2) Retrieve auth data for the **current** user via session.
      *    (Supabase client-side cannot fetch arbitrary users.)
      * --------------------------------------------------------- */
-    const { data: authData, error: _authError } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
 
-    let _authUser = authData?.user;
+    let authUser = authData?.user;
 
-    if (_authError) {
-      console.error('[_supabaseAuthService] Error fetching auth user:', _authError);
+    if (authError) {
+      console.error('[_supabaseAuthService] Error fetching auth user:', authError);
     }
 
-    // Fallback – construct minimal auth payload if IDs don’t match
+    // Fallback – construct minimal auth payload if IDs don't match
     if (!authUser || authUser.id !== userId) {
       authUser = {
         id: userId,
@@ -422,9 +422,9 @@ console.warn('[_supabaseAuthService] Fetching user profile for ID:', _userId);
     /* -----------------------------------------------------------
      * 3) Map combined auth + profile data to our `User` type
      * --------------------------------------------------------- */
-    return mapProfileToUser(_authUser, _profileData);
+    return mapProfileToUser(authUser, profileData);
   } catch (error: any) {
-    console.error('[_supabaseAuthService] Unexpected error in getCurrentUser:', _error);
+    console.error('[_supabaseAuthService] Unexpected error in getCurrentUser:', error);
     return null;
   }
 };
@@ -437,7 +437,7 @@ export const _refreshUser = async (): Promise<User | null> => {
   try {
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
-    if (_sessionError) {
+    if (sessionError) {
       throw sessionError;
     }
     
@@ -445,12 +445,12 @@ export const _refreshUser = async (): Promise<User | null> => {
       return null;
     }
     
-    const _authUser = sessionData.session.user;
+    const authUser = sessionData.session.user;
     
     // Refresh the auth session token to ensure we have the latest claims
     const { error: refreshError } = await supabase.auth.refreshSession();
     
-    if (_refreshError) {
+    if (refreshError) {
       throw refreshError;
     }
     
@@ -461,7 +461,7 @@ export const _refreshUser = async (): Promise<User | null> => {
       .eq('id', authUser.id)
       .single();
     
-    if (_profileError) {
+    if (profileError) {
       throw profileError;
     }
     
@@ -470,11 +470,11 @@ export const _refreshUser = async (): Promise<User | null> => {
     }
     
     // Map to our User type
-    const _user = mapProfileToUser(_authUser, _profileData);
+    const user = mapProfileToUser(authUser, profileData);
     
     return user;
-  } catch (_error) {
-    console.error('Error refreshing user:', _error);
+  } catch (error) {
+    console.error('Error refreshing user:', error);
     return null;
   }
 };
@@ -485,11 +485,11 @@ export const _refreshUser = async (): Promise<User | null> => {
  */
 export const _resetPassword = async (email: string): Promise<void> => {
   try {
-    const { _error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'cardshowhunter://reset-password',
     });
     
-    if (_error) {
+    if (error) {
       throw error;
     }
   } catch (error: any) {
@@ -500,15 +500,15 @@ export const _resetPassword = async (email: string): Promise<void> => {
 
 /**
  * Resend **email-verification** link after signup.
- * Useful when a user’s original verification email expired.
+ * Useful when a user's original verification email expired.
  */
-export const _resendEmailVerification = async (_email: string): Promise<void> => {
+export const _resendEmailVerification = async (email: string): Promise<void> => {
   try {
-    const { _error } = await supabase.auth.resend({
+    const { error } = await supabase.auth.resend({
       type: 'signup',
-      _email,
+      email,
     });
-    if (_error) {
+    if (error) {
       throw error;
     }
   } catch (error: any) {
@@ -523,11 +523,11 @@ export const _resendEmailVerification = async (_email: string): Promise<void> =>
  */
 export const _updatePassword = async (newPassword: string): Promise<void> => {
   try {
-    const { _error } = await supabase.auth.updateUser({
+    const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
     
-    if (_error) {
+    if (error) {
       throw error;
     }
   } catch (error: any) {
@@ -547,38 +547,38 @@ export const _updateUserProfile = async (userData: Partial<User>): Promise<User>
       throw new Error('User ID is required for update');
     }
     
-    const _userId = userData.id;
+    const userId = userData.id;
 
     /* ---------------------------------------------------------------
-     * Capture the user’s existing home ZIP *before* the update so we
+     * Capture the user's existing home ZIP *before* the update so we
      * can detect changes afterwards and surface a toast.
      * ------------------------------------------------------------- */
-    const _sessionUser = await getSession();
-    const _previousZip = sessionUser?.homeZipCode ?? null;
+    const sessionUser = await getSession();
+    const previousZip = sessionUser?.homeZipCode ?? null;
     
     // Convert our User fields to DB fields
-    const _profileData = mapUserToProfile(_userData);
+    const profileData = mapUserToProfile(userData);
     
     // Remove any undefined values to avoid setting NULL
     Object.keys(profileData).forEach(key => {
-      const _typedKey = key as keyof typeof profileData;
-      if (profileData[_typedKey] === undefined) {
-        delete profileData[_typedKey];
+      const typedKey = key as keyof typeof profileData;
+      if (profileData[typedKey] === undefined) {
+        delete profileData[typedKey];
       }
     });
     
     // Update the profile
-    const { _error } = await supabase
+    const { error } = await supabase
       .from('profiles')
       .update(profileData)
-      .eq('id', _userId);
+      .eq('id', userId);
     
-    if (_error) {
+    if (error) {
       throw error;
     }
     
     // Get updated user data
-    const _updatedUser = await getSession();
+    const updatedUser = await getSession();
     if (!updatedUser) {
       throw new Error('Failed to retrieve updated user data');
     }
@@ -607,12 +607,12 @@ export const _updateUserProfile = async (userData: Partial<User>): Promise<User>
 export const _subscribeToAuthChanges = (
   callback: (authState: AuthState) => void
 ) => {
-  let _initialized = false;
+  let initialized = false;
 
-  const _subscription = supabase.auth.onAuthStateChange(
-    async (_event, _session) => {
+  const subscription = supabase.auth.onAuthStateChange(
+    async (event, session) => {
        
-console.warn('Auth state change event:', _event);
+console.warn('Auth state change event:', event);
       
       // Initial state is loading
       if (!initialized) {
@@ -632,16 +632,16 @@ console.warn('Auth state change event:', _event);
             throw new Error('No session or user found after sign in');
           }
           
-          const _userId = session.user.id;
+          const userId = session.user.id;
           
           // Fetch user profile
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', _userId)
+            .eq('id', userId)
             .single();
           
-          if (_profileError) {
+          if (profileError) {
             throw profileError;
           }
           
@@ -650,7 +650,7 @@ console.warn('Auth state change event:', _event);
           }
           
           // Map profile to our User type
-          const _user = mapProfileToUser(session.user, _profileData);
+          const user = mapProfileToUser(session.user, profileData);
           
           callback({
             user,
@@ -659,7 +659,7 @@ console.warn('Auth state change event:', _event);
             isAuthenticated: true,
           });
         } catch (error: any) {
-          console.error('Error in auth state change listener:', _error);
+          console.error('Error in auth state change listener:', error);
           callback({
             user: null,
             isLoading: false,
@@ -688,7 +688,7 @@ console.warn('Auth state change event:', _event);
  * @returns Boolean indicating if a user is authenticated
  */
 export const _isAuthenticated = async (): Promise<boolean> => {
-  const { _data } = await supabase.auth.getSession();
+  const { data } = await supabase.auth.getSession();
   return !!data.session;
 };
 
@@ -703,17 +703,17 @@ export const _updateUserRole = async (
   newRole: UserRole
 ): Promise<void> => {
   try {
-    const { _error } = await supabase
+    const { error } = await supabase
       .from('profiles')
       .update({
         role: newRole,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', _uid);
+      .eq('id', uid);
 
-    if (_error) throw error;
+    if (error) throw error;
   } catch (error: any) {
-    console.error('Error updating user role:', _error);
+    console.error('Error updating user role:', error);
     throw new Error(error.message || 'Failed to update user role');
   }
 };
@@ -723,7 +723,7 @@ export const _updateUserRole = async (
  * ------------------------------------------------------------------ */
 
 /**
- * Add a show to the user’s favorites.
+ * Add a show to the user's favorites.
  * Relies on a Postgres function `add_favorite_show(user_id uuid, show_id uuid)`
  * that performs the insert as well as any business-logic validations.
  */
@@ -732,19 +732,19 @@ export const _addShowToFavorites = async (
   showId: string
 ): Promise<void> => {
   try {
-    const { _error } = await supabase.rpc('add_favorite_show', {
+    const { error } = await supabase.rpc('add_favorite_show', {
       user_id: userId,
       show_id: showId,
     });
-    if (_error) throw error;
+    if (error) throw error;
   } catch (error: any) {
-    console.error('[_supabaseAuthService] addShowToFavorites failed:', _error);
+    console.error('[_supabaseAuthService] addShowToFavorites failed:', error);
     throw new Error(error.message || 'Failed to add show to favorites');
   }
 };
 
 /**
- * Remove a show from the user’s favorites.
+ * Remove a show from the user's favorites.
  * Mirrors {@link addShowToFavorites} but calls
  * the `remove_favorite_show` Postgres function.
  */
@@ -753,13 +753,47 @@ export const _removeShowFromFavorites = async (
   showId: string
 ): Promise<void> => {
   try {
-    const { _error } = await supabase.rpc('remove_favorite_show', {
+    const { error } = await supabase.rpc('remove_favorite_show', {
       user_id: userId,
       show_id: showId,
     });
-    if (_error) throw error;
+    if (error) throw error;
   } catch (error: any) {
-    console.error('[_supabaseAuthService] removeShowFromFavorites failed:', _error);
+    console.error('[_supabaseAuthService] removeShowFromFavorites failed:', error);
     throw new Error(error.message || 'Failed to remove show from favorites');
   }
 }
+
+/* ------------------------------------------------------------------
+ * Public (underscore-free) re-exports
+ * ------------------------------------------------------------------ */
+
+// NOTE:
+// These aliases preserve the original "underscore" implementation names
+// while exposing clean import paths for the rest of the code-base.  This
+// avoids sweeping refactors in every consumer and keeps the public API
+// consistent going forward.
+
+export const mapProfileToUser        = _mapProfileToUser;
+export const mapUserToProfile        = _mapUserToProfile;
+
+export const signUp                  = _signUp;
+export const registerUser            = _registerUser;
+export const signIn                  = _signIn;
+export const signOut                 = _signOut;
+
+export const getSession              = _getSession;
+export const getCurrentUser          = _getCurrentUser;
+export const refreshUser             = _refreshUser;
+
+export const resetPassword           = _resetPassword;
+export const resendEmailVerification = _resendEmailVerification;
+export const updatePassword          = _updatePassword;
+
+export const updateUserProfile       = _updateUserProfile;
+export const subscribeToAuthChanges  = _subscribeToAuthChanges;
+export const isAuthenticated         = _isAuthenticated;
+export const updateUserRole          = _updateUserRole;
+
+export const addShowToFavorites      = _addShowToFavorites;
+export const removeShowFromFavorites = _removeShowFromFavorites;

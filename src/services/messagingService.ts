@@ -46,7 +46,7 @@ export interface Message {
  * @param metadata Additional metadata
  * @returns The sent message or null if failed
  */
-export const _sendMessage = async (
+export const sendMessage = async (
   senderId: string,
   recipientId: string,
   content: string,
@@ -74,7 +74,7 @@ console.warn('Sending message:', { senderId, recipientId, content, type, metadat
     //   .select()
     //   .single();
     
-    // if (_error) throw error;
+    // if (error) throw error;
     
     // For now, just return a mock message
     const mockMessage: Message = {
@@ -103,30 +103,30 @@ console.warn('Sending message:', { senderId, recipientId, content, type, metadat
  * @param offset Offset for pagination
  * @returns Array of messages
  */
-export const _getUserMessages = async (
+export const getUserMessages = async (
   userId: string,
-  _limit: number = 20,
-  _offset: number = 0
+  limit: number = 20,
+  offset: number = 0
 ): Promise<Message[]> => {
   try {
     // This is a placeholder implementation
      
-console.warn('Getting messages for user:', _userId);
+console.warn('Getting messages for user:', userId);
     
     // In a real implementation, we would fetch messages from Supabase
     // const { data, error } = await supabase
     //   .from('messages')
     //   .select('*')
-    //   .or(`recipient_id.eq.${_userId},sender_id.eq.${_userId}`)
+    //   .or(`recipient_id.eq.${userId},sender_id.eq.${userId}`)
     //   .order('created_at', { ascending: false })
     //   .range(offset, offset + limit - 1);
     
-    // if (_error) throw error;
+    // if (error) throw error;
     
     // Return empty array for now
     return [];
-  } catch (_error) {
-    console.error('Error getting user messages:', _error);
+  } catch (error) {
+    console.error('Error getting user messages:', error);
     return [];
   }
 };
@@ -136,23 +136,23 @@ console.warn('Getting messages for user:', _userId);
  * @param messageId ID of the message
  * @returns Success status
  */
-export const _markMessageAsRead = async (_messageId: string): Promise<boolean> => {
+export const markMessageAsRead = async (messageId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
      
-console.warn('Marking message as read:', _messageId);
+console.warn('Marking message as read:', messageId);
     
     // In a real implementation, we would update the message in Supabase
-    // const { _error } = await supabase
+    // const { error } = await supabase
     //   .from('messages')
     //   .update({ status: MessageStatus.READ, updated_at: new Date().toISOString() })
-    //   .eq('id', _messageId);
+    //   .eq('id', messageId);
     
-    // if (_error) throw error;
+    // if (error) throw error;
     
     return true;
-  } catch (_error) {
-    console.error('Error marking message as read:', _error);
+  } catch (error) {
+    console.error('Error marking message as read:', error);
     return false;
   }
 };
@@ -163,24 +163,24 @@ console.warn('Marking message as read:', _messageId);
  * @param userId ID of the user (for verification)
  * @returns Success status
  */
-export const _deleteMessage = async (_messageId: string, _userId: string): Promise<boolean> => {
+export const deleteMessage = async (messageId: string, userId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
      
-console.warn('Deleting message:', _messageId);
+console.warn('Deleting message:', messageId);
     
     // In a real implementation, we would delete the message from Supabase
-    // const { _error } = await supabase
+    // const { error } = await supabase
     //   .from('messages')
     //   .delete()
-    //   .eq('id', _messageId)
-    //   .or(`recipient_id.eq.${_userId},sender_id.eq.${_userId}`);
+    //   .eq('id', messageId)
+    //   .or(`recipient_id.eq.${userId},sender_id.eq.${userId}`);
     
-    // if (_error) throw error;
+    // if (error) throw error;
     
     return true;
-  } catch (_error) {
-    console.error('Error deleting message:', _error);
+  } catch (error) {
+    console.error('Error deleting message:', error);
     return false;
   }
 };
@@ -193,7 +193,7 @@ console.warn('Deleting message:', _messageId);
  * @param metadata Additional metadata
  * @returns Array of sent messages or null if failed
  */
-export const _sendBroadcastMessage = async (
+export const sendBroadcastMessage = async (
   senderId: string,
   recipientIds: string[],
   content: string,
@@ -206,28 +206,28 @@ console.warn('Sending broadcast message:', { senderId, recipientIds, content, me
     
     // In a real implementation, we would send individual messages to each recipient
     const messages: Message[] = [];
-    for (const _recipientId of recipientIds) {
-      const _message = await sendMessage(
-        _senderId,
-        _recipientId,
+    for (const recipientId of recipientIds) {
+      const message = await sendMessage(
+        senderId,
+        recipientId,
         content,
         MessageType.BROADCAST,
         metadata
       );
-      if (_message) {
+      if (message) {
         messages.push(message);
       }
     }
     
     return messages;
-  } catch (_error) {
-    console.error('Error sending broadcast message:', _error);
+  } catch (error) {
+    console.error('Error sending broadcast message:', error);
     return null;
   }
 };
 
 // Export the messaging service
-export const _messagingService = {
+export const messagingService = {
   sendMessage,
   getUserMessages,
   markMessageAsRead,

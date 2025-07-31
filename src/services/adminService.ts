@@ -14,7 +14,7 @@ import { Show, Coordinates } from '../types';
  * @param row The raw database record
  * @returns A Show object with properly mapped fields
  */
-const _mapDbShowToAppShow = (row: any): Show => ({
+const mapDbShowToAppShow = (row: any): Show => ({
   id: row.id,
   title: row.title,
   location: row.location,
@@ -31,8 +31,8 @@ const _mapDbShowToAppShow = (row: any): Show => ({
     typeof row.coordinates === 'object' ? 
     {
       // Extract coordinates from PostGIS geography type
-      latitude: parseFloat(row.coordinates.coordinates?.[_1]) || 0,
-      longitude: parseFloat(row.coordinates.coordinates?.[_0]) || 0,
+      latitude: parseFloat(row.coordinates.coordinates?.[1]) || 0,
+      longitude: parseFloat(row.coordinates.coordinates?.[0]) || 0,
     } : undefined,
   status: row.status,
   organizerId: row.organizer_id,
@@ -49,21 +49,21 @@ const _mapDbShowToAppShow = (row: any): Show => ({
  * 
  * @returns An object containing isAdmin status and any error message
  */
-export const _checkAdminStatus = async (): Promise<{ isAdmin: boolean; error: string | null }> => {
+export const checkAdminStatus = async (): Promise<{ isAdmin: boolean; error: string | null }> => {
   try {
     const { data, error } = await supabase.rpc('is_admin');
     
-    if (_error) {
+    if (error) {
       // If the function is missing in the DB, fall back to a hard-coded check
-      const _functionMissing =
+      const functionMissing =
         error.code === 'PGRST202' ||                        // Supabase “function not found”
         /is_admin/i.test(error.message || '');              // Generic missing-function hint
 
-      if (_functionMissing) {
+      if (functionMissing) {
         try {
           // Safe fallback: treat the configured email as an admin until the DB is fixed
           const {
-            data: { _user },
+            data: { user },
           } = await supabase.auth.getUser();
 
           if (user?.email?.toLowerCase() === 'kaczcards@gmail.com') {
@@ -73,18 +73,18 @@ export const _checkAdminStatus = async (): Promise<{ isAdmin: boolean; error: st
           // Not the fallback admin – report no error (avoid blocking UI)
           return { isAdmin: false, error: null };
         } catch (fallbackErr: any) {
-          console.error('Fallback admin check failed:', _fallbackErr);
+          console.error('Fallback admin check failed:', fallbackErr);
           return { isAdmin: false, error: fallbackErr.message || error.message };
         }
       }
 
-      console.error('Error checking admin status:', _error);
+      console.error('Error checking admin status:', error);
       return { isAdmin: false, error: error.message };
     }
     
     return { isAdmin: !!data, error: null };
   } catch (err: any) {
-    console.error('Unexpected error checking admin status:', _err);
+    console.error('Unexpected error checking admin status:', err);
     return { isAdmin: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -95,12 +95,12 @@ export const _checkAdminStatus = async (): Promise<{ isAdmin: boolean; error: st
  * 
  * @returns An object containing an array of shows and any error message
  */
-export const _getAllShowsForValidation = async (): Promise<{ shows: Show[]; error: string | null }> => {
+export const getAllShowsForValidation = async (): Promise<{ shows: Show[]; error: string | null }> => {
   try {
     // First check if the user has admin privileges
     const { isAdmin, error: adminCheckError } = await checkAdminStatus();
     
-    if (_adminCheckError) {
+    if (adminCheckError) {
       return { shows: [], error: adminCheckError };
     }
     
@@ -119,7 +119,7 @@ export const _getAllShowsForValidation = async (): Promise<{ shows: Show[]; erro
     /* -----------------------------------------------------------
      * 2. Fallback – if the view doesn't exist yet, query shows
      * --------------------------------------------------------- */
-    const _viewMissing =
+    const viewMissing =
       error &&
       (
         // Supabase “relation/view not found” codes
@@ -128,11 +128,11 @@ export const _getAllShowsForValidation = async (): Promise<{ shows: Show[]; erro
         /admin_shows_view/i.test(error.message || '')
       );
 
-    if (_viewMissing) {
+    if (viewMissing) {
       console.warn(
-        '[_adminService] admin_shows_view missing – falling back to public.shows',
+        '[adminService] admin_shows_view missing – falling back to public.shows',
       );
-      const _fb = await supabase
+      const fb = await supabase
         .from('shows')
         .select('*')
         .order('created_at', { ascending: false });
@@ -140,15 +140,15 @@ export const _getAllShowsForValidation = async (): Promise<{ shows: Show[]; erro
       error = fb.error;
     }
 
-    if (_error) {
-      console.error('Error fetching shows for validation:', _error);
+    if (error) {
+      console.error('Error fetching shows for validation:', error);
       return { shows: [], error: error.message };
     }
 
-    const _mappedShows = Array.isArray(data) ? data.map(mapDbShowToAppShow) : [];
+    const mappedShows = Array.isArray(data) ? data.map(mapDbShowToAppShow) : [];
     return { shows: mappedShows, error: null };
   } catch (err: any) {
-    console.error('Unexpected error fetching shows for validation:', _err);
+    console.error('Unexpected error fetching shows for validation:', err);
     return { shows: [], error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -160,7 +160,7 @@ export const _getAllShowsForValidation = async (): Promise<{ shows: Show[]; erro
  * @param coordinates The new coordinates for the show
  * @returns An object indicating success and any error message
  */
-export const _updateShowCoordinates = async (
+export const updateShowCoordinates = async (
   showId: string,
   coordinates: Coordinates
 ): Promise<{ success: boolean; error: string | null }> => {
@@ -168,7 +168,7 @@ export const _updateShowCoordinates = async (
     // First check if the user has admin privileges
     const { isAdmin, error: adminCheckError } = await checkAdminStatus();
     
-    if (_adminCheckError) {
+    if (adminCheckError) {
       return { success: false, error: adminCheckError };
     }
     
@@ -177,7 +177,7 @@ export const _updateShowCoordinates = async (
     }
     
     // Convert coordinates to PostGIS geography point format
-    const _geographyPoint = `SRID=4326;POINT(${coordinates.longitude} ${coordinates.latitude})`;
+    const geographyPoint = `SRID=4326;POINT(${coordinates.longitude} ${coordinates.latitude})`;
     
     // First attempt: PostGIS geography update
     const { error: geoError } = await supabase
@@ -186,7 +186,7 @@ export const _updateShowCoordinates = async (
         coordinates: geographyPoint,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', _showId);
+      .eq('id', showId);
 
     // If PostGIS update works, we're done
     if (!geoError) {
@@ -203,7 +203,7 @@ export const _updateShowCoordinates = async (
      * This keeps the admin UI functional even on staging DBs that haven't
      * enabled PostGIS.
      */
-    const _fallbackCoordinates = {
+    const fallbackCoordinates = {
       type: 'Point',
       coordinates: [coordinates.longitude, coordinates.latitude],
     };
@@ -214,9 +214,9 @@ export const _updateShowCoordinates = async (
         coordinates: fallbackCoordinates as any,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', _showId);
+      .eq('id', showId);
 
-    if (_fbError) {
+    if (fbError) {
       console.error('Error updating show coordinates (both attempts failed):', {
         primary: geoError?.message,
         fallback: fbError.message,
@@ -226,11 +226,11 @@ export const _updateShowCoordinates = async (
 
     // Fallback succeeded
     console.warn(
-      '[_adminService] PostGIS update failed, stored fallback JSON coordinates instead.',
+      '[adminService] PostGIS update failed, stored fallback JSON coordinates instead.',
     );
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error updating show coordinates:', _err);
+    console.error('Unexpected error updating show coordinates:', err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -242,20 +242,20 @@ export const _updateShowCoordinates = async (
  * @param userId The ID of the user to make an admin
  * @returns An object indicating success and any error message
  */
-export const _assignAdminRole = async (
+export const assignAdminRole = async (
   userId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { _error } = await supabase.rpc('assign_admin_role', { target_user_id: userId });
+    const { error } = await supabase.rpc('assign_admin_role', { target_user_id: userId });
     
-    if (_error) {
-      console.error('Error assigning admin role:', _error);
+    if (error) {
+      console.error('Error assigning admin role:', error);
       return { success: false, error: error.message };
     }
     
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error assigning admin role:', _err);
+    console.error('Unexpected error assigning admin role:', err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };
@@ -267,20 +267,20 @@ export const _assignAdminRole = async (
  * @param userId The ID of the user to remove admin privileges from
  * @returns An object indicating success and any error message
  */
-export const _revokeAdminRole = async (
+export const revokeAdminRole = async (
   userId: string
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { _error } = await supabase.rpc('revoke_admin_role', { target_user_id: userId });
+    const { error } = await supabase.rpc('revoke_admin_role', { target_user_id: userId });
     
-    if (_error) {
-      console.error('Error revoking admin role:', _error);
+    if (error) {
+      console.error('Error revoking admin role:', error);
       return { success: false, error: error.message };
     }
     
     return { success: true, error: null };
   } catch (err: any) {
-    console.error('Unexpected error revoking admin role:', _err);
+    console.error('Unexpected error revoking admin role:', err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
   }
 };

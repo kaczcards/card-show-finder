@@ -7,10 +7,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ShowFilters, CardCategory, ShowFeature } from '../types';
+import { ShowFilters } from '../types';
 
 // Constants
-const PRIMARY_COLOR = '#FF6A00'; // Orange
 const SECONDARY_COLOR = '#0057B8'; // Blue
 
 interface FilterChipsProps {

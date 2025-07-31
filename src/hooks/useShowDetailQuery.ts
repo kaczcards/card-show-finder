@@ -61,18 +61,18 @@ interface ShowDetailResponse {
  * Custom hook to fetch show details using React Query and the get_show_details_by_id RPC function
  * @param showId The ID of the show to fetch
  */
-export const _useShowDetailQuery = (showId: string) => {
-  const _queryClient = useQueryClient();
-  const _authContext = useAuth();
-  const _user = authContext.authState?.user || null;
+export const useShowDetailQuery = (showId: string) => {
+  const queryClient = useQueryClient();
+  const authContext = useAuth();
+  const user = authContext.authState?.user || null;
   
   // Function to fetch show details from the RPC
-  const _fetchShowDetails = async () => {
+  const fetchShowDetails = async () => {
     const { data, error } = await supabase.rpc('get_show_details_by_id', { 
       show_id: showId 
     });
     
-    if (_error) {
+    if (error) {
       throw new Error(error.message);
     }
     
@@ -81,9 +81,9 @@ export const _useShowDetailQuery = (showId: string) => {
     }
     
     // Enhanced version that adds social media links for MVP Dealers
-    const _enhanceWithSocialMediaLinks = async (data: ShowDetailResponse) => {
+    const enhanceWithSocialMediaLinks = async (data: ShowDetailResponse) => {
       // Find any dealers with elevated privileges (MVP Dealers or Show Organizers)
-      const _privilegedDealers = data.participatingDealers.filter(
+      const privilegedDealers = data.participatingDealers.filter(
         dealer =>
           dealer.role === 'MVP_DEALER' ||
           dealer.role === 'SHOW_ORGANIZER'
@@ -95,16 +95,16 @@ export const _useShowDetailQuery = (showId: string) => {
         // Fetch profiles for all MVP dealers in a single batch
         const { data: profiles, error } = await supabase
           .from('profiles')
-          .select('id, _facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url')
+          .select('id, facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url')
           .in('id', privilegedDealers.map(dealer => dealer.id));
         
         if (error || !profiles) {
-          console.error('Error fetching dealer social media:', _error);
+          console.error('Error fetching dealer social media:', error);
           return data; // Return original data if there's an error
         }
         
         // Create a map for easy lookup
-        const _profileMap = new Map();
+        const profileMap = new Map();
         profiles.forEach(profile => {
           profileMap.set(profile.id, {
             facebookUrl: profile.facebook_url,
@@ -116,7 +116,7 @@ export const _useShowDetailQuery = (showId: string) => {
         });
         
         // Enhance the dealers with social media links
-        const _enhancedDealers = data.participatingDealers.map(dealer => {
+        const enhancedDealers = data.participatingDealers.map(dealer => {
           if (
             (dealer.role === 'MVP_DEALER' || dealer.role === 'SHOW_ORGANIZER') &&
             profileMap.has(dealer.id)
@@ -133,14 +133,14 @@ export const _useShowDetailQuery = (showId: string) => {
           ...data,
           participatingDealers: enhancedDealers
         };
-      } catch (_err) {
-        console.error('Unexpected error enhancing dealers with social media:', _err);
+      } catch (err) {
+        console.error('Unexpected error enhancing dealers with social media:', err);
         return data; // Return original data if there's an error
       }
     };
 
     // Apply the enhancement
-    const _enhancedData = await enhanceWithSocialMediaLinks(data as ShowDetailResponse);
+    const enhancedData = await enhanceWithSocialMediaLinks(data as ShowDetailResponse);
     return enhancedData;
   };
   
@@ -159,27 +159,27 @@ export const _useShowDetailQuery = (showId: string) => {
   });
   
   // Check if the current user is the show organizer
-  const _isCurrentUserOrganizer = user?.id === data?.show?.organizer_id;
+  const isCurrentUserOrganizer = user?.id === data?.show?.organizer_id;
   
   // Check if the user has a show organizer role
-  const _isShowOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
+  const isShowOrganizer = user?.role === UserRole.SHOW_ORGANIZER;
   
   // Check if the show is a favorite
-  const _checkIfFavorite = async () => {
+  const checkIfFavorite = async () => {
     try {
-      const { data: { _session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return false;
       
       const { data, error } = await supabase
         .from('user_favorite_shows')
         .select()
         .eq('user_id', session.user.id)
-        .eq('show_id', _showId)
+        .eq('show_id', showId)
         .single();
         
       return !error && !!data;
-    } catch (_error) {
-      console.error('Error checking favorite status:', _error);
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
       return false;
     }
   };
@@ -187,53 +187,53 @@ export const _useShowDetailQuery = (showId: string) => {
   // Use a query to check if the show is a favorite
   const { 
     data: isFavorite = false,
-    refetch: _refetchFavorite
+    refetch: refetchFavorite
   } = useQuery({
-    queryKey: ['showFavorite', _showId, user?.id],
+    queryKey: ['showFavorite', showId, user?.id],
     queryFn: checkIfFavorite,
     enabled: !!user?.id, // Only run if user is logged in
   });
   
   // Mutation for toggling favorite status
-  const _toggleFavoriteMutation = useMutation({
+  const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
-      const { data: { _session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session?.user) {
         throw new Error('Please sign in to save favorites');
       }
-      const _userId = session.user.id;
+      const userId = session.user.id;
 
-      if (_isFavorite) {
-        const { _error } = await supabase
+      if (isFavorite) {
+        const { error } = await supabase
           .from('user_favorite_shows')
           .delete()
-          .eq('user_id', _userId)
-          .eq('show_id', _showId);
-        if (_error) throw error;
+          .eq('user_id', userId)
+          .eq('show_id', showId);
+        if (error) throw error;
         return false; // Not a favorite anymore
       } else {
-        const { _error } = await supabase
+        const { error } = await supabase
           .from('user_favorite_shows')
           .insert([{ user_id: userId, show_id: showId }]);
-        if (_error) throw error;
+        if (error) throw error;
         return true; // Now a favorite
       }
     },
-    onSuccess: (_newFavoriteStatus) => {
+    onSuccess: (newFavoriteStatus) => {
       // Update the cache
-      queryClient.setQueryData(['showFavorite', _showId, user?.id], newFavoriteStatus);
+      queryClient.setQueryData(['showFavorite', showId, user?.id], newFavoriteStatus);
       // Invalidate the show details to update the favorite count
       queryClient.invalidateQueries({ queryKey: ['showDetails', showId] });
     },
-    onError: (_error) => {
-      const _appError = handleSupabaseError(_error);
-      console.error('🚨 UNEXPECTED ERROR in toggleFavorite:', _appError);
+    onError: (error) => {
+      const appError = handleSupabaseError(error);
+      console.error('🚨 UNEXPECTED ERROR in toggleFavorite:', appError);
       Alert.alert('Error', 'An unexpected error occurred while updating favorites.');
     }
   });
   
   // Helper function to toggle favorite status
-  const _toggleFavorite = async () => {
+  const toggleFavorite = async () => {
     if (!user) {
       Alert.alert('Sign In Required', 'Please sign in to save favorites');
       return;
@@ -243,49 +243,49 @@ export const _useShowDetailQuery = (showId: string) => {
   };
   
   // Helper function to format show date
-  const _formatShowDate = (show: ShowDetails) => {
+  const formatShowDate = (show: ShowDetails) => {
     if (!show.start_date) return '';
     
-    const _startDate = new Date(show.start_date);
-    const _options: Intl.DateTimeFormatOptions = { 
+    const startDate = new Date(show.start_date);
+    const options: Intl.DateTimeFormatOptions = { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     };
     
-    return startDate.toLocaleDateString('en-US', _options);
+    return startDate.toLocaleDateString('en-US', options);
   };
   
   // Helper function to share the show
-  const _shareShow = async () => {
+  const shareShow = async () => {
     if (!data?.show) return;
     
     try {
-      const _show = data.show;
-      const _message = `Check out this card show: ${show.title}\n\nWhen: ${formatShowDate(show)}\nWhere: ${show.location || show.address}\n\nShared from Card Show Finder app`;
+      const show = data.show;
+      const message = `Check out this card show: ${show.title}\n\nWhen: ${formatShowDate(show)}\nWhere: ${show.location || show.address}\n\nShared from Card Show Finder app`;
       await Share.share({ message, title: show.title });
-    } catch (_error) {
-      console.error('Error sharing:', _error);
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
   
   // Helper function to open the map location
-  const _openMapLocation = () => {
+  const openMapLocation = () => {
     if (!data?.show) return;
     
-    const _address = data.show.address || data.show.location || '';
-    const _encodedAddress = encodeURIComponent(_address);
-    const _url = `https://maps.apple.com/?q=${_encodedAddress}`;
+    const address = data.show.address || data.show.location || '';
+    const encodedAddress = encodeURIComponent(address);
+    const url = `https://maps.apple.com/?q=${encodedAddress}`;
     
     Linking.openURL(url).catch(() => {
-      const _googleUrl = `https://www.google.com/maps/search/?api=1&query=${_encodedAddress}`;
+      const googleUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
       Linking.openURL(googleUrl);
     });
   };
   
-  // Helper function for claiming a show (_placeholder)
-  const _handleClaimShow = () => {
+  // Helper function for claiming a show (placeholder)
+  const handleClaimShow = () => {
     Alert.alert("Claim Show", "This feature is coming soon!");
   };
   
@@ -316,8 +316,5 @@ export const _useShowDetailQuery = (showId: string) => {
 // Exports
 // ------------------------------------------------------------------
 
-// Default export should reference the correctly-named hook
-export default _useShowDetailQuery;
-
-// Backward-compatible named export (legacy imports without underscore)
-export const useShowDetailQuery = _useShowDetailQuery;
+// Default export
+export default useShowDetailQuery;

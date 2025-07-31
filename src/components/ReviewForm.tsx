@@ -20,28 +20,28 @@ interface ReviewFormProps {
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
-  _showId, // currently unused but required for type-safety
-  _seriesId,
+  showId, // currently unused but required for type-safety
+  seriesId,
   onSubmit,
-  _onCancel,
+  onCancel,
 }) => {
   const [rating, setRating] = useState<number>(0);
-  const [_comment, _setComment] = useState<string>('');
+  const [comment, setComment] = useState<string>('');
 
-  const _handleSubmit = () => {
+  const handleSubmit = () => {
     if (rating === 0) {
       Alert.alert('Missing Rating', 'Please select a star rating before submitting your review.');
       return;
     }
-    onSubmit(_rating, _comment);
+    onSubmit(rating, comment);
   };
 
   return (
     <Modal
       animationType="slide"
-      transparent={_true}
-      visible={_true} // This component is always visible when rendered
-      onRequestClose={_onCancel}
+      transparent={true}
+      visible={true} // This component is always visible when rendered
+      onRequestClose={onCancel}
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
@@ -49,11 +49,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
           {/* Star Rating */}
           <View style={styles.starRatingContainer}>
-            {[1, _2, 3, 4, 5].map((_star) => (
-              <TouchableOpacity key={_star} onPress={() => setRating(_star)}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity key={star} onPress={() => setRating(star)}>
                 <Ionicons
                   name={rating >= star ? 'star' : 'star-outline'}
-                  size={_36}
+                  size={36}
                   color={rating >= star ? '#FFD700' : '#ccc'}
                   style={styles.starIcon}
                 />
@@ -66,18 +66,18 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             style={styles.commentInput}
             placeholder="Share your thoughts about the show..."
             multiline
-            numberOfLines={_4}
-            value={_comment}
-            onChangeText={_setComment}
+            numberOfLines={4}
+            value={comment}
+            onChangeText={setComment}
             textAlignVertical="top"
           />
 
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.cancelButton} onPress={_onCancel}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.submitButton} onPress={_handleSubmit}>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
               <Text style={styles.submitButtonText}>Submit Review</Text>
             </TouchableOpacity>
           </View>
@@ -87,12 +87,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,_0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalView: {
     margin: 20,

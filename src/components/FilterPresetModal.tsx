@@ -65,23 +65,23 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
   }, [visible, userId]);
 
   // Load presets from Supabase
-  const _loadPresets = async () => {
+  const loadPresets = async () => {
     try {
       if (!userId) return;
       setLoading(true);
-      setError(_null);
-      const _userPresets = await loadFilterPresetsFromSupabase(_userId);
-      setPresets(_userPresets);
+      setError(null);
+      const userPresets = await loadFilterPresetsFromSupabase(userId);
+      setPresets(userPresets);
     } catch (err: any) {
       setError('Failed to load saved presets');
-      console.error('Error loading presets:', _err);
+      console.error('Error loading presets:', err);
     } finally {
       setLoading(false);
     }
   };
 
   // Save a new preset
-  const _handleSavePreset = async () => {
+  const handleSavePreset = async () => {
     if (!userId) {
       Alert.alert('Login Required', 'Please sign in to save filter presets.');
       return;
@@ -94,18 +94,18 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
 
     try {
       setSavingPreset(true);
-      setError(_null);
+      setError(null);
 
       // Check if a preset with this name already exists
-      const _existingPreset = presets.find(
-        (_preset) => preset.name.toLowerCase() === newPresetName.trim().toLowerCase()
+      const existingPreset = presets.find(
+        (preset) => preset.name.toLowerCase() === newPresetName.trim().toLowerCase()
       );
 
-      if (_existingPreset) {
+      if (existingPreset) {
         // Ask user if they want to overwrite
         Alert.alert(
           'Preset Exists',
-          `A preset named "${_newPresetName}" already exists. Do you want to update it?`,
+          `A preset named "${newPresetName}" already exists. Do you want to update it?`,
           [
             {
               text: 'Cancel',
@@ -115,12 +115,12 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
               text: 'Update',
               onPress: async () => {
                 // Update existing preset
-                const _updated = await updateFilterPreset(existingPreset.id!, {
+                const updated = await updateFilterPreset(existingPreset.id!, {
                   name: newPresetName.trim(),
                   filters: currentFilters,
                 });
 
-                if (_updated) {
+                if (updated) {
                   setNewPresetName('');
                   loadPresets();
                   Alert.alert('Success', 'Preset updated successfully');
@@ -134,28 +134,28 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
       }
 
       // Create new preset
-      const _newPreset = await createFilterPreset({
+      const newPreset = await createFilterPreset({
         userId,
         name: newPresetName.trim(),
         filters: currentFilters,
         isDefault: presets.length === 0, // Make it default if it's the first preset
       });
 
-      if (_newPreset) {
+      if (newPreset) {
         setNewPresetName('');
         loadPresets();
         Alert.alert('Success', 'Preset saved successfully');
       }
     } catch (err: any) {
       setError('Failed to save preset');
-      console.error('Error saving preset:', _err);
+      console.error('Error saving preset:', err);
     } finally {
       setSavingPreset(false);
     }
   };
 
   // Delete a preset
-  const _handleDeletePreset = (preset: FilterPreset) => {
+  const handleDeletePreset = (preset: FilterPreset) => {
     if (!userId) return;
     Alert.alert(
       'Delete Preset',
@@ -175,7 +175,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
               loadPresets();
             } catch (err: any) {
               setError('Failed to delete preset');
-              console.error('Error deleting preset:', _err);
+              console.error('Error deleting preset:', err);
             } finally {
               setLoading(false);
             }
@@ -186,33 +186,33 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
   };
 
   // Set a preset as default
-  const _handleSetDefaultPreset = async (preset: FilterPreset) => {
+  const handleSetDefaultPreset = async (preset: FilterPreset) => {
     if (!userId) return;
     try {
       setLoading(true);
-      await setDefaultFilterPreset(_userId, preset.id!);
+      await setDefaultFilterPreset(userId, preset.id!);
       loadPresets();
       Alert.alert('Success', `"${preset.name}" set as default`);
     } catch (err: any) {
       setError('Failed to set default preset');
-      console.error('Error setting default preset:', _err);
+      console.error('Error setting default preset:', err);
     } finally {
       setLoading(false);
     }
   };
 
   // Apply a preset
-  const _handleApplyPreset = (preset: FilterPreset) => {
+  const handleApplyPreset = (preset: FilterPreset) => {
     onApplyPreset(preset.filters);
     onClose();
   };
 
   // Render a preset item
-  const _renderPresetItem = ({ _item }: { item: FilterPreset }) => (
+  const renderPresetItem = ({ item }: { item: FilterPreset }) => (
     <View style={styles.presetItem}>
       <TouchableOpacity
         style={styles.presetNameContainer}
-        onPress={() => handleApplyPreset(_item)}
+        onPress={() => handleApplyPreset(item)}
       >
         <Text style={styles.presetName}>{item.name}</Text>
         {item.isDefault && (
@@ -226,17 +226,17 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
         {!item.isDefault && (
           <TouchableOpacity
             style={[styles.presetAction, styles.defaultAction]}
-            onPress={() => handleSetDefaultPreset(_item)}
+            onPress={() => handleSetDefaultPreset(item)}
           >
-            <Ionicons name="star-outline" size={_20} color={PRIMARY_COLOR} />
+            <Ionicons name="star-outline" size={20} color={PRIMARY_COLOR} />
           </TouchableOpacity>
         )}
         
         <TouchableOpacity
           style={[styles.presetAction, styles.deleteAction]}
-          onPress={() => handleDeletePreset(_item)}
+          onPress={() => handleDeletePreset(item)}
         >
-          <Ionicons name="trash-outline" size={_20} color="#FF3B30" />
+          <Ionicons name="trash-outline" size={20} color="#FF3B30" />
         </TouchableOpacity>
       </View>
     </View>
@@ -244,7 +244,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
 
   return (
     <Modal
-      visible={_visible}
+      visible={visible}
       transparent
       animationType="slide"
       onRequestClose={onClose}
@@ -258,7 +258,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Filter Presets</Text>
             <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={_24} color="#666" />
+              <Ionicons name="close" size={24} color="#666" />
             </TouchableOpacity>
           </View>
 
@@ -266,8 +266,8 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              value={_newPresetName}
-              onChangeText={_setNewPresetName}
+              value={newPresetName}
+              onChangeText={setNewPresetName}
               placeholder="Name your filter preset"
               placeholderTextColor="#999"
             />
@@ -276,7 +276,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
                 styles.saveButton,
                 (!newPresetName.trim() || savingPreset) && styles.saveButtonDisabled,
               ]}
-              onPress={_handleSavePreset}
+              onPress={handleSavePreset}
               disabled={!newPresetName.trim() || savingPreset}
             >
               {savingPreset ? (
@@ -288,7 +288,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
           </View>
 
           {/* Error Message */}
-          {error && <Text style={styles.errorText}>{_error}</Text>}
+          {error && <Text style={styles.errorText}>{error}</Text>}
 
           {/* Presets List */}
           {loading ? (
@@ -298,7 +298,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
             </View>
           ) : presets.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="bookmarks-outline" size={_50} color={SECONDARY_COLOR} />
+              <Ionicons name="bookmarks-outline" size={50} color={SECONDARY_COLOR} />
               <Text style={styles.emptyText}>No saved presets</Text>
               <Text style={styles.emptySubtext}>
                 Save your current filters as a preset to quickly apply them later
@@ -306,9 +306,9 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
             </View>
           ) : (
             <FlatList
-              data={_presets}
-              renderItem={_renderPresetItem}
-              keyExtractor={(_item) => item.id || item.name}
+              data={presets}
+              renderItem={renderPresetItem}
+              keyExtractor={(item) => item.id || item.name}
               contentContainerStyle={styles.presetList}
               showsVerticalScrollIndicator={false}
             />
@@ -319,11 +319,11 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,_0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
     backgroundColor: 'white',
