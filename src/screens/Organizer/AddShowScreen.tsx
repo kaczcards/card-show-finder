@@ -462,7 +462,8 @@ const AddShowScreen: React.FC = () => {
     try {
       await showSeriesService.debugShowsTableColumns();
       Alert.alert('Debug', 'Schema columns logged to console.');
-    } catch (e) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_e) {
       Alert.alert('Debug Error', 'Failed to run schema debug helper.');
     }
   }, []);

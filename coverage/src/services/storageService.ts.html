@@ -524,7 +524,9 @@
 <a name='L459'></a><a href='#L459'>459</a>
 <a name='L460'></a><a href='#L460'>460</a>
 <a name='L461'></a><a href='#L461'>461</a>
-<a name='L462'></a><a href='#L462'>462</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L462'></a><a href='#L462'>462</a>
+<a name='L463'></a><a href='#L463'>463</a>
+<a name='L464'></a><a href='#L464'>464</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -601,6 +603,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1052,7 +1056,7 @@ class StorageService {
       // Check cache first
       const cacheKey = <span class="cstat-no" title="statement not covered" >this.getCacheKey(path, options);</span>
       const cachedUrl = <span class="cstat-no" title="statement not covered" >this.getCachedUrl(cacheKey);</span>
-      
+&nbsp;
 <span class="cstat-no" title="statement not covered" >      if (cachedUrl) {</span>
 <span class="cstat-no" title="statement not covered" >        return { data: cachedUrl, error: null };</span>
       }
@@ -1061,12 +1065,14 @@ class StorageService {
       const expiresIn = <span class="cstat-no" title="statement not covered" >options.expiresIn || this.defaultExpiresIn;</span>
       
       // Create a transform object without the format property
-      const transform = <span class="cstat-no" title="statement not covered" >options.transform ? {</span>
+      const transform = <span class="cstat-no" title="statement not covered" >options.transform</span>
+        ? {
         width: options.transform.width,
         height: options.transform.height,
         quality: options.transform.quality
         // format is omitted as it's not compatible with TransformOptions
-      } : undefined;
+        }
+        : undefined;
       
       // Generate signed URL
       const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase.storage</span>
@@ -1075,7 +1081,7 @@ class StorageService {
           download: options.download || false,
           transform
         });
-      
+&nbsp;
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
 <span class="cstat-no" title="statement not covered" >        throw error;</span>
       }
@@ -1088,7 +1094,7 @@ class StorageService {
 <span class="cstat-no" title="statement not covered" >      this.cacheSignedUrl(cacheKey, data.signedUrl, expiresIn);</span>
       
 <span class="cstat-no" title="statement not covered" >      return { data: data.signedUrl, error: null };</span>
-    } catch (error) {
+    } catch (error: any) {
 <span class="cstat-no" title="statement not covered" >      console.error('Error generating signed URL:', error);</span>
 <span class="cstat-no" title="statement not covered" >      return { data: null, error: error instanceof Error ? error : new Error(String(error)) };</span>
     }
@@ -1097,7 +1103,7 @@ class StorageService {
   /**
    * Upload an image to storage
    * @param userId - User ID for folder path
-   * @param file - File to upload (base64 string, Blob, or File)
+   * @param file - File to upload (base64 string, _Blob, or File)
    * @param fileName - Optional file name (generated if not provided)
    * @param contentType - Content type of the file
    * @returns Path to the uploaded file or null if error
@@ -1114,7 +1120,7 @@ class StorageService {
       
       // Create path with user folder structure
       const filePath = <span class="cstat-no" title="statement not covered" >`${userId}/${finalFileName}`;</span>
-      
+&nbsp;
       let fileData: File | Blob | Uint8Array;
       
       // Handle different file types
@@ -1150,7 +1156,7 @@ class StorageService {
           contentType: contentType || 'image/jpeg',
           upsert: true
         });
-      
+&nbsp;
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
 <span class="cstat-no" title="statement not covered" >        throw error;</span>
       }
@@ -1160,7 +1166,7 @@ class StorageService {
       }
       
 <span class="cstat-no" title="statement not covered" >      return { data: data.path, error: null };</span>
-    } catch (error) {
+    } catch (error: any) {
 <span class="cstat-no" title="statement not covered" >      console.error('Error uploading image:', error);</span>
 <span class="cstat-no" title="statement not covered" >      return { data: null, error: error instanceof Error ? error : new Error(String(error)) };</span>
     }
@@ -1174,9 +1180,9 @@ class StorageService {
    */
 <span class="fstat-no" title="function not covered" >  as</span>ync getImage(
     path: string,
-    options: SignedUrlOptions = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
+    _options: SignedUrlOptions = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
   ): Promise&lt;StorageResult&lt;string&gt;&gt; {
-<span class="cstat-no" title="statement not covered" >    return this.getSignedUrl(path, options);</span>
+<span class="cstat-no" title="statement not covered" >    return this.getSignedUrl(path, _options);</span>
   }
   
   /**
@@ -1189,10 +1195,10 @@ class StorageService {
 <span class="fstat-no" title="function not covered" >  as</span>ync getUserImage(
     userId: string,
     fileName: string,
-    options: SignedUrlOptions = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
+    _options: SignedUrlOptions = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
   ): Promise&lt;StorageResult&lt;string&gt;&gt; {
     const path = <span class="cstat-no" title="statement not covered" >`${userId}/${fileName}`;</span>
-<span class="cstat-no" title="statement not covered" >    return this.getSignedUrl(path, options);</span>
+<span class="cstat-no" title="statement not covered" >    return this.getSignedUrl(path, _options);</span>
   }
   
   /**
@@ -1205,7 +1211,7 @@ class StorageService {
       const { error } = <span class="cstat-no" title="statement not covered" >await supabase.storage</span>
         .from(this.defaultBucket)
         .remove([path]);
-      
+&nbsp;
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
 <span class="cstat-no" title="statement not covered" >        throw error;</span>
       }
@@ -1214,7 +1220,7 @@ class StorageService {
 <span class="cstat-no" title="statement not covered" >      this.clearCacheForPath(path);</span>
       
 <span class="cstat-no" title="statement not covered" >      return { data: true, error: null };</span>
-    } catch (error) {
+    } catch (error: any) {
 <span class="cstat-no" title="statement not covered" >      console.error('Error deleting image:', error);</span>
 <span class="cstat-no" title="statement not covered" >      return { data: null, error: error instanceof Error ? error : new Error(String(error)) };</span>
     }
@@ -1244,7 +1250,7 @@ class StorageService {
       const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase.storage</span>
         .from(this.defaultBucket)
         .list(userId);
-      
+&nbsp;
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
 <span class="cstat-no" title="statement not covered" >        throw error;</span>
       }
@@ -1253,9 +1259,9 @@ class StorageService {
       const paths = <span class="cstat-no" title="statement not covered" >data</span>
         .filter(<span class="fstat-no" title="function not covered" >it</span>em =&gt; <span class="cstat-no" title="statement not covered" >!item.metadata?.isDir)</span>
         .map(<span class="fstat-no" title="function not covered" >it</span>em =&gt; <span class="cstat-no" title="statement not covered" >`${userId}/${item.name}`)</span>;
-      
+&nbsp;
 <span class="cstat-no" title="statement not covered" >      return { data: paths, error: null };</span>
-    } catch (error) {
+    } catch (error: any) {
 <span class="cstat-no" title="statement not covered" >      console.error('Error listing user images:', error);</span>
 <span class="cstat-no" title="statement not covered" >      return { data: null, error: error instanceof Error ? error : new Error(String(error)) };</span>
     }
@@ -1269,29 +1275,29 @@ class StorageService {
    */
 <span class="fstat-no" title="function not covered" >  as</span>ync getMultipleImages(
     paths: string[],
-    options: SignedUrlOptions = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
+    _options: SignedUrlOptions = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
   ): Promise&lt;StorageResult&lt;Record&lt;string, string&gt;&gt;&gt; {
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const results: Record&lt;string, string&gt; = <span class="cstat-no" title="statement not covered" >{};</span>
       
       // Process all paths in parallel
 <span class="cstat-no" title="statement not covered" >      await Promise.all(</span>
-        paths.map(<span class="fstat-no" title="function not covered" >as</span>ync (path) =&gt; {
-          const { data, error } = <span class="cstat-no" title="statement not covered" >await this.getSignedUrl(path, options);</span>
-          
+        paths.map(<span class="fstat-no" title="function not covered" >as</span>ync (singlePath) =&gt; {
+          const { data, error } = <span class="cstat-no" title="statement not covered" >await this.getSignedUrl(singlePath, _options);</span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >          if (error) {</span>
-<span class="cstat-no" title="statement not covered" >            console.warn(`Error getting signed URL for ${path}:`, error);</span>
+<span class="cstat-no" title="statement not covered" >            console.warn(`Error getting signed URL for ${singlePath}:`, error);</span>
 <span class="cstat-no" title="statement not covered" >            return;</span>
           }
           
 <span class="cstat-no" title="statement not covered" >          if (data) {</span>
-<span class="cstat-no" title="statement not covered" >            results[path] = data;</span>
+<span class="cstat-no" title="statement not covered" >            results[singlePath] = data;</span>
           }
         })
       );
       
 <span class="cstat-no" title="statement not covered" >      return { data: results, error: null };</span>
-    } catch (error) {
+    } catch (error: any) {
 <span class="cstat-no" title="statement not covered" >      console.error('Error getting multiple images:', error);</span>
 <span class="cstat-no" title="statement not covered" >      return { data: null, error: error instanceof Error ? error : new Error(String(error)) };</span>
     }
@@ -1347,7 +1353,7 @@ class StorageService {
    */
 <span class="fstat-no" title="function not covered" >  pr</span>ivate getCachedUrl(cacheKey: string): string | null {
     const cached = <span class="cstat-no" title="statement not covered" >this.signedUrlCache.get(cacheKey);</span>
-    
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!cached) {</span>
 <span class="cstat-no" title="statement not covered" >      return null;</span>
     }
@@ -1453,7 +1459,7 @@ export const storageService = <span class="cstat-no" title="statement not covere
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.767Z
+                at 2025-07-31T19:28:55.556Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

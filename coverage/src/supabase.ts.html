@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/23</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/23</span>
             </div>
         
             
@@ -167,7 +167,19 @@
 <a name='L102'></a><a href='#L102'>102</a>
 <a name='L103'></a><a href='#L103'>103</a>
 <a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -271,13 +283,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 &nbsp;
 // Supabase configuration - ideally from environment variables
-const supabaseUrl = <span class="cstat-no" title="statement not covered" >process.env.EXPO_PUBLIC_SUPABASE_URL || Constants.expoConfig?.extra?.supabaseUrl || '';</span>
-const supabaseAnonKey = <span class="cstat-no" title="statement not covered" >process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.expoConfig?.extra?.supabaseAnonKey || '';</span>
+const _supabaseUrl = <span class="cstat-no" title="statement not covered" >process.env.EXPO_PUBLIC_SUPABASE_URL || Constants.expoConfig?.extra?.supabaseUrl || '';</span>
+const _supabaseAnonKey = <span class="cstat-no" title="statement not covered" >process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.expoConfig?.extra?.supabaseAnonKey || '';</span>
 &nbsp;
 /* -------------------------------------------------------------------------- */
 /*  🔍 DIAGNOSTICS – PRINT SUPABASE CREDS IN DEV                              */
@@ -285,10 +309,10 @@ const supabaseAnonKey = <span class="cstat-no" title="statement not covered" >pr
 // NOTE: These values are **public** (anon key &amp; project URL) so it's safe
 // to log them for debugging.  Remove or wrap behind an env‐guard before
 // shipping production builds if desired.
-<span class="cstat-no" title="statement not covered" >console.log(</span>
+<span class="cstat-no" title="statement not covered" >console.warn(</span>
   '\n================= [SUPABASE CONFIG] =================\n' +
-  `• SUPABASE URL : ${supabaseUrl || '&lt;EMPTY&gt;'}\n` +
-  `• ANON KEY     : ${supabaseAnonKey?.slice(0, 8) || '&lt;EMPTY&gt;'}…\n` +
+  `• SUPABASE URL : ${_supabaseUrl || '&lt;EMPTY&gt;'}\n` +
+  `• ANON KEY     : ${_supabaseAnonKey?.slice(0, 8) || '&lt;EMPTY&gt;'}…\n` +
   '====================================================\n'
 );
 &nbsp;
@@ -296,10 +320,10 @@ const supabaseAnonKey = <span class="cstat-no" title="statement not covered" >pr
 /* 1. Guard-rails / configuration validation                                  */
 /* -------------------------------------------------------------------------- */
 &nbsp;
-<span class="cstat-no" title="statement not covered" >if (!supabaseUrl || !supabaseAnonKey) {</span>
+<span class="cstat-no" title="statement not covered" >if (!_supabaseUrl || !_supabaseAnonKey) {</span>
   // Fail fast – running with a broken client leads to subtle bugs later
 <span class="cstat-no" title="statement not covered" >  console.error(</span>
-    '[Supabase] Missing configuration. ' +
+    '[_Supabase] Missing configuration. ' +
       'Ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set.'
   );
 }
@@ -313,7 +337,7 @@ const supabaseAnonKey = <span class="cstat-no" title="statement not covered" >pr
  * We keep it in a `let` so tests (or a logout flow) can force-recreate it
  * via `recreateSupabaseClient()`.
  */
-let supabaseSingleton = <span class="cstat-no" title="statement not covered" >createClient(supabaseUrl, supabaseAnonKey, {</span>
+let _supabaseSingleton = <span class="cstat-no" title="statement not covered" >createClient(_supabaseUrl, _supabaseAnonKey, {</span>
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -326,7 +350,7 @@ let supabaseSingleton = <span class="cstat-no" title="statement not covered" >cr
  * Public accessor used throughout the codebase to avoid importing
  * `createClient` elsewhere.  Always returns **the same** instance.
  */
-export const supabase = <span class="cstat-no" title="statement not covered" >supabaseSingleton;</span>
+export const _supabase = <span class="cstat-no" title="statement not covered" >_supabaseSingleton;</span>
 &nbsp;
 /* -------------------------------------------------------------------------- */
 /* 3. Helper utilities                                                        */
@@ -335,11 +359,11 @@ export const supabase = <span class="cstat-no" title="statement not covered" >su
 /**
  * Defensive check used by legacy code (`isSupabaseInitialized()`).
  */
-export const isSupabaseInitialized = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span>: boolean =&gt; {</span>
+export const _isSupabaseInitialized = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span>: boolean =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    return Boolean(supabaseSingleton &amp;&amp; supabaseSingleton.auth);</span>
-  } catch (err) {
-<span class="cstat-no" title="statement not covered" >    console.error('[Supabase] initialization check failed:', err);</span>
+<span class="cstat-no" title="statement not covered" >    return Boolean(_supabaseSingleton &amp;&amp; _supabaseSingleton.auth);</span>
+  } catch (_err) {
+<span class="cstat-no" title="statement not covered" >    console.error('[_Supabase] initialization check failed:', _err);</span>
 <span class="cstat-no" title="statement not covered" >    return false;</span>
   }
 };
@@ -348,21 +372,21 @@ export const isSupabaseInitialized = <span class="cstat-no" title="statement not
  * Provides the singleton client or throws a descriptive error.
  * Prefer this helper in newly-written code so errors surface early.
  */
-export const getSupabase = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (!isSupabaseInitialized()) {</span>
+export const _getSupabase = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  if (!_isSupabaseInitialized()) {</span>
 <span class="cstat-no" title="statement not covered" >    throw new Error(</span>
-      '[Supabase] Client not initialised – check environment variables.'
+      '[_Supabase] Client not initialised – check environment variables.'
     );
   }
-<span class="cstat-no" title="statement not covered" >  return supabaseSingleton;</span>
+<span class="cstat-no" title="statement not covered" >  return _supabaseSingleton;</span>
 };
 &nbsp;
 /**
  * Optional helper to **re**create the client (e.g. after logout to purge
  * cached auth state, or inside E2E tests).  Most apps will never need this.
  */
-export const recreateSupabaseClient = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  supabaseSingleton = createClient(supabaseUrl, supabaseAnonKey, {</span>
+export const _recreateSupabaseClient = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  _supabaseSingleton = createClient(_supabaseUrl, _supabaseAnonKey, {</span>
     auth: {
       storage: AsyncStorage,
       autoRefreshToken: true,
@@ -370,11 +394,23 @@ export const recreateSupabaseClient = <span class="cstat-no" title="statement no
       detectSessionInUrl: false,
     },
   });
-<span class="cstat-no" title="statement not covered" >  return supabaseSingleton;</span>
+<span class="cstat-no" title="statement not covered" >  return _supabaseSingleton;</span>
 };
 &nbsp;
 // Export types from Supabase for use in other files
 export type { User, Session } from '@supabase/supabase-js';
+&nbsp;
+/* -------------------------------------------------------------------------- */
+/* 4. Back-compat exports (non-underscore names)                               */
+/* -------------------------------------------------------------------------- */
+// Many legacy modules still import these helpers without the leading
+// underscore.  Re-export them here so existing imports continue to work
+// while new code can adopt the explicit “private” underscore versions.
+&nbsp;
+export const supabase = <span class="cstat-no" title="statement not covered" >_supabase;</span>
+export const isSupabaseInitialized = <span class="cstat-no" title="statement not covered" >_isSupabaseInitialized;</span>
+export const getSupabase = <span class="cstat-no" title="statement not covered" >_getSupabase;</span>
+export const recreateSupabaseClient = <span class="cstat-no" title="statement not covered" >_recreateSupabaseClient;</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -382,7 +418,7 @@ export type { User, Session } from '@supabase/supabase-js';
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.767Z
+                at 2025-07-31T19:28:55.556Z
             </div>
         <script src="../prettify.js"></script>
         <script>

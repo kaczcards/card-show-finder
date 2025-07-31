@@ -174,7 +174,8 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
                 (address.city || address.subregion || address.region || undefined) : 
                 undefined;
               showGpsLocationToast(locationName);
-            } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (_e) {
               showGpsLocationToast();
             }
           }
@@ -358,8 +359,8 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
       const encodedAddress = encodeURIComponent(address);
       const url = `${scheme}${encodedAddress}`;
 
-      Linking.openURL(url).catch((err) => {
-        console.error('Error opening native maps app:', err);
+      Linking.openURL(url).catch((_err) => {
+        console.error('Error opening native maps app:', _err);
         // Fallback to Google Maps in browser
         const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
         Linking.openURL(webUrl).catch((e) => {
@@ -397,7 +398,8 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
             (address.city || address.subregion || address.region || undefined) : 
             undefined;
           showGpsLocationToast(locationName);
-        } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_e) {
           // If reverse geocoding fails, still show toast but without location name
           showGpsLocationToast();
         }
@@ -442,7 +444,8 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
       if (isNaN(date.getTime())) return 'Unknown date';
       const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
       return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       return 'Unknown date';
     }
   };

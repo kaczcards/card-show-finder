@@ -523,7 +523,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -627,17 +626,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -645,9 +641,13 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -689,7 +689,7 @@ export const getAllBadgeDefinitions = <span class="cstat-no" title="statement no
 <span class="cstat-no" title="statement not covered" >    if (error) {</span>
 <span class="cstat-no" title="statement not covered" >      throw error;</span>
     }
-    
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!data) {</span>
 <span class="cstat-no" title="statement not covered" >      return [];</span>
     }
@@ -703,8 +703,8 @@ export const getAllBadgeDefinitions = <span class="cstat-no" title="statement no
       requirement: badge.requirement,
       tier: badge.tier as BadgeTier,
     }));
-  } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error fetching badge definitions:', error);</span>
+  } catch (_error) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error fetching badge definitions:', _error);</span>
 <span class="cstat-no" title="statement not covered" >    return []; </span>// Return empty array instead of throwing to prevent UI crashes
   }
 };
@@ -748,7 +748,7 @@ export const getUserBadges = <span class="cstat-no" title="statement not covered
 <span class="cstat-no" title="statement not covered" >    return userBadgesData.map(<span class="fstat-no" title="function not covered" >us</span>erBadge =&gt; {</span>
       // Find the corresponding badge definition
       const badgeDef = <span class="cstat-no" title="statement not covered" >badgeDefsData.find(<span class="fstat-no" title="function not covered" >de</span>f =&gt; <span class="cstat-no" title="statement not covered" >def.id === userBadge.badge_id)</span>;</span>
-      
+&nbsp;
 <span class="cstat-no" title="statement not covered" >      if (!badgeDef) {</span>
 <span class="cstat-no" title="statement not covered" >        return null; </span>// Skip if no matching definition found
       }
@@ -764,8 +764,8 @@ export const getUserBadges = <span class="cstat-no" title="statement not covered
         dateEarned: userBadge.earned_at,
       };
     }).filter(<span class="fstat-no" title="function not covered" >ba</span>dge =&gt; <span class="cstat-no" title="statement not covered" >badge !== null)</span> as Badge[]; // Remove any nulls
-  } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error fetching user badges:', error);</span>
+  } catch (_error) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error fetching user badges:', _error);</span>
 <span class="cstat-no" title="statement not covered" >    return []; </span>// Return empty array instead of throwing to prevent UI crashes
   }
 };
@@ -787,8 +787,8 @@ export const getUnearnedBadges = <span class="cstat-no" title="statement not cov
     
     // Filter out the badges the user has already earned
 <span class="cstat-no" title="statement not covered" >    return allBadges.filter(<span class="fstat-no" title="function not covered" >ba</span>dge =&gt; <span class="cstat-no" title="statement not covered" >!earnedBadgeIds.includes(badge.id))</span>;</span>
-  } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error fetching unearned badges:', error);</span>
+  } catch (_error) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error fetching unearned badges:', _error);</span>
 <span class="cstat-no" title="statement not covered" >    return []; </span>// Return empty array instead of throwing to prevent UI crashes
   }
 };
@@ -801,7 +801,7 @@ export const getUnearnedBadges = <span class="cstat-no" title="statement not cov
 export const getUserFeaturedBadges = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (userId: string, limit: number = <span class="branch-0 cbranch-no" title="branch not covered" >3)</span>: Promise&lt;Badge[]&gt; =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const userBadges = <span class="cstat-no" title="statement not covered" >await getUserBadges(userId);</span>
-    
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    if (userBadges.length === 0) {</span>
 <span class="cstat-no" title="statement not covered" >      return [];</span>
     }
@@ -828,10 +828,9 @@ export const getUserFeaturedBadges = <span class="cstat-no" title="statement not
 <span class="cstat-no" title="statement not covered" >      return dateB.getTime() - dateA.getTime();</span>
     });
     
-    // Return the top badges based on the limit
 <span class="cstat-no" title="statement not covered" >    return tieredBadges.slice(0, limit);</span>
-  } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error fetching featured badges:', error);</span>
+  } catch (_error) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error fetching featured badges:', _error);</span>
 <span class="cstat-no" title="statement not covered" >    return []; </span>// Return empty array instead of throwing to prevent UI crashes
   }
 };
@@ -843,7 +842,7 @@ export const getUserFeaturedBadges = <span class="cstat-no" title="statement not
 export const getUserNextBadge = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (userId: string): Promise&lt;Badge | null&gt; =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const unearnedBadges = <span class="cstat-no" title="statement not covered" >await getUnearnedBadges(userId);</span>
-    
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    if (unearnedBadges.length === 0) {</span>
 <span class="cstat-no" title="statement not covered" >      return null;</span>
     }
@@ -916,8 +915,8 @@ export const getUserNextBadge = <span class="cstat-no" title="statement not cove
       requirement: nextBadgeDef.requirement,
       tier: nextBadgeDef.tier as BadgeTier,
     };
-  } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error fetching next badge:', error);</span>
+  } catch (_error) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error fetching next badge:', _error);</span>
 <span class="cstat-no" title="statement not covered" >    return null; </span>// Return null instead of throwing to prevent UI crashes
   }
 };
@@ -927,7 +926,10 @@ export const getUserNextBadge = <span class="cstat-no" title="statement not cove
  * @param userId The ID of the user
  * @param badgeId The ID of the badge to check progress for
  */
-export const getBadgeProgress = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (userId: string, badgeId: string): Promise&lt;{</span>
+export const getBadgeProgress = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+  userId: string,
+  badgeId: string
+): Promise&lt;{
   current: number;
   required: number;
   percent: number;
@@ -939,7 +941,6 @@ export const getBadgeProgress = <span class="cstat-no" title="statement not cove
       .select('*')
       .eq('id', badgeId)
       .single();
-    
 <span class="cstat-no" title="statement not covered" >    if (badgeError) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error('Error fetching badge definition:', badgeError);</span>
 <span class="cstat-no" title="statement not covered" >      return null; </span>// Return null instead of throwing
@@ -956,25 +957,24 @@ export const getBadgeProgress = <span class="cstat-no" title="statement not cove
       .select('show_attendance_count')
       .eq('id', userId)
       .single();
-    
 <span class="cstat-no" title="statement not covered" >    if (profileError) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error('Error fetching profile data:', profileError);</span>
 <span class="cstat-no" title="statement not covered" >      return null; </span>// Return null instead of throwing
     }
-    
+&nbsp;
     const current = <span class="cstat-no" title="statement not covered" >profileData?.show_attendance_count || 0;</span>
     const required = <span class="cstat-no" title="statement not covered" >badgeDef.requirement_count || 0;</span>
-    
+&nbsp;
     // Calculate percentage (cap at 100%)
     const percent = <span class="cstat-no" title="statement not covered" >Math.min((current / required) * 100, 100);</span>
-    
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    return {</span>
       current,
       required,
       percent,
     };
-  } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error getting badge progress:', error);</span>
+  } catch (_error) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error getting badge progress:', _error);</span>
 <span class="cstat-no" title="statement not covered" >    return null; </span>// Return null instead of throwing to prevent UI crashes
   }
 };
@@ -985,7 +985,7 @@ export const getBadgeProgress = <span class="cstat-no" title="statement not cove
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.546Z
+                at 2025-07-31T19:28:55.373Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

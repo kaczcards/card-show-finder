@@ -1134,7 +1134,7 @@ export function <span class="fstat-no" title="function not covered" >logError(</
   // Remote logging could be implemented here
 <span class="cstat-no" title="statement not covered" >  if (currentConfig.enableRemoteLogging) {</span>
     // Implementation would depend on the remote logging service
-    // sendErrorToRemoteService(error);
+    // sendErrorToRemoteService(_error);
   }
 }
 &nbsp;
@@ -1157,9 +1157,9 @@ async function <span class="fstat-no" title="function not covered" >storeErrorIn
 &nbsp;
     // Save back to storage
 <span class="cstat-no" title="statement not covered" >    await AsyncStorage.setItem('app_errors', JSON.stringify(storedErrors));</span>
-  } catch (e) {
+  } catch (_e) {
     // Fail silently, but log to console
-<span class="cstat-no" title="statement not covered" >    console.error('Error storing error in AsyncStorage:', e);</span>
+<span class="cstat-no" title="statement not covered" >    console.error('Error storing error in AsyncStorage:', _e);</span>
   }
 }
 &nbsp;
@@ -1170,8 +1170,8 @@ export async function <span class="fstat-no" title="function not covered" >getSt
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const storedErrorsJson = <span class="cstat-no" title="statement not covered" >await AsyncStorage.getItem('app_errors');</span>
 <span class="cstat-no" title="statement not covered" >    return storedErrorsJson ? JSON.parse(storedErrorsJson) : [];</span>
-  } catch (e) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error retrieving errors from AsyncStorage:', e);</span>
+  } catch (_e) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error retrieving errors from AsyncStorage:', _e);</span>
 <span class="cstat-no" title="statement not covered" >    return [];</span>
   }
 }
@@ -1182,8 +1182,8 @@ export async function <span class="fstat-no" title="function not covered" >getSt
 export async function <span class="fstat-no" title="function not covered" >clearStoredErrors(</span>): Promise&lt;void&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
 <span class="cstat-no" title="statement not covered" >    await AsyncStorage.setItem('app_errors', JSON.stringify([]));</span>
-  } catch (e) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error clearing errors from AsyncStorage:', e);</span>
+  } catch (_e) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error clearing errors from AsyncStorage:', _e);</span>
   }
 }
 &nbsp;
@@ -1268,11 +1268,11 @@ function <span class="fstat-no" title="function not covered" >determineErrorCate
   }
 &nbsp;
   // Check error message for common patterns
-  const message = <span class="cstat-no" title="statement not covered" >error.message.toLowerCase();</span>
-<span class="cstat-no" title="statement not covered" >  if (message.includes('network') || message.includes('connection')) <span class="cstat-no" title="statement not covered" >return ErrorCategory.NETWORK;</span></span>
-<span class="cstat-no" title="statement not covered" >  if (message.includes('auth') || message.includes('login') || message.includes('password')) <span class="cstat-no" title="statement not covered" >return ErrorCategory.AUTHENTICATION;</span></span>
-<span class="cstat-no" title="statement not covered" >  if (message.includes('permission') || message.includes('access') || message.includes('denied')) <span class="cstat-no" title="statement not covered" >return ErrorCategory.PERMISSION;</span></span>
-<span class="cstat-no" title="statement not covered" >  if (message.includes('valid') || message.includes('required')) <span class="cstat-no" title="statement not covered" >return ErrorCategory.VALIDATION;</span></span>
+  const msg = <span class="cstat-no" title="statement not covered" >error.message.toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >  if (msg.includes('network') || msg.includes('connection')) <span class="cstat-no" title="statement not covered" >return ErrorCategory.NETWORK;</span></span>
+<span class="cstat-no" title="statement not covered" >  if (msg.includes('auth') || msg.includes('login') || msg.includes('password')) <span class="cstat-no" title="statement not covered" >return ErrorCategory.AUTHENTICATION;</span></span>
+<span class="cstat-no" title="statement not covered" >  if (msg.includes('permission') || msg.includes('access') || msg.includes('denied')) <span class="cstat-no" title="statement not covered" >return ErrorCategory.PERMISSION;</span></span>
+<span class="cstat-no" title="statement not covered" >  if (msg.includes('valid') || msg.includes('required')) <span class="cstat-no" title="statement not covered" >return ErrorCategory.VALIDATION;</span></span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return ErrorCategory.UNKNOWN;</span>
 }
@@ -1354,7 +1354,7 @@ export function <span class="fstat-no" title="function not covered" >withErrorHa
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.767Z
+                at 2025-07-31T19:28:55.556Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -138,7 +138,9 @@
 <a name='L73'></a><a href='#L73'>73</a>
 <a name='L74'></a><a href='#L74'>74</a>
 <a name='L75'></a><a href='#L75'>75</a>
-<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -167,24 +169,12 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -195,10 +185,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -242,7 +246,8 @@ export const useUserSubscriptions = <span class="cstat-no" title="statement not 
 <span class="cstat-no" title="statement not covered" >        setIsLoading(true);</span>
 <span class="cstat-no" title="statement not covered" >        setError(null);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        console.log('[useUserSubscriptions] Fetching subscriptions for user:', user.id);</span>
+         
+<span class="cstat-no" title="statement not covered" >console.warn('[_useUserSubscriptions] Fetching subscriptions for user:', user.id);</span>
 &nbsp;
         /* --------------------------------------------------------------
          * Subscription info lives in the `profiles` table, not a separate
@@ -258,7 +263,7 @@ export const useUserSubscriptions = <span class="cstat-no" title="statement not 
 &nbsp;
         // Handle Supabase error
 <span class="cstat-no" title="statement not covered" >        if (supabaseError) {</span>
-<span class="cstat-no" title="statement not covered" >          console.error('[useUserSubscriptions] Error fetching subscriptions:', supabaseError);</span>
+<span class="cstat-no" title="statement not covered" >          console.error('[_useUserSubscriptions] Error fetching subscriptions:', supabaseError);</span>
 <span class="cstat-no" title="statement not covered" >          throw new Error(supabaseError.message || 'Failed to fetch subscription data');</span>
         }
 &nbsp;
@@ -274,9 +279,10 @@ export const useUserSubscriptions = <span class="cstat-no" title="statement not 
           : [];
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        setSubscriptions(mapped);</span>
-<span class="cstat-no" title="statement not covered" >        console.log('[useUserSubscriptions] Fetched subscriptions:', mapped.length);</span>
+         
+<span class="cstat-no" title="statement not covered" >console.warn('[_useUserSubscriptions] Fetched subscriptions:', mapped.length);</span>
       } catch (err) {
-<span class="cstat-no" title="statement not covered" >        console.error('[useUserSubscriptions] Unexpected error:', err);</span>
+<span class="cstat-no" title="statement not covered" >        console.error('[_useUserSubscriptions] Unexpected error:', err);</span>
 <span class="cstat-no" title="statement not covered" >        setError(err instanceof Error ? err : new Error('An unknown error occurred'));</span>
       } finally {
 <span class="cstat-no" title="statement not covered" >        setIsLoading(false);</span>
@@ -295,7 +301,7 @@ export const useUserSubscriptions = <span class="cstat-no" title="statement not 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.546Z
+                at 2025-07-31T19:28:55.373Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

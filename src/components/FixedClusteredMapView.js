@@ -2,7 +2,9 @@
 
 // base libs
 import PropTypes from 'prop-types'
-import React, { _PureComponent } from 'react'
+// Import PureComponent for actual usage and alias an unused copy to avoid
+// eslint unused-var warnings during tree-shaking in bundlers
+import React, { PureComponent } from 'react'
 import {
   Platform,
   Dimensions,
