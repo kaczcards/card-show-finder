@@ -18,7 +18,7 @@ export type AuthStackParamList = {
 };
 
 // Create navigation stack
-const _AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
 /**
  * AuthNavigator - Handles navigation between authentication screens

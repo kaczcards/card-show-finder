@@ -785,6 +785,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Expose context & hook for external modules
-export { AuthContext, useAuth };
+// Expose context for external modules
+export { AuthContext };
 export default AuthContext;
