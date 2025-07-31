@@ -961,16 +961,7 @@
 <a name='L896'></a><a href='#L896'>896</a>
 <a name='L897'></a><a href='#L897'>897</a>
 <a name='L898'></a><a href='#L898'>898</a>
-<a name='L899'></a><a href='#L899'>899</a>
-<a name='L900'></a><a href='#L900'>900</a>
-<a name='L901'></a><a href='#L901'>901</a>
-<a name='L902'></a><a href='#L902'>902</a>
-<a name='L903'></a><a href='#L903'>903</a>
-<a name='L904'></a><a href='#L904'>904</a>
-<a name='L905'></a><a href='#L905'>905</a>
-<a name='L906'></a><a href='#L906'>906</a>
-<a name='L907'></a><a href='#L907'>907</a>
-<a name='L908'></a><a href='#L908'>908</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L899'></a><a href='#L899'>899</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -997,16 +988,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1580,6 +1561,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1878,17 +1860,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Image,
-  useWindowDimensions,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image as _Image, useWindowDimensions,  } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
 import { useUserSubscriptions } from '../../hooks/useUserSubscriptions';
@@ -1918,7 +1890,7 @@ const SubscriptionScreen: React.FC = <span class="cstat-no" title="statement not
   const { authState, refreshUserRole } = <span class="cstat-no" title="statement not covered" >useAuth();</span> // Destructure refreshUserRole from useAuth
   const { user } = <span class="cstat-no" title="statement not covered" >authState;</span>
   const navigation = <span class="cstat-no" title="statement not covered" >useNavigation();</span>
-  const { width } = <span class="cstat-no" title="statement not covered" >useWindowDimensions();</span>
+  const { width: _width } = <span class="cstat-no" title="statement not covered" >useWindowDimensions();</span>
   
   const [loading, setLoading] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
   const [processingPayment, setProcessingPayment] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
@@ -1929,8 +1901,8 @@ const SubscriptionScreen: React.FC = <span class="cstat-no" title="statement not
   
   // Colors
   const ORANGE = <span class="cstat-no" title="statement not covered" >'#FF6A00';</span>
-  const BLUE = <span class="cstat-no" title="statement not covered" >'#0057B8';</span>
-  const LIGHT_GRAY = <span class="cstat-no" title="statement not covered" >'#f0f0f0';</span>
+  const _BLUE = <span class="cstat-no" title="statement not covered" >'#0057B8';</span>
+  const _LIGHT_GRAY = <span class="cstat-no" title="statement not covered" >'#f0f0f0';</span>
   const DARK_GRAY = <span class="cstat-no" title="statement not covered" >'#666666';</span>
   
   /* ------------------------------------------------------------------
@@ -2784,14 +2756,15 @@ const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.
   }
 });
 &nbsp;
-export default SubscriptionScreen;</pre></td></tr></table></pre>
+export default SubscriptionScreen;
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.546Z
+                at 2025-07-31T19:28:55.373Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -364,10 +364,7 @@
 <a name='L299'></a><a href='#L299'>299</a>
 <a name='L300'></a><a href='#L300'>300</a>
 <a name='L301'></a><a href='#L301'>301</a>
-<a name='L302'></a><a href='#L302'>302</a>
-<a name='L303'></a><a href='#L303'>303</a>
-<a name='L304'></a><a href='#L304'>304</a>
-<a name='L305'></a><a href='#L305'>305</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L302'></a><a href='#L302'>302</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -443,7 +440,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -467,7 +463,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -515,7 +510,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -671,7 +665,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { supabase } from "../supabase";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { supabase } from '../supabase';
 &nbsp;
 /**
  * MFA enrollment response
@@ -747,15 +741,14 @@ export class MFAService {
 <span class="fstat-no" title="function not covered" >  as</span>ync startEnrollment(): Promise&lt;MFAEnrollmentResponse&gt; {
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const { data, error } = <span class="cstat-no" title="statement not covered" >await this.callMFAEndpoint&lt;MFAEnrollmentResponse&gt;("enroll", {}, "GET");</span>
-      
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
 <span class="cstat-no" title="statement not covered" >        throw new Error(error.message);</span>
       }
       
 <span class="cstat-no" title="statement not covered" >      return data;</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to start MFA enrollment:", error);</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      console.error("Failed to start MFA enrollment:", err);</span>
+<span class="cstat-no" title="statement not covered" >      throw err;</span>
     }
   }
 &nbsp;
@@ -771,15 +764,14 @@ export class MFAService {
         code,
         challengeId
       });
-      
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
 <span class="cstat-no" title="statement not covered" >        throw new Error(error.message);</span>
       }
       
 <span class="cstat-no" title="statement not covered" >      return data;</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to verify MFA setup:", error);</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      console.error("Failed to verify MFA setup:", err);</span>
+<span class="cstat-no" title="statement not covered" >      throw err;</span>
     }
   }
 &nbsp;
@@ -803,9 +795,9 @@ export class MFAService {
       }
       
 <span class="cstat-no" title="statement not covered" >      return data;</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to authenticate with MFA:", error);</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      console.error("Failed to authenticate with MFA:", err);</span>
+<span class="cstat-no" title="statement not covered" >      throw err;</span>
     }
   }
 &nbsp;
@@ -823,15 +815,14 @@ export class MFAService {
         userId,
         sessionId
       });
-      
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
 <span class="cstat-no" title="statement not covered" >        throw new Error(error.message);</span>
       }
       
 <span class="cstat-no" title="statement not covered" >      return data;</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to validate recovery code:", error);</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      console.error("Failed to validate recovery code:", err);</span>
+<span class="cstat-no" title="statement not covered" >      throw err;</span>
     }
   }
 &nbsp;
@@ -851,9 +842,9 @@ export class MFAService {
       }
       
 <span class="cstat-no" title="statement not covered" >      return data;</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to disable MFA:", error);</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      console.error("Failed to disable MFA:", err);</span>
+<span class="cstat-no" title="statement not covered" >      throw err;</span>
     }
   }
 &nbsp;
@@ -870,9 +861,9 @@ export class MFAService {
       }
       
 <span class="cstat-no" title="statement not covered" >      return data;</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to get MFA status:", error);</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      console.error("Failed to get MFA status:", err);</span>
+<span class="cstat-no" title="statement not covered" >      throw err;</span>
     }
   }
 &nbsp;
@@ -892,9 +883,9 @@ export class MFAService {
       }
       
 <span class="cstat-no" title="statement not covered" >      return data;</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to regenerate recovery codes:", error);</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      console.error("Failed to regenerate recovery codes:", err);</span>
+<span class="cstat-no" title="statement not covered" >      throw err;</span>
     }
   }
 &nbsp;
@@ -917,8 +908,8 @@ export class MFAService {
       }
       
 <span class="cstat-no" title="statement not covered" >      return profile?.mfa_enabled &amp;&amp; profile?.mfa_verified;</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to check if MFA is required:", error);</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      console.error("Failed to check if MFA is required:", err);</span>
 <span class="cstat-no" title="statement not covered" >      return false; </span>// Default to not requiring MFA on error
     }
   }
@@ -967,8 +958,8 @@ export class MFAService {
       
       const data = <span class="cstat-no" title="statement not covered" >await response.json();</span>
 <span class="cstat-no" title="statement not covered" >      return { data: data as T, error: null };</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      return { data: {} as T, error: error as Error };</span>
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >      return { data: {} as T, error: err as Error };</span>
     }
   }
 }
@@ -982,7 +973,7 @@ export const mfaService = <span class="cstat-no" title="statement not covered" >
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.546Z
+                at 2025-07-31T19:28:55.373Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

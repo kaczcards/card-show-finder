@@ -1016,10 +1016,10 @@ const formatElapsedTime = <span class="cstat-no" title="statement not covered" >
   const seconds = <span class="cstat-no" title="statement not covered" >Math.floor(milliseconds / 1000);</span>
   const minutes = <span class="cstat-no" title="statement not covered" >Math.floor(seconds / 60);</span>
   const hours = <span class="cstat-no" title="statement not covered" >Math.floor(minutes / 60);</span>
-  
+&nbsp;
   const remainingMinutes = <span class="cstat-no" title="statement not covered" >minutes % 60;</span>
   const remainingSeconds = <span class="cstat-no" title="statement not covered" >seconds % 60;</span>
-  
+&nbsp;
 <span class="cstat-no" title="statement not covered" >  if (hours &gt; 0) {</span>
 <span class="cstat-no" title="statement not covered" >    return `${hours}h ${remainingMinutes}m ${remainingSeconds}s`;</span>
   } else <span class="cstat-no" title="statement not covered" >if (minutes &gt; 0) {</span>
@@ -1034,12 +1034,12 @@ const formatElapsedTime = <span class="cstat-no" title="statement not covered" >
  */
 const calculateEta = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>tats: GeocodingStats): string =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (stats.processed === 0) <span class="cstat-no" title="statement not covered" >return 'calculating...';</span></span>
-  
+&nbsp;
   const elapsedMs = <span class="cstat-no" title="statement not covered" >new Date().getTime() - stats.startTime.getTime();</span>
   const msPerItem = <span class="cstat-no" title="statement not covered" >elapsedMs / stats.processed;</span>
   const remainingItems = <span class="cstat-no" title="statement not covered" >stats.total - stats.processed;</span>
   const estimatedRemainingMs = <span class="cstat-no" title="statement not covered" >msPerItem * remainingItems;</span>
-  
+&nbsp;
 <span class="cstat-no" title="statement not covered" >  return formatElapsedTime(estimatedRemainingMs);</span>
 };
 &nbsp;
@@ -1073,7 +1073,7 @@ const hasInvalidCoordinates = <span class="cstat-no" title="statement not covere
  * Fetch all shows from the database
  */
 const fetchAllShows = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;Show[]&gt; =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  console.log(chalk.cyan('Fetching all shows from the database...'));</span>
+<span class="cstat-no" title="statement not covered" >  console.warn(chalk.cyan('Fetching all shows from the database...'));</span>
   
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase</span>
@@ -1086,17 +1086,17 @@ const fetchAllShows = <span class="cstat-no" title="statement not covered" ><spa
     }
     
 <span class="cstat-no" title="statement not covered" >    if (!data || !Array.isArray(data)) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.yellow('No shows found in the database.'));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.yellow('No shows found in the database.'));</span>
 <span class="cstat-no" title="statement not covered" >      return [];</span>
     }
     
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.green(`Successfully fetched ${data.length} shows`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.green(`Successfully fetched ${data.length} shows`));</span>
 <span class="cstat-no" title="statement not covered" >    return data as Show[];</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    console.error(chalk.red('Failed to fetch shows:'), error);</span>
     
     // Retry once after a short delay
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.yellow('Retrying fetch after 5 seconds...'));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.yellow('Retrying fetch after 5 seconds...'));</span>
 <span class="cstat-no" title="statement not covered" >    await new Promise(<span class="fstat-no" title="function not covered" >re</span>solve =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 5000))</span>;</span>
     
 <span class="cstat-no" title="statement not covered" >    try {</span>
@@ -1113,7 +1113,7 @@ const fetchAllShows = <span class="cstat-no" title="statement not covered" ><spa
 <span class="cstat-no" title="statement not covered" >        return [];</span>
       }
       
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.green(`Successfully fetched ${data.length} shows on retry`));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.green(`Successfully fetched ${data.length} shows on retry`));</span>
 <span class="cstat-no" title="statement not covered" >      return data as Show[];</span>
     } catch (retryError) {
 <span class="cstat-no" title="statement not covered" >      console.error(chalk.red('Failed to fetch shows on retry:'), retryError);</span>
@@ -1146,7 +1146,7 @@ const updateShowCoordinates = <span class="cstat-no" title="statement not covere
       
       // Retry logic
 <span class="cstat-no" title="statement not covered" >      if (retryCount &lt; MAX_RETRIES) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log(chalk.yellow(`Retrying update (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));</span>
+<span class="cstat-no" title="statement not covered" >        console.warn(chalk.yellow(`Retrying update (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));</span>
 <span class="cstat-no" title="statement not covered" >        await new Promise(<span class="fstat-no" title="function not covered" >re</span>solve =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 2000))</span>;</span>
 <span class="cstat-no" title="statement not covered" >        return updateShowCoordinates(showId, latitude, longitude, retryCount + 1);</span>
       }
@@ -1160,7 +1160,7 @@ const updateShowCoordinates = <span class="cstat-no" title="statement not covere
     
     // Retry logic
 <span class="cstat-no" title="statement not covered" >    if (retryCount &lt; MAX_RETRIES) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.yellow(`Retrying update (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.yellow(`Retrying update (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));</span>
 <span class="cstat-no" title="statement not covered" >      await new Promise(<span class="fstat-no" title="function not covered" >re</span>solve =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 2000))</span>;</span>
 <span class="cstat-no" title="statement not covered" >      return updateShowCoordinates(showId, latitude, longitude, retryCount + 1);</span>
     }
@@ -1174,12 +1174,12 @@ const updateShowCoordinates = <span class="cstat-no" title="statement not covere
  */
 const processShow = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (show: Show, retryCount: number = <span class="branch-0 cbranch-no" title="branch not covered" >0)</span>: Promise&lt;boolean&gt; =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (!show.address) {</span>
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.yellow(`Skipping show "${show.title}" (ID: ${show.id}) - No address provided`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.yellow(`Skipping show "${show.title}" (ID: ${show.id}) - No address provided`));</span>
 <span class="cstat-no" title="statement not covered" >    return false;</span>
   }
   
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.cyan(`Geocoding address for "${show.title}" (ID: ${show.id}): ${show.address}`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.cyan(`Geocoding address for "${show.title}" (ID: ${show.id}): ${show.address}`));</span>
     
     const coordinates = <span class="cstat-no" title="statement not covered" >await geocodeAddress(show.address);</span>
     
@@ -1188,7 +1188,7 @@ const processShow = <span class="cstat-no" title="statement not covered" ><span 
       
       // Retry logic
 <span class="cstat-no" title="statement not covered" >      if (retryCount &lt; MAX_RETRIES) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log(chalk.yellow(`Retrying geocoding (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));</span>
+<span class="cstat-no" title="statement not covered" >        console.warn(chalk.yellow(`Retrying geocoding (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));</span>
 <span class="cstat-no" title="statement not covered" >        await new Promise(<span class="fstat-no" title="function not covered" >re</span>solve =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 2000))</span>;</span>
 <span class="cstat-no" title="statement not covered" >        return processShow(show, retryCount + 1);</span>
       }
@@ -1196,7 +1196,7 @@ const processShow = <span class="cstat-no" title="statement not covered" ><span 
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
     
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.green(`Successfully geocoded "${show.title}" - Coordinates:`), coordinates);</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.green(`Successfully geocoded "${show.title}" - Coordinates:`), coordinates);</span>
     
     // Update the show with new coordinates
     const updated = <span class="cstat-no" title="statement not covered" >await updateShowCoordinates(</span>
@@ -1206,7 +1206,7 @@ const processShow = <span class="cstat-no" title="statement not covered" ><span 
     );
     
 <span class="cstat-no" title="statement not covered" >    if (updated) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.green(`Updated coordinates for show "${show.title}" (ID: ${show.id})`));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.green(`Updated coordinates for show "${show.title}" (ID: ${show.id})`));</span>
 <span class="cstat-no" title="statement not covered" >      return true;</span>
     } else {
 <span class="cstat-no" title="statement not covered" >      console.error(chalk.red(`Failed to update coordinates for show "${show.title}" (ID: ${show.id})`));</span>
@@ -1217,7 +1217,7 @@ const processShow = <span class="cstat-no" title="statement not covered" ><span 
     
     // Retry logic
 <span class="cstat-no" title="statement not covered" >    if (retryCount &lt; MAX_RETRIES) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.yellow(`Retrying due to error (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.yellow(`Retrying due to error (attempt ${retryCount + 1} of ${MAX_RETRIES})...`));</span>
 <span class="cstat-no" title="statement not covered" >      await new Promise(<span class="fstat-no" title="function not covered" >re</span>solve =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 2000))</span>;</span>
 <span class="cstat-no" title="statement not covered" >      return processShow(show, retryCount + 1);</span>
     }
@@ -1250,12 +1250,12 @@ const processShowsInBatches = <span class="cstat-no" title="statement not covere
     const batch = <span class="cstat-no" title="statement not covered" >shows.slice(i, i + batchSize);</span>
     const currentBatch = <span class="cstat-no" title="statement not covered" >Math.floor(i / batchSize) + 1;</span>
     
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.bold.blue(`\n--- Processing batch ${currentBatch} of ${totalBatches} ---`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.bold.blue(`\n--- Processing batch ${currentBatch} of ${totalBatches} ---`));</span>
     
     // Process each show in the batch
 <span class="cstat-no" title="statement not covered" >    for (const show of batch) {</span>
 <span class="cstat-no" title="statement not covered" >      if (!show.address) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log(chalk.yellow(`Skipping show "${show.title}" - No address provided`));</span>
+<span class="cstat-no" title="statement not covered" >        console.warn(chalk.yellow(`Skipping show "${show.title}" - No address provided`));</span>
 <span class="cstat-no" title="statement not covered" >        stats.skipped++;</span>
 <span class="cstat-no" title="statement not covered" >        continue;</span>
       }
@@ -1274,13 +1274,13 @@ const processShowsInBatches = <span class="cstat-no" title="statement not covere
       const elapsedTime = <span class="cstat-no" title="statement not covered" >formatElapsedTime(new Date().getTime() - stats.startTime.getTime());</span>
       const eta = <span class="cstat-no" title="statement not covered" >calculateEta(stats);</span>
       
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.bold(`\nProgress: ${stats.processed}/${stats.total} shows (${percentComplete}%)`));</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`Elapsed: ${elapsedTime} | Estimated remaining: ${eta}`);</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`Success: ${chalk.green(stats.succeeded.toString())}, Failed: ${chalk.red(stats.failed.toString())}, Skipped: ${chalk.yellow(stats.skipped.toString())}`);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.bold(`\nProgress: ${stats.processed}/${stats.total} shows (${percentComplete}%)`));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(`Elapsed: ${elapsedTime} | Estimated remaining: ${eta}`);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(`Success: ${chalk.green(stats.succeeded.toString())}, Failed: ${chalk.red(stats.failed.toString())}, Skipped: ${chalk.yellow(stats.skipped.toString())}`);</span>
       
       // Add delay between requests to avoid rate limits
 <span class="cstat-no" title="statement not covered" >      if (batch.indexOf(show) &lt; batch.length - 1) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log(chalk.dim(`Waiting ${delayBetweenRequestsMs}ms before next request...`));</span>
+<span class="cstat-no" title="statement not covered" >        console.warn(chalk.dim(`Waiting ${delayBetweenRequestsMs}ms before next request...`));</span>
 <span class="cstat-no" title="statement not covered" >        await new Promise(<span class="fstat-no" title="function not covered" >re</span>solve =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, delayBetweenRequestsMs))</span>;</span>
       }
     }
@@ -1288,7 +1288,7 @@ const processShowsInBatches = <span class="cstat-no" title="statement not covere
     // Add delay between batches
 <span class="cstat-no" title="statement not covered" >    if (i + batchSize &lt; shows.length) {</span>
       const batchDelayMs = <span class="cstat-no" title="statement not covered" >3000;</span>
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.dim(`\nWaiting ${batchDelayMs}ms before next batch...`));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.dim(`\nWaiting ${batchDelayMs}ms before next batch...`));</span>
 <span class="cstat-no" title="statement not covered" >      await new Promise(<span class="fstat-no" title="function not covered" >re</span>solve =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, batchDelayMs))</span>;</span>
     }
   }
@@ -1304,14 +1304,14 @@ const geocodeExistingShows = <span class="cstat-no" title="statement not covered
   delayBetweenRequestsMs: number = <span class="branch-0 cbranch-no" title="branch not covered" >1000</span>
 ): Promise&lt;GeocodingStats&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.bold.green('\n=== Starting geocoding process for existing shows ==='));</span>
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.cyan(`Batch size: ${batchSize}, Delay between requests: ${delayBetweenRequestsMs}ms`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.bold.green('\n=== Starting geocoding process for existing shows ==='));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.cyan(`Batch size: ${batchSize}, Delay between requests: ${delayBetweenRequestsMs}ms`));</span>
     
     // Fetch all shows
     const allShows = <span class="cstat-no" title="statement not covered" >await fetchAllShows();</span>
     
 <span class="cstat-no" title="statement not covered" >    if (allShows.length === 0) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.yellow('No shows found in the database.'));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.yellow('No shows found in the database.'));</span>
 <span class="cstat-no" title="statement not covered" >      return {</span>
         total: 0,
         processed: 0,
@@ -1329,11 +1329,11 @@ const geocodeExistingShows = <span class="cstat-no" title="statement not covered
       hasInvalidCoordinates(show)
     );
     
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.bold(`\nFound ${chalk.cyan(showsToProcess.length.toString())} shows with addresses but missing or invalid coordinates`));</span>
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.dim(`(out of ${allShows.length} total shows in the database)`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.bold(`\nFound ${chalk.cyan(showsToProcess.length.toString())} shows with addresses but missing or invalid coordinates`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.dim(`(out of ${allShows.length} total shows in the database)`));</span>
     
 <span class="cstat-no" title="statement not covered" >    if (showsToProcess.length === 0) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.green('\nNo shows need geocoding. All done!'));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.green('\nNo shows need geocoding. All done!'));</span>
 <span class="cstat-no" title="statement not covered" >      return {</span>
         total: allShows.length,
         processed: 0,
@@ -1353,13 +1353,13 @@ const geocodeExistingShows = <span class="cstat-no" title="statement not covered
     
     const elapsedTime = <span class="cstat-no" title="statement not covered" >formatElapsedTime(new Date().getTime() - stats.startTime.getTime());</span>
     
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.bold.green('\n=== Geocoding process completed ==='));</span>
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.bold(`Total time: ${elapsedTime}`));</span>
-<span class="cstat-no" title="statement not covered" >    console.log(chalk.bold(`Total shows: ${stats.total}`));</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`Processed: ${stats.processed}`);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`Succeeded: ${chalk.green(stats.succeeded.toString())}`);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`Failed: ${chalk.red(stats.failed.toString())}`);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`Skipped: ${chalk.yellow(stats.skipped.toString())}`);</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.bold.green('\n=== Geocoding process completed ==='));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.bold(`Total time: ${elapsedTime}`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(chalk.bold(`Total shows: ${stats.total}`));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(`Processed: ${stats.processed}`);</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(`Succeeded: ${chalk.green(stats.succeeded.toString())}`);</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(`Failed: ${chalk.red(stats.failed.toString())}`);</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(`Skipped: ${chalk.yellow(stats.skipped.toString())}`);</span>
     
 <span class="cstat-no" title="statement not covered" >    return stats;</span>
   } catch (error) {
@@ -1406,7 +1406,7 @@ const parseCommandLineArgs = <span class="cstat-no" title="statement not covered
 <span class="cstat-no" title="statement not covered" >if (require.main === module) {</span>
 <span class="cstat-no" title="statement not covered" >  (<span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.bold.magenta('\n=== GEOCODING EXISTING SHOWS ==='));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.bold.magenta('\n=== GEOCODING EXISTING SHOWS ==='));</span>
       
       // Parse command line arguments
       const { batchSize, delay } = <span class="cstat-no" title="statement not covered" >parseCommandLineArgs();</span>
@@ -1414,7 +1414,7 @@ const parseCommandLineArgs = <span class="cstat-no" title="statement not covered
       // Run the geocoding process
 <span class="cstat-no" title="statement not covered" >      await geocodeExistingShows(batchSize, delay);</span>
       
-<span class="cstat-no" title="statement not covered" >      console.log(chalk.bold.magenta('\n=== SCRIPT COMPLETED SUCCESSFULLY ==='));</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(chalk.bold.magenta('\n=== SCRIPT COMPLETED SUCCESSFULLY ==='));</span>
 <span class="cstat-no" title="statement not covered" >      process.exit(0);</span>
     } catch (error) {
 <span class="cstat-no" title="statement not covered" >      console.error(chalk.bold.red('\nScript failed:'), error);</span>
@@ -1432,7 +1432,7 @@ export { geocodeExistingShows };
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.767Z
+                at 2025-07-31T19:28:55.556Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

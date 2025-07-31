@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/155</span>
+                <span class='fraction'>0/153</span>
             </div>
         
             
@@ -650,12 +650,7 @@
 <a name='L585'></a><a href='#L585'>585</a>
 <a name='L586'></a><a href='#L586'>586</a>
 <a name='L587'></a><a href='#L587'>587</a>
-<a name='L588'></a><a href='#L588'>588</a>
-<a name='L589'></a><a href='#L589'>589</a>
-<a name='L590'></a><a href='#L590'>590</a>
-<a name='L591'></a><a href='#L591'>591</a>
-<a name='L592'></a><a href='#L592'>592</a>
-<a name='L593'></a><a href='#L593'>593</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L588'></a><a href='#L588'>588</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -784,11 +779,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -881,7 +873,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -938,9 +929,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1218,6 +1206,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1246,6 +1235,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Dealer Service
@@ -1376,10 +1366,7 @@ export const getDealerShows = <span class="cstat-no" title="statement not covere
     }
 &nbsp;
     const { data, error } = <span class="cstat-no" title="statement not covered" >await query;</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    if (error) {</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
-    }
+<span class="cstat-no" title="statement not covered" >    if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!data || data.length === 0) {</span>
 <span class="cstat-no" title="statement not covered" >      return { data: [], error: null };</span>
@@ -1448,8 +1435,8 @@ export const registerForShow = <span class="cstat-no" title="statement not cover
     // ------------------------------------------------------------
     // Debugging – log the raw role we got back from Supabase
     // ------------------------------------------------------------
-    // eslint-disable-next-line no-console
-<span class="cstat-no" title="statement not covered" >    console.log(</span>
+     
+<span class="cstat-no" title="statement not covered" >    console.warn(</span>
       '[registerForShow] DB role value:',
       userData?.role,
       '| normalised:',
@@ -1461,12 +1448,12 @@ export const registerForShow = <span class="cstat-no" title="statement not cover
     /**
      * Temporary, more lenient role check:
      * 1. Accept normalised enum values (DEALER / MVP_DEALER)
-     * 2. Fallback – if the raw string contains “dealer” or “mvp”
+     * 2. Fallback – if the raw string contains "dealer" or "mvp"
      * (case-insensitive) we also treat it as dealer-tier.
      */
     const rawRole = <span class="cstat-no" title="statement not covered" >(userData?.role || '').toString().toLowerCase();</span>
     const isDealerLike =
-<span class="cstat-no" title="statement not covered" >      rawRole.includes('dealer') || rawRole.includes('mvp') || rawRole.includes('organizer');</span> // allow organizers
+<span class="cstat-no" title="statement not covered" >      rawRole.includes('dealer') || rawRole.includes('mvp') || rawRole.includes('organizer');</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (</span>
       !userRole &amp;&amp;
@@ -1477,13 +1464,12 @@ export const registerForShow = <span class="cstat-no" title="statement not cover
 &nbsp;
     // If we passed the lenient check but normalisation failed,
     // treat the user as a basic DEALER for the remainder of this call.
-    const effectiveRole =
-<span class="cstat-no" title="statement not covered" >      userRole ?? UserRole.DEALER;</span>
+    const effectiveRole = <span class="cstat-no" title="statement not covered" >userRole ?? UserRole.DEALER;</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (</span>
       effectiveRole !== UserRole.DEALER &amp;&amp;
       effectiveRole !== UserRole.MVP_DEALER &amp;&amp;
-      effectiveRole !== UserRole.SHOW_ORGANIZER // organizers can register as dealers
+      effectiveRole !== UserRole.SHOW_ORGANIZER
     ) {
 <span class="cstat-no" title="statement not covered" >      return { data: null, error: 'User is not a dealer' };</span>
     }
@@ -1521,17 +1507,14 @@ export const registerForShow = <span class="cstat-no" title="statement not cover
 <span class="cstat-no" title="statement not covered" >    if (participationData.openToTrades !== undefined) <span class="cstat-no" title="statement not covered" >insertData.open_to_trades = participationData.openToTrades;</span></span>
 <span class="cstat-no" title="statement not covered" >    if (participationData.buyingCards !== undefined) <span class="cstat-no" title="statement not covered" >insertData.buying_cards = participationData.buyingCards;</span></span>
 &nbsp;
-    const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase</span>
+    const { data: inserted, error } = <span class="cstat-no" title="statement not covered" >await supabase</span>
       .from('show_participants')
       .insert(insertData)
       .select()
       .single();
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    if (error) {</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
-    }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    return { data: mapDbParticipationToAppParticipation(data), error: null };</span>
+<span class="cstat-no" title="statement not covered" >    if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
+<span class="cstat-no" title="statement not covered" >    return { data: mapDbParticipationToAppParticipation(inserted), error: null };</span>
   } catch (err: any) {
 <span class="cstat-no" title="statement not covered" >    console.error('Error registering for show:', err);</span>
 <span class="cstat-no" title="statement not covered" >    return { data: null, error: err.message || 'Failed to register for show' };</span>
@@ -1786,7 +1769,7 @@ export const getAvailableShowsForDealer = <span class="cstat-no" title="statemen
 &nbsp;
     // Exclude shows the dealer is already registered for
 <span class="cstat-no" title="statement not covered" >    if (registeredShowIds.length &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >      query = query.not('id', 'in', `(${registeredShowIds.join(',')})`)</span>
+<span class="cstat-no" title="statement not covered" >      query = query.not('id', 'in', registeredShowIds)</span>
     }
 &nbsp;
     // Order by start date
@@ -1810,7 +1793,8 @@ export const getAvailableShowsForDealer = <span class="cstat-no" title="statemen
     ) {
       // This would ideally use the server-side PostGIS functions,
       // but for simplicity we'll do basic filtering here
-<span class="cstat-no" title="statement not covered" >      console.log('Filtering by distance is not implemented in this version');</span>
+       
+<span class="cstat-no" title="statement not covered" >console.warn('Filtering by distance is not implemented in this version');</span>
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return { </span>
@@ -1839,14 +1823,15 @@ export const getAvailableShowsForDealer = <span class="cstat-no" title="statemen
 <span class="cstat-no" title="statement not covered" >    console.error('Error fetching available shows for dealer:', err);</span>
 <span class="cstat-no" title="statement not covered" >    return { data: null, error: err.message || 'Failed to fetch available shows' };</span>
   }
-};</pre></td></tr></table></pre>
+};
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.767Z
+                at 2025-07-31T19:28:55.556Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

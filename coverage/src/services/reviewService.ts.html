@@ -1315,7 +1315,7 @@
  */
 &nbsp;
 import { supabase } from '../supabase';
-import { User } from '../types';
+import { User as _User } from '../types';
 &nbsp;
 /**
  * Review type definition based on the database schema
@@ -1399,7 +1399,7 @@ export const createReview = <span class="cstat-no" title="statement not covered"
     const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase</span>
       .from('reviews')
       .insert([reviewData])
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .single();
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (error) {</span>
@@ -1429,7 +1429,7 @@ export const getReviewById = <span class="cstat-no" title="statement not covered
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase</span>
       .from('reviews')
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .eq('id', reviewId)
       .single();
 &nbsp;
@@ -1469,7 +1469,7 @@ export const getReviewsByShowId = <span class="cstat-no" title="statement not co
     // Then fetch the reviews with pagination
     let query = <span class="cstat-no" title="statement not covered" >supabase</span>
       .from('reviews')
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .eq('show_id', showId)
       .order('created_at', { ascending: false });
 &nbsp;
@@ -1515,7 +1515,7 @@ export const getReviewsBySeriesId = <span class="cstat-no" title="statement not 
     // Then fetch the reviews with pagination
     let query = <span class="cstat-no" title="statement not covered" >supabase</span>
       .from('reviews')
-      .select('*, profiles:user_id(username, first_name, last_name), shows:show_id(title, start_date)')
+      .select('*, profiles:user_id(username, _first_name, last_name), shows:show_id(title, _start_date)')
       .eq('series_id', seriesId)
       .order('created_at', { ascending: false });
 &nbsp;
@@ -1612,7 +1612,7 @@ export const updateReview = <span class="cstat-no" title="statement not covered"
       .from('reviews')
       .update(updateData)
       .eq('id', reviewId)
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .single();
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (error) {</span>
@@ -1659,7 +1659,7 @@ export const deleteReview = <span class="cstat-no" title="statement not covered"
 /**
  * Add an organizer response to a review
  */
-export const addOrganizerResponse = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+export const _addOrganizerResponse = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
   reviewId: string,
   organizerResponse: OrganizerResponseInput
 ): Promise&lt;{ data: Review | null; error: string | null }&gt; =&gt; {
@@ -1677,7 +1677,7 @@ export const addOrganizerResponse = <span class="cstat-no" title="statement not 
       .from('reviews')
       .update(responseData)
       .eq('id', reviewId)
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .single();
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (error) {</span>
@@ -1700,7 +1700,7 @@ export const addOrganizerResponse = <span class="cstat-no" title="statement not 
 /**
  * Update an organizer response
  */
-export const updateOrganizerResponse = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+export const _updateOrganizerResponse = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
   reviewId: string,
   comment: string
 ): Promise&lt;{ data: Review | null; error: string | null }&gt; =&gt; {
@@ -1732,7 +1732,7 @@ export const updateOrganizerResponse = <span class="cstat-no" title="statement n
       .from('reviews')
       .update(responseData)
       .eq('id', reviewId)
-      .select('*, profiles:user_id(username, first_name, last_name)')
+      .select('*, profiles:user_id(username, _first_name, last_name)')
       .single();
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (error) {</span>
@@ -1755,7 +1755,7 @@ export const updateOrganizerResponse = <span class="cstat-no" title="statement n
 /**
  * Remove an organizer response
  */
-export const removeOrganizerResponse = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+export const _removeOrganizerResponse = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
   reviewId: string
 ): Promise&lt;{ success: boolean; error: string | null }&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
@@ -1933,7 +1933,7 @@ const mapDbReviewToAppReview = <span class="cstat-no" title="statement not cover
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.767Z
+                at 2025-07-31T19:28:55.556Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

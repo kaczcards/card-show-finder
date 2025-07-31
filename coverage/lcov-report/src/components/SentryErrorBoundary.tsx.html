@@ -359,7 +359,11 @@
 <a name='L294'></a><a href='#L294'>294</a>
 <a name='L295'></a><a href='#L295'>295</a>
 <a name='L296'></a><a href='#L296'>296</a>
-<a name='L297'></a><a href='#L297'>297</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -516,23 +520,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -657,7 +665,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
-import * as Sentry from 'sentry-expo';
+import * as _Sentry from 'sentry-expo'; // Temporarily disabled
 import { getSentryErrorBoundary, captureException } from '../services/sentryConfig';
 &nbsp;
 // Get the Sentry ErrorBoundary component
@@ -798,7 +806,7 @@ interface SentryErrorBoundaryProps {
  * // With custom fallback and error handler
  * &lt;SentryErrorBoundary 
  *   fallback={CustomErrorFallback}
- *   onError={(error) =&gt; console.log('Captured error:', error)}
+ *   onError={(error) =&gt; console.warn('Captured error:', error);}
  * &gt;
  *   &lt;YourComponent /&gt;
  * &lt;/SentryErrorBoundary&gt;
@@ -812,8 +820,10 @@ const SentryErrorBoundary: React.FC&lt;SentryErrorBoundaryProps&gt; = <span clas
     // Log error in development
 <span class="cstat-no" title="statement not covered" >    if (__DEV__) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error('Error caught by SentryErrorBoundary:', error);</span>
-<span class="cstat-no" title="statement not covered" >      console.log('Component stack:', componentStack);</span>
-<span class="cstat-no" title="statement not covered" >      console.log('Sentry event ID:', eventId);</span>
+       
+<span class="cstat-no" title="statement not covered" >console.warn('Component stack:', componentStack);</span>
+       
+<span class="cstat-no" title="statement not covered" >console.warn('Sentry event ID:', eventId);</span>
     }
 &nbsp;
     // Call custom error handler if provided
@@ -828,7 +838,9 @@ const SentryErrorBoundary: React.FC&lt;SentryErrorBoundaryProps&gt; = <span clas
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;ErrorBoundary 
       /* `fallback` must be a render function that returns the element */
-      fallback={<span class="fstat-no" title="function not covered" >(e</span>rrorProps) =&gt; <span class="cstat-no" title="statement not covered" >&lt;FallbackComponent {...errorProps} /&gt;}</span>
+      fallback={<span class="fstat-no" title="function not covered" >(e</span>rrorProps: ErrorFallbackProps) =&gt; (
+<span class="cstat-no" title="statement not covered" >        &lt;FallbackComponent {...errorProps} /&gt;</span>
+      )}
       onError={handleError}
     &gt;
       {children}
@@ -958,7 +970,7 @@ export default SentryErrorBoundary;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.546Z
+                at 2025-07-31T19:28:55.373Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
