@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert, ScrollView, SafeAreaView, Dimensions,  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 // Use fallback map components that gracefully degrade when the native
-// react-native-maps module isn’t available (e.g. running in Expo Go).
+// react-native-maps module isn't available (e.g. running in Expo Go).
 import { Region, Marker } from '../../components/MapFallback';
 import { useNavigation } from '@react-navigation/native';
 import { Show, Coordinates } from '../../types';
@@ -303,7 +303,7 @@ const AdminMapScreen: React.FC = () => {
               <TextInput
                 style={styles.input}
                 value={newCoordinates.latitude.toString()}
-                onChangeText={(_text) => {
+                onChangeText={(text) => {
                   const value = parseFloat(text);
                   if (!isNaN(value)) {
                     setNewCoordinates(prev => ({ ...prev, latitude: value }));
@@ -319,7 +319,7 @@ const AdminMapScreen: React.FC = () => {
               <TextInput
                 style={styles.input}
                 value={newCoordinates.longitude.toString()}
-                onChangeText={(_text) => {
+                onChangeText={(text) => {
                   const value = parseFloat(text);
                   if (!isNaN(value)) {
                     setNewCoordinates(prev => ({ ...prev, longitude: value }));
