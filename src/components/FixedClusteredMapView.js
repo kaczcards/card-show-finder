@@ -4,7 +4,7 @@
 import PropTypes from 'prop-types'
 // Import PureComponent for actual usage and alias an unused copy to avoid
 // eslint unused-var warnings during tree-shaking in bundlers
-import React, { PureComponent, PureComponent as __PureComponent } from 'react'
+import React, { PureComponent } from 'react'
 import {
   Platform,
   Dimensions,

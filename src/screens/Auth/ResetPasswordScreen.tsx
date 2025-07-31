@@ -71,6 +71,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         console.warn('[ResetPasswordScreen] Token extracted using URL object:', token.substring(0, 5) + '...');
         return token;
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_e) {
       console.warn('[ResetPasswordScreen] URL parsing failed, falling back to string search');
     }
