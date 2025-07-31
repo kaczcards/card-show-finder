@@ -7,8 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  Linking,
-  Share
+  /* Linking and Share removed – not used in this component */
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CommonActions, useNavigation } from '@react-navigation/native';
@@ -55,8 +54,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const nav = useNavigation<any>();
 
   // State for modals and UI elements
-  const [showSeries, _setShowSeries] = useState<ShowSeries | null>(null);
-  const [loadingSeries, _setLoadingSeries] = useState(false);
+  const [_showSeries, _setShowSeries] = useState<ShowSeries | null>(null);
+  const [_loadingSeries, _setLoadingSeries] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(null);
@@ -323,10 +322,10 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         />
       )}
       
-      {showReviewForm && showSeries && (
+      {showReviewForm && _showSeries && (
         <ReviewForm
           _showId={showId}
-          _seriesId={showSeries.id}
+          _seriesId={_showSeries?.id || ''}
           onSubmit={() => {}}
           onCancel={() => setShowReviewForm(false)}
         />

@@ -83,7 +83,9 @@ const ShowParticipationScreen: React.FC = () => {
   const [availableShows, setAvailableShows] = useState<Array<Show>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  // Note: the error message is handled via setError for alerts/logs – the
+  // value itself is never read from UI, so prefix with “_” to satisfy ESLint.
+  const [_error, setError] = useState<string | null>(null);
   
   // State for registration modal
   const [registrationModalVisible, setRegistrationModalVisible] = useState<boolean>(false);
