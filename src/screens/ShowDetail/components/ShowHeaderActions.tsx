@@ -17,8 +17,8 @@ interface ShowHeaderActionsProps {
 
 const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
   isFavorite,
-  _isCurrentUserOrganizer,
-  _onToggleFavorite,
+  isCurrentUserOrganizer,
+  onToggleFavorite,
   _onOpenMap,
   _onShare,
   _onReview,
@@ -39,7 +39,7 @@ const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
 
   return (
     <View style={styles.actionsContainer}>
-      <TouchableOpacity style={styles.actionButton} onPress={_onToggleFavorite}>
+      <TouchableOpacity style={styles.actionButton} onPress={onToggleFavorite}>
         <Ionicons 
           name={isFavorite ? 'heart' : 'heart-outline'} 
           size={_24} 

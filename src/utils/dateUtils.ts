@@ -11,7 +11,7 @@
  */
 export const _formatDate = (
   date: Date | string | undefined | null,
-  _options: Intl.DateTimeFormatOptions = { 
+  options: Intl.DateTimeFormatOptions = { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
@@ -22,7 +22,7 @@ export const _formatDate = (
   
   try {
     const _dateObj = typeof date === 'string' ? new Date(_date) : date;
-    return dateObj.toLocaleDateString('en-US', _options);
+    return dateObj.toLocaleDateString('en-US', options);
   } catch (_error) {
     console.error('Error formatting date:', _error);
     return typeof date === 'string' ? date : '';
@@ -66,7 +66,7 @@ export const _isSameDay = (
 export const _formatDateRange = (
   startDate: Date | string | undefined | null,
   endDate: Date | string | undefined | null,
-  _options: Intl.DateTimeFormatOptions = { 
+  options: Intl.DateTimeFormatOptions = { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
@@ -77,11 +77,11 @@ export const _formatDateRange = (
   
   // If no end date or same as start date, just show the start date
   if (!endDate || isSameDay(_startDate, _endDate)) {
-    return formatDate(_startDate, _options);
+    return formatDate(_startDate, options);
   }
   
   // Otherwise, show the range
-  return `${formatDate(startDate, _options)} to ${formatDate(endDate, _options)}`;
+  return `${formatDate(startDate, options)} to ${formatDate(endDate, options)}`;
 };
 
 /**
