@@ -84,7 +84,7 @@ const ProfileScreen: React.FC = () => {
         .single();
 
       if (_error) {
-        // eslint-disable-next-line no-console
+         
 console.warn(
           '[ProfileScreen] Error fetching favorite_shows_count:',
           _error.message
@@ -92,7 +92,7 @@ console.warn(
 
         /* 42703 = column does not exist -> migration not applied yet  */
         if (_error.code === '42703') {
-          // eslint-disable-next-line no-console
+           
 console.warn(
             '[ProfileScreen] Falling back to counting records in user_favorite_shows'
           );
@@ -130,7 +130,7 @@ console.warn(
 
       // Success path – column exists
       const count = data?.favorite_shows_count ?? 0;
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Fetched favorite_shows_count:', count);
       setLocalFavoriteCount(count);
     } catch (_err) {
@@ -144,7 +144,7 @@ console.warn('[ProfileScreen] Fetched favorite_shows_count:', count);
    * ------------------------------------------------------------------ */
   useFocusEffect(
     useCallback(() => {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
       fetchFavoriteCount();
       // no cleanup needed
@@ -279,7 +279,7 @@ console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
     
     try {
       setIsSubmitting(true);
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Saving profile changes:', {
         firstName,
         lastName: lastName || undefined,
@@ -305,7 +305,7 @@ console.warn('[ProfileScreen] Saving profile changes:', {
       });
       
       setIsEditMode(false);
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Profile updated successfully');
       Alert.alert('Success', 'Profile updated successfully');
     } catch (err: any) {
@@ -399,13 +399,13 @@ console.warn('[ProfileScreen] Profile updated successfully');
   // Get role display name
   const getRoleDisplayName = (role: UserRole) => {
     // Debug logging to track what role is being passed
-    // eslint-disable-next-line no-console
+     
 console.warn('[ProfileScreen] getRoleDisplayName called with role:', role, 
       'for user ID:', user?.id);
     
     // Special case for the specific user ID that needs to show as Dealer
     if (user?.id === '7d792f27-9112-4837-926f-42e4eb1f0577') {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
       return 'Dealer';
     }
@@ -436,7 +436,7 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    // eslint-disable-next-line no-console
+     
 console.warn('[ProfileScreen] Opening URL:', formattedUrl);
 
     Linking.openURL(formattedUrl).catch(_err => {
@@ -467,7 +467,7 @@ console.warn('[ProfileScreen] Opening URL:', formattedUrl);
   /* ------------------------------------------------------------------ */
   /* Debug – log role + dealer status each render                        */
   /* ------------------------------------------------------------------ */
-  // eslint-disable-next-line no-console
+   
 console.warn('[ProfileScreen] render', {
     userId: user.id,
     role: user.role,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect as _useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -308,7 +308,7 @@ const ShowParticipationScreen: React.FC = () => {
         return;
       }
       
-      const { data, error } = await registerForShow(user.id, formData);
+      const { data: _data, error } = await registerForShow(user.id, formData);
       
       if (error) {
         Alert.alert('Registration Failed', error);
@@ -340,7 +340,7 @@ const ShowParticipationScreen: React.FC = () => {
         return;
       }
       
-      const { data, error } = await updateShowParticipation(
+      const { data: _data, error } = await updateShowParticipation(
         user.id,
         selectedParticipation.id,
         formData
@@ -373,7 +373,7 @@ const ShowParticipationScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const { success, error } = await cancelShowParticipation(user.id, participationId);
+              const { success: _success, error } = await cancelShowParticipation(user.id, participationId);
               
               if (error) {
                 Alert.alert('Cancellation Failed', error);

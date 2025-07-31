@@ -28,7 +28,7 @@ export const useUserSubscriptions = () => {
         setIsLoading(true);
         setError(null);
 
-        // eslint-disable-next-line no-console
+         
 console.warn('[useUserSubscriptions] Fetching subscriptions for user:', user.id);
 
         /* --------------------------------------------------------------
@@ -61,7 +61,7 @@ console.warn('[useUserSubscriptions] Fetching subscriptions for user:', user.id)
           : [];
 
         setSubscriptions(mapped);
-        // eslint-disable-next-line no-console
+         
 console.warn('[useUserSubscriptions] Fetched subscriptions:', mapped.length);
       } catch (_err) {
         console.error('[useUserSubscriptions] Unexpected error:', _err);

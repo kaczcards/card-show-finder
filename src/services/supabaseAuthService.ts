@@ -609,7 +609,7 @@ export const _subscribeToAuthChanges = (
 ) => {
   let initialized = false;
 
-  const subscription = supabase.auth.onAuthStateChange(
+  const _subscription = supabase.auth.onAuthStateChange(
     async (event, session) => {
        
 console.warn('Auth state change event:', event);

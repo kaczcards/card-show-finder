@@ -379,7 +379,7 @@ export const getCurrentUser = async (userId: string): Promise<User | null> => {
       return null;
     }
 
-    // eslint-disable-next-line no-console
+     
 console.warn('[supabaseAuthService] Fetching user profile for ID:', userId);
 
     /* -----------------------------------------------------------
@@ -613,7 +613,7 @@ export const subscribeToAuthChanges = (
 
   const subscription = supabase.auth.onAuthStateChange(
     async (event, session) => {
-      // eslint-disable-next-line no-console
+       
 console.warn('Auth state change event:', event);
       
       // Initial state is loading

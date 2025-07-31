@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import _React, { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 import {
   AppError,

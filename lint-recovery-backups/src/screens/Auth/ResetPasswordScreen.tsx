@@ -53,7 +53,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
    * - Any URL containing token=XYZ
    */
   const extractToken = (url: string): string | null => {
-    // eslint-disable-next-line no-console
+     
 console.warn('[ResetPasswordScreen] Attempting to extract token from URL:', url);
     
     // Try standard URLSearchParams approach first
@@ -70,12 +70,12 @@ console.warn('[ResetPasswordScreen] Attempting to extract token from URL:', url)
       const token = urlObj.searchParams.get('token');
       
       if (token) {
-        // eslint-disable-next-line no-console
+         
 console.warn('[ResetPasswordScreen] Token extracted using URL object:', token.substring(0, 5) + '...');
         return token;
       }
     } catch (_e) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] URL parsing failed, falling back to string search');
     }
     
@@ -83,7 +83,7 @@ console.warn('[ResetPasswordScreen] URL parsing failed, falling back to string s
     const tokenKey = 'token=';
     const idx = url.indexOf(tokenKey);
     if (idx === -1) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] No token parameter found in URL');
       return null;
     }
@@ -95,10 +95,10 @@ console.warn('[ResetPasswordScreen] No token parameter found in URL');
     
     // Log a truncated version of the token for debugging (avoid logging full token for security)
     if (token) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] Token extracted using string search:', token.substring(0, 5) + '...');
     } else {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] Failed to extract token using string search');
     }
     
@@ -108,19 +108,19 @@ console.warn('[ResetPasswordScreen] Failed to extract token using string search'
   // Process a URL to extract the token
   const processUrl = async (url: string | null) => {
     if (!url) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] No URL to process');
       return;
     }
     
-    // eslint-disable-next-line no-console
+     
 console.warn('[ResetPasswordScreen] Processing URL:', url);
     setDebugInfo(prev => `${prev}\nProcessing URL: ${url}`);
     
     if (url.includes('reset-password')) {
       const urlToken = extractToken(url);
       if (urlToken) {
-        // eslint-disable-next-line no-console
+         
 console.warn('[ResetPasswordScreen] Setting token from URL');
         setToken(urlToken);
         setTokenTimedOut(false);
@@ -131,7 +131,7 @@ console.warn('[ResetPasswordScreen] Setting token from URL');
         setDebugInfo(prev => `${prev}\nNo token found in URL`);
       }
     } else {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] URL does not contain reset-password path');
       setDebugInfo(prev => `${prev}\nURL does not contain reset-password path`);
     }
@@ -139,7 +139,7 @@ console.warn('[ResetPasswordScreen] URL does not contain reset-password path');
 
   // Extract token from route params or URL
   useEffect(() => {
-    // eslint-disable-next-line no-console
+     
 console.warn('[ResetPasswordScreen] Component mounted');
     setDebugInfo('Component mounted');
     
@@ -150,7 +150,7 @@ console.warn('[ResetPasswordScreen] Component mounted');
     }
 
     if (routeToken) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] Token found in route params');
       setToken(routeToken);
       setDebugInfo(prev => `${prev}\nToken found in route params: ${routeToken.substring(0, 5)}...`);
@@ -160,13 +160,13 @@ console.warn('[ResetPasswordScreen] Token found in route params');
     // If no token in route params, check if we can extract it from the URL
     const getTokenFromUrl = async () => {
       try {
-        // eslint-disable-next-line no-console
+         
 console.warn('[ResetPasswordScreen] Checking initial URL');
         setDebugInfo(prev => `${prev}\nChecking initial URL...`);
         
         // Get the initial URL that opened the app
         const initialUrl = await Linking.getInitialURL();
-        // eslint-disable-next-line no-console
+         
 console.warn('[ResetPasswordScreen] Initial URL:', initialUrl);
         setDebugInfo(prev => `${prev}\nInitial URL: ${initialUrl || 'none'}`);
         
@@ -189,7 +189,7 @@ console.warn('[ResetPasswordScreen] Initial URL:', initialUrl);
 
     // Set up URL event listener for when app is already running
     const urlListener = (event: { url: string }) => {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] URL event received:', event.url);
       setDebugInfo(prev => `${prev}\nURL event received: ${event.url}`);
       processUrl(event.url);
@@ -200,7 +200,7 @@ console.warn('[ResetPasswordScreen] URL event received:', event.url);
 
     // Clean up function
     return () => {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] Component unmounting, cleaning up listeners');
       isMounted.current = false;
       subscription.remove();
@@ -244,13 +244,13 @@ console.warn('[ResetPasswordScreen] Component unmounting, cleaning up listeners'
 
     try {
       setIsLoading(true);
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] Attempting to update password with token');
 
       // Update the user's password using the helper in supabaseAuthService
       await updatePassword(password);
 
-      // eslint-disable-next-line no-console
+       
 console.warn('[ResetPasswordScreen] Password updated successfully');
       
       // Password reset successful

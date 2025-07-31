@@ -48,54 +48,54 @@ const CURRENT_YEAR = TODAY.getFullYear();
  * Main function to analyze show series
  */
 async function analyzeShowSeries() {
-  console.log(`${colors.bright}${colors.blue}======================================================${colors.reset}`);
-  console.log(`${colors.bright}${colors.blue}  CARD SHOW FINDER - RECURRING SHOW SERIES ANALYSIS${colors.reset}`);
-  console.log(`${colors.bright}${colors.blue}======================================================${colors.reset}\n`);
+  console.warn(`${colors.bright}${colors.blue}======================================================${colors.reset}`);
+  console.warn(`${colors.bright}${colors.blue}  CARD SHOW FINDER - RECURRING SHOW SERIES ANALYSIS${colors.reset}`);
+  console.warn(`${colors.bright}${colors.blue}======================================================${colors.reset}\n`);
   
   try {
     // 1. Parse both shows
-    console.log(`${colors.bright}1. PARSING SHOW DETAILS${colors.reset}\n`);
+    console.warn(`${colors.bright}1. PARSING SHOW DETAILS${colors.reset}\n`);
     const show1 = parseShowDetails(SHOW_1, "Show 1 (August)");
     const show2 = parseShowDetails(SHOW_2, "Show 2 (September)");
     
     // 2. Compare field similarities
-    console.log(`\n${colors.bright}2. COMPARING FIELD SIMILARITIES${colors.reset}\n`);
+    console.warn(`\n${colors.bright}2. COMPARING FIELD SIMILARITIES${colors.reset}\n`);
     const similarities = compareShows(show1, show2);
     
     // 3. Geocode both shows
-    console.log(`\n${colors.bright}3. GEOCODING BOTH SHOWS${colors.reset}\n`);
+    console.warn(`\n${colors.bright}3. GEOCODING BOTH SHOWS${colors.reset}\n`);
     show1.geocoded = await geocodeShow(show1);
     show2.geocoded = await geocodeShow(show2);
     
     // 4. Series detection algorithm
-    console.log(`\n${colors.bright}4. SERIES DETECTION ALGORITHM${colors.reset}\n`);
+    console.warn(`\n${colors.bright}4. SERIES DETECTION ALGORITHM${colors.reset}\n`);
     const seriesResult = detectSeries(show1, show2);
     
     // 5. Database schema for show series
-    console.log(`\n${colors.bright}5. DATABASE SCHEMA FOR SHOW SERIES${colors.reset}\n`);
+    console.warn(`\n${colors.bright}5. DATABASE SCHEMA FOR SHOW SERIES${colors.reset}\n`);
     displayDatabaseSchema();
     
     // 6. Ownership inheritance
-    console.log(`\n${colors.bright}6. OWNERSHIP INHERITANCE MODEL${colors.reset}\n`);
+    console.warn(`\n${colors.bright}6. OWNERSHIP INHERITANCE MODEL${colors.reset}\n`);
     demonstrateOwnershipInheritance(show1, show2);
     
     // 7. System architecture
-    console.log(`\n${colors.bright}7. SYSTEM ARCHITECTURE${colors.reset}\n`);
+    console.warn(`\n${colors.bright}7. SYSTEM ARCHITECTURE${colors.reset}\n`);
     displaySystemArchitecture();
     
     // 8. Admin system integration
-    console.log(`\n${colors.bright}8. ADMIN SYSTEM INTEGRATION${colors.reset}\n`);
+    console.warn(`\n${colors.bright}8. ADMIN SYSTEM INTEGRATION${colors.reset}\n`);
     displayAdminIntegration(show1, show2);
     
     // 9. Mock data demonstration
-    console.log(`\n${colors.bright}9. MOCK DATA DEMONSTRATION${colors.reset}\n`);
+    console.warn(`\n${colors.bright}9. MOCK DATA DEMONSTRATION${colors.reset}\n`);
     generateMockData(show1, show2);
     
     // 10. Conclusion
-    console.log(`\n${colors.bright}${colors.green}CONCLUSION:${colors.reset}`);
-    console.log(`The system successfully identifies these shows as part of the same recurring series.`);
-    console.log(`Ownership inheritance ensures that organizers automatically own future shows at the same venue.`);
-    console.log(`The proposed database schema and system architecture provide a robust foundation for handling recurring shows.`);
+    console.warn(`\n${colors.bright}${colors.green}CONCLUSION:${colors.reset}`);
+    console.warn(`The system successfully identifies these shows as part of the same recurring series.`);
+    console.warn(`Ownership inheritance ensures that organizers automatically own future shows at the same venue.`);
+    console.warn(`The proposed database schema and system architecture provide a robust foundation for handling recurring shows.`);
     
   } catch (error) {
     console.error(`\n${colors.red}ERROR: ${error.message}${colors.reset}`);
@@ -108,7 +108,7 @@ async function analyzeShowSeries() {
  * Parse show details from text description
  */
 function parseShowDetails(showText, label) {
-  console.log(`${colors.cyan}Parsing ${label}:${colors.reset} "${showText}"`);
+  console.warn(`${colors.cyan}Parsing ${label}:${colors.reset} "${showText}"`);
   
   // Extract fields using regex patterns
   const cityMatch = showText.match(/([A-Za-z\s]+),?\s*(?=[A-Z]{2}|–|-)/) || ['', 'Indianapolis'];
@@ -151,13 +151,13 @@ function parseShowDetails(showText, label) {
   };
   
   // Display parsed fields
-  console.log(`${colors.green}✓ Parsed Fields:${colors.reset}`);
-  console.log(`  ${colors.dim}Name:${colors.reset} ${show.name}`);
-  console.log(`  ${colors.dim}Date:${colors.reset} ${show.startDate} (${date ? formatDate(date) : 'Unknown'})`);
-  console.log(`  ${colors.dim}Venue:${colors.reset} ${show.venueName}`);
-  console.log(`  ${colors.dim}Address:${colors.reset} ${show.address}`);
-  console.log(`  ${colors.dim}City/State:${colors.reset} ${show.city}, ${show.state}`);
-  console.log(`  ${colors.dim}Hours:${colors.reset} ${show.hours}`);
+  console.warn(`${colors.green}✓ Parsed Fields:${colors.reset}`);
+  console.warn(`  ${colors.dim}Name:${colors.reset} ${show.name}`);
+  console.warn(`  ${colors.dim}Date:${colors.reset} ${show.startDate} (${date ? formatDate(date) : 'Unknown'})`);
+  console.warn(`  ${colors.dim}Venue:${colors.reset} ${show.venueName}`);
+  console.warn(`  ${colors.dim}Address:${colors.reset} ${show.address}`);
+  console.warn(`  ${colors.dim}City/State:${colors.reset} ${show.city}, ${show.state}`);
+  console.warn(`  ${colors.dim}Hours:${colors.reset} ${show.hours}`);
   
   return show;
 }
@@ -166,7 +166,7 @@ function parseShowDetails(showText, label) {
  * Compare two shows and identify similarities
  */
 function compareShows(show1, show2) {
-  console.log(`${colors.cyan}Comparing shows for similarities:${colors.reset}`);
+  console.warn(`${colors.cyan}Comparing shows for similarities:${colors.reset}`);
   
   const similarities = {
     venue: show1.venueName === show2.venueName,
@@ -183,20 +183,20 @@ function compareShows(show1, show2) {
   const matchingFields = Object.values(similarities).filter(v => v).length;
   const similarityScore = Math.round((matchingFields / totalFields) * 100);
   
-  console.log(`${colors.cyan}Field Comparison:${colors.reset}`);
+  console.warn(`${colors.cyan}Field Comparison:${colors.reset}`);
   Object.entries(similarities).forEach(([field, isMatch]) => {
     const status = isMatch ? 
       `${colors.green}MATCH${colors.reset}` : 
       `${colors.red}DIFFERENT${colors.reset}`;
     
-    console.log(`  ${colors.dim}${field}:${colors.reset} ${status}`);
+    console.warn(`  ${colors.dim}${field}:${colors.reset} ${status}`);
   });
   
-  console.log(`\n${colors.cyan}Similarity Score:${colors.reset} ${similarityScore}% match`);
+  console.warn(`\n${colors.cyan}Similarity Score:${colors.reset} ${similarityScore}% match`);
   
   // Determine if they are likely the same series
   const isSameSeries = similarities.venue && similarities.address && similarities.city;
-  console.log(`${colors.cyan}Series Detection:${colors.reset} ${isSameSeries ? 
+  console.warn(`${colors.cyan}Series Detection:${colors.reset} ${isSameSeries ? 
     `${colors.green}SAME SERIES${colors.reset}` : 
     `${colors.red}DIFFERENT SERIES${colors.reset}`}`);
   
@@ -213,7 +213,7 @@ function compareShows(show1, show2) {
  */
 async function geocodeShow(show) {
   const address = `${show.address}, ${show.city}, ${show.state}`;
-  console.log(`${colors.cyan}Geocoding:${colors.reset} ${address}`);
+  console.warn(`${colors.cyan}Geocoding:${colors.reset} ${address}`);
   
   try {
     const geocodeResult = await geocodeAddress(address);
@@ -222,10 +222,10 @@ async function geocodeShow(show) {
       throw new Error('Geocoding failed - no results returned');
     }
     
-    console.log(`${colors.green}✓ Geocoding Successful:${colors.reset}`);
-    console.log(`  ${colors.dim}ZIP/Postal Code:${colors.reset} ${geocodeResult.postalCode}`);
-    console.log(`  ${colors.dim}Latitude:${colors.reset} ${geocodeResult.lat}`);
-    console.log(`  ${colors.dim}Longitude:${colors.reset} ${geocodeResult.lon}`);
+    console.warn(`${colors.green}✓ Geocoding Successful:${colors.reset}`);
+    console.warn(`  ${colors.dim}ZIP/Postal Code:${colors.reset} ${geocodeResult.postalCode}`);
+    console.warn(`  ${colors.dim}Latitude:${colors.reset} ${geocodeResult.lat}`);
+    console.warn(`  ${colors.dim}Longitude:${colors.reset} ${geocodeResult.lon}`);
     
     // Update show with geocoded information
     show.zipCode = geocodeResult.postalCode;
@@ -310,7 +310,7 @@ async function geocodeAddress(address) {
  * Series detection algorithm
  */
 function detectSeries(show1, show2) {
-  console.log(`${colors.cyan}Running Series Detection Algorithm:${colors.reset}`);
+  console.warn(`${colors.cyan}Running Series Detection Algorithm:${colors.reset}`);
   
   // 1. Check venue and address match
   const venueMatch = show1.venueName === show2.venueName;
@@ -324,7 +324,7 @@ function detectSeries(show1, show2) {
       show2.geocoded.lat, show2.geocoded.lon
     );
     locationProximity = distance < 0.1; // Less than 100 meters apart
-    console.log(`  ${colors.dim}Location Distance:${colors.reset} ${distance.toFixed(3)} km`);
+    console.warn(`  ${colors.dim}Location Distance:${colors.reset} ${distance.toFixed(3)} km`);
   }
   
   // 3. Check for pattern in dates (monthly, etc.)
@@ -342,9 +342,9 @@ function detectSeries(show1, show2) {
     
     datePattern = isMonthly || sameDayOfWeek;
     
-    console.log(`  ${colors.dim}Days Between Shows:${colors.reset} ${daysDiff.toFixed(0)} days`);
-    console.log(`  ${colors.dim}Monthly Pattern:${colors.reset} ${isMonthly ? 'Yes' : 'No'}`);
-    console.log(`  ${colors.dim}Same Day of Week:${colors.reset} ${sameDayOfWeek ? 'Yes' : 'No'}`);
+    console.warn(`  ${colors.dim}Days Between Shows:${colors.reset} ${daysDiff.toFixed(0)} days`);
+    console.warn(`  ${colors.dim}Monthly Pattern:${colors.reset} ${isMonthly ? 'Yes' : 'No'}`);
+    console.warn(`  ${colors.dim}Same Day of Week:${colors.reset} ${sameDayOfWeek ? 'Yes' : 'No'}`);
   }
   
   // 4. Check for time pattern (same hours)
@@ -361,20 +361,20 @@ function detectSeries(show1, show2) {
   // Series detection result
   const isSameSeries = confidenceScore >= 60; // 60% threshold
   
-  console.log(`\n${colors.cyan}Series Detection Results:${colors.reset}`);
-  console.log(`  ${colors.dim}Venue Match:${colors.reset} ${venueMatch ? 'Yes' : 'No'} (30%)`);
-  console.log(`  ${colors.dim}Address Match:${colors.reset} ${addressMatch ? 'Yes' : 'No'} (30%)`);
-  console.log(`  ${colors.dim}Location Proximity:${colors.reset} ${locationProximity ? 'Yes' : 'No'} (20%)`);
-  console.log(`  ${colors.dim}Date Pattern:${colors.reset} ${datePattern ? 'Yes' : 'No'} (10%)`);
-  console.log(`  ${colors.dim}Time Pattern:${colors.reset} ${timePattern ? 'Yes' : 'No'} (10%)`);
-  console.log(`  ${colors.dim}Confidence Score:${colors.reset} ${confidenceScore}%`);
+  console.warn(`\n${colors.cyan}Series Detection Results:${colors.reset}`);
+  console.warn(`  ${colors.dim}Venue Match:${colors.reset} ${venueMatch ? 'Yes' : 'No'} (30%)`);
+  console.warn(`  ${colors.dim}Address Match:${colors.reset} ${addressMatch ? 'Yes' : 'No'} (30%)`);
+  console.warn(`  ${colors.dim}Location Proximity:${colors.reset} ${locationProximity ? 'Yes' : 'No'} (20%)`);
+  console.warn(`  ${colors.dim}Date Pattern:${colors.reset} ${datePattern ? 'Yes' : 'No'} (10%)`);
+  console.warn(`  ${colors.dim}Time Pattern:${colors.reset} ${timePattern ? 'Yes' : 'No'} (10%)`);
+  console.warn(`  ${colors.dim}Confidence Score:${colors.reset} ${confidenceScore}%`);
   
-  console.log(`\n${colors.cyan}Final Determination:${colors.reset} ${isSameSeries ? 
+  console.warn(`\n${colors.cyan}Final Determination:${colors.reset} ${isSameSeries ? 
     `${colors.green}SAME SERIES${colors.reset}` : 
     `${colors.red}DIFFERENT SERIES${colors.reset}`}`);
   
   if (isSameSeries) {
-    console.log(`\n${colors.cyan}Series Pattern:${colors.reset} Monthly card show at ${show1.venueName}`);
+    console.warn(`\n${colors.cyan}Series Pattern:${colors.reset} Monthly card show at ${show1.venueName}`);
     
     // Predict next show in series
     if (show1.parsedDate && show2.parsedDate) {
@@ -397,7 +397,7 @@ function detectSeries(show1, show2) {
       const nextMonth = nextDate.toLocaleString('default', { month: 'long' });
       const nextDay = nextDate.getDate();
       
-      console.log(`  ${colors.dim}Predicted Next Show:${colors.reset} ${nextMonth} ${nextDay}${getDaySuffix(nextDay)}`);
+      console.warn(`  ${colors.dim}Predicted Next Show:${colors.reset} ${nextMonth} ${nextDay}${getDaySuffix(nextDay)}`);
     }
   }
   
@@ -449,11 +449,11 @@ function getDaySuffix(day) {
  * Display database schema for show series
  */
 function displayDatabaseSchema() {
-  console.log(`${colors.cyan}Database Schema for Show Series:${colors.reset}`);
+  console.warn(`${colors.cyan}Database Schema for Show Series:${colors.reset}`);
   
   // Show Series table
-  console.log(`\n${colors.bright}1. Show Series Table:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}1. Show Series Table:${colors.reset}`);
+  console.warn(`
 CREATE TABLE show_series (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
@@ -481,8 +481,8 @@ ON show_series USING gist (
   `);
   
   // Shows table with series relationship
-  console.log(`\n${colors.bright}2. Shows Table with Series Relationship:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}2. Shows Table with Series Relationship:${colors.reset}`);
+  console.warn(`
 CREATE TABLE shows (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   series_id UUID REFERENCES show_series(id),
@@ -512,8 +512,8 @@ CREATE TABLE shows (
   `);
   
   // Series ownership table
-  console.log(`\n${colors.bright}3. Series Ownership Table:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}3. Series Ownership Table:${colors.reset}`);
+  console.warn(`
 CREATE TABLE series_ownership (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   series_id UUID REFERENCES show_series(id) NOT NULL,
@@ -532,8 +532,8 @@ CREATE TABLE series_ownership (
   `);
   
   // RLS Policies
-  console.log(`\n${colors.bright}4. Row-Level Security Policies:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}4. Row-Level Security Policies:${colors.reset}`);
+  console.warn(`
 -- Enable RLS on tables
 ALTER TABLE show_series ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shows ENABLE ROW LEVEL SECURITY;
@@ -573,8 +573,8 @@ CREATE POLICY "Public can view approved shows"
   `);
   
   // Database functions
-  console.log(`\n${colors.bright}5. Database Functions:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}5. Database Functions:${colors.reset}`);
+  console.warn(`
 -- Function to detect and link shows to series
 CREATE OR REPLACE FUNCTION detect_and_link_series()
 RETURNS TRIGGER AS $$
@@ -669,19 +669,19 @@ END;
 $$ LANGUAGE plpgsql;
   `);
   
-  console.log(`\n${colors.cyan}Database Schema Benefits:${colors.reset}`);
-  console.log(`1. ${colors.dim}Series Grouping:${colors.reset} Shows at the same venue are linked together`);
-  console.log(`2. ${colors.dim}Ownership Inheritance:${colors.reset} Owners automatically control all shows in a series`);
-  console.log(`3. ${colors.dim}Automatic Detection:${colors.reset} New shows are linked to existing series via triggers`);
-  console.log(`4. ${colors.dim}Recurrence Patterns:${colors.reset} System can predict and generate future shows`);
-  console.log(`5. ${colors.dim}Security:${colors.reset} RLS policies ensure owners can only manage their series`);
+  console.warn(`\n${colors.cyan}Database Schema Benefits:${colors.reset}`);
+  console.warn(`1. ${colors.dim}Series Grouping:${colors.reset} Shows at the same venue are linked together`);
+  console.warn(`2. ${colors.dim}Ownership Inheritance:${colors.reset} Owners automatically control all shows in a series`);
+  console.warn(`3. ${colors.dim}Automatic Detection:${colors.reset} New shows are linked to existing series via triggers`);
+  console.warn(`4. ${colors.dim}Recurrence Patterns:${colors.reset} System can predict and generate future shows`);
+  console.warn(`5. ${colors.dim}Security:${colors.reset} RLS policies ensure owners can only manage their series`);
 }
 
 /**
  * Demonstrate ownership inheritance
  */
 function demonstrateOwnershipInheritance(show1, show2) {
-  console.log(`${colors.cyan}Ownership Inheritance Model:${colors.reset}`);
+  console.warn(`${colors.cyan}Ownership Inheritance Model:${colors.reset}`);
   
   // Mock user data
   const user = {
@@ -692,50 +692,50 @@ function demonstrateOwnershipInheritance(show1, show2) {
   };
   
   // Scenario 1: User claims ownership of first show
-  console.log(`\n${colors.bright}Scenario 1: User Claims First Show${colors.reset}`);
-  console.log(`1. ${colors.dim}Action:${colors.reset} ${user.name} claims ownership of "${show1.raw}"`);
-  console.log(`2. ${colors.dim}System:${colors.reset} Creates new show_series record for LaQuinta Inn shows`);
-  console.log(`3. ${colors.dim}System:${colors.reset} Links the August show to this series`);
-  console.log(`4. ${colors.dim}System:${colors.reset} Creates ownership record for ${user.name}`);
+  console.warn(`\n${colors.bright}Scenario 1: User Claims First Show${colors.reset}`);
+  console.warn(`1. ${colors.dim}Action:${colors.reset} ${user.name} claims ownership of "${show1.raw}"`);
+  console.warn(`2. ${colors.dim}System:${colors.reset} Creates new show_series record for LaQuinta Inn shows`);
+  console.warn(`3. ${colors.dim}System:${colors.reset} Links the August show to this series`);
+  console.warn(`4. ${colors.dim}System:${colors.reset} Creates ownership record for ${user.name}`);
   
   // Scenario 2: September show is scraped later
-  console.log(`\n${colors.bright}Scenario 2: September Show is Scraped${colors.reset}`);
-  console.log(`1. ${colors.dim}Action:${colors.reset} Scraper finds "${show2.raw}"`);
-  console.log(`2. ${colors.dim}System:${colors.reset} Detects matching venue/address with existing series`);
-  console.log(`3. ${colors.dim}System:${colors.reset} Automatically links to same series as August show`);
-  console.log(`4. ${colors.dim}Result:${colors.reset} ${user.name} automatically owns September show`);
+  console.warn(`\n${colors.bright}Scenario 2: September Show is Scraped${colors.reset}`);
+  console.warn(`1. ${colors.dim}Action:${colors.reset} Scraper finds "${show2.raw}"`);
+  console.warn(`2. ${colors.dim}System:${colors.reset} Detects matching venue/address with existing series`);
+  console.warn(`3. ${colors.dim}System:${colors.reset} Automatically links to same series as August show`);
+  console.warn(`4. ${colors.dim}Result:${colors.reset} ${user.name} automatically owns September show`);
   
   // Scenario 3: User edits series details
-  console.log(`\n${colors.bright}Scenario 3: User Edits Series Details${colors.reset}`);
-  console.log(`1. ${colors.dim}Action:${colors.reset} ${user.name} updates series name to "Monthly Indianapolis Card Show"`);
-  console.log(`2. ${colors.dim}System:${colors.reset} Updates show_series record`);
-  console.log(`3. ${colors.dim}Result:${colors.reset} Both August and September shows reflect the new name`);
+  console.warn(`\n${colors.bright}Scenario 3: User Edits Series Details${colors.reset}`);
+  console.warn(`1. ${colors.dim}Action:${colors.reset} ${user.name} updates series name to "Monthly Indianapolis Card Show"`);
+  console.warn(`2. ${colors.dim}System:${colors.reset} Updates show_series record`);
+  console.warn(`3. ${colors.dim}Result:${colors.reset} Both August and September shows reflect the new name`);
   
   // Scenario 4: Future shows prediction
-  console.log(`\n${colors.bright}Scenario 4: Future Shows Prediction${colors.reset}`);
-  console.log(`1. ${colors.dim}System:${colors.reset} Analyzes pattern (monthly, first weekend)`);
-  console.log(`2. ${colors.dim}System:${colors.reset} Predicts October show on Oct 4th`);
-  console.log(`3. ${colors.dim}Action:${colors.reset} ${user.name} confirms prediction and adds to calendar`);
-  console.log(`4. ${colors.dim}Result:${colors.reset} October show is pre-created and owned by ${user.name}`);
+  console.warn(`\n${colors.bright}Scenario 4: Future Shows Prediction${colors.reset}`);
+  console.warn(`1. ${colors.dim}System:${colors.reset} Analyzes pattern (monthly, first weekend)`);
+  console.warn(`2. ${colors.dim}System:${colors.reset} Predicts October show on Oct 4th`);
+  console.warn(`3. ${colors.dim}Action:${colors.reset} ${user.name} confirms prediction and adds to calendar`);
+  console.warn(`4. ${colors.dim}Result:${colors.reset} October show is pre-created and owned by ${user.name}`);
   
   // Ownership benefits
-  console.log(`\n${colors.cyan}Ownership Benefits:${colors.reset}`);
-  console.log(`1. ${colors.dim}Automatic Inheritance:${colors.reset} All shows at same venue are owned by same person`);
-  console.log(`2. ${colors.dim}Bulk Updates:${colors.reset} Changes to series affect all linked shows`);
-  console.log(`3. ${colors.dim}Predictive Creation:${colors.reset} Future shows can be pre-generated`);
-  console.log(`4. ${colors.dim}Simplified Management:${colors.reset} Organizers manage one series, not individual shows`);
-  console.log(`5. ${colors.dim}Verification:${colors.reset} Once verified as owner, applies to all future shows`);
+  console.warn(`\n${colors.cyan}Ownership Benefits:${colors.reset}`);
+  console.warn(`1. ${colors.dim}Automatic Inheritance:${colors.reset} All shows at same venue are owned by same person`);
+  console.warn(`2. ${colors.dim}Bulk Updates:${colors.reset} Changes to series affect all linked shows`);
+  console.warn(`3. ${colors.dim}Predictive Creation:${colors.reset} Future shows can be pre-generated`);
+  console.warn(`4. ${colors.dim}Simplified Management:${colors.reset} Organizers manage one series, not individual shows`);
+  console.warn(`5. ${colors.dim}Verification:${colors.reset} Once verified as owner, applies to all future shows`);
 }
 
 /**
  * Display system architecture
  */
 function displaySystemArchitecture() {
-  console.log(`${colors.cyan}System Architecture for Recurring Shows:${colors.reset}`);
+  console.warn(`${colors.cyan}System Architecture for Recurring Shows:${colors.reset}`);
   
   // Components
-  console.log(`\n${colors.bright}System Components:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}System Components:${colors.reset}`);
+  console.warn(`
 ┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
 │                     │     │                     │     │                     │
 │   Scraper System    │────▶│  Series Detector    │────▶│   Database Layer    │
@@ -752,51 +752,51 @@ function displaySystemArchitecture() {
   `);
   
   // Component descriptions
-  console.log(`\n${colors.bright}Component Descriptions:${colors.reset}`);
-  console.log(`1. ${colors.cyan}Scraper System:${colors.reset}`);
-  console.log(`   - Extracts show data from websites`);
-  console.log(`   - Applies date filtering to skip past shows`);
-  console.log(`   - Standardizes fields (venue, address, date, etc.)`);
-  console.log(`   - Geocodes addresses for mapping`);
+  console.warn(`\n${colors.bright}Component Descriptions:${colors.reset}`);
+  console.warn(`1. ${colors.cyan}Scraper System:${colors.reset}`);
+  console.warn(`   - Extracts show data from websites`);
+  console.warn(`   - Applies date filtering to skip past shows`);
+  console.warn(`   - Standardizes fields (venue, address, date, etc.)`);
+  console.warn(`   - Geocodes addresses for mapping`);
   
-  console.log(`\n2. ${colors.cyan}Series Detector:${colors.reset}`);
-  console.log(`   - Analyzes new shows for series patterns`);
-  console.log(`   - Compares venue, address, and date patterns`);
-  console.log(`   - Calculates confidence scores for matches`);
-  console.log(`   - Links shows to existing series`);
+  console.warn(`\n2. ${colors.cyan}Series Detector:${colors.reset}`);
+  console.warn(`   - Analyzes new shows for series patterns`);
+  console.warn(`   - Compares venue, address, and date patterns`);
+  console.warn(`   - Calculates confidence scores for matches`);
+  console.warn(`   - Links shows to existing series`);
   
-  console.log(`\n3. ${colors.cyan}Database Layer:${colors.reset}`);
-  console.log(`   - Stores shows, series, and ownership data`);
-  console.log(`   - Enforces relationships and constraints`);
-  console.log(`   - Implements RLS policies for security`);
-  console.log(`   - Provides functions for series management`);
+  console.warn(`\n3. ${colors.cyan}Database Layer:${colors.reset}`);
+  console.warn(`   - Stores shows, series, and ownership data`);
+  console.warn(`   - Enforces relationships and constraints`);
+  console.warn(`   - Implements RLS policies for security`);
+  console.warn(`   - Provides functions for series management`);
   
-  console.log(`\n4. ${colors.cyan}Series Manager:${colors.reset}`);
-  console.log(`   - Core business logic for series operations`);
-  console.log(`   - Handles ownership inheritance rules`);
-  console.log(`   - Predicts future shows in series`);
-  console.log(`   - Manages series metadata and settings`);
+  console.warn(`\n4. ${colors.cyan}Series Manager:${colors.reset}`);
+  console.warn(`   - Core business logic for series operations`);
+  console.warn(`   - Handles ownership inheritance rules`);
+  console.warn(`   - Predicts future shows in series`);
+  console.warn(`   - Manages series metadata and settings`);
   
-  console.log(`\n5. ${colors.cyan}Admin Interface:${colors.reset}`);
-  console.log(`   - Approves and manages shows`);
-  console.log(`   - Verifies series ownership claims`);
-  console.log(`   - Manages series relationships`);
-  console.log(`   - Handles exceptions and edge cases`);
+  console.warn(`\n5. ${colors.cyan}Admin Interface:${colors.reset}`);
+  console.warn(`   - Approves and manages shows`);
+  console.warn(`   - Verifies series ownership claims`);
+  console.warn(`   - Manages series relationships`);
+  console.error(`   - Handles exceptions and edge cases`);
   
-  console.log(`\n6. ${colors.cyan}User Interface:${colors.reset}`);
-  console.log(`   - Displays shows grouped by series`);
-  console.log(`   - Allows organizers to claim and manage series`);
-  console.log(`   - Provides calendar views of recurring shows`);
-  console.log(`   - Enables users to follow favorite series`);
+  console.warn(`\n6. ${colors.cyan}User Interface:${colors.reset}`);
+  console.warn(`   - Displays shows grouped by series`);
+  console.warn(`   - Allows organizers to claim and manage series`);
+  console.warn(`   - Provides calendar views of recurring shows`);
+  console.warn(`   - Enables users to follow favorite series`);
   
   // Data flow
-  console.log(`\n${colors.bright}Data Flow:${colors.reset}`);
-  console.log(`1. ${colors.dim}Scraper → Series Detector:${colors.reset} New shows are analyzed for series matching`);
-  console.log(`2. ${colors.dim}Series Detector → Database:${colors.reset} Shows are linked to series or create new series`);
-  console.log(`3. ${colors.dim}Database → Series Manager:${colors.reset} Series data is retrieved and processed`);
-  console.log(`4. ${colors.dim}Series Manager → Admin Interface:${colors.reset} Series management tools for admins`);
-  console.log(`5. ${colors.dim}Series Manager → User Interface:${colors.reset} Series data displayed to users`);
-  console.log(`6. ${colors.dim}Admin Interface → Series Detector:${colors.reset} Manual series adjustments and verification`);
+  console.warn(`\n${colors.bright}Data Flow:${colors.reset}`);
+  console.warn(`1. ${colors.dim}Scraper → Series Detector:${colors.reset} New shows are analyzed for series matching`);
+  console.warn(`2. ${colors.dim}Series Detector → Database:${colors.reset} Shows are linked to series or create new series`);
+  console.warn(`3. ${colors.dim}Database → Series Manager:${colors.reset} Series data is retrieved and processed`);
+  console.warn(`4. ${colors.dim}Series Manager → Admin Interface:${colors.reset} Series management tools for admins`);
+  console.warn(`5. ${colors.dim}Series Manager → User Interface:${colors.reset} Series data displayed to users`);
+  console.warn(`6. ${colors.dim}Admin Interface → Series Detector:${colors.reset} Manual series adjustments and verification`);
 }
 
 /**
@@ -804,57 +804,57 @@ function displaySystemArchitecture() {
  */
 function displayAdminIntegration(show1, show2) {
   // Accept show parameters so we can reference them safely
-  console.log(`${colors.cyan}Admin System Integration:${colors.reset}`);
+  console.warn(`${colors.cyan}Admin System Integration:${colors.reset}`);
   
   // Admin interface features
-  console.log(`\n${colors.bright}Admin Interface Features:${colors.reset}`);
-  console.log(`1. ${colors.cyan}Series Dashboard:${colors.reset}`);
-  console.log(`   - View all series with their recurring shows`);
-  console.log(`   - Filter by venue, city, owner, or date range`);
-  console.log(`   - See ownership status and verification`);
-  console.log(`   - Monitor series health and activity`);
+  console.warn(`\n${colors.bright}Admin Interface Features:${colors.reset}`);
+  console.warn(`1. ${colors.cyan}Series Dashboard:${colors.reset}`);
+  console.warn(`   - View all series with their recurring shows`);
+  console.warn(`   - Filter by venue, city, owner, or date range`);
+  console.warn(`   - See ownership status and verification`);
+  console.warn(`   - Monitor series health and activity`);
   
-  console.log(`\n2. ${colors.cyan}Series Management:${colors.reset}`);
-  console.log(`   - Manually create or merge series`);
-  console.log(`   - Add or remove shows from a series`);
-  console.log(`   - Update series metadata (name, description, pattern)`);
-  console.log(`   - Generate predicted future shows`);
+  console.warn(`\n2. ${colors.cyan}Series Management:${colors.reset}`);
+  console.warn(`   - Manually create or merge series`);
+  console.warn(`   - Add or remove shows from a series`);
+  console.warn(`   - Update series metadata (name, description, pattern)`);
+  console.warn(`   - Generate predicted future shows`);
   
-  console.log(`\n3. ${colors.cyan}Ownership Verification:${colors.reset}`);
-  console.log(`   - Review ownership claims`);
-  console.log(`   - Verify organizers through documentation`);
-  console.log(`   - Transfer ownership between users`);
-  console.log(`   - Handle ownership disputes`);
+  console.warn(`\n3. ${colors.cyan}Ownership Verification:${colors.reset}`);
+  console.warn(`   - Review ownership claims`);
+  console.warn(`   - Verify organizers through documentation`);
+  console.warn(`   - Transfer ownership between users`);
+  console.warn(`   - Handle ownership disputes`);
   
-  console.log(`\n4. ${colors.cyan}Series Analytics:${colors.reset}`);
-  console.log(`   - Track views and clicks per series`);
-  console.log(`   - Monitor attendance trends`);
-  console.log(`   - Analyze geographic distribution`);
-  console.log(`   - Identify popular recurring shows`);
+  console.warn(`\n4. ${colors.cyan}Series Analytics:${colors.reset}`);
+  console.warn(`   - Track views and clicks per series`);
+  console.warn(`   - Monitor attendance trends`);
+  console.warn(`   - Analyze geographic distribution`);
+  console.warn(`   - Identify popular recurring shows`);
   
   // Admin workflows
-  console.log(`\n${colors.bright}Admin Workflows:${colors.reset}`);
-  console.log(`\n${colors.cyan}Workflow 1: Series Detection Review${colors.reset}`);
-  console.log(`1. System detects new show potentially part of existing series`);
-  console.log(`2. Admin reviews the match (${show1.raw} and ${show2.raw})`);
-  console.log(`3. Admin confirms they are part of the same series`);
-  console.log(`4. System links both shows to the same series`);
+  console.warn(`\n${colors.bright}Admin Workflows:${colors.reset}`);
+  console.warn(`\n${colors.cyan}Workflow 1: Series Detection Review${colors.reset}`);
+  console.warn(`1. System detects new show potentially part of existing series`);
+  console.warn(`2. Admin reviews the match (${show1.raw} and ${show2.raw})`);
+  console.warn(`3. Admin confirms they are part of the same series`);
+  console.warn(`4. System links both shows to the same series`);
   
-  console.log(`\n${colors.cyan}Workflow 2: Ownership Claim Verification${colors.reset}`);
-  console.log(`1. Organizer claims ownership of LaQuinta Inn series`);
-  console.log(`2. Admin reviews documentation (venue contract, etc.)`);
-  console.log(`3. Admin approves ownership claim`);
-  console.log(`4. System grants ownership of all shows in series`);
+  console.warn(`\n${colors.cyan}Workflow 2: Ownership Claim Verification${colors.reset}`);
+  console.warn(`1. Organizer claims ownership of LaQuinta Inn series`);
+  console.warn(`2. Admin reviews documentation (venue contract, etc.)`);
+  console.warn(`3. Admin approves ownership claim`);
+  console.warn(`4. System grants ownership of all shows in series`);
   
-  console.log(`\n${colors.cyan}Workflow 3: Series Pattern Management${colors.reset}`);
-  console.log(`1. Admin notices shows occur on first Saturday of each month`);
-  console.log(`2. Admin sets recurrence pattern to "monthly-first-saturday"`);
-  console.log(`3. System predicts next 6 months of shows`);
-  console.log(`4. Admin approves predictions for public display`);
+  console.warn(`\n${colors.cyan}Workflow 3: Series Pattern Management${colors.reset}`);
+  console.warn(`1. Admin notices shows occur on first Saturday of each month`);
+  console.warn(`2. Admin sets recurrence pattern to "monthly-first-saturday"`);
+  console.warn(`3. System predicts next 6 months of shows`);
+  console.warn(`4. Admin approves predictions for public display`);
   
   // Admin UI mockup
-  console.log(`\n${colors.bright}Admin UI Mockup:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}Admin UI Mockup:${colors.reset}`);
+  console.warn(`
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ CARD SHOW FINDER - ADMIN DASHBOARD                                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -887,7 +887,7 @@ function displayAdminIntegration(show1, show2) {
  * Generate mock data for demonstration
  */
 function generateMockData(show1, show2) {
-  console.log(`${colors.cyan}Mock Data Demonstration:${colors.reset}`);
+  console.warn(`${colors.cyan}Mock Data Demonstration:${colors.reset}`);
   
   // Create mock series
   const mockSeries = {
@@ -978,18 +978,18 @@ function generateMockData(show1, show2) {
   };
   
   // Display mock data
-  console.log(`\n${colors.bright}1. Mock Series:${colors.reset}`);
-  console.log(JSON.stringify(mockSeries, null, 2));
+  console.warn(`\n${colors.bright}1. Mock Series:${colors.reset}`);
+  console.warn(JSON.stringify(mockSeries, null, 2));
   
-  console.log(`\n${colors.bright}2. Mock Shows:${colors.reset}`);
-  console.log(JSON.stringify(mockShows, null, 2));
+  console.warn(`\n${colors.bright}2. Mock Shows:${colors.reset}`);
+  console.warn(JSON.stringify(mockShows, null, 2));
   
-  console.log(`\n${colors.bright}3. Mock Ownership:${colors.reset}`);
-  console.log(JSON.stringify(mockOwnership, null, 2));
+  console.warn(`\n${colors.bright}3. Mock Ownership:${colors.reset}`);
+  console.warn(JSON.stringify(mockOwnership, null, 2));
   
   // Show user experience
-  console.log(`\n${colors.bright}User Experience with Series:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}User Experience with Series:${colors.reset}`);
+  console.warn(`
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ CARD SHOW FINDER - USER VIEW                                                │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -1011,8 +1011,8 @@ function generateMockData(show1, show2) {
   `);
   
   // Show organizer experience
-  console.log(`\n${colors.bright}Organizer Experience:${colors.reset}`);
-  console.log(`
+  console.warn(`\n${colors.bright}Organizer Experience:${colors.reset}`);
+  console.warn(`
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ CARD SHOW FINDER - ORGANIZER DASHBOARD                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤

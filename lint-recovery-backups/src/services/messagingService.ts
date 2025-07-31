@@ -55,7 +55,7 @@ export const sendMessage = async (
 ): Promise<Message | null> => {
   try {
     // This is a placeholder implementation
-    // eslint-disable-next-line no-console
+     
 console.warn('Sending message:', { senderId, recipientId, content, type, metadata });
     
     // In a real implementation, we would store the message in Supabase
@@ -110,7 +110,7 @@ export const getUserMessages = async (
 ): Promise<Message[]> => {
   try {
     // This is a placeholder implementation
-    // eslint-disable-next-line no-console
+     
 console.warn('Getting messages for user:', userId);
     
     // In a real implementation, we would fetch messages from Supabase
@@ -139,7 +139,7 @@ console.warn('Getting messages for user:', userId);
 export const markMessageAsRead = async (messageId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
-    // eslint-disable-next-line no-console
+     
 console.warn('Marking message as read:', messageId);
     
     // In a real implementation, we would update the message in Supabase
@@ -166,7 +166,7 @@ console.warn('Marking message as read:', messageId);
 export const deleteMessage = async (messageId: string, userId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
-    // eslint-disable-next-line no-console
+     
 console.warn('Deleting message:', messageId);
     
     // In a real implementation, we would delete the message from Supabase
@@ -201,7 +201,7 @@ export const sendBroadcastMessage = async (
 ): Promise<Message[] | null> => {
   try {
     // This is a placeholder implementation
-    // eslint-disable-next-line no-console
+     
 console.warn('Sending broadcast message:', { senderId, recipientIds, content, metadata });
     
     // In a real implementation, we would send individual messages to each recipient
