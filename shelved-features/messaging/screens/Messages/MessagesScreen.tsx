@@ -29,7 +29,7 @@ type Conversation = any; // Minimal stub to satisfy existing references
 
 // Stubbed messaging service — prevents import-time type errors during CI
 const messagingService = {
-  /* eslint-disable @typescript-eslint/no-unused-vars */
+   
   startConversationFromProfile: async (
     _senderId: string,
     _recipientId: string,
@@ -38,7 +38,7 @@ const messagingService = {
     // Return fake conversation ID
     return 'placeholder-convo-id';
   },
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+   
 };
 
 const FeatureComingSoon: React.FC = () => (

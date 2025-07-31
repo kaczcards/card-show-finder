@@ -173,7 +173,7 @@ const HomeScreen = ({
     try {
       // First priority: Use coordinates from props if available
       if (propUserLocation) {
-        // eslint-disable-next-line no-console
+         
 console.warn('Using coordinates from props');
         setCoordinates(propUserLocation);
         return propUserLocation;
@@ -184,7 +184,7 @@ console.warn('Using coordinates from props');
       }
       // Third priority: Get coordinates from user's home zip code
       else if (authState.user && authState.user.homeZipCode) {
-        // eslint-disable-next-line no-console
+         
 console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         
         const zipData = await locationService.getZipCodeCoordinates(authState.user.homeZipCode);
@@ -211,7 +211,7 @@ console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         appState.current.match(/inactive|background/) && 
         nextAppState === 'active'
       ) {
-        // eslint-disable-next-line no-console
+         
 console.warn('App has come to the foreground - refreshing _data');
         refresh();
       }
@@ -248,8 +248,8 @@ console.warn('App has come to the foreground - refreshing _data');
 
   // Log when coordinates or filters change
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    // eslint-disable-next-line no-console
+     
+     
 console.warn('[HomeScreen] useInfiniteShows called with:', {
       coordinates: effectiveCoords,
       filters,
@@ -258,8 +258,8 @@ console.warn('[HomeScreen] useInfiniteShows called with:', {
 
   // Log whenever shows / totalCount updates
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    // eslint-disable-next-line no-console
+     
+     
 console.warn('[HomeScreen] shows/totalCount updated:', {
       showsLength: shows.length,
       totalCount,
@@ -503,7 +503,7 @@ console.warn('[HomeScreen] shows/totalCount updated:', {
   // Log the filtering results for debugging
   useEffect(() => {
     if (shows.length > 0) {
-      // eslint-disable-next-line no-console
+       
 console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
       
       if (shows.length !== safeShows.length) {

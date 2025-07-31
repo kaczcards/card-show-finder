@@ -1,0 +1,40 @@
+# Backup directories
+*-backups/
+*-backups/**/*
+quick-fixes-backups/
+admin-cli-fixes-backups/
+automated-fixes-backups/
+
+# Node modules
+node_modules/
+node_modules/**/*
+
+# Build and distribution directories
+build/
+dist/
+web-build/
+.expo/
+.expo-shared/
+
+# Cache directories
+.jest-cache/
+.jest/
+.cache/
+.npm/
+.babel-cache/
+
+# Generated files
+*.generated.js
+*.generated.ts
+*.generated.tsx
+coverage/
+__generated__/
+
+# Environment files
+.env
+.env.*
+
+# Misc
+.DS_Store
+*.log
+*.tsbuildinfo

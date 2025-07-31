@@ -126,7 +126,7 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
     : { latitude: 39.9784, longitude: -86.118 }; // Carmel, IN
 
   if (!isValidCoordinates) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       '[useInfiniteShows] Invalid or missing coordinates supplied. ' +
         'Falling back to default coordinates (Carmel, IN).',

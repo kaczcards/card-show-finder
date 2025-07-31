@@ -200,8 +200,8 @@ export const registerForShow = async (
     // ------------------------------------------------------------
     // Debugging – log the raw role we got back from Supabase
     // ------------------------------------------------------------
-    // eslint-disable-next-line no-console
-    // eslint-disable-next-line no-console
+     
+     
 console.warn(
       '[registerForShow] DB role value:',
       userData?.role,
@@ -563,7 +563,7 @@ export const getAvailableShowsForDealer = async (
     ) {
       // This would ideally use the server-side PostGIS functions,
       // but for simplicity we'll do basic filtering here
-      // eslint-disable-next-line no-console
+       
 console.warn('Filtering by distance is not implemented in this version');
     }
 

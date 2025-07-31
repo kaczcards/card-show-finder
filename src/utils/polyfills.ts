@@ -19,7 +19,7 @@
 // devices or JSC-based runtimes may still be missing it.  Supabase’s realtime
 // Postgres client and various React-Query utils rely on this API.
 if (typeof globalThis.structuredClone !== 'function') {
-  // eslint-disable-next-line no-console
+   
   console.warn(
     '[_polyfills] structuredClone not found – installing lightweight polyfill.'
   );

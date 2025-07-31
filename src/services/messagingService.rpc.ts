@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import * as userRoleService from './userRoleService';
+import * as _userRoleService from './userRoleService';
 import { UserRole } from './userRoleService';
 
 // TypeScript interfaces for Messages and Conversations

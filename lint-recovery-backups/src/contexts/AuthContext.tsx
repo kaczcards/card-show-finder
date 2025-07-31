@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Set the count from the profile data
       const count = data?.favorite_shows_count || 0;
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Fetched favorite_shows_count:', count);
       setFavoriteCount(count);
     } catch (_error) {
@@ -270,7 +270,7 @@ console.warn('[AuthContext] Fetched favorite_shows_count:', count);
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
     // 1. Immediately set the app to a "loading" state and clear old errors.
-    // eslint-disable-next-line no-console
+     
 console.warn('[AuthContext] Login attempt started for email:', credentials.email);
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
@@ -291,14 +291,14 @@ console.warn('[AuthContext] Login attempt started for email:', credentials.email
       };
       
       setAuthState(newState);
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Auth state updated after login failure:', 
         { isAuthenticated: newState.isAuthenticated, hasError: !!newState._error });
       
       return Promise.reject(new Error(result._error.message));
     } else if (result.user) {
       // SUCCESS: If the service returns a user, get their profile and update state.
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
 
       // ---- Optional bypass for dev -------------------------------------------------
@@ -339,7 +339,7 @@ console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
         };
         
         setAuthState(newState);
-        // eslint-disable-next-line no-console
+         
 console.warn('[AuthContext] Auth state updated with mock user:', 
           { isAuthenticated: newState.isAuthenticated, userId: mockUser.id, role: mockUser.role });
         
@@ -350,12 +350,12 @@ console.warn('[AuthContext] Auth state updated with mock user:',
       }
 
       // ---- Normal profile fetch ----------------------------------------------------
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Fetching user profile from database...');
       let userData = await supabaseAuthService.getCurrentUser(result.user.id);
       
       if (userData) {
-        // eslint-disable-next-line no-console
+         
 console.warn('[AuthContext] Profile fetch successful:', 
           { userId: userData.id, role: userData.role });
         
@@ -368,7 +368,7 @@ console.warn('[AuthContext] Profile fetch successful:',
         };
         
         setAuthState(newState);
-        // eslint-disable-next-line no-console
+         
 console.warn('[AuthContext] Auth state updated after successful login:', 
           { isAuthenticated: newState.isAuthenticated, userId: userData.id });
         
@@ -383,7 +383,7 @@ console.warn('[AuthContext] Auth state updated after successful login:',
         userData = await forceRefreshAndFetchProfile(result.user.id);
 
         if (userData) {
-          // eslint-disable-next-line no-console
+           
 console.warn('[AuthContext] Fallback profile fetch succeeded:', 
             { userId: userData.id, role: userData.role });
           
@@ -396,7 +396,7 @@ console.warn('[AuthContext] Fallback profile fetch succeeded:',
           };
           
           setAuthState(newState);
-          // eslint-disable-next-line no-console
+           
 console.warn('[AuthContext] Auth state updated after fallback profile fetch:', 
             { isAuthenticated: newState.isAuthenticated, userId: userData.id });
           
@@ -417,7 +417,7 @@ console.warn('[AuthContext] Auth state updated after fallback profile fetch:',
         };
         
         setAuthState(newState);
-        // eslint-disable-next-line no-console
+         
 console.warn('[AuthContext] Auth state updated after all profile fetch attempts failed:', 
           { isAuthenticated: newState.isAuthenticated, hasError: !!newState._error });
         
@@ -436,7 +436,7 @@ console.warn('[AuthContext] Auth state updated after all profile fetch attempts 
       };
       
       setAuthState(newState);
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Auth state updated after unexpected error:', 
         { isAuthenticated: newState.isAuthenticated, hasError: !!newState.error });
       
@@ -473,7 +473,7 @@ console.warn('[AuthContext] Auth state updated after unexpected error:',
       };
       
       setAuthState(newState);
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Auth state updated after registration:', 
         { isAuthenticated: newState.isAuthenticated, userId: userData.id });
       
@@ -517,7 +517,7 @@ console.warn('[AuthContext] Auth state updated after registration:',
       };
       
       setAuthState(newState);
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Auth state updated after logout:', 
         { isAuthenticated: newState.isAuthenticated });
       
@@ -599,7 +599,7 @@ console.warn('[AuthContext] Auth state updated after logout:',
         throw new Error('User not authenticated');
       }
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Adding show to favorites:', _showId);
       
       // Call the service to add the show to favorites
@@ -609,7 +609,7 @@ console.warn('[AuthContext] Adding show to favorites:', _showId);
       // Refresh the favorite count from the database
       fetchFavoriteCount(authState.user.id);
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Show added to favorites successfully');
     } catch (error: any) {
       console.error('[AuthContext] Error adding show to favorites:', _error);
@@ -628,7 +628,7 @@ console.warn('[AuthContext] Show added to favorites successfully');
         throw new Error('User not authenticated');
       }
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Removing show from favorites:', _showId);
       
       // Call the service to remove the show from favorites
@@ -638,7 +638,7 @@ console.warn('[AuthContext] Removing show from favorites:', _showId);
       // Refresh the favorite count from the database
       fetchFavoriteCount(authState.user.id);
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Show removed from favorites successfully');
     } catch (error: any) {
       console.error('[AuthContext] Error removing show from favorites:', _error);
@@ -676,8 +676,8 @@ console.warn('[AuthContext] Show removed from favorites successfully');
         const supabaseKeys = keys.filter(k => k.includes('supabase'));
         if (supabaseKeys.length) {
           await AsyncStorage.multiRemove(supabaseKeys);
-          /* eslint-disable no-console */
-          // eslint-disable-next-line no-console
+           
+           
 console.warn('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
         }
       } catch (clearErr) {
@@ -723,7 +723,7 @@ console.warn('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
         profileImageUrl: profile.profile_image_url ?? undefined,
         favoriteShowsCount: profile.favorite_shows_count || 0,
       };
-      // eslint-disable-next-line no-console
+       
 console.warn('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
 
       return mapped;

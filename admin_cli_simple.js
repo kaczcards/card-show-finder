@@ -68,9 +68,9 @@ const SUPABASE_KEY =
 function createSupabaseClient() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.error(chalk.red('Error: Supabase URL or key not found in environment variables.'));
-    console.log('Please ensure your .env file contains:');
-    console.log('  EXPO_PUBLIC_SUPABASE_URL=your_supabase_url');
-    console.log('  SUPABASE_SERVICE_KEY=your_service_key');
+    console.warn('Please ensure your .env file contains:');
+    console.warn('  EXPO_PUBLIC_SUPABASE_URL=your_supabase_url');
+    console.warn('  SUPABASE_SERVICE_KEY=your_service_key');
     process.exit(1);
   }
   
@@ -106,7 +106,7 @@ function truncate(str, length = 30) {
  * Returns statistics about feedback tags with counts and trends
  */
 async function getFeedbackStats(supabase, { days_ago = 30, min_count = 1 }) {
-  console.log(chalk.dim(`Executing getFeedbackStats(${days_ago}, ${min_count})`));
+  console.warn(chalk.dim(`Executing getFeedbackStats(${days_ago}, ${min_count})`));
   
   try {
     // Get total feedback counts for percentage calculation
@@ -248,7 +248,7 @@ async function getFeedbackStats(supabase, { days_ago = 30, min_count = 1 }) {
  * Returns performance metrics for scraping sources
  */
 async function getSourceStats(supabase, { days_ago = 30, min_shows = 5 }) {
-  console.log(chalk.dim(`Executing getSourceStats(${days_ago}, ${min_shows})`));
+  console.warn(chalk.dim(`Executing getSourceStats(${days_ago}, ${min_shows})`));
   
   try {
     // Get all pending shows for the period
@@ -395,7 +395,7 @@ async function getSourceStats(supabase, { days_ago = 30, min_shows = 5 }) {
  * Finds potential duplicate shows using fuzzy matching
  */
 async function findDuplicatePendingShows(supabase, { similarity_threshold = 0.6, max_results = 100 }) {
-  console.log(chalk.dim(`Executing findDuplicatePendingShows(${similarity_threshold}, ${max_results})`));
+  console.warn(chalk.dim(`Executing findDuplicatePendingShows(${similarity_threshold}, ${max_results})`));
   
   try {
     // Get all pending shows
@@ -535,7 +535,7 @@ async function findDuplicatePendingShows(supabase, { similarity_threshold = 0.6,
  * View that calculates quality scores for pending shows
  */
 async function getPendingQualityView(supabase, { limit = 100, offset = 0, status = 'PENDING' }) {
-  console.log(chalk.dim(`Executing getPendingQualityView(limit=${limit}, offset=${offset}, status=${status})`));
+  console.warn(chalk.dim(`Executing getPendingQualityView(limit=${limit}, offset=${offset}, status=${status})`));
   
   try {
     // Get pending shows
@@ -700,32 +700,32 @@ async function rejectShow(supabase, id, feedback) {
  * Display a pending show's details
  */
 function displayShow(show) {
-  console.log('\n' + chalk.bold.underline(`Show Details: ${show.name || 'Unnamed Show'}`));
+  console.warn('\n' + chalk.bold.underline(`Show Details: ${show.name || 'Unnamed Show'}`));
   
   // Basic info
-  console.log(chalk.bold('Basic Info:'));
-  console.log(`  ${chalk.dim('ID:')} ${show.id}`);
-  console.log(`  ${chalk.dim('Source:')} ${show.source_url}`);
-  console.log(`  ${chalk.dim('Created:')} ${formatDate(show.created_at)}`);
-  console.log(`  ${chalk.dim('Quality Score:')} ${show.quality_score}/100 (${show.quality_band})`);
+  console.warn(chalk.bold('Basic Info:'));
+  console.warn(`  ${chalk.dim('ID:')} ${show.id}`);
+  console.warn(`  ${chalk.dim('Source:')} ${show.source_url}`);
+  console.warn(`  ${chalk.dim('Created:')} ${formatDate(show.created_at)}`);
+  console.warn(`  ${chalk.dim('Quality Score:')} ${show.quality_score}/100 (${show.quality_band})`);
   
   // Show data
-  console.log(chalk.bold('\nShow Data:'));
-  console.log(`  ${chalk.dim('Name:')} ${show.name || 'N/A'}`);
-  console.log(`  ${chalk.dim('Date:')} ${show.start_date || 'N/A'}`);
-  console.log(`  ${chalk.dim('Venue:')} ${show.venue_name || 'N/A'}`);
-  console.log(`  ${chalk.dim('Address:')} ${show.address || 'N/A'}`);
-  console.log(`  ${chalk.dim('Location:')} ${[show.city, show.state].filter(Boolean).join(', ') || 'N/A'}`);
+  console.warn(chalk.bold('\nShow Data:'));
+  console.warn(`  ${chalk.dim('Name:')} ${show.name || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Date:')} ${show.start_date || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Venue:')} ${show.venue_name || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Address:')} ${show.address || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Location:')} ${[show.city, show.state].filter(Boolean).join(', ') || 'N/A'}`);
   
   // Potential issues
   if (show.potential_issues && show.potential_issues.length > 0) {
-    console.log(chalk.bold('\nPotential Issues:'));
+    console.warn(chalk.bold('\nPotential Issues:'));
     show.potential_issues.forEach(issue => {
-      console.log(`  - ${issue}`);
+      console.warn(`  - ${issue}`);
     });
   }
   
-  console.log(); // Empty line at the end
+  console.warn(); // Empty line at the end
 }
 
 /**
@@ -757,17 +757,17 @@ async function viewPendingShows() {
       }
     ]);
     
-    console.log(chalk.cyan(`\nLoading ${status.toLowerCase()} shows...`));
+    console.warn(chalk.cyan(`\nLoading ${status.toLowerCase()} shows...`));
     
     // Get shows with quality scores
     const shows = await getPendingQualityView(supabase, { limit, status });
     
     if (!shows || shows.length === 0) {
-      console.log(chalk.yellow(`No ${status.toLowerCase()} shows found.`));
+      console.warn(chalk.yellow(`No ${status.toLowerCase()} shows found.`));
       return;
     }
     
-    console.log(chalk.green(`Found ${shows.length} ${status.toLowerCase()} shows.`));
+    console.warn(chalk.green(`Found ${shows.length} ${status.toLowerCase()} shows.`));
     
     // Display shows in a table
     const table = new Table({
@@ -857,9 +857,9 @@ async function viewPendingShows() {
             }
           ]);
           
-          console.log(chalk.cyan('Approving show...'));
+          console.warn(chalk.cyan('Approving show...'));
           await approveShow(supabase, selectedShow.id, feedback);
-          console.log(chalk.green('Show approved successfully!'));
+          console.warn(chalk.green('Show approved successfully!'));
         } else if (showAction === 'reject') {
           // Select feedback tags
           const { selectedTags } = await inquirer.prompt([
@@ -886,13 +886,13 @@ async function viewPendingShows() {
             : additionalFeedback;
           
           if (!feedback) {
-            console.log(chalk.yellow('Rejection requires feedback. Operation cancelled.'));
+            console.warn(chalk.yellow('Rejection requires feedback. Operation cancelled.'));
             return;
           }
           
-          console.log(chalk.cyan('Rejecting show...'));
+          console.warn(chalk.cyan('Rejecting show...'));
           await rejectShow(supabase, selectedShow.id, feedback);
-          console.log(chalk.green('Show rejected successfully!'));
+          console.error(chalk.green('Show rejected successfully!'));
         }
       } else if (action === 'approve') {
         const { showIndex } = await inquirer.prompt([
@@ -918,9 +918,9 @@ async function viewPendingShows() {
           }
         ]);
         
-        console.log(chalk.cyan('Approving show...'));
+        console.warn(chalk.cyan('Approving show...'));
         await approveShow(supabase, selectedShow.id, feedback);
-        console.log(chalk.green('Show approved successfully!'));
+        console.warn(chalk.green('Show approved successfully!'));
       } else if (action === 'reject') {
         const { showIndex } = await inquirer.prompt([
           {
@@ -962,23 +962,23 @@ async function viewPendingShows() {
           : additionalFeedback;
         
         if (!feedback) {
-          console.log(chalk.yellow('Rejection requires feedback. Operation cancelled.'));
+          console.warn(chalk.yellow('Rejection requires feedback. Operation cancelled.'));
           return;
         }
         
-        console.log(chalk.cyan('Rejecting show...'));
+        console.warn(chalk.cyan('Rejecting show...'));
         await rejectShow(supabase, selectedShow.id, feedback);
-        console.log(chalk.green('Show rejected successfully!'));
+        console.error(chalk.green('Show rejected successfully!'));
       } else if (action === 'batch_approve') {
         // Filter high quality shows
         const highQualityShows = shows.filter(show => show.quality_score >= 80);
         
         if (highQualityShows.length === 0) {
-          console.log(chalk.yellow('No high quality shows found for batch approval.'));
+          console.warn(chalk.yellow('No high quality shows found for batch approval.'));
           return;
         }
         
-        console.log(chalk.cyan(`Found ${highQualityShows.length} high quality shows that can be batch approved.`));
+        console.warn(chalk.cyan(`Found ${highQualityShows.length} high quality shows that can be batch approved.`));
         
         const { confirm } = await inquirer.prompt([
           {
@@ -990,7 +990,7 @@ async function viewPendingShows() {
         ]);
         
         if (!confirm) {
-          console.log(chalk.yellow('Batch approval cancelled.'));
+          console.warn(chalk.yellow('Batch approval cancelled.'));
           return;
         }
         
@@ -1003,7 +1003,7 @@ async function viewPendingShows() {
           }
         ]);
         
-        console.log(chalk.cyan('Batch approving shows...'));
+        console.warn(chalk.cyan('Batch approving shows...'));
         
         let successCount = 0;
         let errorCount = 0;
@@ -1019,11 +1019,11 @@ async function viewPendingShows() {
           }
         }
         
-        console.log('\n');
-        console.log(chalk.green(`Successfully approved ${successCount} shows.`));
+        console.warn('\n');
+        console.warn(chalk.green(`Successfully approved ${successCount} shows.`));
         
         if (errorCount > 0) {
-          console.log(chalk.yellow(`Failed to approve ${errorCount} shows.`));
+          console.error(chalk.yellow(`Failed to approve ${errorCount} shows.`));
         }
       }
     } else {
@@ -1085,16 +1085,16 @@ async function viewFeedbackStats() {
       }
     ]);
     
-    console.log(chalk.cyan(`\nAnalyzing feedback for the last ${days} days...`));
+    console.warn(chalk.cyan(`\nAnalyzing feedback for the last ${days} days...`));
     
     const stats = await getFeedbackStats(supabase, { days_ago: days, min_count: 1 });
     
     if (!stats || stats.length === 0) {
-      console.log(chalk.yellow('No feedback data found for this period.'));
+      console.warn(chalk.yellow('No feedback data found for this period.'));
       return;
     }
     
-    console.log(chalk.green(`Found feedback data with ${stats.length} tags.`));
+    console.warn(chalk.green(`Found feedback data with ${stats.length} tags.`));
     
     // Display feedback stats
     const table = new Table({
@@ -1144,21 +1144,21 @@ async function viewFeedbackStats() {
     table.printTable();
     
     // Recommendations
-    console.log(chalk.bold.underline('\nRecommendations:'));
+    console.warn(chalk.bold.underline('\nRecommendations:'));
     
     if (stats.length > 0) {
       const topIssue = stats[0];
-      console.log(`1. Focus on fixing "${topIssue.tag}" issues (${topIssue.percentage}% of feedback).`);
+      console.warn(`1. Focus on fixing "${topIssue.tag}" issues (${topIssue.percentage}% of feedback).`);
       
       // Check for specific issues
       const dateFormatIssue = stats.find(f => f.tag === 'DATE_FORMAT');
       if (dateFormatIssue && dateFormatIssue.percentage > 20) {
-        console.log(`2. Improve date parsing in the scraper (${dateFormatIssue.percentage}% of shows have date format issues).`);
+        console.warn(`2. Improve date parsing in the scraper (${dateFormatIssue.percentage}% of shows have date format issues).`);
       }
       
       const multiEventIssue = stats.find(f => f.tag === 'MULTI_EVENT_COLLAPSE');
       if (multiEventIssue && multiEventIssue.percentage > 10) {
-        console.log(`3. Reduce chunk size for HTML processing (${multiEventIssue.percentage}% of shows have multiple events collapsed).`);
+        console.warn(`3. Reduce chunk size for HTML processing (${multiEventIssue.percentage}% of shows have multiple events collapsed).`);
       }
     }
   } catch (error) {
@@ -1191,16 +1191,16 @@ async function viewSourceStats() {
       }
     ]);
     
-    console.log(chalk.cyan(`\nAnalyzing source performance for the last ${days} days...`));
+    console.warn(chalk.cyan(`\nAnalyzing source performance for the last ${days} days...`));
     
     const stats = await getSourceStats(supabase, { days_ago: days, min_shows: minShows });
     
     if (!stats || stats.length === 0) {
-      console.log(chalk.yellow('No source data found for this period.'));
+      console.warn(chalk.yellow('No source data found for this period.'));
       return;
     }
     
-    console.log(chalk.green(`Found performance data for ${stats.length} sources.`));
+    console.warn(chalk.green(`Found performance data for ${stats.length} sources.`));
     
     // Display source stats
     const table = new Table({
@@ -1293,46 +1293,46 @@ async function viewSourceStats() {
       
       const selectedSource = stats[sourceIndex];
       
-      console.log('\n' + chalk.bold.underline(`Source Details: ${new URL(selectedSource.source_url).hostname.replace('www.', '')}`));
-      console.log(chalk.bold('Performance:'));
-      console.log(`  ${chalk.dim('URL:')} ${selectedSource.source_url}`);
-      console.log(`  ${chalk.dim('Total Shows:')} ${selectedSource.total_shows}`);
-      console.log(`  ${chalk.dim('Approved:')} ${selectedSource.approved_count} (${selectedSource.approval_rate}%)`);
-      console.log(`  ${chalk.dim('Rejected:')} ${selectedSource.rejected_count} (${selectedSource.rejection_rate}%)`);
-      console.log(`  ${chalk.dim('Pending:')} ${selectedSource.pending_count}`);
-      console.log(`  ${chalk.dim('Quality Score:')} ${selectedSource.avg_quality_score}/100`);
-      console.log(`  ${chalk.dim('Priority Score:')} ${selectedSource.priority_score}/100`);
+      console.warn('\n' + chalk.bold.underline(`Source Details: ${new URL(selectedSource.source_url).hostname.replace('www.', '')}`));
+      console.warn(chalk.bold('Performance:'));
+      console.warn(`  ${chalk.dim('URL:')} ${selectedSource.source_url}`);
+      console.warn(`  ${chalk.dim('Total Shows:')} ${selectedSource.total_shows}`);
+      console.warn(`  ${chalk.dim('Approved:')} ${selectedSource.approved_count} (${selectedSource.approval_rate}%)`);
+      console.error(`  ${chalk.dim('Rejected:')} ${selectedSource.rejected_count} (${selectedSource.rejection_rate}%)`);
+      console.warn(`  ${chalk.dim('Pending:')} ${selectedSource.pending_count}`);
+      console.warn(`  ${chalk.dim('Quality Score:')} ${selectedSource.avg_quality_score}/100`);
+      console.warn(`  ${chalk.dim('Priority Score:')} ${selectedSource.priority_score}/100`);
       
       // Configuration
-      console.log(chalk.bold('\nConfiguration:'));
-      console.log(`  ${chalk.dim('Enabled:')} ${selectedSource.enabled ? 'Yes' : 'No'}`);
-      console.log(`  ${chalk.dim('Last Success:')} ${formatDate(selectedSource.last_success_at)}`);
-      console.log(`  ${chalk.dim('Last Error:')} ${formatDate(selectedSource.last_error_at)}`);
-      console.log(`  ${chalk.dim('Error Streak:')} ${selectedSource.error_streak}`);
+      console.warn(chalk.bold('\nConfiguration:'));
+      console.warn(`  ${chalk.dim('Enabled:')} ${selectedSource.enabled ? 'Yes' : 'No'}`);
+      console.warn(`  ${chalk.dim('Last Success:')} ${formatDate(selectedSource.last_success_at)}`);
+      console.error(`  ${chalk.dim('Last Error:')} ${formatDate(selectedSource.last_error_at)}`);
+      console.error(`  ${chalk.dim('Error Streak:')} ${selectedSource.error_streak}`);
       
       // Common issues
       if (Object.keys(selectedSource.common_issues || {}).length > 0) {
-        console.log(chalk.bold('\nCommon Issues:'));
+        console.warn(chalk.bold('\nCommon Issues:'));
         Object.entries(selectedSource.common_issues)
           .sort((a, b) => b[1] - a[1])
           .forEach(([tag, count]) => {
-            console.log(`  ${chalk.dim(tag + ':')} ${count} occurrences`);
+            console.warn(`  ${chalk.dim(tag + ':')} ${count} occurrences`);
           });
       }
       
       // Recommendations
-      console.log(chalk.bold('\nRecommendations:'));
+      console.warn(chalk.bold('\nRecommendations:'));
       
       if (selectedSource.rejection_rate >= 80) {
-        console.log(chalk.red(`  • Consider disabling this source (${selectedSource.rejection_rate}% rejection rate)`));
+        console.warn(chalk.red(`  • Consider disabling this source (${selectedSource.rejection_rate}% rejection rate)`));
       } else if (selectedSource.rejection_rate >= 50) {
-        console.log(chalk.yellow(`  • Review scraper configuration (${selectedSource.rejection_rate}% rejection rate)`));
+        console.warn(chalk.yellow(`  • Review scraper configuration (${selectedSource.rejection_rate}% rejection rate)`));
       } else if (selectedSource.approval_rate >= 80) {
-        console.log(chalk.green(`  • Increase priority score (${selectedSource.approval_rate}% approval rate)`));
+        console.warn(chalk.green(`  • Increase priority score (${selectedSource.approval_rate}% approval rate)`));
       }
       
       if (selectedSource.avg_quality_score < 50) {
-        console.log(chalk.yellow(`  • Improve data extraction (low quality score: ${selectedSource.avg_quality_score})`));
+        console.warn(chalk.yellow(`  • Improve data extraction (low quality score: ${selectedSource.avg_quality_score})`));
       }
     }
   } catch (error) {
@@ -1365,7 +1365,7 @@ async function findDuplicates() {
       }
     ]);
     
-    console.log(chalk.cyan(`\nFinding potential duplicates with similarity >= ${threshold}...`));
+    console.warn(chalk.cyan(`\nFinding potential duplicates with similarity >= ${threshold}...`));
     
     const duplicates = await findDuplicatePendingShows(supabase, { 
       similarity_threshold: threshold, 
@@ -1373,11 +1373,11 @@ async function findDuplicates() {
     });
     
     if (!duplicates || duplicates.length === 0) {
-      console.log(chalk.yellow('No potential duplicates found.'));
+      console.warn(chalk.yellow('No potential duplicates found.'));
       return;
     }
     
-    console.log(chalk.green(`Found ${duplicates.length} potential duplicate pairs.`));
+    console.warn(chalk.green(`Found ${duplicates.length} potential duplicate pairs.`));
     
     // Display duplicates in a table
     const table = new Table({
@@ -1434,21 +1434,21 @@ async function findDuplicates() {
       for (let i = 0; i < duplicates.length; i++) {
         const dup = duplicates[i];
         
-        console.log(chalk.bold(`\nDuplicate Pair #${i + 1} (${Math.round(dup.similarity * 100)}% similar):`));
+        console.warn(chalk.bold(`\nDuplicate Pair #${i + 1} (${Math.round(dup.similarity * 100)}% similar):`));
         
-        console.log(chalk.dim('Show 1:'));
-        console.log(`  ID: ${dup.id1}`);
-        console.log(`  Name: ${dup.name1}`);
-        console.log(`  Date: ${dup.start_date1}`);
-        console.log(`  Location: ${[dup.city1, dup.state1].filter(Boolean).join(', ')}`);
-        console.log(`  Source: ${dup.source_url1}`);
+        console.warn(chalk.dim('Show 1:'));
+        console.warn(`  ID: ${dup.id1}`);
+        console.warn(`  Name: ${dup.name1}`);
+        console.warn(`  Date: ${dup.start_date1}`);
+        console.warn(`  Location: ${[dup.city1, dup.state1].filter(Boolean).join(', ')}`);
+        console.warn(`  Source: ${dup.source_url1}`);
         
-        console.log(chalk.dim('\nShow 2:'));
-        console.log(`  ID: ${dup.id2}`);
-        console.log(`  Name: ${dup.name2}`);
-        console.log(`  Date: ${dup.start_date2}`);
-        console.log(`  Location: ${[dup.city2, dup.state2].filter(Boolean).join(', ')}`);
-        console.log(`  Source: ${dup.source_url2}`);
+        console.warn(chalk.dim('\nShow 2:'));
+        console.warn(`  ID: ${dup.id2}`);
+        console.warn(`  Name: ${dup.name2}`);
+        console.warn(`  Date: ${dup.start_date2}`);
+        console.warn(`  Location: ${[dup.city2, dup.state2].filter(Boolean).join(', ')}`);
+        console.warn(`  Source: ${dup.source_url2}`);
         
         const { resolveAction } = await inquirer.prompt([
           {
@@ -1470,7 +1470,7 @@ async function findDuplicates() {
         }
         
         if (resolveAction === 'keep') {
-          console.log(chalk.green('Keeping both shows.'));
+          console.warn(chalk.green('Keeping both shows.'));
           continue;
         }
         
@@ -1487,27 +1487,27 @@ async function findDuplicates() {
         
         try {
           if (resolveAction === 'keep1') {
-            console.log(chalk.cyan('Approving Show 1 and rejecting Show 2...'));
+            console.warn(chalk.cyan('Approving Show 1 and rejecting Show 2...'));
             await approveShow(supabase, dup.id1, 'Kept over duplicate');
             await rejectShow(supabase, dup.id2, feedback);
-            console.log(chalk.green('Shows processed successfully!'));
+            console.warn(chalk.green('Shows processed successfully!'));
           } else if (resolveAction === 'keep2') {
-            console.log(chalk.cyan('Approving Show 2 and rejecting Show 1...'));
+            console.warn(chalk.cyan('Approving Show 2 and rejecting Show 1...'));
             await approveShow(supabase, dup.id2, 'Kept over duplicate');
             await rejectShow(supabase, dup.id1, feedback);
-            console.log(chalk.green('Shows processed successfully!'));
+            console.warn(chalk.green('Shows processed successfully!'));
           } else if (resolveAction === 'reject') {
-            console.log(chalk.cyan('Rejecting both shows...'));
+            console.warn(chalk.cyan('Rejecting both shows...'));
             await rejectShow(supabase, dup.id1, feedback);
             await rejectShow(supabase, dup.id2, feedback);
-            console.log(chalk.green('Shows rejected successfully!'));
+            console.error(chalk.green('Shows rejected successfully!'));
           }
         } catch (error) {
           console.error(chalk.red(`Error: ${error.message}`));
         }
       }
       
-      console.log(chalk.green('\nFinished processing duplicates.'));
+      console.warn(chalk.green('\nFinished processing duplicates.'));
     }
   } catch (error) {
     console.error(chalk.red(`Error: ${error.message}`));
@@ -1579,7 +1579,7 @@ async function exportData() {
       }
     ]);
     
-    console.log(chalk.cyan(`\nExporting ${exportType} data...`));
+    console.warn(chalk.cyan(`\nExporting ${exportType} data...`));
     
     let data;
     let headers;
@@ -1681,7 +1681,7 @@ async function exportData() {
     }
     
     if (!data || data.length === 0) {
-      console.log(chalk.yellow('No data found to export.'));
+      console.warn(chalk.yellow('No data found to export.'));
       return;
     }
     
@@ -1698,7 +1698,7 @@ async function exportData() {
       await csvWriter.writeRecords(data);
     }
     
-    console.log(chalk.green(`Data exported to: ${outputPath}`));
+    console.warn(chalk.green(`Data exported to: ${outputPath}`));
     
     // Ask if user wants to open the file
     const { openFile } = await inquirer.prompt([
@@ -1722,8 +1722,8 @@ async function exportData() {
  * Main menu
  */
 async function mainMenu() {
-  console.log(chalk.bold.green('\nCard Show Finder - Admin CLI'));
-  console.log(chalk.dim('A simplified tool for managing the admin evaluation system'));
+  console.warn(chalk.bold.green('\nCard Show Finder - Admin CLI'));
+  console.warn(chalk.dim('A simplified tool for managing the admin evaluation system'));
   
   const { option } = await inquirer.prompt([
     {
@@ -1742,7 +1742,7 @@ async function mainMenu() {
   ]);
   
   if (option === 'exit') {
-    console.log(chalk.green('Goodbye!'));
+    console.warn(chalk.green('Goodbye!'));
     process.exit(0);
   }
   
@@ -1763,16 +1763,16 @@ async function mainMenu() {
 }
 
 // Start the CLI
-console.log(chalk.bold.blue('======================================================'));
-console.log(chalk.bold.blue('  CARD SHOW FINDER - ADMIN CLI'));
-console.log(chalk.bold.blue('======================================================'));
+console.warn(chalk.bold.blue('======================================================'));
+console.warn(chalk.bold.blue('  CARD SHOW FINDER - ADMIN CLI'));
+console.warn(chalk.bold.blue('======================================================'));
 
 // Verify environment variables
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error(chalk.red('Error: Supabase URL or key not found in environment variables.'));
-  console.log('Please ensure your .env file contains:');
-  console.log('  EXPO_PUBLIC_SUPABASE_URL=your_supabase_url');
-  console.log('  SUPABASE_SERVICE_KEY=your_service_key');
+  console.warn('Please ensure your .env file contains:');
+  console.warn('  EXPO_PUBLIC_SUPABASE_URL=your_supabase_url');
+  console.warn('  SUPABASE_SERVICE_KEY=your_service_key');
   process.exit(1);
 }
 

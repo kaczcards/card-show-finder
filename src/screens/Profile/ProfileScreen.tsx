@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Image, Switch, Platform, FlatList, Linking } from 'react-native';
+import React, { useState, useEffect as _useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Image, Switch as _Switch, Platform as _Platform, FlatList as _FlatList, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import SocialIcon from '../../components/ui/SocialIcon';
@@ -24,8 +24,8 @@ const ProfileScreen: React.FC = () => {
   // Password reset loading
   const [isPasswordResetLoading, setIsPasswordResetLoading] = useState(false);
   // Admin status
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checkingAdmin, setCheckingAdmin] = useState(false);
+  const [isAdmin, _setIsAdmin] = useState(false);
+  const [checkingAdmin, _setCheckingAdmin] = useState(false);
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');

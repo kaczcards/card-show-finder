@@ -16,9 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import _MapView, { Marker, Callout, PROVIDER_GOOGLE as _PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { useAuth } from '../../contexts/AuthContext';
-import { Show, ShowStatus, ShowFilters, Coordinates } from '../../types';
+import { Show, ShowStatus as _ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
 import MapShowCluster, { MapShowClusterHandle } from '../../components/MapShowCluster/index';
 import * as locationService from '../../services/locationService';
@@ -75,7 +75,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
   // Refs
   // Fix: Create proper ref for MapShowCluster with correct type
   const mapRef = useRef<MapShowClusterHandle>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const _scrollViewRef = useRef<ScrollView>(null);
   const retryRef = useRef(0);
 
   // Get auth context
@@ -309,7 +309,7 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
   );
 
   // Handle pull-to-refresh
-  const onRefresh = useCallback(() => {
+  const _onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchShows(true);
   }, [fetchShows]);
@@ -476,7 +476,7 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
   };
 
   // Render map markers - with defensive coding
-  const renderMarkers = () => {
+  const _renderMarkers = () => {
     if (!shows || !Array.isArray(shows) || shows.length === 0) return null;
     return shows
       .filter(show => show?.coordinates?.latitude && show.coordinates.longitude)
@@ -522,7 +522,7 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
   };
 
   // Render empty state when no shows are found
-  const renderEmptyState = () => {
+  const _renderEmptyState = () => {
     if (loading || !dataLoaded || shows.length > 0) return null;
     return (
       <View style={styles.emptyStateContainer}>

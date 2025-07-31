@@ -21,7 +21,7 @@ const Stack = createNativeStackNavigator<AdminStackParamList>();
  */
 const AdminNavigator: React.FC = () => {
   const { authState } = useAuth();
-  const { user, isAuthenticated } = authState;
+  const { user: _user, isAuthenticated } = authState;
 
   // If user is not authenticated, show access denied screen
   if (!isAuthenticated) {

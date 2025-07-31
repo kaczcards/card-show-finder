@@ -126,7 +126,7 @@ const AddShowScreen: React.FC = () => {
   };
 
   // Format a date for PostgreSQL (YYYY-MM-DD format)
-  const formatDateForPostgres = (date: Date): string => {
+  const _formatDateForPostgres = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');

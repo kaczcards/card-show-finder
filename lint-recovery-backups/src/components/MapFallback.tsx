@@ -205,7 +205,7 @@ export const MapView = forwardRef<any, MapViewProps & {
   // Expose methods that might be called on the ref
   useImperativeHandle(ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
-      // eslint-disable-next-line no-console
+       
 console.warn('MapView.animateToRegion called in fallback mode', { region, duration });
       // No-op in fallback mode
     },
@@ -330,13 +330,13 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
   // Expose methods that might be called on the ref
   useImperativeHandle(ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
-      // eslint-disable-next-line no-console
+       
 console.warn('FixedClusteredMapView.animateToRegion called in fallback mode', { region, duration });
       // No-op in fallback mode
     },
     getMapRef: () => ({
       animateToRegion: (region: Region, duration = 500) => {
-        // eslint-disable-next-line no-console
+         
 console.warn('getMapRef().animateToRegion called in fallback mode', { region, duration });
         // No-op in fallback mode
       }

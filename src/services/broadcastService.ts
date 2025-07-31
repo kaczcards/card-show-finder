@@ -98,7 +98,7 @@ export const sendBroadcastMessage = async (
     }
 
     // Format the broadcast message for the organizerService
-    const broadcastMessage: BroadcastMessage = {
+    const _broadcastMessage: BroadcastMessage = {
       showId: showId || '',
       content: message,
       recipients: recipients

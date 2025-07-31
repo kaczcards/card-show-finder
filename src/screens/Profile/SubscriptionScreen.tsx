@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, useWindowDimensions,  } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image as _Image, useWindowDimensions,  } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
 import { useUserSubscriptions } from '../../hooks/useUserSubscriptions';
@@ -40,8 +40,8 @@ const SubscriptionScreen: React.FC = () => {
   
   // Colors
   const ORANGE = '#FF6A00';
-  const BLUE = '#0057B8';
-  const LIGHT_GRAY = '#f0f0f0';
+  const _BLUE = '#0057B8';
+  const _LIGHT_GRAY = '#f0f0f0';
   const DARK_GRAY = '#666666';
   
   /* ------------------------------------------------------------------
