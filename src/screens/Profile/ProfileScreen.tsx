@@ -17,15 +17,15 @@ const ProfileScreen: React.FC = () => {
   const _navigation = useNavigation();
   
   // State for edit mode
-  const [isEditMode, setIsEditMode] = useState(_false);
-  const [isSubmitting, setIsSubmitting] = useState(_false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // session refresh loading
-  const [isRefreshingRole, setIsRefreshingRole] = useState(_false);
+  const [isRefreshingRole, setIsRefreshingRole] = useState(false);
   // Password reset loading
-  const [isPasswordResetLoading, setIsPasswordResetLoading] = useState(_false);
+  const [isPasswordResetLoading, setIsPasswordResetLoading] = useState(false);
   // Admin status
-  const [isAdmin, _setIsAdmin] = useState(_false);
-  const [_checkingAdmin, _setCheckingAdmin] = useState(_false);
+  const [isAdmin, _setIsAdmin] = useState(false);
+  const [_checkingAdmin, _setCheckingAdmin] = useState(false);
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -261,7 +261,7 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
     }
     
     try {
-      setIsSubmitting(_true);
+      setIsSubmitting(true);
       console.warn('[_ProfileScreen] Saving profile changes:', {
         firstName,
         lastName: lastName || undefined,
@@ -286,7 +286,7 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
         ebayStoreUrl: ebayStoreUrl || undefined,
       });
       
-      setIsEditMode(_false);
+      setIsEditMode(false);
        
 console.warn('[_ProfileScreen] Profile updated successfully');
       Alert.alert('Success', 'Profile updated successfully');
@@ -294,14 +294,14 @@ console.warn('[_ProfileScreen] Profile updated successfully');
       console.error('[_ProfileScreen] Error updating profile:', _err);
       Alert.alert('Update Failed', err.message || 'Please try again');
     } finally {
-      setIsSubmitting(_false);
+      setIsSubmitting(false);
     }
   };
 
   // Force-refresh JWT / role - This function is fine and used by the button
   const _handleRefreshRole = async () => {
     try {
-      setIsRefreshingRole(_true);
+      setIsRefreshingRole(true);
       const _success = await refreshUserRole();
       if (_success) {
         Alert.alert('Session Refreshed', 'Your account information has been updated.');
@@ -311,7 +311,7 @@ console.warn('[_ProfileScreen] Profile updated successfully');
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'Unexpected error refreshing session');
     } finally {
-      setIsRefreshingRole(_false);
+      setIsRefreshingRole(false);
     }
   };
 
@@ -323,7 +323,7 @@ console.warn('[_ProfileScreen] Profile updated successfully');
     }
 
     try {
-      setIsPasswordResetLoading(_true);
+      setIsPasswordResetLoading(true);
       await resetPassword(user.email);
       
       Alert.alert(
@@ -335,7 +335,7 @@ console.warn('[_ProfileScreen] Profile updated successfully');
       console.error('[_ProfileScreen] Error sending password reset:', _error);
       Alert.alert('Password Reset Failed', error.message || 'Please try again later.');
     } finally {
-      setIsPasswordResetLoading(_false);
+      setIsPasswordResetLoading(false);
     }
   };
   
