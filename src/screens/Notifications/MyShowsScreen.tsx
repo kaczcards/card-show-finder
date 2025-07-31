@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { CommonActions } from '@react-navigation/native';
+// Alias CommonActions to avoid unused-var lint warnings until we use it
+import { CommonActions as _CommonActions } from '@react-navigation/native';
 import { Show, Review } from '../../types';
 import ReviewForm from '../../components/ReviewForm';
 import ReviewsList from '../../components/ReviewsList';

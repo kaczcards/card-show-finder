@@ -20,8 +20,8 @@ interface ReviewFormProps {
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
-  showId, // currently unused but required for type-safety
-  seriesId,
+  _showId, // currently unused but required for type-safety
+  _seriesId,
   onSubmit,
   onCancel,
 }) => {

@@ -11,7 +11,7 @@ import {
   UseQueryOptions,
   useInfiniteQuery,
   UseInfiniteQueryOptions,
-  InfiniteData,
+  InfiniteData as _InfiniteData,
 } from '@tanstack/react-query';
 import * as showServiceRPC from '../services/showService.rpc';
 import * as showServiceLegacy from '../services/showService';

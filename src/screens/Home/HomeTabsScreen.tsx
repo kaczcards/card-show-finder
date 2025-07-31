@@ -28,7 +28,7 @@ const Tab = createMaterialTopTabNavigator();
  */
 const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
   const { authState } = useAuth();
-  const { user } = authState;
+  const { user: _user } = authState;
 
   // Default filters
   const defaultFilters: ShowFilters = {
@@ -82,7 +82,7 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
           setUserLocation(location);
         }
       } catch (error) {
-        console.error('Error getting user location:', error);
+        console.error('Error getting user: _user location:', error);
       }
     };
 

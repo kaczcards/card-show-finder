@@ -17,7 +17,7 @@ interface ShowHeaderActionsProps {
 
 const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
   isFavorite,
-  isCurrentUserOrganizer,
+  _isCurrentUserOrganizer,
   onToggleFavorite,
   onOpenMap,
   onShare,

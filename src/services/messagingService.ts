@@ -111,7 +111,7 @@ export const getUserMessages = async (
   try {
     // This is a placeholder implementation
      
-console.warn('Getting messages for user:', userId);
+console.warn('Getting messages for user:', _userId);
     
     // In a real implementation, we would fetch messages from Supabase
     // const { data, error } = await supabase
@@ -163,7 +163,7 @@ console.warn('Marking message as read:', messageId);
  * @param userId ID of the user (for verification)
  * @returns Success status
  */
-export const deleteMessage = async (messageId: string, userId: string): Promise<boolean> => {
+export const deleteMessage = async (messageId: string, _userId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
      
