@@ -12,7 +12,7 @@ import { storageService } from './storageService'; // Signed-URL helper
  * interface.  If `imageurl` is missing (undefined/null) we return `null`
  * so the caller can decide how to handle invalid rows.
  */
-const _mapSupabaseRecordToUserCard = async (record: any): Promise<UserCard | null> => {
+const mapSupabaseRecordToUserCard = async (record: any): Promise<UserCard | null> => {
   // Ensure we have an image path; without it, the card is considered invalid
   if (!record?.imageurl) return null;
 
@@ -39,26 +39,26 @@ const _mapSupabaseRecordToUserCard = async (record: any): Promise<UserCard | nul
  * @param userId The ID of the user whose cards to fetch
  * @returns An array of UserCard objects
  */
-export const _getUserCards = async (_userId: string): Promise<{ data: UserCard[] | null; error: any }> => {
+export const getUserCards = async (userId: string): Promise<{ data: UserCard[] | null; error: any }> => {
   try {
     const { data, error } = await supabase
       .from('user_cards')
       .select('*')
-      .eq('userid', _userId)
+      .eq('userid', userId)
       .order('createdat', { ascending: false });
     
-    if (_error) throw error;
+    if (error) throw error;
     
     // Transform lowercase column names to camelCase & replace image paths with signed URLs
-    const _transformedData = data
+    const transformedData = data
       ? (
-          await Promise.all(data.map((_card) => mapSupabaseRecordToUserCard(_card)))
+          await Promise.all(data.map((card) => mapSupabaseRecordToUserCard(card)))
         ).filter(Boolean) as UserCard[] // filter out nulls
       : null;
     
     return { data: transformedData, error: null };
-  } catch (_error) {
-    console.error('Error fetching user cards:', _error);
+  } catch (error) {
+    console.error('Error fetching user cards:', error);
     return { data: null, error };
   }
 };
@@ -70,29 +70,29 @@ export const _getUserCards = async (_userId: string): Promise<{ data: UserCard[]
  * @param cardData The card data to add
  * @returns The newly created UserCard object
  */
-export const _addUserCard = async (
+export const addUserCard = async (
   userId: string, 
   cardData: Omit<UserCard, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
 ): Promise<{ data: UserCard | null; error: any }> => {
   try {
     // First check if the user already has 10 cards
-    const { data: existingCards, error: countError } = await getUserCards(_userId);
+    const { data: existingCards, error: countError } = await getUserCards(userId);
     
-    if (_countError) throw countError;
+    if (countError) throw countError;
     
     if (existingCards && existingCards.length >= 10) {
       return { 
         data: null, 
-        error: new Error('Maximum card limit reached (_10). Please remove a card before adding a new one.') 
+        error: new Error('Maximum card limit reached (10). Please remove a card before adding a new one.') 
       };
     }
     
     // Upload the card image to storage if it's a base64 string
-    let _imageUrl = cardData.imageUrl;
+    let imageUrl = cardData.imageUrl;
     if (imageUrl.startsWith('data:image')) {
       const { data: path, error: uploadErr } = await storageService.uploadImage(
         userId,
-        _imageUrl,
+        imageUrl,
         undefined,
         'image/jpeg'
       );
@@ -116,7 +116,7 @@ export const _addUserCard = async (
       .select()
       .single();
     
-    if (_error) throw error;
+    if (error) throw error;
     
     // Transform to camelCase for our app & attach signed URL
     let signedUrl: string | undefined;
@@ -125,7 +125,7 @@ export const _addUserCard = async (
       signedUrl = url || data.imageurl;
     }
 
-    const _transformedData = data ? {
+    const transformedData = data ? {
       id: data.id,
       userId: data.userid,
       // Ensure we always return a string for imageUrl to satisfy `UserCard`
@@ -139,8 +139,8 @@ export const _addUserCard = async (
     } : null;
     
     return { data: transformedData, error: null };
-  } catch (_error) {
-    console.error('Error adding user card:', _error);
+  } catch (error) {
+    console.error('Error adding user card:', error);
     return { data: null, error };
   }
 };
@@ -151,33 +151,33 @@ export const _addUserCard = async (
  * @param userId The ID of the user (for verification)
  * @returns Success status
  */
-export const _deleteUserCard = async (
-  _cardId: string,
-  _userId: string
+export const deleteUserCard = async (
+  cardId: string,
+  userId: string
 ): Promise<{ success: boolean; error: any }> => {
   try {
     // Verify the card belongs to the user
     const { data: card, error: fetchError } = await supabase
       .from('user_cards')
       .select('imageurl')
-      .eq('id', _cardId)
-      .eq('userid', _userId)
+      .eq('id', cardId)
+      .eq('userid', userId)
       .single();
     
-    if (_fetchError) throw fetchError;
+    if (fetchError) throw fetchError;
     
     if (!card) {
       return { success: false, error: new Error('Card not found or you do not have permission to delete it') };
     }
     
     // Delete the card from the database
-    const { _error } = await supabase
+    const { error: deleteError } = await supabase
       .from('user_cards')
       .delete()
-      .eq('id', _cardId)
-      .eq('userid', _userId);
+      .eq('id', cardId)
+      .eq('userid', userId);
     
-    if (_error) throw error;
+    if (deleteError) throw deleteError;
     
     // Delete the image from storage if it's stored in Supabase
     if (card.imageurl) {
@@ -185,8 +185,8 @@ export const _deleteUserCard = async (
     }
     
     return { success: true, error: null };
-  } catch (_error) {
-    console.error('Error deleting user card:', _error);
+  } catch (error) {
+    console.error('Error deleting user card:', error);
     return { success: false, error };
   }
 };
@@ -198,7 +198,7 @@ export const _deleteUserCard = async (
  * @param updates The fields to update
  * @returns The updated UserCard object
  */
-export const _updateUserCard = async (
+export const updateUserCard = async (
   cardId: string,
   userId: string,
   updates: Partial<Omit<UserCard, 'id' | 'userId' | 'createdAt'>>
@@ -208,18 +208,18 @@ export const _updateUserCard = async (
     const { data: existingCard, error: fetchError } = await supabase
       .from('user_cards')
       .select('*')
-      .eq('id', _cardId)
-      .eq('userid', _userId)
+      .eq('id', cardId)
+      .eq('userid', userId)
       .single();
     
-    if (_fetchError) throw fetchError;
+    if (fetchError) throw fetchError;
     
     if (!existingCard) {
       return { data: null, error: new Error('Card not found or you do not have permission to update it') };
     }
     
     // Handle image update if provided
-    let _imageUrl = updates.imageUrl || existingCard.imageurl;
+    let imageUrl = updates.imageUrl || existingCard.imageurl;
     if (updates.imageUrl && updates.imageUrl.startsWith('data:image')) {
       // Delete old image if it's in our storage
       if (existingCard.imageurl) {
@@ -249,12 +249,12 @@ export const _updateUserCard = async (
     const { data, error } = await supabase
       .from('user_cards')
       .update(updateData)
-      .eq('id', _cardId)
-      .eq('userid', _userId)
+      .eq('id', cardId)
+      .eq('userid', userId)
       .select()
       .single();
     
-    if (_error) throw error;
+    if (error) throw error;
     
     // Transform to camelCase for our app & attach signed URL
     let signedUrl: string | undefined;
@@ -263,7 +263,7 @@ export const _updateUserCard = async (
       signedUrl = url || data.imageurl;
     }
 
-    const _transformedData = data ? {
+    const transformedData = data ? {
       id: data.id,
       userId: data.userid,
       // Ensure a non-undefined string is always returned
@@ -277,8 +277,8 @@ export const _updateUserCard = async (
     } : null;
     
     return { data: transformedData, error: null };
-  } catch (_error) {
-    console.error('Error updating user card:', _error);
+  } catch (error) {
+    console.error('Error updating user card:', error);
     return { data: null, error };
   }
 };
@@ -290,14 +290,14 @@ export const _updateUserCard = async (
  * @param userId The ID of the user whose want list to fetch
  * @returns The user's WantList object
  */
-export const _getUserWantList = async (
-  _userId: string
+export const getUserWantList = async (
+  userId: string
 ): Promise<{ data: WantList | null; error: any }> => {
   try {
     const { data, error } = await supabase
       .from('want_lists')
       .select('*')
-      .eq('userid', _userId)
+      .eq('userid', userId)
       .maybeSingle();
     
     if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
@@ -305,7 +305,7 @@ export const _getUserWantList = async (
     }
     
     // Transform to camelCase for our app
-    const _transformedData = data ? {
+    const transformedData = data ? {
       id: data.id,
       userId: data.userid,
       content: data.content,
@@ -314,8 +314,8 @@ export const _getUserWantList = async (
     } : null;
     
     return { data: transformedData, error: null };
-  } catch (_error) {
-    console.error('Error fetching want list:', _error);
+  } catch (error) {
+    console.error('Error fetching want list:', error);
     return { data: null, error };
   }
 };
@@ -326,17 +326,17 @@ export const _getUserWantList = async (
  * @param content The content of the want list
  * @returns The newly created WantList object
  */
-export const _createWantList = async (
+export const createWantList = async (
   userId: string,
   content: string
 ): Promise<{ data: WantList | null; error: any }> => {
   try {
     // Check if user already has a want list
-    const { data: existingList } = await getUserWantList(_userId);
+    const { data: existingList } = await getUserWantList(userId);
     
-    if (_existingList) {
+    if (existingList) {
       // Update existing want list instead of creating a new one
-      return updateWantList(existingList.id, _userId, content);
+      return updateWantList(existingList.id, userId, content);
     }
     
     // Create new want list with lowercase column names
@@ -344,17 +344,17 @@ export const _createWantList = async (
       .from('want_lists')
       .insert([{
         userid: userId,
-        _content,
+        content,
         createdat: new Date().toISOString(),
         updatedat: new Date().toISOString()
       }])
       .select()
       .single();
     
-    if (_error) throw error;
+    if (error) throw error;
     
     // Transform to camelCase for our app
-    const _transformedData = data ? {
+    const transformedData = data ? {
       id: data.id,
       userId: data.userid,
       content: data.content,
@@ -363,8 +363,8 @@ export const _createWantList = async (
     } : null;
     
     return { data: transformedData, error: null };
-  } catch (_error) {
-    console.error('Error creating want list:', _error);
+  } catch (error) {
+    console.error('Error creating want list:', error);
     return { data: null, error };
   }
 };
@@ -376,7 +376,7 @@ export const _createWantList = async (
  * @param content The new content for the want list
  * @returns The updated WantList object
  */
-export const _updateWantList = async (
+export const updateWantList = async (
   wantListId: string,
   userId: string,
   content: string
@@ -388,15 +388,15 @@ export const _updateWantList = async (
         content,
         updatedat: new Date().toISOString()
       })
-      .eq('id', _wantListId)
-      .eq('userid', _userId)
+      .eq('id', wantListId)
+      .eq('userid', userId)
       .select()
       .single();
     
-    if (_error) throw error;
+    if (error) throw error;
     
     // Transform to camelCase for our app
-    const _transformedData = data ? {
+    const transformedData = data ? {
       id: data.id,
       userId: data.userid,
       content: data.content,
@@ -405,8 +405,8 @@ export const _updateWantList = async (
     } : null;
     
     return { data: transformedData, error: null };
-  } catch (_error) {
-    console.error('Error updating want list:', _error);
+  } catch (error) {
+    console.error('Error updating want list:', error);
     return { data: null, error };
   }
 };
@@ -417,22 +417,22 @@ export const _updateWantList = async (
  * @param showId The ID of the show where the want list will be shared
  * @returns Success status
  */
-export const _shareWantList = async (
+export const shareWantList = async (
   userId: string,
   showId: string
 ): Promise<{ success: boolean; error: any }> => {
   try {
     // First check if the user has a want list
-    const { data: wantList, error: wantListError } = await getUserWantList(_userId);
+    const { data: wantList, error: wantListError } = await getUserWantList(userId);
     
-    if (_wantListError) throw wantListError;
+    if (wantListError) throw wantListError;
     
     if (!wantList) {
       return { success: false, error: new Error('You must create a want list before sharing it') };
     }
     
     // Create or update the shared want list record
-    const { _error } = await supabase
+    const { error } = await supabase
       .from('shared_want_lists')
       .upsert([{
         userid: userId,
@@ -441,11 +441,11 @@ export const _shareWantList = async (
         sharedat: new Date().toISOString()
       }]);
     
-    if (_error) throw error;
+    if (error) throw error;
     
     return { success: true, error: null };
-  } catch (_error) {
-    console.error('Error sharing want list:', _error);
+  } catch (error) {
+    console.error('Error sharing want list:', error);
     return { success: false, error };
   }
 };
@@ -455,7 +455,7 @@ export const _shareWantList = async (
  * @param showId The ID of the show
  * @returns Array of dealer user IDs and their basic info
  */
-export const _getDealersForShow = async (_showId: string): Promise<{ 
+export const getDealersForShow = async (showId: string): Promise<{ 
   data: { id: string; firstName: string; lastName?: string }[] | null; 
   error: any 
 }> => {
@@ -463,18 +463,18 @@ export const _getDealersForShow = async (_showId: string): Promise<{
     // This query assumes there's a 'show_participants' table that tracks who's attending which show
     const { data, error } = await supabase
       .from('show_participants')
-      .select('users:userid(id, _firstName, lastName, role)')
-      .eq('showid', _showId)
+      .select('users:userid(id, firstName, lastName, role)')
+      .eq('showid', showId)
       .eq('users.role', UserRole.MVP_DEALER);
     
-    if (_error) throw error;
+    if (error) throw error;
     
-    // Extract user data from the nested structure
-    const _dealers = data?.map(item => item.users) || [];
-    
+    const dealers = data?.map(item => item.users) || [];
+    // Return list of dealers
     return { data: dealers, error: null };
-  } catch (_error) {
-    console.error('Error fetching dealers for show:', _error);
+    
+  } catch (error) {
+    console.error('Error fetching dealers for show:', error);
     return { data: null, error };
   }
 };
@@ -485,19 +485,19 @@ export const _getDealersForShow = async (_showId: string): Promise<{
  * @param showId The ID of the show
  * @returns Array of want lists with user information
  */
-export const _getSharedWantListsForDealer = async (
-  _dealerId: string,
-  _showId: string
+export const getSharedWantListsForDealer = async (
+  dealerId: string,
+  showId: string
 ): Promise<{ data: any[] | null; error: any }> => {
   try {
     // Verify the user is an MVP dealer
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('role')
-      .eq('id', _dealerId)
+      .eq('id', dealerId)
       .single();
     
-    if (_userError) throw userError;
+    if (userError) throw userError;
     
     if (!userData || userData.role !== UserRole.MVP_DEALER) {
       return { 
@@ -511,16 +511,15 @@ export const _getSharedWantListsForDealer = async (
       .from('shared_want_lists')
       .select(`
         id,
-        _sharedat,
-        users:userid(id, _firstName, lastName),
-        wantLists:wantlistid(id, _content, updatedat)
+        sharedat,
+        users:userid(id, firstName, lastName),
+        wantLists:wantlistid(id, content, updatedat)
       `)
-      .eq('showid', _showId);
+      .eq('showid', showId);
     
-    if (_error) throw error;
+    if (error) throw error;
     
-    // Transform the data to have camelCase keys
-    const _transformedData = data?.map(item => ({
+    const transformedData = data?.map(item => ({
       id: item.id,
       sharedAt: item.sharedat,
       user: item.users,
@@ -532,8 +531,8 @@ export const _getSharedWantListsForDealer = async (
     }));
     
     return { data: transformedData, error: null };
-  } catch (_error) {
-    console.error('Error fetching shared want lists:', _error);
+  } catch (error) {
+    console.error('Error fetching shared want lists:', error);
     return { data: null, error };
   }
 };

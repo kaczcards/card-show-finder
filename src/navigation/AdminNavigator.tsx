@@ -11,7 +11,7 @@ export type AdminStackParamList = {
   // Add other admin screens here as needed
 };
 
-const _Stack = createNativeStackNavigator<AdminStackParamList>();
+const Stack = createNativeStackNavigator<AdminStackParamList>();
 
 /**
  * Admin Navigator Component
@@ -20,14 +20,14 @@ const _Stack = createNativeStackNavigator<AdminStackParamList>();
  * It's only accessible to users with admin privileges.
  */
 const AdminNavigator: React.FC = () => {
-  const { _authState } = useAuth();
-  const { _user, isAuthenticated } = authState;
+  const { authState } = useAuth();
+  const { user, isAuthenticated } = authState;
 
   // If user is not authenticated, show access denied screen
   if (!isAuthenticated) {
     return (
       <View style={styles.container}>
-        <Ionicons name="lock-closed" size={_64} color="#FF3B30" />
+        <Ionicons name="lock-closed" size={64} color="#FF3B30" />
         <Text style={styles.title}>Access Denied</Text>
         <Text style={styles.message}>
           You must be logged in to access admin features.
@@ -51,7 +51,7 @@ const AdminNavigator: React.FC = () => {
     >
       <Stack.Screen
         name="AdminMap"
-        component={_AdminMapScreen}
+        component={AdminMapScreen}
         options={{
           title: "Coordinate Validation",
           headerBackTitle: "Back",
@@ -62,7 +62,7 @@ const AdminNavigator: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

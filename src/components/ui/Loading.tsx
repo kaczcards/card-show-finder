@@ -33,27 +33,27 @@ interface LoadingProps {
  */
 const Loading: React.FC<LoadingProps> = ({
   type = 'fullScreen',
-  _message,
-  _size = 'large',
+  message,
+  size = 'large',
   style,
 }) => {
   // Get theme from context
-  const { _theme } = useTheme();
+  const { theme } = useTheme();
   
   // Determine loading style based on type
-  const _loadingStyle = type === 'fullScreen' 
+  const loadingStyle = type === 'fullScreen' 
     ? theme.components.loadingStates.fullScreen
     : theme.components.loadingStates.inline;
   
   return (
     <View style={[loadingStyle.container, style]}>
       <ActivityIndicator 
-        size={_size} 
+        size={size} 
         color={loadingStyle.indicatorColor}
       />
       {message && (
         <Text style={loadingStyle.text}>
-          {_message}
+          {message}
         </Text>
       )}
     </View>

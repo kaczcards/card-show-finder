@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { User, UserRole, AuthState, AuthCredentials } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as supabaseAuthService from '../services/supabaseAuthService';
-import { signIn } from '../services/supabaseAuthService';
+import { signIn as _signIn } from '../services/supabaseAuthService';
 import { refreshUserSession } from '../services/sessionService';
 // import * as Sentry from 'sentry-expo'; // ↳ Temporarily disabled while debugging
 
@@ -785,6 +785,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Expose context & hook for external modules
-export { AuthContext, useAuth };
+// Expose context for external modules
+export { AuthContext };
 export default AuthContext;

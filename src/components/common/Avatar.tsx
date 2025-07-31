@@ -28,31 +28,31 @@ const Avatar: React.FC<AvatarProps> = ({
   imageStyle,
   textStyle,
 }) => {
-  const [isLoading, setIsLoading] = useState(_false);
-  const [hasError, setHasError] = useState(_false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Get initials from name
-  const _getInitials = (): string => {
+  const getInitials = (): string => {
     if (!name) return '';
     
-    const _nameParts = name.trim().split(' ');
+    const nameParts = name.trim().split(' ');
     if (nameParts.length === 0) return '';
     
     if (nameParts.length === 1) {
-      return nameParts[_0].charAt(0).toUpperCase();
+      return nameParts[0].charAt(0).toUpperCase();
     }
     
     return (
-      nameParts[_0].charAt(0).toUpperCase() +
+      nameParts[0].charAt(0).toUpperCase() +
       nameParts[nameParts.length - 1].charAt(0).toUpperCase()
     );
   };
 
   // Generate a consistent background color based on name
-  const _getBackgroundColor = (): string => {
+  const getBackgroundColor = (): string => {
     if (!name) return '#e0e0e0';
     
-    const _colors = [
+    const colors = [
       '#F44336', '#E91E63', '#9C27B0', '#673AB7', 
       '#3F51B5', '#2196F3', '#03A9F4', '#00BCD4',
       '#009688', '#4CAF50', '#8BC34A', '#CDDC39',
@@ -60,17 +60,17 @@ const Avatar: React.FC<AvatarProps> = ({
     ];
     
     // Simple hash function to get consistent color for the same name
-    let _hash = 0;
-    for (let _i = 0; i < name.length; i++) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     
-    const _index = Math.abs(hash) % colors.length;
-    return colors[_index];
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
   };
 
   // Container styles
-  const _containerStyle: ViewStyle = {
+  const containerStyle: ViewStyle = {
     width: size,
     height: size,
     borderRadius: size / 2,
@@ -84,9 +84,9 @@ const Avatar: React.FC<AvatarProps> = ({
   // Handle valid image URI
   if (uri && !hasError) {
     return (
-      <View style={_containerStyle}>
+      <View style={containerStyle}>
         <Image
-          source={{ _uri }}
+          source={{ uri }}
           style={[
             {
               width: size,
@@ -94,11 +94,11 @@ const Avatar: React.FC<AvatarProps> = ({
             },
             imageStyle,
           ]}
-          onLoadStart={() => setIsLoading(_true)}
-          onLoadEnd={() => setIsLoading(_false)}
+          onLoadStart={() => setIsLoading(true)}
+          onLoadEnd={() => setIsLoading(false)}
           onError={() => {
-            setHasError(_true);
-            setIsLoading(_false);
+            setHasError(true);
+            setIsLoading(false);
           }}
         />
         {isLoading && (
@@ -113,9 +113,9 @@ const Avatar: React.FC<AvatarProps> = ({
   }
 
   // Show initials if name is provided
-  if (_name) {
+  if (name) {
     return (
-      <View style={_containerStyle}>
+      <View style={containerStyle}>
         <Text
           style={[
             {
@@ -134,7 +134,7 @@ const Avatar: React.FC<AvatarProps> = ({
 
   // Default fallback - show icon
   return (
-    <View style={_containerStyle}>
+    <View style={containerStyle}>
       <MaterialIcons name="person" size={size * 0.6} color="#ffffff" />
     </View>
   );

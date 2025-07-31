@@ -27,22 +27,22 @@ import {
 
 const SubscriptionScreen: React.FC = () => {
   const { authState, refreshUserRole } = useAuth(); // Destructure refreshUserRole from useAuth
-  const { _user } = authState;
-  const _navigation = useNavigation();
-  const { _width } = useWindowDimensions();
+  const { user } = authState;
+  const navigation = useNavigation();
+  const { width } = useWindowDimensions();
   
-  const [loading, setLoading] = useState(_false);
-  const [processingPayment, setProcessingPayment] = useState(_false);
+  const [loading, setLoading] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
   const [timeRemaining, setTimeRemaining] = useState<{ days: number, hours: number } | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   
   // Colors
-  const _ORANGE = '#FF6A00';
-  const _BLUE = '#0057B8';
-  const _LIGHT_GRAY = '#f0f0f0';
-  const _DARK_GRAY = '#666666';
+  const ORANGE = '#FF6A00';
+  const BLUE = '#0057B8';
+  const LIGHT_GRAY = '#f0f0f0';
+  const DARK_GRAY = '#666666';
   
   /* ------------------------------------------------------------------
    * Subscriptions – fetch via dedicated hook
@@ -54,71 +54,71 @@ const SubscriptionScreen: React.FC = () => {
   } = useUserSubscriptions();
 
   // Extract the current subscription from the array (there will be only one item)
-  const _currentSubscription = subscriptions && subscriptions.length > 0 ? subscriptions[_0] : null;
+  const currentSubscription = subscriptions && subscriptions.length > 0 ? subscriptions[0] : null;
 
   useEffect(() => {
-    if (_user) {
+    if (user) {
       loadSubscriptionDetails();
     }
-  }, [_user]);
+  }, [user]);
   
   // Refresh time remaining every minute
   useEffect(() => {
     if (!user) return;
     
-    const _timer = setInterval(() => {
+    const timer = setInterval(() => {
       if (user.subscriptionExpiry) {
         setTimeRemaining(getSubscriptionTimeRemaining(user));
       }
     }, 60000); // Update every minute
     
-    return () => clearInterval(_timer);
-  }, [_user]);
+    return () => clearInterval(timer);
+  }, [user]);
   
-  const _loadSubscriptionDetails = () => {
+  const loadSubscriptionDetails = () => {
     if (!user) return;
     
-    setLoading(_true);
+    setLoading(true);
     try {
-      const _details = getSubscriptionDetails(_user);
-      setSubscriptionDetails(_details);
+      const details = getSubscriptionDetails(user);
+      setSubscriptionDetails(details);
       setTimeRemaining(getSubscriptionTimeRemaining(user));
       
       // Pre-select the appropriate plan based on user's account type
       if (details?.accountType) {
-        const _planType = details.accountType === 'dealer' 
+        const planType = details.accountType === 'dealer' 
           ? SubscriptionPlanType.DEALER 
           : SubscriptionPlanType.ORGANIZER;
           
-        const _duration = billingCycle === 'monthly' 
+        const duration = billingCycle === 'monthly' 
           ? SubscriptionDuration.MONTHLY 
           : SubscriptionDuration.ANNUAL;
           
-        const _plan = SUBSCRIPTION_PLANS.find(p => 
+        const plan = SUBSCRIPTION_PLANS.find(p => 
           p.type === planType && p.duration === duration
         );
         
         setSelectedPlan(plan || null);
       }
-    } catch (_error) {
-      console.error('Error loading subscription details:', _error);
+    } catch (error) {
+      console.error('Error loading subscription details:', error);
       Alert.alert('Error', 'Failed to load subscription details');
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   };
   
-  const _handlePurchase = async () => {
+  const handlePurchase = async () => {
     // Guard: subscription data must be ready
-    if (_subsLoading) {
+    if (subsLoading) {
       Alert.alert('Please wait', 'Subscription data is still loading. Try again shortly.');
       return;
     }
     if (!user || !selectedPlan) return;
     
-    setProcessingPayment(_true);
+    setProcessingPayment(true);
     try {
-      const _result = await initiateSubscriptionPurchase(user.id, selectedPlan.id);
+      const result = await initiateSubscriptionPurchase(user.id, selectedPlan.id);
       
       if (result.success) {
         await refreshUserRole(); // Call to refresh user's role and state after successful purchase
@@ -131,23 +131,23 @@ const SubscriptionScreen: React.FC = () => {
         Alert.alert('Error', result.error || 'Failed to process payment');
       }
     } catch (error: any) {
-      console.error('Error purchasing subscription:', _error);
+      console.error('Error purchasing subscription:', error);
       Alert.alert('Error', error.message || 'Failed to process payment');
     } finally {
-      setProcessingPayment(_false);
+      setProcessingPayment(false);
     }
   };
   
-  const _handleRenewal = async () => {
-    if (_subsLoading) {
+  const handleRenewal = async () => {
+    if (subsLoading) {
       Alert.alert('Please wait', 'Subscription data is still loading. Try again shortly.');
       return;
     }
     if (!user || !selectedPlan) return;
     
-    setProcessingPayment(_true);
+    setProcessingPayment(true);
     try {
-      const _result = await renewSubscription(user.id, selectedPlan.id);
+      const result = await renewSubscription(user.id, selectedPlan.id);
       
       if (result.success) {
         await refreshUserRole(); // Call to refresh user's role and state after successful renewal
@@ -160,15 +160,15 @@ const SubscriptionScreen: React.FC = () => {
         Alert.alert('Error', result.error || 'Failed to renew subscription');
       }
     } catch (error: any) {
-      console.error('Error renewing subscription:', _error);
+      console.error('Error renewing subscription:', error);
       Alert.alert('Error', error.message || 'Failed to renew subscription');
     } finally {
-      setProcessingPayment(_false);
+      setProcessingPayment(false);
     }
   };
   
-  const _handleCancel = async () => {
-    if (_subsLoading) {
+  const handleCancel = async () => {
+    if (subsLoading) {
       Alert.alert('Please wait', 'Subscription data is still loading. Try again shortly.');
       return;
     }
@@ -183,9 +183,9 @@ const SubscriptionScreen: React.FC = () => {
           text: 'Yes, Cancel',
           style: 'destructive',
           onPress: async () => {
-            setLoading(_true);
+            setLoading(true);
             try {
-              const _result = await cancelSubscription(user.id);
+              const result = await cancelSubscription(user.id);
               
               if (result.success) {
                 await refreshUserRole(); // Call to refresh user's role and state after successful cancellation
@@ -198,10 +198,10 @@ const SubscriptionScreen: React.FC = () => {
                 Alert.alert('Error', result.error || 'Failed to cancel subscription');
               }
             } catch (error: any) {
-              console.error('Error cancelling subscription:', _error);
+              console.error('Error cancelling subscription:', error);
               Alert.alert('Error', error.message || 'Failed to cancel subscription');
             } finally {
-              setLoading(_false);
+              setLoading(false);
             }
           }
         }
@@ -209,17 +209,17 @@ const SubscriptionScreen: React.FC = () => {
     );
   };
   
-  const _toggleBillingCycle = () => {
-    const _newCycle = billingCycle === 'monthly' ? 'annual' : 'monthly';
-    setBillingCycle(_newCycle);
+  const toggleBillingCycle = () => {
+    const newCycle = billingCycle === 'monthly' ? 'annual' : 'monthly';
+    setBillingCycle(newCycle);
     
     // Update selected plan based on new billing cycle
-    if (_selectedPlan) {
-      const _duration = newCycle === 'monthly' 
+    if (selectedPlan) {
+      const duration = newCycle === 'monthly' 
         ? SubscriptionDuration.MONTHLY 
         : SubscriptionDuration.ANNUAL;
         
-      const _plan = SUBSCRIPTION_PLANS.find(p => 
+      const plan = SUBSCRIPTION_PLANS.find(p => 
         p.type === selectedPlan.type && p.duration === duration
       );
       
@@ -227,7 +227,7 @@ const SubscriptionScreen: React.FC = () => {
     }
   };
   
-  const _renderCurrentSubscription = () => {
+  const renderCurrentSubscription = () => {
     if (!user || user.accountType === 'collector') {
       return (
         <View style={styles.currentSubscriptionContainer}>
@@ -302,25 +302,25 @@ const SubscriptionScreen: React.FC = () => {
     );
   };
   
-  const _renderPlanSelector = () => {
-    const _dealerMonthlyPlan = SUBSCRIPTION_PLANS.find(
+  const renderPlanSelector = () => {
+    const dealerMonthlyPlan = SUBSCRIPTION_PLANS.find(
       p => p.type === SubscriptionPlanType.DEALER && p.duration === SubscriptionDuration.MONTHLY
     );
     
-    const _dealerAnnualPlan = SUBSCRIPTION_PLANS.find(
+    const dealerAnnualPlan = SUBSCRIPTION_PLANS.find(
       p => p.type === SubscriptionPlanType.DEALER && p.duration === SubscriptionDuration.ANNUAL
     );
     
-    const _organizerMonthlyPlan = SUBSCRIPTION_PLANS.find(
+    const organizerMonthlyPlan = SUBSCRIPTION_PLANS.find(
       p => p.type === SubscriptionPlanType.ORGANIZER && p.duration === SubscriptionDuration.MONTHLY
     );
     
-    const _organizerAnnualPlan = SUBSCRIPTION_PLANS.find(
+    const organizerAnnualPlan = SUBSCRIPTION_PLANS.find(
       p => p.type === SubscriptionPlanType.ORGANIZER && p.duration === SubscriptionDuration.ANNUAL
     );
     
-    const _dealerPlan = billingCycle === 'monthly' ? dealerMonthlyPlan : dealerAnnualPlan;
-    const _organizerPlan = billingCycle === 'monthly' ? organizerMonthlyPlan : organizerAnnualPlan;
+    const dealerPlan = billingCycle === 'monthly' ? dealerMonthlyPlan : dealerAnnualPlan;
+    const organizerPlan = billingCycle === 'monthly' ? organizerMonthlyPlan : organizerAnnualPlan;
     
     return (
       <View style={styles.planSelectorContainer}>
@@ -339,7 +339,7 @@ const SubscriptionScreen: React.FC = () => {
               styles.billingToggleSwitch,
               billingCycle === 'annual' ? styles.billingToggleSwitchRight : {}
             ]}
-            onPress={_toggleBillingCycle}
+            onPress={toggleBillingCycle}
           >
             <View style={styles.billingToggleKnob} />
           </TouchableOpacity>
@@ -377,10 +377,10 @@ const SubscriptionScreen: React.FC = () => {
             )}
             
             <View style={styles.planFeatures}>
-              {dealerPlan?.features.slice(0, _3).map((_feature, _index) => (
-                <View key={_index} style={styles.featureRow}>
+              {dealerPlan?.features.slice(0, 3).map((feature, index) => (
+                <View key={index} style={styles.featureRow}>
                   <Text style={styles.featureCheck}>✓</Text>
-                  <Text style={styles.featureText}>{_feature}</Text>
+                  <Text style={styles.featureText}>{feature}</Text>
                 </View>
               ))}
               <Text style={styles.moreFeatures}>+{(dealerPlan?.features.length || 0) - 3} more features</Text>
@@ -413,10 +413,10 @@ const SubscriptionScreen: React.FC = () => {
             )}
             
             <View style={styles.planFeatures}>
-              {organizerPlan?.features.slice(0, _3).map((_feature, _index) => (
-                <View key={_index} style={styles.featureRow}>
+              {organizerPlan?.features.slice(0, 3).map((feature, index) => (
+                <View key={index} style={styles.featureRow}>
                   <Text style={styles.featureCheck}>✓</Text>
-                  <Text style={styles.featureText}>{_feature}</Text>
+                  <Text style={styles.featureText}>{feature}</Text>
                 </View>
               ))}
               <Text style={styles.moreFeatures}>+{(organizerPlan?.features.length || 0) - 3} more features</Text>
@@ -427,15 +427,15 @@ const SubscriptionScreen: React.FC = () => {
     );
   };
   
-  const _renderPlanComparison = () => {
+  const renderPlanComparison = () => {
     // Get one plan of each type to compare features
-    const _dealerPlan = SUBSCRIPTION_PLANS.find(p => p.type === SubscriptionPlanType.DEALER);
-    const _organizerPlan = SUBSCRIPTION_PLANS.find(p => p.type === SubscriptionPlanType.ORGANIZER);
+    const dealerPlan = SUBSCRIPTION_PLANS.find(p => p.type === SubscriptionPlanType.DEALER);
+    const organizerPlan = SUBSCRIPTION_PLANS.find(p => p.type === SubscriptionPlanType.ORGANIZER);
     
     if (!dealerPlan || !organizerPlan) return null;
     
     // Combine all features for comparison
-    const _allFeatures = new Set<string>();
+    const allFeatures = new Set<string>();
     dealerPlan.features.forEach(feature => allFeatures.add(feature));
     organizerPlan.features.forEach(feature => allFeatures.add(feature));
     
@@ -443,7 +443,7 @@ const SubscriptionScreen: React.FC = () => {
       <View style={styles.comparisonContainer}>
         <Text style={styles.sectionTitle}>Plan Comparison</Text>
         
-        <ScrollView horizontal showsHorizontalScrollIndicator={_false}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.comparisonTable}>
             {/* Header Row */}
             <View style={styles.comparisonRow}>
@@ -462,19 +462,19 @@ const SubscriptionScreen: React.FC = () => {
             </View>
             
             {/* Feature Rows */}
-            {Array.from(allFeatures).map((_feature, _index) => {
-              const _dealerHas = dealerPlan.features.includes(feature);
-              const _organizerHas = organizerPlan.features.includes(feature);
+            {Array.from(allFeatures).map((feature, index) => {
+              const dealerHas = dealerPlan.features.includes(feature);
+              const organizerHas = organizerPlan.features.includes(feature);
               // Free account has basic features only
-              const _freeHas = feature.includes('view') || feature.includes('browse');
+              const freeHas = feature.includes('view') || feature.includes('browse');
               
               return (
-                <View key={_index} style={[
+                <View key={index} style={[
                   styles.comparisonRow,
                   index % 2 === 0 ? styles.comparisonRowEven : {}
                 ]}>
                   <View style={[styles.comparisonCell, { width: 180 }]}>
-                    <Text style={styles.featureText}>{_feature}</Text>
+                    <Text style={styles.featureText}>{feature}</Text>
                   </View>
                   <View style={styles.comparisonCell}>
                     <Text style={styles.checkmark}>{freeHas ? '✓' : ''}</Text>
@@ -494,37 +494,37 @@ const SubscriptionScreen: React.FC = () => {
     );
   };
   
-  const _renderActionButtons = () => {
+  const renderActionButtons = () => {
     if (!user) return null;
-    if (_subsLoading) {
+    if (subsLoading) {
       return (
         <View style={styles.actionButtonsContainer}>
-          <ActivityIndicator color={_ORANGE} />
+          <ActivityIndicator color={ORANGE} />
         </View>
       );
     }
     
     // Use the currentSubscription from our mapped data if available
-    const _activeStatus = currentSubscription?.status === 'active' || subscriptionDetails?.status === 'active';
-    const _expiredStatus = currentSubscription?.status === 'expired' || subscriptionDetails?.status === 'expired';
+    const activeStatus = currentSubscription?.status === 'active' || subscriptionDetails?.status === 'active';
+    const expiredStatus = currentSubscription?.status === 'expired' || subscriptionDetails?.status === 'expired';
     
-    const _isUpgrade = user.accountType === 'collector' || 
+    const isUpgrade = user.accountType === 'collector' || 
       (user.accountType === 'dealer' && selectedPlan?.type === SubscriptionPlanType.ORGANIZER);
       
-    const _isDowngrade = user.accountType === 'organizer' && 
+    const isDowngrade = user.accountType === 'organizer' && 
       selectedPlan?.type === SubscriptionPlanType.DEALER;
       
-    const _isRenewal = user.accountType !== 'collector' && 
+    const isRenewal = user.accountType !== 'collector' && 
       ((user.accountType === 'dealer' && selectedPlan?.type === SubscriptionPlanType.DEALER) ||
        (user.accountType === 'organizer' && selectedPlan?.type === SubscriptionPlanType.ORGANIZER));
        
-    const _hasExpired = expiredStatus;
+    const hasExpired = expiredStatus;
     
-    let _buttonText = 'Select a Plan';
-    if (_selectedPlan) {
-      if (_isUpgrade) buttonText = 'Upgrade';
-      else if (_isDowngrade) buttonText = 'Downgrade';
-      else if (_isRenewal) buttonText = hasExpired ? 'Reactivate' : 'Renew';
+    let buttonText = 'Select a Plan';
+    if (selectedPlan) {
+      if (isUpgrade) buttonText = 'Upgrade';
+      else if (isDowngrade) buttonText = 'Downgrade';
+      else if (isRenewal) buttonText = hasExpired ? 'Reactivate' : 'Renew';
       else buttonText = 'Subscribe';
     }
     
@@ -533,7 +533,7 @@ const SubscriptionScreen: React.FC = () => {
         {user.accountType !== 'collector' && activeStatus && (
           <TouchableOpacity 
             style={styles.cancelButton}
-            onPress={_handleCancel}
+            onPress={handleCancel}
           >
             <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
           </TouchableOpacity>
@@ -551,19 +551,19 @@ const SubscriptionScreen: React.FC = () => {
           {processingPayment ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.primaryButtonText}>{_buttonText}</Text>
+            <Text style={styles.primaryButtonText}>{buttonText}</Text>
           )}
         </TouchableOpacity>
       </View>
     );
   };
   
-  const _combinedLoading = loading || subsLoading;
+  const combinedLoading = loading || subsLoading;
 
-  if (_combinedLoading) {
+  if (combinedLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={_ORANGE} />
+        <ActivityIndicator size="large" color={ORANGE} />
         <Text style={styles.loadingText}>Loading subscription details...</Text>
       </View>
     );
@@ -597,7 +597,7 @@ const SubscriptionScreen: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

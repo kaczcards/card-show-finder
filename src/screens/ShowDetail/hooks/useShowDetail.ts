@@ -61,53 +61,53 @@ interface UseShowDetailResult {
  * @param onShare Function to handle sharing the show
  * @param onOpenMap Function to handle opening the map
  */
-export const _useShowDetail = (
+export const useShowDetail = (
   showId: string,
   onShare: (show: ShowDetails) => Promise<void>,
   onOpenMap: (address: string) => void
 ): UseShowDetailResult => {
   const [show, setShow] = useState<ShowDetails | null>(null);
-  const [loading, setLoading] = useState(_true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(_false);
-  const [isClaimingShow, _setIsClaimingShow] = useState(_false);
-  const [_isShowClaimed, setIsShowClaimed] = useState(_false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isClaimingShow, setIsClaimingShow] = useState(false);
+  const [isShowClaimed, setIsShowClaimed] = useState(false);
   const [participatingDealers, setParticipatingDealers] = useState<Dealer[]>([]);
-  const [loadingDealers, setLoadingDealers] = useState(_false);
+  const [loadingDealers, setLoadingDealers] = useState(false);
   
   // Auth context for current user
-  const _authContext = useAuth();
-  const _user = authContext.authState?.user || null;
+  const authContext = useAuth();
+  const user = authContext.authState?.user || null;
   
   // Derived state
-  const [isShowOrganizer, setIsShowOrganizer] = useState(_false);
-  const [isCurrentUserOrganizer, setIsCurrentUserOrganizer] = useState(_false);
+  const [isShowOrganizer, setIsShowOrganizer] = useState(false);
+  const [isCurrentUserOrganizer, setIsCurrentUserOrganizer] = useState(false);
 
   // Check if user is a show organizer
   useEffect(() => {
-    if (_user) {
-      const _userRole = user.role as UserRole;
-      const _hasOrganizerRole = userRole === UserRole.SHOW_ORGANIZER;
-      setIsShowOrganizer(_hasOrganizerRole);
+    if (user) {
+      const userRole = user.role as UserRole;
+      const hasOrganizerRole = userRole === UserRole.SHOW_ORGANIZER;
+      setIsShowOrganizer(hasOrganizerRole);
     } else {
-      setIsShowOrganizer(_false);
+      setIsShowOrganizer(false);
     }
-  }, [_user]);
+  }, [user]);
 
   // Fetch show details and dealers when showId changes
   useEffect(() => {
     fetchShowDetails();
     fetchParticipatingDealers();
     checkIfFavorite();
-  }, [_showId]);
+  }, [showId]);
 
   /**
    * Fetch show details from the database
    */
-  const _fetchShowDetails = async () => {
+  const fetchShowDetails = async () => {
     try {
-      setLoading(_true);
-      setError(_null);
+      setLoading(true);
+      setError(null);
       
       /* ------------------------------------------------------------------
        * Step 1: Fetch the show row on its own (no joins)
@@ -115,9 +115,9 @@ export const _useShowDetail = (
       const {
         data: showData,
         error: showError,
-      } = await supabase.from('shows').select('*').eq('id', _showId).single();
+      } = await supabase.from('shows').select('*').eq('id', showId).single();
 
-      if (_showError) throw showError;
+      if (showError) throw showError;
       if (!showData) throw new Error('Show not found');
 
       /* ------------------------------------------------------------------
@@ -131,7 +131,7 @@ export const _useShowDetail = (
         } = await supabase
           .from('profiles')
           .select(
-            'id, _first_name, last_name, profile_image_url, username, full_name, avatar_url'
+            'id, first_name, last_name, profile_image_url, username, full_name, avatar_url'
           )
           .eq('id', showData.organizer_id)
           .single();
@@ -144,119 +144,119 @@ export const _useShowDetail = (
       /* ------------------------------------------------------------------
        * Step 3: Combine the data and update component state
        * ------------------------------------------------------------------ */
-      const _combinedData = {
+      const combinedData = {
         ...showData,
         profiles: organizerProfile,
       };
 
-      setShow(_combinedData);
+      setShow(combinedData);
       setIsCurrentUserOrganizer(user?.id === showData.organizer_id);
       setIsShowClaimed(!!showData.claimed_by);
-    } catch (_error) {
-      console.error('Error fetching show details:', _error);
+    } catch (error) {
+      console.error('Error fetching show details:', error);
       setError('Failed to load show details');
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   };
 
   /**
    * Fetch participating dealers for the show
    */
-  const _fetchParticipatingDealers = async () => {
-    setLoadingDealers(_true);
+  const fetchParticipatingDealers = async () => {
+    setLoadingDealers(true);
     try {
       const { data: participants, error: participantsError } = await supabase
         .from('show_participants')
         .select('userid')
-        .eq('showid', _showId);
+        .eq('showid', showId);
 
-      if (_participantsError) throw participantsError;
+      if (participantsError) throw participantsError;
       if (!participants || participants.length === 0) {
         setParticipatingDealers([]);
         return;
       }
 
-      const _participantUserIds = [...new Set(participants.map((_p) => p.userid))];
+      const participantUserIds = [...new Set(participants.map((p) => p.userid))];
       const { data: dealerProfiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, _first_name, last_name, profile_image_url, role, account_type')
-        .in('id', _participantUserIds)
+        .select('id, first_name, last_name, profile_image_url, role, account_type')
+        .in('id', participantUserIds)
         // Roles are stored lowercase in DB, so query accordingly
         .or('role.eq.mvp_dealer,role.eq.dealer');
 
-      if (_profilesError) throw profilesError;
+      if (profilesError) throw profilesError;
 
-      const _dealers = (dealerProfiles || []).map((_profile) => ({
+      const dealers = (dealerProfiles || []).map((profile) => ({
         id: profile.id,
-        name: `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() || profile.id.substring(0, _8),
+        name: `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() || profile.id.substring(0, 8),
         profileImageUrl: profile.profile_image_url,
         // Normalise role to uppercase so downstream comparisons
         // (`dealer.role === 'MVP_DEALER'`, etc.) work reliably.
         role: ((profile.role ?? '') as string).toUpperCase() as UserRole,
         accountType: profile.account_type,
       }));
-      setParticipatingDealers(_dealers);
-    } catch (_error) {
-      console.error('Error in fetchParticipatingDealers:', _error);
+      setParticipatingDealers(dealers);
+    } catch (error) {
+      console.error('Error in fetchParticipatingDealers:', error);
       // Don't set error state here to avoid disrupting the main UI if dealers can't load
     } finally {
-      setLoadingDealers(_false);
+      setLoadingDealers(false);
     }
   };
 
   /**
    * Check if the current show is marked as a favorite by the user
    */
-  const _checkIfFavorite = async () => {
+  const checkIfFavorite = async () => {
     try {
-      const { data: { _session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
-        setIsFavorite(_false);
+        setIsFavorite(false);
         return;
       }
       const { data, error } = await supabase
         .from('user_favorite_shows')
         .select()
         .eq('user_id', session.user.id)
-        .eq('show_id', _showId)
+        .eq('show_id', showId)
         .single();
       setIsFavorite(!error && !!data);
-    } catch (_error) {
-      console.error('Error checking favorite status:', _error);
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
     }
   };
 
   /**
    * Toggle the favorite status of the show
    */
-  const _toggleFavorite = async () => {
+  const toggleFavorite = async () => {
     try {
-      const { data: { _session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session?.user) {
         Alert.alert('Sign In Required', 'Please sign in to save favorites');
         return;
       }
-      const _userId = session.user.id;
+      const userId = session.user.id;
 
-      if (_isFavorite) {
-        const { _error } = await supabase
+      if (isFavorite) {
+        const { error } = await supabase
           .from('user_favorite_shows')
           .delete()
-          .eq('user_id', _userId)
-          .eq('show_id', _showId);
-        if (_error) throw error;
-        setIsFavorite(_false);
+          .eq('user_id', userId)
+          .eq('show_id', showId);
+        if (error) throw error;
+        setIsFavorite(false);
       } else {
-        const { _error } = await supabase
+        const { error } = await supabase
           .from('user_favorite_shows')
           .insert([{ user_id: userId, show_id: showId }]);
-        if (_error) throw error;
-        setIsFavorite(_true);
+        if (error) throw error;
+        setIsFavorite(true);
       }
-    } catch (_error) {
-      const _appError = handleSupabaseError(_error);
-      console.error('🚨 UNEXPECTED ERROR in toggleFavorite:', _appError);
+    } catch (error) {
+      const appError = handleSupabaseError(error);
+      console.error('🚨 UNEXPECTED ERROR in toggleFavorite:', appError);
       Alert.alert('Error', 'An unexpected error occurred while updating favorites.');
     }
   };
@@ -264,29 +264,29 @@ export const _useShowDetail = (
   /**
    * Share the show details
    */
-  const _shareShow = async () => {
+  const shareShow = async () => {
     if (!show) return;
     try {
       // Cast `show` explicitly to `ShowDetails` to satisfy the expected type
       await onShare(show as ShowDetails);
-    } catch (_error) {
-      console.error('Error sharing:', _error);
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
 
   /**
    * Open the show location in a map app
    */
-  const _openMapLocation = () => {
+  const openMapLocation = () => {
     if (!show) return;
-    const _address = show.address || show.location || '';
-    onOpenMap(_address);
+    const address = show.address || show.location || '';
+    onOpenMap(address);
   };
 
   /**
-   * Handle claiming a show (_placeholder)
+   * Handle claiming a show (placeholder)
    */
-  const _handleClaimShow = () => {
+  const handleClaimShow = () => {
     Alert.alert("Claim Show", "This feature is coming soon!");
   };
 

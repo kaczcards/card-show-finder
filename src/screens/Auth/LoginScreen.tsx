@@ -27,19 +27,19 @@ type AuthStackParamList = {
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-const LoginScreen: React.FC<Props> = ({ _navigation }) => {
+const LoginScreen: React.FC<Props> = ({ navigation }) => {
   // State for form fields
-  const [email, _setEmail] = useState('');
-  const [password, _setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(_false);
-  const [verificationRequired, setVerificationRequired] = useState(_false);
-  const [isResending, setIsResending] = useState(_false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [verificationRequired, setVerificationRequired] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   // Get auth context
-  const { login, clearError, error, isLoading, _isAuthenticated } = useAuth();
+  const { login, clearError, error, isLoading, isAuthenticated } = useAuth();
 
   // Handle login
-  const _handleLogin = async () => {
+  const handleLogin = async () => {
     // Basic validation
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
@@ -53,14 +53,14 @@ const LoginScreen: React.FC<Props> = ({ _navigation }) => {
       await login({ email, password });
     } catch (err: any) {
       // Extract a human-readable message from the caught error
-      const _message = err?.message || '';
+      const message = err?.message || '';
 
       // Special handling when the account exists but email is unverified
       if (
         message.toLowerCase().includes('verify') ||
         message.toLowerCase().includes('confirmed')
       ) {
-        setVerificationRequired(_true);
+        setVerificationRequired(true);
       } else {
         // Display the error message, which is now properly handled
         Alert.alert('Login Failed', message || 'Please check your credentials and try again');
@@ -69,26 +69,26 @@ const LoginScreen: React.FC<Props> = ({ _navigation }) => {
   };
 
   // Resend verification email
-  const _handleResendVerification = async () => {
+  const handleResendVerification = async () => {
     if (!email) {
       Alert.alert('Email Required', 'Enter your email first so we know where to send the verification link.');
       return;
     }
     try {
-      setIsResending(_true);
-      await resendEmailVerification(_email);
+      setIsResending(true);
+      await resendEmailVerification(email);
       Alert.alert('Verification Email Sent', 'Please check your inbox for the confirmation link.');
     } catch (err: any) {
       Alert.alert('Error', err?.message || 'Unable to resend verification email.');
     } finally {
-      setIsResending(_false);
+      setIsResending(false);
     }
   };
 
   // Clear any existing errors when navigating
-  const _handleNavigate = (screen: keyof AuthStackParamList) => {
+  const handleNavigate = (screen: keyof AuthStackParamList) => {
     clearError();
-    setVerificationRequired(_false);
+    setVerificationRequired(false);
     navigation.navigate(screen);
   };
 
@@ -125,8 +125,8 @@ const LoginScreen: React.FC<Props> = ({ _navigation }) => {
                     </Text>
                     <TouchableOpacity
                       style={styles.resendButton}
-                      onPress={_handleResendVerification}
-                      disabled={_isResending}
+                      onPress={handleResendVerification}
+                      disabled={isResending}
                     >
                       {isResending ? (
                         <ActivityIndicator color="#fff" />
@@ -136,37 +136,37 @@ const LoginScreen: React.FC<Props> = ({ _navigation }) => {
                     </TouchableOpacity>
                   </>
                 ) : (
-                  <Text style={styles.errorText}>{_error}</Text>
+                  <Text style={styles.errorText}>{error}</Text>
                 )}
               </View>
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={_22} color="#888" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={22} color="#888" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
                 placeholderTextColor="#999"
-                value={_email}
-                onChangeText={_setEmail}
+                value={email}
+                onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                autoCorrect={_false}
+                autoCorrect={false}
                 editable={!isLoading}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={_22} color="#888" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={22} color="#888" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
                 placeholderTextColor="#999"
-                value={_password}
-                onChangeText={_setPassword}
+                value={password}
+                onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoCorrect={_false}
+                autoCorrect={false}
                 editable={!isLoading}
               />
               <TouchableOpacity
@@ -175,7 +175,7 @@ const LoginScreen: React.FC<Props> = ({ _navigation }) => {
               >
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={_22}
+                  size={22}
                   color="#888"
                 />
               </TouchableOpacity>
@@ -184,15 +184,15 @@ const LoginScreen: React.FC<Props> = ({ _navigation }) => {
             <TouchableOpacity
               style={styles.forgotPassword}
               onPress={() => handleNavigate('ForgotPassword')}
-              disabled={_isLoading}
+              disabled={isLoading}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={_handleLogin}
-              disabled={_isLoading}
+              onPress={handleLogin}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
@@ -205,7 +205,7 @@ const LoginScreen: React.FC<Props> = ({ _navigation }) => {
               <Text style={styles.registerText}>Don't have an account? </Text>
               <TouchableOpacity
                 onPress={() => handleNavigate('Register')}
-                disabled={_isLoading}
+                disabled={isLoading}
               >
                 <Text style={styles.registerLink}>Sign Up</Text>
               </TouchableOpacity>
@@ -217,7 +217,7 @@ const LoginScreen: React.FC<Props> = ({ _navigation }) => {
   );
 };
 
-const _BRAND_COLORS = {
+const BRAND_COLORS = {
   primaryBlue: '#007AFF',
   primaryOrange: '#FF6A00',
   white: '#FFFFFF',
@@ -228,10 +228,10 @@ const _BRAND_COLORS = {
   errorRed: '#DC2626',
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: _BRAND_COLORS.lightGray,
+    backgroundColor: BRAND_COLORS.lightGray,
   },
   container: {
     flex: 1,
@@ -260,7 +260,7 @@ const _styles = StyleSheet.create({
   appName: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: _BRAND_COLORS.primaryOrange,
+    color: BRAND_COLORS.primaryOrange,
   },
   formContainer: {
     width: '100%',
@@ -268,13 +268,13 @@ const _styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: _BRAND_COLORS.darkText,
+    color: BRAND_COLORS.darkText,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: _BRAND_COLORS.subtleText,
+    color: BRAND_COLORS.subtleText,
     textAlign: 'center',
     marginBottom: 30,
   },
@@ -286,20 +286,20 @@ const _styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: _BRAND_COLORS.errorRed,
+    color: BRAND_COLORS.errorRed,
     fontSize: 14,
     textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: _BRAND_COLORS.white,
+    backgroundColor: BRAND_COLORS.white,
     borderRadius: 12,
     marginBottom: 18,
     height: 55,
     paddingHorizontal: 15,
     borderWidth: 1,
-    borderColor: _BRAND_COLORS.lightBorder,
+    borderColor: BRAND_COLORS.lightBorder,
   },
   inputIcon: {
     marginRight: 10,
@@ -307,7 +307,7 @@ const _styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    color: _BRAND_COLORS.darkText,
+    color: BRAND_COLORS.darkText,
     fontSize: 16,
   },
   eyeIcon: {
@@ -318,12 +318,12 @@ const _styles = StyleSheet.create({
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: _BRAND_COLORS.primaryBlue,
+    color: BRAND_COLORS.primaryBlue,
     fontSize: 14,
     fontWeight: '600',
   },
   button: {
-    backgroundColor: _BRAND_COLORS.primaryBlue,
+    backgroundColor: BRAND_COLORS.primaryBlue,
     borderRadius: 12,
     height: 55,
     alignItems: 'center',
@@ -338,7 +338,7 @@ const _styles = StyleSheet.create({
     backgroundColor: '#99C9FF',
   },
   buttonText: {
-    color: _BRAND_COLORS.white,
+    color: BRAND_COLORS.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -348,16 +348,16 @@ const _styles = StyleSheet.create({
     marginTop: 25,
   },
   registerText: {
-    color: _BRAND_COLORS.subtleText,
+    color: BRAND_COLORS.subtleText,
     fontSize: 14,
   },
   registerLink: {
-    color: _BRAND_COLORS.primaryBlue,
+    color: BRAND_COLORS.primaryBlue,
     fontSize: 14,
     fontWeight: 'bold',
   },
   resendButton: {
-    backgroundColor: _BRAND_COLORS.errorRed,
+    backgroundColor: BRAND_COLORS.errorRed,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 8,
@@ -366,7 +366,7 @@ const _styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resendButtonText: {
-    color: _BRAND_COLORS.white,
+    color: BRAND_COLORS.white,
     fontSize: 14,
     fontWeight: 'bold',
   },

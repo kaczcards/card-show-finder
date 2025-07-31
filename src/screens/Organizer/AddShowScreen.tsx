@@ -22,26 +22,26 @@ import { supabase } from '../../supabase';
  * Lightweight geocoding helper (OpenStreetMap Nominatim).
  * NOTE: Replace with a robust geocoder or your own backend in production.
  */
-const _geocodeAddress = async (
+const geocodeAddress = async (
   address: string,
 ): Promise<{ latitude: number; longitude: number }> => {
   try {
-    const _url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
       address,
     )}`;
-    const _res = await fetch(_url, {
+    const res = await fetch(url, {
       headers: {
         'User-Agent': 'CardShowFinder/1.0 (contact@cardshowfinder.app)',
       },
     });
-    const _json = await res.json();
+    const json = await res.json();
     if (Array.isArray(json) && json.length > 0) {
-      const { _lat, _lon } = json[_0];
-      return { latitude: parseFloat(_lat), longitude: parseFloat(_lon) };
+      const { lat, lon } = json[0];
+      return { latitude: parseFloat(lat), longitude: parseFloat(lon) };
     }
     throw new Error('No geocoding results');
-  } catch (_err) {
-    console.error('[_geocodeAddress] Failed to geocode:', _err);
+  } catch (err) {
+    console.error('[geocodeAddress] Failed to geocode:', err);
     throw err;
   }
 };
@@ -49,48 +49,48 @@ const _geocodeAddress = async (
 type AddShowScreenRouteProp = RouteProp<OrganizerStackParamList, 'AddShow'>;
 
 const AddShowScreen: React.FC = () => {
-  const _navigation = useNavigation();
-  const _route = useRoute<AddShowScreenRouteProp>();
-  const { _authState } = useAuth();
-  const { _seriesId } = route.params || {};
-  const _userId = authState?.user?.id;
+  const navigation = useNavigation();
+  const route = useRoute<AddShowScreenRouteProp>();
+  const { authState } = useAuth();
+  const { seriesId } = route.params || {};
+  const userId = authState?.user?.id;
 
   // Form state
-  const [title, _setTitle] = useState('');
-  const [description, _setDescription] = useState('');
-  const [location, _setLocation] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
   // ─────────────────────────  Structured address  ──────────────────────────
-  const [street,     _setStreet]     = useState('');
-  const [city,       _setCity]       = useState('');
+  const [street,     setStreet]     = useState('');
+  const [city,       setCity]       = useState('');
   const [stateProv,  setStateProv]  = useState('');   // 2–letter state / province
-  const [zipCode,    _setZipCode]    = useState('');
-  const [entryFee, _setEntryFee] = useState('');
+  const [zipCode,    setZipCode]    = useState('');
+  const [entryFee, setEntryFee] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [_startDateText, setStartDateText] = useState('');
-  const [_endDateText, setEndDateText] = useState('');
+  const [startDateText, setStartDateText] = useState('');
+  const [endDateText, setEndDateText] = useState('');
   // Time state – hours (1-12), minutes (0-59), period (AM/PM)
-  const [_startHour, setStartHour]   = useState<string>('10');
+  const [startHour, setStartHour]   = useState<string>('10');
   const [startMinute, setStartMinute] = useState<string>('00');
   const [startPeriod, setStartPeriod] = useState<'AM' | 'PM'>('AM');
-  const [_endHour, setEndHour]     = useState<string>('4');
+  const [endHour, setEndHour]     = useState<string>('4');
   const [endMinute, setEndMinute]   = useState<string>('00');
   const [endPeriod, setEndPeriod]   = useState<'AM' | 'PM'>('PM');
 
   // Calendar-modal visibility (actual UI to be added in follow-up patch)
-  const [showStartPicker, setShowStartPicker] = useState(_false);
-  const [showEndPicker,   setShowEndPicker]   = useState(_false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker,   setShowEndPicker]   = useState(false);
   
-  // Categories and features (_optional)
+  // Categories and features (optional)
   const [categories, setCategories] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
 
   // UI state
-  const [isSubmitting, setIsSubmitting] = useState(_false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Helper function to compare only the date part (not time)
-  const _areSameDay = (date1: Date, date2: Date): boolean => {
+  const areSameDay = (date1: Date, date2: Date): boolean => {
     return (
       date1.getFullYear() === date2.getFullYear() &&
       date1.getMonth() === date2.getMonth() &&
@@ -99,80 +99,80 @@ const AddShowScreen: React.FC = () => {
   };
 
   // Format date & time for display (e.g. "Wed, Apr 24 2025  10:00 AM")
-  const _formatDateTime = (date: Date, hr: string, min: string, _period: 'AM' | 'PM'): string => {
-    const _datePart = date.toLocaleDateString('en-US', {
+  const formatDateTime = (date: Date, hr: string, min: string, period: 'AM' | 'PM'): string => {
+    const datePart = date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
-    const _timePart = `${hr.padStart(2, '0')}:${min.padStart(2, '0')} ${_period}`;
-    return `${_datePart}  ${_timePart}`;
+    const timePart = `${hr.padStart(2, '0')}:${min.padStart(2, '0')} ${period}`;
+    return `${datePart}  ${timePart}`;
   };
 
   // When component mounts, initialise text fields
   React.useEffect(() => {
-    setStartDateText(formatDateTime(startDate, _startHour, startMinute, startPeriod));
-    setEndDateText(formatDateTime(endDate, _endHour, endMinute, endPeriod));
+    setStartDateText(formatDateTime(startDate, startHour, startMinute, startPeriod));
+    setEndDateText(formatDateTime(endDate, endHour, endMinute, endPeriod));
   }, []);
 
   /**
    * Attempt to parse a user entered date string.
    * Falls back to current value if parsing fails.
    */
-  const _tryParseDate = (value: string, current: Date): Date => {
-    const _parsed = new Date(_value);
+  const tryParseDate = (value: string, current: Date): Date => {
+    const parsed = new Date(value);
     return isNaN(parsed.getTime()) ? current : parsed;
   };
 
   // Format a date for PostgreSQL (YYYY-MM-DD format)
-  const _formatDateForPostgres = (date: Date): string => {
-    const _year = date.getFullYear();
-    const _month = String(date.getMonth() + 1).padStart(2, '0');
-    const _day = String(date.getDate()).padStart(2, '0');
-    return `${_year}-${_month}-${_day}`;
+  const formatDateForPostgres = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // Combine date and time into a full datetime string for PostgreSQL
-  const _getFullDateForPostgres = (
+  const getFullDateForPostgres = (
     date: Date,
     hr: string,
     min: string,
     period: 'AM' | 'PM'
   ): string => {
-    const _h = parseInt(_hr, _10) % 12 + (period === 'PM' ? 12 : 0);
-    const _m = parseInt(_min, _10) || 0;
+    const h = parseInt(hr, 10) % 12 + (period === 'PM' ? 12 : 0);
+    const m = parseInt(min, 10) || 0;
     
-    const _year = date.getFullYear();
-    const _month = String(date.getMonth() + 1).padStart(2, '0');
-    const _day = String(date.getDate()).padStart(2, '0');
-    const _hour = String(_h).padStart(2, '0');
-    const _minute = String(_m).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(h).padStart(2, '0');
+    const minute = String(m).padStart(2, '0');
     
     // Format: YYYY-MM-DD HH:MM:SS+00 (UTC)
-    return `${_year}-${_month}-${_day} ${_hour}:${_minute}:00+00`;
+    return `${year}-${month}-${day} ${hour}:${minute}:00+00`;
   };
 
   // Validate address format more thoroughly
-  const _validateAddress = (): { isValid: boolean; message?: string } => {
+  const validateAddress = (): { isValid: boolean; message?: string } => {
     // Check if all required fields are filled
     if (!street.trim() || !city.trim() || !stateProv.trim() || !zipCode.trim()) {
       return { 
         isValid: false, 
-        message: 'All address fields are required (_street, _city, state, ZIP)' 
+        message: 'All address fields are required (street, city, state, ZIP)' 
       };
     }
 
     // Validate state code format (2 letters)
-    if (!/^[A-Z]{_2}$/.test(stateProv)) {
+    if (!/^[A-Z]{2}$/.test(stateProv)) {
       return { 
         isValid: false, 
-        message: 'State must be a valid 2-letter state code (e.g., _CA, NY, TX)' 
+        message: 'State must be a valid 2-letter state code (e.g., CA, NY, TX)' 
       };
     }
 
     // Validate ZIP code format (5 digits or 5+4)
-    if (!/^\d{_5}(-\d{_4})?$/.test(zipCode)) {
+    if (!/^\d{5}(-\d{4})?$/.test(zipCode)) {
       return { 
         isValid: false, 
         message: 'ZIP code must be 5 digits or 5+4 format (e.g., 90210 or 90210-1234)' 
@@ -191,7 +191,7 @@ const AddShowScreen: React.FC = () => {
   };
 
   // Validate form
-  const _validateForm = (): boolean => {
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!title.trim()) {
@@ -210,25 +210,25 @@ const AddShowScreen: React.FC = () => {
     }
     if (!stateProv.trim()) {
       newErrors.stateProv = 'State is required';
-    } else if (!/^[A-Z]{_2}$/.test(stateProv)) {
-      newErrors.stateProv = 'State must be a valid 2-letter code (e.g., _CA)';
+    } else if (!/^[A-Z]{2}$/.test(stateProv)) {
+      newErrors.stateProv = 'State must be a valid 2-letter code (e.g., CA)';
     }
     
     if (!zipCode.trim()) {
       newErrors.zipCode = 'ZIP code is required';
-    } else if (!/^\d{_5}(-\d{_4})?$/.test(zipCode)) {
+    } else if (!/^\d{5}(-\d{4})?$/.test(zipCode)) {
       newErrors.zipCode = 'ZIP code is invalid (must be 5 digits or 5+4 format)';
     }
 
     // Combine date+time for proper comparison
-    const _getFullDate = (
+    const getFullDate = (
       base: Date,
       hr: string,
       min: string,
       period: 'AM' | 'PM'
     ): Date => {
-      const _h = parseInt(_hr, _10) % 12 + (period === 'PM' ? 12 : 0);
-      const _m = parseInt(_min, _10) || 0;
+      const h = parseInt(hr, 10) % 12 + (period === 'PM' ? 12 : 0);
+      const m = parseInt(min, 10) || 0;
       return new Date(
         base.getFullYear(),
         base.getMonth(),
@@ -240,8 +240,8 @@ const AddShowScreen: React.FC = () => {
       );
     };
 
-    const _fullStart = getFullDate(_startDate, _startHour, startMinute, startPeriod);
-    const _fullEnd   = getFullDate(_endDate,   _endHour,   endMinute,   endPeriod);
+    const fullStart = getFullDate(startDate, startHour, startMinute, startPeriod);
+    const fullEnd   = getFullDate(endDate,   endHour,   endMinute,   endPeriod);
 
     // Allow same-day events as long as end time is after start time
     if (fullStart.getTime() >= fullEnd.getTime()) {
@@ -252,27 +252,27 @@ const AddShowScreen: React.FC = () => {
       newErrors.entryFee = 'Entry fee must be a valid number';
     }
 
-    setErrors(_newErrors);
+    setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   // Check if geocoding result is accurate enough
-  const _isGeocodingAccurate = (coords: { latitude: number; longitude: number; confidence?: number }) => {
+  const isGeocodingAccurate = (coords: { latitude: number; longitude: number; confidence?: number }) => {
     // If the geocoding service provides a confidence score, use it
     if (coords.confidence !== undefined) {
       return coords.confidence >= 0.7; // 70% confidence minimum
     }
 
-    // Basic validation - check if coordinates are not at (_0,_0) or other obvious invalid values
+    // Basic validation - check if coordinates are not at (0,0) or other obvious invalid values
     if (Math.abs(coords.latitude) < 0.01 && Math.abs(coords.longitude) < 0.01) {
-      return false; // Coordinates near (_0,_0) are likely invalid
+      return false; // Coordinates near (0,0) are likely invalid
     }
 
     // Check if coordinates are within reasonable bounds for US
     if (coords.latitude < 24 || coords.latitude > 50 || 
         coords.longitude < -125 || coords.longitude > -66) {
       // Outside continental US bounds (rough check)
-      console.warn('[_AddShowScreen] Coordinates outside continental US bounds:', _coords);
+      console.warn('[AddShowScreen] Coordinates outside continental US bounds:', coords);
       // Still return true as the show might be outside the US
       return true;
     }
@@ -281,11 +281,11 @@ const AddShowScreen: React.FC = () => {
   };
 
   // Handle form submission
-  const _handleSubmit = async () => {
-    console.warn('[_AddShowScreen] Submit button pressed');
+  const handleSubmit = async () => {
+    console.warn('[AddShowScreen] Submit button pressed');
     
     if (!validateForm()) {
-      console.warn('[_AddShowScreen] Form validation failed');
+      console.warn('[AddShowScreen] Form validation failed');
       return;
     }
 
@@ -294,52 +294,52 @@ const AddShowScreen: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(_true);
+    setIsSubmitting(true);
 
     try {
       // Create full datetime objects with time components
-      const _fullStartDate = getFullDateForPostgres(_startDate, _startHour, startMinute, startPeriod);
-      const _fullEndDate = getFullDateForPostgres(_endDate, _endHour, endMinute, endPeriod);
+      const fullStartDate = getFullDateForPostgres(startDate, startHour, startMinute, startPeriod);
+      const fullEndDate = getFullDateForPostgres(endDate, endHour, endMinute, endPeriod);
       
-      console.warn('[_AddShowScreen] Date values being sent:');
-      console.warn('  - Start Date:', _fullStartDate);
-      console.warn('  - End Date:', _fullEndDate);
+      console.warn('[AddShowScreen] Date values being sent:');
+      console.warn('  - Start Date:', fullStartDate);
+      console.warn('  - End Date:', fullEndDate);
 
       /* -----------------------------------------------------------
        * 1. Validate address format before geocoding
        * --------------------------------------------------------- */
-      const _addressValidation = validateAddress();
+      const addressValidation = validateAddress();
       if (!addressValidation.isValid) {
-        console.warn('[_AddShowScreen] Address validation failed:', addressValidation.message);
+        console.warn('[AddShowScreen] Address validation failed:', addressValidation.message);
         Alert.alert('Invalid Address', addressValidation.message || 'Please check your address format and try again.');
-        setIsSubmitting(_false);
+        setIsSubmitting(false);
         return;
       }
 
       /* -----------------------------------------------------------
        * 2. Geocode the full street address → coordinates
        * --------------------------------------------------------- */
-      const _fullAddress = `${_street}, ${_city}, ${_stateProv} ${_zipCode}`;
-      console.warn('[_AddShowScreen] Attempting to geocode address:', _fullAddress);
+      const fullAddress = `${street}, ${city}, ${stateProv} ${zipCode}`;
+      console.warn('[AddShowScreen] Attempting to geocode address:', fullAddress);
 
-      let _coords = null;
+      let coords = null;
       try {
-        coords = await geocodeAddress(_fullAddress);
-      } catch (_geoErr) {
-        console.warn('[_AddShowScreen] Geocoding threw:', _geoErr);
+        coords = await geocodeAddress(fullAddress);
+      } catch (geoErr) {
+        console.warn('[AddShowScreen] Geocoding threw:', geoErr);
       }
 
       if (!coords) {
-        console.error('[_AddShowScreen] Geocoding failed or returned null');
+        console.error('[AddShowScreen] Geocoding failed or returned null');
         Alert.alert(
           'Address Not Found',
           'We could not find this address on the map. Please check that:\n\n' +
           '• The street number and name are correct\n' +
           '• The city name is spelled correctly\n' +
-          '• The state code is valid (e.g., _CA, NY, TX)\n' +
+          '• The state code is valid (e.g., CA, NY, TX)\n' +
           '• The ZIP code matches the city and state'
         );
-        setIsSubmitting(_false);
+        setIsSubmitting(false);
         return;
       }
 
@@ -347,63 +347,63 @@ const AddShowScreen: React.FC = () => {
        * 3. Verify geocoding accuracy
        * --------------------------------------------------------- */
       if (!isGeocodingAccurate(coords)) {
-        console.warn('[_AddShowScreen] Geocoding result may be inaccurate:', _coords);
-        const _continueWithInaccurate = await new Promise<boolean>((_resolve) => {
+        console.warn('[AddShowScreen] Geocoding result may be inaccurate:', coords);
+        const continueWithInaccurate = await new Promise<boolean>((resolve) => {
           Alert.alert(
             'Address May Be Inaccurate',
             'We found the address, but the location may not be precise. This could affect how your show appears on the map.\n\nDo you want to continue anyway?',
             [
-              { text: 'No, Let Me Fix It', onPress: () => resolve(_false), style: 'cancel' },
-              { text: 'Yes, Continue', onPress: () => resolve(_true) }
+              { text: 'No, Let Me Fix It', onPress: () => resolve(false), style: 'cancel' },
+              { text: 'Yes, Continue', onPress: () => resolve(true) }
             ]
           );
         });
         
         if (!continueWithInaccurate) {
-          setIsSubmitting(_false);
+          setIsSubmitting(false);
           return;
         }
       }
 
-      console.warn('[_AddShowScreen] Geocoding success:', _coords);
+      console.warn('[AddShowScreen] Geocoding success:', coords);
       
       // ------------------------------------------------------------------
-      //  Build parameters for RPC (_create_show_with_coordinates)
+      //  Build parameters for RPC (create_show_with_coordinates)
       // ------------------------------------------------------------------
-      const _rpcParams = {
+      const rpcParams = {
         p_title: title,
         p_description: description || null,
         p_location: location,
-        p_address: `${_street}, ${_city}, ${_stateProv} ${_zipCode}`,
+        p_address: `${street}, ${city}, ${stateProv} ${zipCode}`,
         p_start_date: fullStartDate,
         p_end_date: fullEndDate,
-        p_entry_fee: entryFee ? Number(_entryFee) : 0,
+        p_entry_fee: entryFee ? Number(entryFee) : 0,
         p_latitude: coords.latitude,
         p_longitude: coords.longitude,
         p_features:
           features.length > 0
             ? features.reduce<Record<string, boolean>>(
-                (_obj, _feat) => ({ ...obj, [_feat]: true }),
+                (obj, feat) => ({ ...obj, [feat]: true }),
                 {},
               )
             : null,
         p_categories: categories.length > 0 ? categories : null,
         p_series_id: seriesId || null,
-        p_image_url: null,
+        p_imageurl: null,
       };
 
       console.warn(
-        '[_AddShowScreen] Sending RPC payload:',
-        JSON.stringify(rpcParams, _null, 2),
+        '[AddShowScreen] Sending RPC payload:',
+        JSON.stringify(rpcParams, null, 2),
       );
 
       // Call RPC to create show (bypasses problematic trigger)
-      const { _data, error } = await supabase
-        .rpc('create_show_with_coordinates', _rpcParams)
+      const { data, error } = await supabase
+        .rpc('create_show_with_coordinates', rpcParams)
         .single();
 
-      if (_error) {
-        console.error('Error creating show:', _error);
+      if (error) {
+        console.error('Error creating show:', error);
         
         // Provide more helpful error messages based on error code
         if (error.code === '42883') { // PostgreSQL operator does not exist
@@ -417,15 +417,15 @@ const AddShowScreen: React.FC = () => {
         }
       }
 
-      console.warn('[_AddShowScreen] Show created successfully:', _data);
+      console.warn('[AddShowScreen] Show created successfully:', data);
       
       Alert.alert(
         'Success',
         'Your show has been created successfully',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
-    } catch (_error) {
-      console.error('[_AddShowScreen] Error creating show:', _error);
+    } catch (error) {
+      console.error('[AddShowScreen] Error creating show:', error);
       Alert.alert(
         'Error Creating Show',
         error instanceof Error 
@@ -433,12 +433,12 @@ const AddShowScreen: React.FC = () => {
           : 'There was a problem creating your show. Please check your address and try again.'
       );
     } finally {
-      setIsSubmitting(_false);
+      setIsSubmitting(false);
     }
   };
 
   // Toggle category selection
-  const _toggleCategory = (category: string) => {
+  const toggleCategory = (category: string) => {
     setCategories(prev => 
       prev.includes(category)
         ? prev.filter(c => c !== category)
@@ -447,7 +447,7 @@ const AddShowScreen: React.FC = () => {
   };
 
   // Toggle feature selection
-  const _toggleFeature = (feature: string) => {
+  const toggleFeature = (feature: string) => {
     setFeatures(prev => 
       prev.includes(feature)
         ? prev.filter(f => f !== feature)
@@ -458,34 +458,34 @@ const AddShowScreen: React.FC = () => {
   /* ------------------------------------------------------------------
    * DEBUG HELPERS
    * ----------------------------------------------------------------*/
-  const _handleDebugSchema = React.useCallback(async () => {
+  const handleDebugSchema = React.useCallback(async () => {
     try {
       await showSeriesService.debugShowsTableColumns();
       Alert.alert('Debug', 'Schema columns logged to console.');
-    } catch (_e) {
+    } catch (e) {
       Alert.alert('Debug Error', 'Failed to run schema debug helper.');
     }
   }, []);
 
   // Debug function to log date picker selection
-  const _logDateSelection = (type: 'start' | 'end', date: Date | undefined) => {
-    console.warn(`[_DatePicker] ${_type} date selected:`, _date);
-    console.warn(`[_DatePicker] Current startDate:`, _startDate);
-    console.warn(`[_DatePicker] Current endDate:`, _endDate);
-    console.warn(`[_DatePicker] Are dates equal:`, date && startDate && areSameDay(_date, _startDate));
+  const logDateSelection = (type: 'start' | 'end', date: Date | undefined) => {
+    console.warn(`[DatePicker] ${type} date selected:`, date);
+    console.warn(`[DatePicker] Current startDate:`, startDate);
+    console.warn(`[DatePicker] Current endDate:`, endDate);
+    console.warn(`[DatePicker] Are dates equal:`, date && startDate && areSameDay(date, startDate));
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={_100}
+      keyboardVerticalOffset={100}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.formContainer}>
           {/* Debug helper button */}
-          <TouchableOpacity style={styles.debugButton} onPress={_handleDebugSchema}>
-            <Ionicons name="bug-outline" size={_16} color="#FFFFFF" style={{ marginRight: 4 }} />
+          <TouchableOpacity style={styles.debugButton} onPress={handleDebugSchema}>
+            <Ionicons name="bug-outline" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
             <Text style={styles.debugText}>Debug Schema</Text>
           </TouchableOpacity>
 
@@ -494,8 +494,8 @@ const AddShowScreen: React.FC = () => {
             <Text style={styles.label}>Show Title*</Text>
             <TextInput
               style={[styles.input, errors.title && styles.inputError]}
-              value={_title}
-              onChangeText={_setTitle}
+              value={title}
+              onChangeText={setTitle}
               placeholder="Enter show title"
               placeholderTextColor="#999"
             />
@@ -507,8 +507,8 @@ const AddShowScreen: React.FC = () => {
             <Text style={styles.label}>Location Name*</Text>
             <TextInput
               style={[styles.input, errors.location && styles.inputError]}
-              value={_location}
-              onChangeText={_setLocation}
+              value={location}
+              onChangeText={setLocation}
               placeholder="Convention center, hotel, etc."
               placeholderTextColor="#999"
             />
@@ -520,8 +520,8 @@ const AddShowScreen: React.FC = () => {
             <Text style={styles.label}>Street Address*</Text>
             <TextInput
               style={[styles.input, errors.street && styles.inputError]}
-              value={_street}
-              onChangeText={_setStreet}
+              value={street}
+              onChangeText={setStreet}
               placeholder="123 Main St."
               placeholderTextColor="#999"
             />
@@ -532,8 +532,8 @@ const AddShowScreen: React.FC = () => {
             <Text style={styles.label}>City*</Text>
             <TextInput
               style={[styles.input, errors.city && styles.inputError]}
-              value={_city}
-              onChangeText={_setCity}
+              value={city}
+              onChangeText={setCity}
               placeholder="Anytown"
               placeholderTextColor="#999"
             />
@@ -544,11 +544,11 @@ const AddShowScreen: React.FC = () => {
             <Text style={styles.label}>State*</Text>
             <TextInput
               style={[styles.input, errors.stateProv && styles.inputError]}
-              value={_stateProv}
+              value={stateProv}
               onChangeText={txt => setStateProv(txt.toUpperCase())}
               placeholder="CA"
               placeholderTextColor="#999"
-              maxLength={_2}
+              maxLength={2}
               autoCapitalize="characters"
             />
             {errors.stateProv && <Text style={styles.errorText}>{errors.stateProv}</Text>}
@@ -558,12 +558,12 @@ const AddShowScreen: React.FC = () => {
             <Text style={styles.label}>ZIP Code*</Text>
             <TextInput
               style={[styles.input, errors.zipCode && styles.inputError]}
-              value={_zipCode}
-              onChangeText={_setZipCode}
+              value={zipCode}
+              onChangeText={setZipCode}
               placeholder="90210"
               placeholderTextColor="#999"
               keyboardType="number-pad"
-              maxLength={_10}
+              maxLength={10}
             />
             {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
           </View>
@@ -572,95 +572,95 @@ const AddShowScreen: React.FC = () => {
           <View style={styles.formGroup}>
             <Text style={styles.label}>Event Dates*</Text>
             
-            {/* ------------ DATE + TIME (_Start) ------------- */}
+            {/* ------------ DATE + TIME (Start) ------------- */}
             <View style={styles.dateInputWrapper}>
-              <Ionicons name="calendar-outline" size={_20} color="#0057B8" style={styles.dateIcon} />
+              <Ionicons name="calendar-outline" size={20} color="#0057B8" style={styles.dateIcon} />
               <TextInput
                 style={[styles.input, { flex: 1 }]}
-                value={_startDateText}
-                onChangeText={(_text) => {
-                  setStartDateText(_text);
-                  setStartDate(tryParseDate(text, _startDate));
+                value={startDateText}
+                onChangeText={(text) => {
+                  setStartDateText(text);
+                  setStartDate(tryParseDate(text, startDate));
                 }}
                 placeholder="Start date (e.g., 2025-04-22)"
                 placeholderTextColor="#999"
               />
-              <TouchableOpacity onPress={() => setShowStartPicker(_true)}>
-                <Ionicons name="chevron-down" size={_20} color="#0057B8" />
+              <TouchableOpacity onPress={() => setShowStartPicker(true)}>
+                <Ionicons name="chevron-down" size={20} color="#0057B8" />
               </TouchableOpacity>
             </View>
             {/* TIME PICKERS – start */}
             <View style={styles.timeRow}>
-              {['Hour', 'Min', 'AM/PM'].map((_lbl) => (
-                <Text key={_lbl} style={styles.timeLabel}>{_lbl}</Text>
+              {['Hour', 'Min', 'AM/PM'].map((lbl) => (
+                <Text key={lbl} style={styles.timeLabel}>{lbl}</Text>
               ))}
             </View>
             <View style={styles.timeRow}>
               <TextInput
                 style={[styles.timeInput]}
                 keyboardType="number-pad"
-                maxLength={_2}
-                value={_startHour}
+                maxLength={2}
+                value={startHour}
                 onChangeText={txt => setStartHour(txt.replace(/[^0-9]/g, ''))}
               />
               <TextInput
                 style={[styles.timeInput]}
                 keyboardType="number-pad"
-                maxLength={_2}
-                value={_startMinute}
+                maxLength={2}
+                value={startMinute}
                 onChangeText={txt => setStartMinute(txt.replace(/[^0-9]/g, ''))}
               />
               <TouchableOpacity
                 style={styles.amPmToggle}
                 onPress={() => setStartPeriod(prev => (prev === 'AM' ? 'PM' : 'AM'))}
               >
-                <Text style={styles.amPmText}>{_startPeriod}</Text>
+                <Text style={styles.amPmText}>{startPeriod}</Text>
               </TouchableOpacity>
             </View>
             
-            {/* ------------ DATE + TIME (_End) ------------- */}
+            {/* ------------ DATE + TIME (End) ------------- */}
             <View style={styles.dateInputWrapper}>
-              <Ionicons name="calendar-outline" size={_20} color="#0057B8" style={styles.dateIcon} />
+              <Ionicons name="calendar-outline" size={20} color="#0057B8" style={styles.dateIcon} />
               <TextInput
                 style={[styles.input, { flex: 1 }]}
-                value={_endDateText}
-                onChangeText={(_text) => {
-                  setEndDateText(_text);
-                  setEndDate(tryParseDate(text, _endDate));
+                value={endDateText}
+                onChangeText={(text) => {
+                  setEndDateText(text);
+                  setEndDate(tryParseDate(text, endDate));
                 }}
                 placeholder="End date (e.g., 2025-04-24)"
                 placeholderTextColor="#999"
               />
-              <TouchableOpacity onPress={() => setShowEndPicker(_true)}>
-                <Ionicons name="chevron-down" size={_20} color="#0057B8" />
+              <TouchableOpacity onPress={() => setShowEndPicker(true)}>
+                <Ionicons name="chevron-down" size={20} color="#0057B8" />
               </TouchableOpacity>
             </View>
             {/* TIME PICKERS – end */}
             <View style={styles.timeRow}>
-              {['Hour', 'Min', 'AM/PM'].map((_lbl) => (
-                <Text key={_lbl} style={styles.timeLabel}>{_lbl}</Text>
+              {['Hour', 'Min', 'AM/PM'].map((lbl) => (
+                <Text key={lbl} style={styles.timeLabel}>{lbl}</Text>
               ))}
             </View>
             <View style={styles.timeRow}>
               <TextInput
                 style={[styles.timeInput]}
                 keyboardType="number-pad"
-                maxLength={_2}
-                value={_endHour}
+                maxLength={2}
+                value={endHour}
                 onChangeText={txt => setEndHour(txt.replace(/[^0-9]/g, ''))}
               />
               <TextInput
                 style={[styles.timeInput]}
                 keyboardType="number-pad"
-                maxLength={_2}
-                value={_endMinute}
+                maxLength={2}
+                value={endMinute}
                 onChangeText={txt => setEndMinute(txt.replace(/[^0-9]/g, ''))}
               />
               <TouchableOpacity
                 style={styles.amPmToggle}
                 onPress={() => setEndPeriod(prev => (prev === 'AM' ? 'PM' : 'AM'))}
               >
-                <Text style={styles.amPmText}>{_endPeriod}</Text>
+                <Text style={styles.amPmText}>{endPeriod}</Text>
               </TouchableOpacity>
             </View>
             
@@ -671,16 +671,16 @@ const AddShowScreen: React.FC = () => {
           {showStartPicker && (
             <DateTimePicker
               testID="startDatePicker"
-              value={_startDate}
+              value={startDate}
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              onChange={(_, _selected) => {
-                setShowStartPicker(_false);
-                if (_selected) {
-                  logDateSelection('start', _selected);
-                  setStartDate(_selected);
+              onChange={(_, selected) => {
+                setShowStartPicker(false);
+                if (selected) {
+                  logDateSelection('start', selected);
+                  setStartDate(selected);
                   setStartDateText(
-                    formatDateTime(_selected, _startHour, startMinute, startPeriod),
+                    formatDateTime(selected, startHour, startMinute, startPeriod),
                   );
                 }
               }}
@@ -689,17 +689,17 @@ const AddShowScreen: React.FC = () => {
           {showEndPicker && (
             <DateTimePicker
               testID="endDatePicker"
-              value={_endDate}
+              value={endDate}
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              onChange={(_, _selected) => {
-                setShowEndPicker(_false);
-                if (_selected) {
-                  logDateSelection('end', _selected);
+              onChange={(_, selected) => {
+                setShowEndPicker(false);
+                if (selected) {
+                  logDateSelection('end', selected);
                   // Create a new date object to ensure we don't have reference issues
-                  const _newEndDate = new Date(_selected);
-                  setEndDate(_newEndDate);
-                  setEndDateText(formatDateTime(newEndDate, _endHour, endMinute, endPeriod));
+                  const newEndDate = new Date(selected);
+                  setEndDate(newEndDate);
+                  setEndDateText(formatDateTime(newEndDate, endHour, endMinute, endPeriod));
                 }
               }}
             />
@@ -710,8 +710,8 @@ const AddShowScreen: React.FC = () => {
             <Text style={styles.label}>Entry Fee ($)</Text>
             <TextInput
               style={[styles.input, errors.entryFee && styles.inputError]}
-              value={_entryFee}
-              onChangeText={_setEntryFee}
+              value={entryFee}
+              onChangeText={setEntryFee}
               placeholder="0.00"
               placeholderTextColor="#999"
               keyboardType="decimal-pad"
@@ -724,12 +724,12 @@ const AddShowScreen: React.FC = () => {
             <Text style={styles.label}>Description</Text>
             <TextInput
               style={[styles.textArea, errors.description && styles.inputError]}
-              value={_description}
-              onChangeText={_setDescription}
+              value={description}
+              onChangeText={setDescription}
               placeholder="Describe your show, including details about vendors, special guests, etc."
               placeholderTextColor="#999"
               multiline
-              numberOfLines={_6}
+              numberOfLines={6}
               textAlignVertical="top"
             />
           </View>
@@ -740,12 +740,12 @@ const AddShowScreen: React.FC = () => {
             <View style={styles.tagsContainer}>
               {['Sports', 'Pokemon', 'Magic', 'Yu-Gi-Oh', 'Comics', 'Memorabilia'].map(category => (
                 <TouchableOpacity
-                  key={_category}
+                  key={category}
                   style={[
                     styles.tagButton,
                     categories.includes(category) && styles.tagButtonSelected
                   ]}
-                  onPress={() => toggleCategory(_category)}
+                  onPress={() => toggleCategory(category)}
                 >
                   <Text 
                     style={[
@@ -753,7 +753,7 @@ const AddShowScreen: React.FC = () => {
                       categories.includes(category) && styles.tagTextSelected
                     ]}
                   >
-                    {_category}
+                    {category}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -766,12 +766,12 @@ const AddShowScreen: React.FC = () => {
             <View style={styles.tagsContainer}>
               {['Grading', 'Autographs', 'Raffles', 'Tournaments', 'Food'].map(feature => (
                 <TouchableOpacity
-                  key={_feature}
+                  key={feature}
                   style={[
                     styles.tagButton,
                     features.includes(feature) && styles.tagButtonSelected
                   ]}
-                  onPress={() => toggleFeature(_feature)}
+                  onPress={() => toggleFeature(feature)}
                 >
                   <Text 
                     style={[
@@ -779,7 +779,7 @@ const AddShowScreen: React.FC = () => {
                       features.includes(feature) && styles.tagTextSelected
                     ]}
                   >
-                    {_feature}
+                    {feature}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -789,14 +789,14 @@ const AddShowScreen: React.FC = () => {
           {/* Submit Button */}
           <TouchableOpacity
             style={styles.submitButton}
-            onPress={_handleSubmit}
-            disabled={_isSubmitting}
+            onPress={handleSubmit}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <>
-                <Ionicons name="add-circle-outline" size={_20} color="#FFFFFF" style={styles.submitIcon} />
+                <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" style={styles.submitIcon} />
                 <Text style={styles.submitText}>Create Show</Text>
               </>
             )}
@@ -807,7 +807,7 @@ const AddShowScreen: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
@@ -949,7 +949,7 @@ const _styles = StyleSheet.create({
   /* ---------- Modal backdrop (calendar placeholder) ---------- */
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,_0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },

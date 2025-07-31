@@ -11,7 +11,7 @@ import { ScopeContext, SeverityLevel, Transaction, Breadcrumb } from '@sentry/ty
  */
 
 // Get the Sentry DSN from Expo constants (configured in app.config.js)
-const _SENTRY_DSN = Constants.expoConfig?.extra?.sentryDsn;
+const SENTRY_DSN = Constants.expoConfig?.extra?.sentryDsn;
 
 /**
  * Environment names for different build types
@@ -56,10 +56,10 @@ interface SentryConfigOptions {
  *   environment: Environment.PRODUCTION
  * });
  */
-export const _initSentry = (options: SentryConfigOptions = {}): void => {
+export const initSentry = (options: SentryConfigOptions = {}): void => {
   const {
-    _userId,
-    _userData,
+    userId,
+    userData,
     environment = __DEV__ ? Environment.DEVELOPMENT : Environment.PRODUCTION,
     debug = __DEV__,
     enableTracing = !__DEV__,
@@ -81,7 +81,7 @@ export const _initSentry = (options: SentryConfigOptions = {}): void => {
     debug,
     environment,
     tracesSampleRate: enableTracing ? 0.2 : 0, // Sample 20% of transactions in non-dev
-    beforeSend(_event) {
+    beforeSend(event) {
       // You can modify or filter events before they are sent to Sentry
       // For example, remove sensitive data
       return event;
@@ -89,8 +89,8 @@ export const _initSentry = (options: SentryConfigOptions = {}): void => {
   });
 
   // Set user context if provided
-  if (_userId) {
-    setUserContext(_userId, _userData);
+  if (userId) {
+    setUserContext(userId, userData);
   }
 
   // Add device context
@@ -102,7 +102,7 @@ export const _initSentry = (options: SentryConfigOptions = {}): void => {
   });
 
    
-console.warn(`Sentry initialized in ${_environment} environment`);
+console.warn(`Sentry initialized in ${environment} environment`);
 };
 
 /**
@@ -116,7 +116,7 @@ console.warn(`Sentry initialized in ${_environment} environment`);
  * // After user login:
  * setUserContext('user-123', { email: 'user@example.com', subscription: 'premium' });
  */
-export const _setUserContext = (userId: string, userData?: Record<string, any>): void => {
+export const setUserContext = (userId: string, userData?: Record<string, any>): void => {
   if (!SENTRY_DSN) return;
 
   Sentry.Native.setUser({
@@ -133,7 +133,7 @@ export const _setUserContext = (userId: string, userData?: Record<string, any>):
  * // After user logout:
  * clearUserContext();
  */
-export const _clearUserContext = (): void => {
+export const clearUserContext = (): void => {
   if (!SENTRY_DSN) return;
   
   Sentry.Native.setUser(null);
@@ -149,17 +149,17 @@ export const _clearUserContext = (): void => {
  * try {
  *   // Some code that might throw
  *   throw new Error('Something went wrong');
- * } catch (_error) {
- *   captureException(_error, { extra: { action: 'saving_data' } });
+ * } catch (error) {
+ *   captureException(error, { extra: { action: 'saving_data' } });
  * }
  */
-export const _captureException = (error: Error, _context?: ScopeContext): void => {
+export const captureException = (error: Error, context?: ScopeContext): void => {
   if (!SENTRY_DSN) {
-    console.error('Error captured but Sentry is not initialized:', _error);
+    console.error('Error captured but Sentry is not initialized:', error);
     return;
   }
 
-  Sentry.Native.captureException(error, _context);
+  Sentry.Native.captureException(error, context);
 };
 
 /**
@@ -178,7 +178,7 @@ export const _captureException = (error: Error, _context?: ScopeContext): void =
  *   extra: { remainingCalls: 10, resetTime: '2023-07-19T15:00:00Z' } 
  * });
  */
-export const _captureMessage = (
+export const captureMessage = (
   message: string, 
   level: SeverityLevel = 'info',
   /**
@@ -190,7 +190,7 @@ export const _captureMessage = (
 ): void => {
   if (!SENTRY_DSN) {
      
-console.warn(`[${_level}] ${_message}`);
+console.warn(`[${level}] ${message}`);
     return;
   }
 
@@ -209,28 +209,28 @@ console.warn(`[${_level}] ${_message}`);
  * 
  * @example
  * // Measure the time it takes to load data
- * const _transaction = startTransaction('loadUserData', 'data-loading');
+ * const transaction = startTransaction('loadUserData', 'data-loading');
  * try {
  *   await fetchUserData();
  *   transaction.setStatus('ok');
- * } catch (_error) {
+ * } catch (error) {
  *   transaction.setStatus('error');
- *   captureException(_error);
+ *   captureException(error);
  * } finally {
  *   transaction.finish();
  * }
  */
-export const _startTransaction = (
+export const startTransaction = (
   name: string,
   operation: string
 ): Transaction => {
   if (!SENTRY_DSN) {
     // Return a dummy transaction if Sentry is not initialized
-    const _startTime = Date.now();
+    const startTime = Date.now();
     return {
       finish: () => {
          
-console.warn(`Transaction "${_name}" (${_operation}); finished in ${Date.now() - startTime}ms`);
+console.warn(`Transaction "${name}" (${operation}); finished in ${Date.now() - startTime}ms`);
       },
       setStatus: () => {},
       setTag: () => {},
@@ -264,7 +264,7 @@ console.warn(`Transaction "${_name}" (${_operation}); finished in ${Date.now() -
  * // In a component file:
  * import { getSentryErrorBoundary } from './services/sentryConfig';
  * 
- * const _ErrorBoundary = getSentryErrorBoundary();
+ * const ErrorBoundary = getSentryErrorBoundary();
  * 
  * export default function App() {
  *   return (
@@ -274,7 +274,7 @@ console.warn(`Transaction "${_name}" (${_operation}); finished in ${Date.now() -
  *   );
  * }
  */
-export const _getSentryErrorBoundary = () => {
+export const getSentryErrorBoundary = () => {
   return Sentry.Native.ErrorBoundary;
 };
 
@@ -299,11 +299,11 @@ export const _getSentryErrorBoundary = () => {
  *   level: 'debug'
  * });
  */
-export const _addBreadcrumb = (breadcrumb: Breadcrumb): void => {
+export const addBreadcrumb = (breadcrumb: Breadcrumb): void => {
   if (!SENTRY_DSN) return;
   
   Sentry.Native.addBreadcrumb(breadcrumb);
 };
 
 // Export the raw Sentry object for advanced use cases
-export const _SentryRaw = Sentry;
+export const SentryRaw = Sentry;

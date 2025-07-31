@@ -83,7 +83,7 @@ export interface ShowAttendee {
 /**
  * Convert a raw Supabase row into an app `Show` object.
  */
-const _mapDbShowToAppShow = (row: any): Show => ({
+const mapDbShowToAppShow = (row: any): Show => ({
   id: row.id,
   title: row.title,
   location: row.location,
@@ -113,8 +113,8 @@ const _mapDbShowToAppShow = (row: any): Show => ({
         Array.isArray(row.coordinates.coordinates) &&
         row.coordinates.coordinates.length >= 2
       ? {
-          latitude: row.coordinates.coordinates[_1],
-          longitude: row.coordinates.coordinates[_0],
+          latitude: row.coordinates.coordinates[1],
+          longitude: row.coordinates.coordinates[0],
         }
       : undefined,
   status: row.status as ShowStatus,
@@ -129,9 +129,9 @@ const _mapDbShowToAppShow = (row: any): Show => ({
 /**
  * Format date for Supabase
  */
-const _formatDate = (date: Date | string | undefined | null): string | null => {
+const formatDate = (date: Date | string | undefined | null): string | null => {
   if (!date) return null;
-  return new Date(_date).toISOString();
+  return new Date(date).toISOString();
 };
 
 // -----------------------------------------------------------------------------
@@ -144,12 +144,12 @@ const _formatDate = (date: Date | string | undefined | null): string | null => {
  * @param params Search parameters
  * @returns Shows matching the criteria with pagination info
  */
-export const _searchShowsAdvanced = async (
+export const searchShowsAdvanced = async (
   params: ShowSearchParams
 ): Promise<ShowSearchResponse> => {
   try {
     // Prepare parameters for RPC function
-    const _rpcParams = {
+    const rpcParams = {
       lat: params.lat,
       lng: params.lng,
       radius_miles: params.radius_miles || 25,
@@ -167,12 +167,12 @@ export const _searchShowsAdvanced = async (
     };
 
     // Call the RPC function
-    const { data, _error } = await supabase.rpc('search_shows_advanced', {
+    const { data, error } = await supabase.rpc('search_shows_advanced', {
       search_params: rpcParams
     });
 
-    if (_error) {
-      console.error('[showService/searchShowsAdvanced] RPC error:', _error);
+    if (error) {
+      console.error('[showService/searchShowsAdvanced] RPC error:', error);
       return {
         data: [],
         pagination: {
@@ -186,14 +186,14 @@ export const _searchShowsAdvanced = async (
     }
 
     // Map the shows to our app format
-    const _shows = data.data.map(mapDbShowToAppShow);
+    const shows = data.data.map(mapDbShowToAppShow);
 
     return {
       data: shows,
       pagination: data.pagination
     };
-  } catch (_error) {
-    console.error('[showService/searchShowsAdvanced] exception:', _error);
+  } catch (error) {
+    console.error('[showService/searchShowsAdvanced] exception:', error);
     return {
       data: [],
       pagination: {
@@ -213,16 +213,16 @@ export const _searchShowsAdvanced = async (
  * @param id Show ID
  * @returns Show data or null if not found
  */
-export const _getShowById = async (_id: string): Promise<Show | null> => {
+export const getShowById = async (id: string): Promise<Show | null> => {
   try {
-    const { data, _error } = await supabase
+    const { data, error } = await supabase
       .from('shows')
-      .select('*, organizer:organizer_id(id, _full_name, avatar_url)')
-      .eq('id', _id)
+      .select('*, organizer:organizer_id(id, full_name, avatar_url)')
+      .eq('id', id)
       .single();
 
-    if (_error) {
-      console.error('[showService/getShowById] error:', _error);
+    if (error) {
+      console.error('[showService/getShowById] error:', error);
       return null;
     }
 
@@ -230,9 +230,9 @@ export const _getShowById = async (_id: string): Promise<Show | null> => {
       return null;
     }
 
-    return mapDbShowToAppShow(_data);
-  } catch (_error) {
-    console.error('[showService/getShowById] exception:', _error);
+    return mapDbShowToAppShow(data);
+  } catch (error) {
+    console.error('[showService/getShowById] exception:', error);
     return null;
   }
 };
@@ -243,10 +243,10 @@ export const _getShowById = async (_id: string): Promise<Show | null> => {
  * @param showData Show data to create
  * @returns Created show or null if failed
  */
-export const _createShow = async (showData: Partial<Show>): Promise<Show | null> => {
+export const createShow = async (showData: Partial<Show>): Promise<Show | null> => {
   try {
     // Extract coordinates for proper storage
-    const _coordinates = showData.coordinates 
+    const coordinates = showData.coordinates 
       ? { 
           type: 'Point',
           coordinates: [showData.coordinates.longitude, showData.coordinates.latitude]
@@ -254,7 +254,7 @@ export const _createShow = async (showData: Partial<Show>): Promise<Show | null>
       : null;
 
     // Prepare data for insertion
-    const _dbShowData = {
+    const dbShowData = {
       title: showData.title,
       location: showData.location,
       address: showData.address,
@@ -283,12 +283,12 @@ export const _createShow = async (showData: Partial<Show>): Promise<Show | null>
         }
       );
 
-      if (_rpcError) {
-        console.error('[showService/createShow] RPC error:', _rpcError);
+      if (rpcError) {
+        console.error('[showService/createShow] RPC error:', rpcError);
         throw rpcError;
       }
 
-      return rpcData ? mapDbShowToAppShow(_rpcData) : null;
+      return rpcData ? mapDbShowToAppShow(rpcData) : null;
     } else {
       // Use standard query builder for shows without coordinates
       const { data, error } = await supabase
@@ -297,15 +297,15 @@ export const _createShow = async (showData: Partial<Show>): Promise<Show | null>
         .select('*')
         .single();
 
-      if (_error) {
-        console.error('[showService/createShow] error:', _error);
+      if (error) {
+        console.error('[showService/createShow] error:', error);
         throw error;
       }
 
-      return data ? mapDbShowToAppShow(_data) : null;
+      return data ? mapDbShowToAppShow(data) : null;
     }
-  } catch (_error) {
-    console.error('[showService/createShow] exception:', _error);
+  } catch (error) {
+    console.error('[showService/createShow] exception:', error);
     return null;
   }
 };
@@ -317,13 +317,13 @@ export const _createShow = async (showData: Partial<Show>): Promise<Show | null>
  * @param showData Show data to update
  * @returns Updated show or null if failed
  */
-export const _updateShow = async (
+export const updateShow = async (
   id: string,
   showData: Partial<Show>
 ): Promise<Show | null> => {
   try {
     // Extract coordinates for proper storage
-    const _coordinates = showData.coordinates 
+    const coordinates = showData.coordinates 
       ? { 
           type: 'Point',
           coordinates: [showData.coordinates.longitude, showData.coordinates.latitude]
@@ -363,30 +363,30 @@ export const _updateShow = async (
         }
       );
 
-      if (_rpcError) {
-        console.error('[showService/updateShow] RPC error:', _rpcError);
+      if (rpcError) {
+        console.error('[showService/updateShow] RPC error:', rpcError);
         throw rpcError;
       }
 
-      return rpcData ? mapDbShowToAppShow(_rpcData) : null;
+      return rpcData ? mapDbShowToAppShow(rpcData) : null;
     } else {
       // Use standard query builder for updates without coordinates
       const { data, error } = await supabase
         .from('shows')
         .update(dbShowData)
-        .eq('id', _id)
+        .eq('id', id)
         .select('*')
         .single();
 
-      if (_error) {
-        console.error('[showService/updateShow] error:', _error);
+      if (error) {
+        console.error('[showService/updateShow] error:', error);
         throw error;
       }
 
-      return data ? mapDbShowToAppShow(_data) : null;
+      return data ? mapDbShowToAppShow(data) : null;
     }
-  } catch (_error) {
-    console.error('[showService/updateShow] exception:', _error);
+  } catch (error) {
+    console.error('[showService/updateShow] exception:', error);
     return null;
   }
 };
@@ -397,21 +397,21 @@ export const _updateShow = async (
  * @param id Show ID to delete
  * @returns Success status
  */
-export const _deleteShow = async (_id: string): Promise<boolean> => {
+export const deleteShow = async (id: string): Promise<boolean> => {
   try {
-    const { _error } = await supabase
+    const { error } = await supabase
       .from('shows')
       .delete()
-      .eq('id', _id);
+      .eq('id', id);
 
-    if (_error) {
-      console.error('[showService/deleteShow] error:', _error);
+    if (error) {
+      console.error('[showService/deleteShow] error:', error);
       return false;
     }
 
     return true;
-  } catch (_error) {
-    console.error('[showService/deleteShow] exception:', _error);
+  } catch (error) {
+    console.error('[showService/deleteShow] exception:', error);
     return false;
   }
 };
@@ -422,16 +422,16 @@ export const _deleteShow = async (_id: string): Promise<boolean> => {
  * @param userId User ID
  * @returns Array of favorite shows
  */
-export const _getFavoriteShows = async (_userId: string): Promise<Show[]> => {
+export const getFavoriteShows = async (userId: string): Promise<Show[]> => {
   try {
-    const { data, _error } = await supabase
+    const { data, error } = await supabase
       .from('user_favorites')
       .select('shows(*)')
-      .eq('user_id', _userId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (_error) {
-      console.error('[showService/getFavoriteShows] error:', _error);
+    if (error) {
+      console.error('[showService/getFavoriteShows] error:', error);
       return [];
     }
 
@@ -439,8 +439,8 @@ export const _getFavoriteShows = async (_userId: string): Promise<Show[]> => {
     return data
       .filter(item => item.shows) // Filter out any null shows
       .map(item => mapDbShowToAppShow(item.shows));
-  } catch (_error) {
-    console.error('[showService/getFavoriteShows] exception:', _error);
+  } catch (error) {
+    console.error('[showService/getFavoriteShows] exception:', error);
     return [];
   }
 };
@@ -450,45 +450,45 @@ export const _getFavoriteShows = async (_userId: string): Promise<Show[]> => {
  * 
  * @param userId User ID
  * @param showId Show ID
- * @param isFavorite Whether to favorite (_true) or unfavorite (_false)
+ * @param isFavorite Whether to favorite (true) or unfavorite (false)
  * @returns Success status
  */
-export const _toggleFavoriteShow = async (
+export const toggleFavoriteShow = async (
   userId: string,
   showId: string,
-  _isFavorite: boolean
+  isFavorite: boolean
 ): Promise<boolean> => {
   try {
-    if (_isFavorite) {
+    if (isFavorite) {
       // Add to favorites
-      const { _error } = await supabase
+      const { error } = await supabase
         .from('user_favorites')
         .upsert(
           { user_id: userId, show_id: showId, created_at: new Date().toISOString() },
           { onConflict: 'user_id,show_id' }
         );
 
-      if (_error) {
-        console.error('[showService/toggleFavoriteShow] add error:', _error);
+      if (error) {
+        console.error('[showService/toggleFavoriteShow] add error:', error);
         return false;
       }
     } else {
       // Remove from favorites
-      const { _error } = await supabase
+      const { error } = await supabase
         .from('user_favorites')
         .delete()
-        .eq('user_id', _userId)
-        .eq('show_id', _showId);
+        .eq('user_id', userId)
+        .eq('show_id', showId);
 
-      if (_error) {
-        console.error('[showService/toggleFavoriteShow] remove error:', _error);
+      if (error) {
+        console.error('[showService/toggleFavoriteShow] remove error:', error);
         return false;
       }
     }
 
     return true;
-  } catch (_error) {
-    console.error('[showService/toggleFavoriteShow] exception:', _error);
+  } catch (error) {
+    console.error('[showService/toggleFavoriteShow] exception:', error);
     return false;
   }
 };
@@ -500,26 +500,26 @@ export const _toggleFavoriteShow = async (
  * @param showId Show ID
  * @returns True if favorited, false otherwise
  */
-export const _isShowFavorited = async (
-  _userId: string,
-  _showId: string
+export const isShowFavorited = async (
+  userId: string,
+  showId: string
 ): Promise<boolean> => {
   try {
-    const { data, _error } = await supabase
+    const { data, error } = await supabase
       .from('user_favorites')
       .select('id')
-      .eq('user_id', _userId)
-      .eq('show_id', _showId)
+      .eq('user_id', userId)
+      .eq('show_id', showId)
       .maybeSingle();
 
-    if (_error) {
-      console.error('[showService/isShowFavorited] error:', _error);
+    if (error) {
+      console.error('[showService/isShowFavorited] error:', error);
       return false;
     }
 
     return !!data;
-  } catch (_error) {
-    console.error('[showService/isShowFavorited] exception:', _error);
+  } catch (error) {
+    console.error('[showService/isShowFavorited] exception:', error);
     return false;
   }
 };
@@ -530,24 +530,24 @@ export const _isShowFavorited = async (
  * @param showId Show ID
  * @returns Array of show attendees with profile information
  */
-export const _getShowAttendees = async (_showId: string): Promise<ShowAttendee[]> => {
+export const getShowAttendees = async (showId: string): Promise<ShowAttendee[]> => {
   try {
-    const { data, _error } = await supabase
+    const { data, error } = await supabase
       .from('show_attendees')
       .select(`
         *,
         profiles:user_id (
           id,
-          _full_name,
+          full_name,
           username,
           avatar_url,
           role
         )
       `)
-      .eq('show_id', _showId);
+      .eq('show_id', showId);
 
-    if (_error) {
-      console.error('[showService/getShowAttendees] error:', _error);
+    if (error) {
+      console.error('[showService/getShowAttendees] error:', error);
       return [];
     }
 
@@ -562,8 +562,8 @@ export const _getShowAttendees = async (_showId: string): Promise<ShowAttendee[]
       avatar_url: item.profiles?.avatar_url,
       role: item.profiles?.role
     }));
-  } catch (_error) {
-    console.error('[showService/getShowAttendees] exception:', _error);
+  } catch (error) {
+    console.error('[showService/getShowAttendees] exception:', error);
     return [];
   }
 };
@@ -575,26 +575,26 @@ export const _getShowAttendees = async (_showId: string): Promise<ShowAttendee[]
  * @param showId Show ID
  * @returns Success status
  */
-export const _markAttendingShow = async (
+export const markAttendingShow = async (
   userId: string,
   showId: string
 ): Promise<boolean> => {
   try {
-    const { _error } = await supabase
+    const { error } = await supabase
       .from('show_attendees')
       .upsert(
         { user_id: userId, show_id: showId, created_at: new Date().toISOString() },
         { onConflict: 'user_id,show_id' }
       );
 
-    if (_error) {
-      console.error('[showService/markAttendingShow] error:', _error);
+    if (error) {
+      console.error('[showService/markAttendingShow] error:', error);
       return false;
     }
 
     return true;
-  } catch (_error) {
-    console.error('[showService/markAttendingShow] exception:', _error);
+  } catch (error) {
+    console.error('[showService/markAttendingShow] exception:', error);
     return false;
   }
 };
@@ -606,26 +606,26 @@ export const _markAttendingShow = async (
  * @param showId Show ID
  * @returns True if attending, false otherwise
  */
-export const _isAttendingShow = async (
-  _userId: string,
-  _showId: string
+export const isAttendingShow = async (
+  userId: string,
+  showId: string
 ): Promise<boolean> => {
   try {
-    const { data, _error } = await supabase
+    const { data, error } = await supabase
       .from('show_attendees')
       .select('id')
-      .eq('user_id', _userId)
-      .eq('show_id', _showId)
+      .eq('user_id', userId)
+      .eq('show_id', showId)
       .maybeSingle();
 
-    if (_error) {
-      console.error('[showService/isAttendingShow] error:', _error);
+    if (error) {
+      console.error('[showService/isAttendingShow] error:', error);
       return false;
     }
 
     return !!data;
-  } catch (_error) {
-    console.error('[showService/isAttendingShow] exception:', _error);
+  } catch (error) {
+    console.error('[showService/isAttendingShow] exception:', error);
     return false;
   }
 };
@@ -636,14 +636,14 @@ export const _isAttendingShow = async (
  * @param userId User ID
  * @returns User profile with statistics
  */
-export const _getUserStats = async (userId: string): Promise<UserStats | null> => {
+export const getUserStats = async (userId: string): Promise<UserStats | null> => {
   try {
-    const { data, _error } = await supabase.rpc('get_user_profile_with_stats', {
+    const { data, error } = await supabase.rpc('get_user_profile_with_stats', {
       user_id: userId
     });
 
-    if (_error) {
-      console.error('[showService/getUserStats] RPC error:', _error);
+    if (error) {
+      console.error('[showService/getUserStats] RPC error:', error);
       return null;
     }
 
@@ -653,8 +653,8 @@ export const _getUserStats = async (userId: string): Promise<UserStats | null> =
     }
 
     return data as UserStats;
-  } catch (_error) {
-    console.error('[showService/getUserStats] exception:', _error);
+  } catch (error) {
+    console.error('[showService/getUserStats] exception:', error);
     return null;
   }
 };
@@ -665,20 +665,20 @@ export const _getUserStats = async (userId: string): Promise<UserStats | null> =
  * @param userId User ID
  * @returns User permissions object
  */
-export const _getUserPermissions = async (userId: string): Promise<any> => {
+export const getUserPermissions = async (userId: string): Promise<any> => {
   try {
-    const { data, _error } = await supabase.rpc('get_user_permissions', {
+    const { data, error } = await supabase.rpc('get_user_permissions', {
       user_id: userId
     });
 
-    if (_error) {
-      console.error('[showService/getUserPermissions] RPC error:', _error);
+    if (error) {
+      console.error('[showService/getUserPermissions] RPC error:', error);
       return null;
     }
 
     return data;
-  } catch (_error) {
-    console.error('[showService/getUserPermissions] exception:', _error);
+  } catch (error) {
+    console.error('[showService/getUserPermissions] exception:', error);
     return null;
   }
 };
@@ -689,22 +689,22 @@ export const _getUserPermissions = async (userId: string): Promise<any> => {
  * @param organizerId User ID of the organizer
  * @returns Array of shows organized by the user
  */
-export const _getShowsByOrganizer = async (_organizerId: string): Promise<Show[]> => {
+export const getShowsByOrganizer = async (organizerId: string): Promise<Show[]> => {
   try {
-    const { data, _error } = await supabase
+    const { data, error } = await supabase
       .from('shows')
       .select('*')
-      .eq('organizer_id', _organizerId)
+      .eq('organizer_id', organizerId)
       .order('start_date', { ascending: true });
 
-    if (_error) {
-      console.error('[showService/getShowsByOrganizer] error:', _error);
+    if (error) {
+      console.error('[showService/getShowsByOrganizer] error:', error);
       return [];
     }
 
     return data.map(mapDbShowToAppShow);
-  } catch (_error) {
-    console.error('[showService/getShowsByOrganizer] exception:', _error);
+  } catch (error) {
+    console.error('[showService/getShowsByOrganizer] exception:', error);
     return [];
   }
 };
@@ -715,15 +715,15 @@ export const _getShowsByOrganizer = async (_organizerId: string): Promise<Show[]
  * @param userId User ID
  * @returns Array of shows the user is attending
  */
-export const _getShowsAttendedByUser = async (_userId: string): Promise<Show[]> => {
+export const getShowsAttendedByUser = async (userId: string): Promise<Show[]> => {
   try {
-    const { data, _error } = await supabase
+    const { data, error } = await supabase
       .from('show_attendees')
       .select('shows(*)')
-      .eq('user_id', _userId);
+      .eq('user_id', userId);
 
-    if (_error) {
-      console.error('[showService/getShowsAttendedByUser] error:', _error);
+    if (error) {
+      console.error('[showService/getShowsAttendedByUser] error:', error);
       return [];
     }
 
@@ -731,8 +731,8 @@ export const _getShowsAttendedByUser = async (_userId: string): Promise<Show[]> 
     return data
       .filter(item => item.shows) // Filter out any null shows
       .map(item => mapDbShowToAppShow(item.shows));
-  } catch (_error) {
-    console.error('[showService/getShowsAttendedByUser] exception:', _error);
+  } catch (error) {
+    console.error('[showService/getShowsAttendedByUser] exception:', error);
     return [];
   }
 };

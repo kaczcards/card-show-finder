@@ -85,7 +85,7 @@ export interface InfiniteShowsResult {
  * @param params - Filtering parameters and coordinates
  * @returns An object with shows data, loading states, and functions to fetch more data
  */
-export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResult => {
+export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResult => {
   const {
     coordinates,
     radius = 25,
@@ -114,7 +114,7 @@ export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsRes
    *   3. Log a debug message so developers can see when the fallback
    *      path is taken
    */
-  const _isValidCoordinates =
+  const isValidCoordinates =
     coordinates &&
     typeof coordinates.latitude === 'number' &&
     typeof coordinates.longitude === 'number' &&
@@ -128,8 +128,8 @@ export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsRes
   if (!isValidCoordinates) {
     // eslint-disable-next-line no-console
     console.warn(
-      '[_useInfiniteShows] Invalid or missing coordinates supplied. ' +
-        'Falling back to default coordinates (_Carmel, _IN).',
+      '[useInfiniteShows] Invalid or missing coordinates supplied. ' +
+        'Falling back to default coordinates (Carmel, IN).',
       coordinates
     );
   }
@@ -157,10 +157,10 @@ export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsRes
     }],
     // Start pagination at page 1
     initialPageParam: 1,
-    queryFn: async ({ _pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1 }) => {
       // Prepare parameters for the paginated shows query
-      const _page = Number(_pageParam) || 1;
-      const _queryParams: PaginatedShowsParams = {
+      const page = Number(pageParam) || 1;
+      const queryParams: PaginatedShowsParams = {
         latitude: effectiveCoordinates.latitude,
         longitude: effectiveCoordinates.longitude,
         radius,
@@ -174,7 +174,7 @@ export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsRes
       };
       
       // Call the service function to get paginated shows
-      const _result = await getPaginatedShows(_queryParams);
+      const result = await getPaginatedShows(queryParams);
       
       // If there's an error, throw it so React Query can handle it
       if (result.error) {
@@ -198,19 +198,19 @@ export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsRes
   });
   
   // Function to refresh data
-  const _refresh = async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     await refetch();
   };
   
   // Flatten the pages of shows into a single array
-  const _flattenedShows =
+  const flattenedShows =
     data?.pages.flatMap((page: PaginatedShowsResult) => page.data) || [];
   
   // Get the total count from the first page (or 0 if no data)
-  const _totalCount = data?.pages[_0]?.pagination.totalCount || 0;
+  const totalCount = data?.pages[0]?.pagination.totalCount || 0;
   
   // Extract error message if any
-  const _errorMessage = isError ? (queryError as Error)?.message || 'Failed to load shows' : null;
+  const errorMessage = isError ? (queryError as Error)?.message || 'Failed to load shows' : null;
   
   return {
     shows: flattenedShows,
@@ -229,7 +229,4 @@ export const _useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsRes
   };
 };
 
-export default _useInfiniteShows;
-
-// Backward-compatible export
-export const useInfiniteShows = _useInfiniteShows;
+export default useInfiniteShows;

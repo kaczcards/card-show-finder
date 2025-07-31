@@ -74,9 +74,9 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   // Refs
   // Fix: Create proper ref for MapShowCluster with correct type
-  const _mapRef = useRef<MapShowClusterHandle>(null);
-  const _scrollViewRef = useRef<ScrollView>(null);
-  const _retryRef = useRef(_0);
+  const mapRef = useRef<MapShowClusterHandle>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const retryRef = useRef(0);
 
   // Get auth context
   const { authState } = useAuth();
@@ -84,18 +84,18 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
   // Update userLocation when initialUserLocation changes
   useEffect(() => {
-    if (_initialUserLocation) {
-      setUserLocation(_initialUserLocation);
+    if (initialUserLocation) {
+      setUserLocation(initialUserLocation);
     }
-  }, [_initialUserLocation]);
+  }, [initialUserLocation]);
 
   // Get user location
-  const _getUserLocation = useCallback(async () => {
+  const getUserLocation = useCallback(async () => {
     try {
-      const _hasPermission = await locationService.checkLocationPermissions();
+      const hasPermission = await locationService.checkLocationPermissions();
 
       if (!hasPermission) {
-        const _granted = await locationService.requestLocationPermissions();
+        const granted = await locationService.requestLocationPermissions();
         if (!granted) {
            
 console.warn('Location permission denied');
@@ -112,18 +112,18 @@ console.warn('Location permission denied');
         }
       }
 
-      const _location = await locationService.getCurrentLocation();
+      const location = await locationService.getCurrentLocation();
 
-      if (_location) {
+      if (location) {
          
-console.warn('Got user location:', _location);
+console.warn('Got user location:', location);
         return location;
       } else if (user && user.homeZipCode) {
          
 console.warn('Falling back to user ZIP code:', user.homeZipCode);
         showLocationFailedToast(user.homeZipCode);
         
-        const _zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+        const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
         if (zipData && zipData.coordinates) {
           return zipData.coordinates;
         }
@@ -137,8 +137,8 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
       }
       
       return null;
-    } catch (_error) {
-      console.error('Error getting user location:', _error);
+    } catch (error) {
+      console.error('Error getting user location:', error);
       showErrorToast(
         'Location Error',
         'Failed to get your location. Please try again.'
@@ -149,7 +149,7 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
 
   // Set up initial region based on user location or ZIP code
   useEffect(() => {
-    const _setupInitialRegion = async () => {
+    const setupInitialRegion = async () => {
       try {
         setLoading(true);
         setError(null);
@@ -157,32 +157,32 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
         let determinedLocation: Coordinates | null = null;
         let regionToSet: Region | null = null;
 
-        if (_initialUserLocation) {
+        if (initialUserLocation) {
           determinedLocation = initialUserLocation;
         }
 
         if (!determinedLocation) {
-          const _location = await getUserLocation();
-          if (_location) {
+          const location = await getUserLocation();
+          if (location) {
             determinedLocation = location;
             
             // Show toast for GPS location if it was successful
             try {
-              const _address = await locationService.reverseGeocodeCoordinates(location);
+              const address = await locationService.reverseGeocodeCoordinates(location);
               // Fix: Handle null values from address properties
-              const _locationName = address ? 
+              const locationName = address ? 
                 (address.city || address.subregion || address.region || undefined) : 
                 undefined;
-              showGpsLocationToast(_locationName);
-            } catch (_e) {
+              showGpsLocationToast(locationName);
+            } catch (e) {
               showGpsLocationToast();
             }
           }
         }
 
         if (!determinedLocation && user?.homeZipCode) {
-          const _zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
-          if (_zipData) {
+          const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+          if (zipData) {
             determinedLocation = zipData.coordinates;
             showLocationFailedToast(user.homeZipCode);
           }
@@ -200,26 +200,26 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
               );
             }
         } else {
-            _regionToSet = { ...determinedLocation, latitudeDelta: 0.5, longitudeDelta: 0.5 };
+            regionToSet = { ...determinedLocation, latitudeDelta: 0.5, longitudeDelta: 0.5 };
         }
 
-        setUserLocation(_determinedLocation);
-        setInitialRegion(_regionToSet);
-        setCurrentRegion(_regionToSet);
+        setUserLocation(determinedLocation);
+        setInitialRegion(regionToSet);
+        setCurrentRegion(regionToSet);
 
         if (!initialUserLocation && !user?.homeZipCode) {
           setError('Could not determine your location. Please set your home ZIP code in your profile.');
         }
-      } catch (_error) {
-        console.error('Error setting up initial region:', _error);
-        const _defaultRegion = {
+      } catch (error) {
+        console.error('Error setting up initial region:', error);
+        const defaultRegion = {
           latitude: 39.8283,
           longitude: -98.5795,
           latitudeDelta: 40,
           longitudeDelta: 40,
         };
-        setInitialRegion(_defaultRegion);
-        setCurrentRegion(_defaultRegion);
+        setInitialRegion(defaultRegion);
+        setCurrentRegion(defaultRegion);
         setError('Error determining your location. Please try again later.');
         showErrorToast(
           'Location Error',
@@ -234,7 +234,7 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
   }, [getUserLocation, user, initialUserLocation]);
 
   // Fetch shows based on location or ZIP code
-  const _fetchShows = useCallback(async (isRefreshing = false) => {
+  const fetchShows = useCallback(async (isRefreshing = false) => {
     if (!userLocation) return;
     try {
       if (!isRefreshing) {
@@ -244,8 +244,8 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
       // Reset dataLoaded flag for new fetch cycle
       setDataLoaded(false);
 
-      const _today = new Date();
-      const _thirtyDaysOut = new Date();
+      const today = new Date();
+      const thirtyDaysOut = new Date();
       thirtyDaysOut.setDate(today.getDate() + 30);
 
       const currentFilters: ShowFilters = {
@@ -258,12 +258,12 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
       };
 
        
-console.warn('[_MapScreen] Filters being used:', _currentFilters);
+console.warn('[MapScreen] Filters being used:', currentFilters);
 
       /* ------------------------------------------------------------------
        * Use production-ready solution that bypasses broken nearby_shows RPC
        * ------------------------------------------------------------------ */
-      const _result = await getPaginatedShows({
+      const result = await getPaginatedShows({
         ...currentFilters,
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
@@ -271,29 +271,29 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
         page: 1,
       });
 
-      const _showsData = result.data || [];
-      setShows(_showsData);
+      const showsData = result.data || [];
+      setShows(showsData);
       console.warn(
-        `[_MapScreen] Successfully fetched ${showsData.length} shows (using production solution)`
+        `[MapScreen] Successfully fetched ${showsData.length} shows (using production solution)`
       );
 
       if (showsData.length === 0 && retryRef.current < 1) {
         retryRef.current += 1;
-        console.warn('[_MapScreen] No shows returned – retrying in 2 seconds (attempt 1).');
+        console.warn('[MapScreen] No shows returned – retrying in 2 seconds (attempt 1).');
         setTimeout(() => fetchShows(), 2000);
       } else {
         retryRef.current = 0; // Reset on successful fetch
       }
 
     } catch (error: any) {
-      console.error('[_MapScreen] Error fetching shows:', _error);
+      console.error('[MapScreen] Error fetching shows:', error);
       setShows([]);
       setError(error?.message || 'Failed to load card shows. Please try again.');
     } finally {
       // Mark fetch completed before clearing loading flag
       setDataLoaded(true);
       setLoading(false);
-      if (_isRefreshing) {
+      if (isRefreshing) {
         setRefreshing(false);
       }
     }
@@ -302,102 +302,102 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
   // Load shows when screen is focused or when the initial region is set
   useFocusEffect(
     useCallback(() => {
-      if (_initialRegion) {
+      if (initialRegion) {
         fetchShows();
       }
     }, [fetchShows, initialRegion])
   );
 
   // Handle pull-to-refresh
-  const _onRefresh = useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchShows(true);
-  }, [_fetchShows]);
+  }, [fetchShows]);
 
   // Handle filter changes
-  const _handleFilterChange = (_newFilters: ShowFilters) => {
-    if (_onFilterChange) {
-      onFilterChange(_newFilters);
+  const handleFilterChange = (newFilters: ShowFilters) => {
+    if (onFilterChange) {
+      onFilterChange(newFilters);
     } else {
-      setLocalFilters(_newFilters);
+      setLocalFilters(newFilters);
     }
     setFilterVisible(false);
   };
 
   // Reset filters to defaults
-  const _resetFilters = () => {
-    if (_onFilterChange) {
-      onFilterChange(_defaultFilters);
+  const resetFilters = () => {
+    if (onFilterChange) {
+      onFilterChange(defaultFilters);
     } else {
-      setLocalFilters(_defaultFilters);
+      setLocalFilters(defaultFilters);
     }
   };
 
   // Navigate to show detail or call provided callback
-  const _handleShowPress = (_showId: string) => {
-    if (_onShowPress) {
-      onShowPress(_showId);
+  const handleShowPress = (showId: string) => {
+    if (onShowPress) {
+      onShowPress(showId);
     } else {
-      navigation.navigate('ShowDetail', { _showId });
+      navigation.navigate('ShowDetail', { showId });
     }
   };
 
   // Handle region change from the map - this only updates the map's visible area, not trigger data fetch
-  const _handleRegionChangeComplete = (_region: Region) => {
-    setCurrentRegion(_region);
+  const handleRegionChangeComplete = (region: Region) => {
+    setCurrentRegion(region);
   };
 
   // ---------------------------------------------------------------------------
   // Open address in native maps application (Task 2)
   // ---------------------------------------------------------------------------
-  const _openMapLocation = (address: string) => {
+  const openMapLocation = (address: string) => {
     if (!address) return;
 
     try {
-      const _scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
-      const _encodedAddress = encodeURIComponent(_address);
-      const _url = `${_scheme}${_encodedAddress}`;
+      const scheme = Platform.select({ ios: 'maps:?q=', android: 'geo:?q=' });
+      const encodedAddress = encodeURIComponent(address);
+      const url = `${scheme}${encodedAddress}`;
 
-      Linking.openURL(url).catch((_err) => {
-        console.error('Error opening native maps app:', _err);
+      Linking.openURL(url).catch((err) => {
+        console.error('Error opening native maps app:', err);
         // Fallback to Google Maps in browser
-        const _webUrl = `https://www.google.com/maps/search/?api=1&query=${_encodedAddress}`;
-        Linking.openURL(webUrl).catch((_e) => {
-          console.error('Error opening web maps:', _e);
+        const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+        Linking.openURL(webUrl).catch((e) => {
+          console.error('Error opening web maps:', e);
           Alert.alert('Error', 'Could not open maps application.');
         });
       });
-    } catch (_error) {
-      console.error('Error processing maps URL:', _error);
+    } catch (error) {
+      console.error('Error processing maps URL:', error);
       Alert.alert('Error', 'Could not open maps application.');
     }
   };
 
   // Center map on user location
-  const _centerOnUserLocation = async () => {
+  const centerOnUserLocation = async () => {
     try {
       setLoading(true);
-      const _location = await getUserLocation();
+      const location = await getUserLocation();
 
       if (location && mapRef.current) {
-        const _newRegion = {
+        const newRegion = {
           latitude: location.latitude,
           longitude: location.longitude,
           latitudeDelta: 0.1,
           longitudeDelta: 0.1,
         };
-        setCurrentRegion(_newRegion);
-        mapRef.current.getMapRef()?.animateToRegion(newRegion, _1000);
+        setCurrentRegion(newRegion);
+        mapRef.current.getMapRef()?.animateToRegion(newRegion, 1000);
         
         // Get location name for better context in toast
         try {
-          const _address = await locationService.reverseGeocodeCoordinates(location);
+          const address = await locationService.reverseGeocodeCoordinates(location);
           // Fix: Handle null values from address properties
-          const _locationName = address ? 
+          const locationName = address ? 
             (address.city || address.subregion || address.region || undefined) : 
             undefined;
-          showGpsLocationToast(_locationName);
-        } catch (_e) {
+          showGpsLocationToast(locationName);
+        } catch (e) {
           // If reverse geocoding fails, still show toast but without location name
           showGpsLocationToast();
         }
@@ -406,16 +406,16 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
         showLocationFailedToast(user.homeZipCode);
         
         // Try to center on ZIP code
-        const _zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+        const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
         if (zipData && mapRef.current) {
-          const _newRegion = {
+          const newRegion = {
             latitude: zipData.coordinates.latitude,
             longitude: zipData.coordinates.longitude,
             latitudeDelta: 0.1,
             longitudeDelta: 0.1,
           };
-          setCurrentRegion(_newRegion);
-          mapRef.current.getMapRef()?.animateToRegion(newRegion, _1000);
+          setCurrentRegion(newRegion);
+          mapRef.current.getMapRef()?.animateToRegion(newRegion, 1000);
         }
       } else {
         // No location available at all
@@ -424,8 +424,8 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
           'Could not determine your location. Please set your home ZIP code in your profile.'
         );
       }
-    } catch (_error) {
-      console.error('Error centering on user location:', _error);
+    } catch (error) {
+      console.error('Error centering on user location:', error);
       showErrorToast(
         'Location Error',
         'Failed to center on your location. Please try again.'
@@ -436,13 +436,13 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
   };
 
   // Format date for callout with timezone correction
-  const _formatDate = (_dateValue: Date | string) => {
+  const formatDate = (dateValue: Date | string) => {
     try {
-      const _date = new Date(_dateValue);
+      const date = new Date(dateValue);
       if (isNaN(date.getTime())) return 'Unknown date';
-      const _utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+      const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
       return utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch (_err) {
+    } catch (err) {
       return 'Unknown date';
     }
   };
@@ -451,11 +451,11 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
    * Determine if a show entry fee should be considered free.
    * Adds verbose logging so we can see the raw value coming from the API.
    */
-  const _isEntryFree = (fee: any): boolean => {
+  const isEntryFree = (fee: any): boolean => {
     // Diagnostic log – remove or reduce verbosity once confirmed working
     console.warn(
-      `[_MapScreen] [_DEBUG] entryFee raw value:`,
-      _fee,
+      `[MapScreen] [DEBUG] entryFee raw value:`,
+      fee,
       '| type:',
       typeof fee
     );
@@ -464,7 +464,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
     if (typeof fee === 'number') return fee <= 0;
 
     // Handle string representations
-    const _feeStr = String(_fee).trim().toLowerCase();
+    const feeStr = String(fee).trim().toLowerCase();
     return (
       feeStr === '' ||
       feeStr === '0' ||
@@ -476,17 +476,17 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
   };
 
   // Render map markers - with defensive coding
-  const _renderMarkers = () => {
+  const renderMarkers = () => {
     if (!shows || !Array.isArray(shows) || shows.length === 0) return null;
     return shows
       .filter(show => show?.coordinates?.latitude && show.coordinates.longitude)
-      .map((_show) => (
+      .map((show) => (
         <Marker
           key={show.id}
           // Fix: Add null check before assigning coordinates to coordinate prop
           coordinate={show.coordinates || { latitude: 0, longitude: 0 }}
           title={show.title}
-          description={`${formatDate(show.startDate)} • ${
+            description={`${formatDate(show.startDate)} • ${
             isEntryFree(show.entryFee) ? 'Free' : `$${show.entryFee}`
           }`}
           pinColor="#007AFF"
@@ -522,7 +522,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
   };
 
   // Render empty state when no shows are found
-  const _renderEmptyState = () => {
+  const renderEmptyState = () => {
     if (loading || !dataLoaded || shows.length > 0) return null;
     return (
       <View style={styles.emptyStateContainer}>
@@ -531,7 +531,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
         <Text style={styles.emptyStateDescription}>
           Try adjusting your filters or expanding your search radius
         </Text>
-        <TouchableOpacity style={styles.resetButton} onPress={_resetFilters}>
+        <TouchableOpacity style={styles.resetButton} onPress={resetFilters}>
           <Text style={styles.resetButtonText}>Reset Filters</Text>
         </TouchableOpacity>
       </View>
@@ -557,14 +557,14 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
             </View>
         ) : dataLoaded && error && !shows.length ? (
             <View style={styles.errorContainer}>
-                 <Text style={styles.errorText}>{_error}</Text>
+                 <Text style={styles.errorText}>{error}</Text>
                  <TouchableOpacity style={styles.retryButton} onPress={() => fetchShows()}>
                      <Text style={styles.retryButtonText}>Retry</Text>
                  </TouchableOpacity>
             </View>
         ) : dataLoaded ? (
             <MapShowCluster
-                ref={_mapRef}
+                ref={mapRef}
                 // Fix: Add null check for currentRegion
                 region={currentRegion || {
                   latitude: 39.8283, 
@@ -572,16 +572,16 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
                   latitudeDelta: 0.5,
                   longitudeDelta: 0.5
                 }}
-                shows={_shows}
-                onCalloutPress={_handleShowPress}
-                onRegionChangeComplete={_handleRegionChangeComplete}
+                shows={shows}
+                onCalloutPress={handleShowPress}
+                onRegionChangeComplete={handleRegionChangeComplete}
             />
         ) : null
         }
 
       <TouchableOpacity
         style={styles.myLocationButton}
-        onPress={_centerOnUserLocation}
+        onPress={centerOnUserLocation}
       >
         <Ionicons name="locate" size={24} color="#007AFF" />
       </TouchableOpacity>
@@ -595,7 +595,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
             {filters.features && filters.features.length > 0 && `${filters.features.length} features • `}
             {filters.categories && filters.categories.length > 0 && `${filters.categories.length} categories • `}
             {filters.maxEntryFee !== undefined && `Max $${filters.maxEntryFee} • `}
-            <Text style={styles.resetFiltersText} onPress={_resetFilters}>Reset</Text>
+            <Text style={styles.resetFiltersText} onPress={resetFilters}>Reset</Text>
           </Text>
         </View>
       )}
@@ -605,7 +605,7 @@ console.warn('[_MapScreen] Filters being used:', _currentFilters);
         visible={filterVisible}
         onClose={() => setFilterVisible(false)}
         filters={filters}
-        onApplyFilters={_handleFilterChange}
+        onApplyFilters={handleFilterChange}
       />
     </SafeAreaView>
   );
@@ -768,7 +768,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, _255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   emptyStateTitle: {
     fontSize: 18,
@@ -796,7 +796,7 @@ const styles = StyleSheet.create({
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, _255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -828,7 +828,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 8,
-    backgroundColor: 'rgba(0, _122, 255, 0.1)',
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
     marginVertical: 8,
     borderRadius: 4,
     position: 'absolute',

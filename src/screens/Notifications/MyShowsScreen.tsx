@@ -25,15 +25,15 @@ import { supabase } from '../../supabase';
  * - Shows with favorited MVP dealer booths
  */
 const MyShowsScreen: React.FC = () => {
-  const { _authState } = useAuth();
-  const _navigation = useNavigation();
+  const { authState } = useAuth();
+  const navigation = useNavigation();
   const [currentTab, setCurrentTab] = useState<'upcoming' | 'past'>('upcoming');
   const [upcomingShows, setUpcomingShows] = useState<Show[]>([]);
   const [pastShows, setPastShows] = useState<Show[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
-  const [reviewFormVisible, setReviewFormVisible] = useState(_false);
-  const [loading, setLoading] = useState(_true);
+  const [reviewFormVisible, setReviewFormVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // Track which shows have dealer booth info
@@ -42,31 +42,31 @@ const MyShowsScreen: React.FC = () => {
   useEffect(() => {
     if (!authState.isAuthenticated || !authState.user) return;
     
-    const _fetchUserShows = async () => {
+    const fetchUserShows = async () => {
       try {
-        setLoading(_true);
-        setError(_null);
+        setLoading(true);
+        setError(null);
         
-        const _userId = authState.user?.id;
-        const _currentDate = new Date().toISOString();
+        const userId = authState.user?.id;
+        const currentDate = new Date().toISOString();
 
         /* -----------------------------------------------------------
          * Get favourite show IDs from user_favorite_shows join table
          * --------------------------------------------------------- */
-        const { data: favRows, error: _favRowsError } = await supabase
+        const { data: favRows, error: favRowsError } = await supabase
           .from('user_favorite_shows')
           .select('show_id')
-          .eq('user_id', _userId);
+          .eq('user_id', userId);
 
-        if (_favRowsError) {
-          console.error('Error fetching favourite show IDs:', _favRowsError);
+        if (favRowsError) {
+          console.error('Error fetching favourite show IDs:', favRowsError);
         }
 
-        const _favoriteShowIds =
+        const favoriteShowIds =
           favRows && favRows.length > 0 ? favRows.map((r: any) => r.show_id) : [];
 
         console.warn(
-          `[_MyShows] Fetched ${favoriteShowIds.length} favourite show IDs for user ${_userId}`
+          `[MyShows] Fetched ${favoriteShowIds.length} favourite show IDs for user ${userId}`
         );
         
         // Step 1: Get shows the user has favorited
@@ -74,14 +74,14 @@ const MyShowsScreen: React.FC = () => {
         let allPast: Record<string, Show> = {};
         
         if (favoriteShowIds.length > 0) {
-          const { data: favoriteShows, error: _favoriteError } = await supabase
+          const { data: favoriteShows, error: favoriteError } = await supabase
             .from('shows')
             .select('*')
-            .in('id', _favoriteShowIds);
+            .in('id', favoriteShowIds);
           
-          if (_favoriteError) {
-            console.error('Error fetching favorite shows:', _favoriteError);
-          } else if (_favoriteShows) {
+          if (favoriteError) {
+            console.error('Error fetching favorite shows:', favoriteError);
+          } else if (favoriteShows) {
             // Sort shows into upcoming and past
             favoriteShows.forEach(show => {
               if (new Date(show.end_date) >= new Date()) {
@@ -124,21 +124,21 @@ const MyShowsScreen: React.FC = () => {
         }
         
         // Step 2: Get shows where user is registered as a dealer
-        const { data: dealerShows, error: _dealerError } = await supabase
+        const { data: dealerShows, error: dealerError } = await supabase
           .from('show_participants')
           .select(`
             showid,
             shows (*)
           `)
-          .eq('userid', _userId);
+          .eq('userid', userId);
         
-        if (_dealerError) {
-          console.error('Error fetching dealer shows:', _dealerError);
+        if (dealerError) {
+          console.error('Error fetching dealer shows:', dealerError);
         } else if (dealerShows && dealerShows.length > 0) {
           dealerShows.forEach(item => {
             if (!item.shows) return;
             
-            const _show = item.shows as any;
+            const show = item.shows as any;
             
             // Add dealer participation info
             if (!showsWithBoothInfo[show.id]) {
@@ -190,17 +190,17 @@ const MyShowsScreen: React.FC = () => {
         // Set the state with all found shows
         setUpcomingShows(Object.values(allUpcoming));
         setPastShows(Object.values(allPast));
-        setShowsWithBoothInfo(_showsWithBoothInfo);
+        setShowsWithBoothInfo(showsWithBoothInfo);
         
         // Step 4: Get reviews for past shows
-        const { data: reviewData, error: _reviewError } = await supabase
+        const { data: reviewData, error: reviewError } = await supabase
           .from('reviews')
           .select('*')
-          .eq('user_id', _userId);
+          .eq('user_id', userId);
           
-        if (_reviewError) {
-          console.error('Error fetching reviews:', _reviewError);
-        } else if (_reviewData) {
+        if (reviewError) {
+          console.error('Error fetching reviews:', reviewError);
+        } else if (reviewData) {
           setReviews(reviewData.map(review => ({
             id: review.id,
             showId: review.show_id,
@@ -214,10 +214,10 @@ const MyShowsScreen: React.FC = () => {
         }
         
       } catch (err: any) {
-        console.error('Error in fetchUserShows:', _err);
+        console.error('Error in fetchUserShows:', err);
         setError('Failed to load your shows. Please try again later.');
       } finally {
-        setLoading(_false);
+        setLoading(false);
       }
     };
     
@@ -225,23 +225,23 @@ const MyShowsScreen: React.FC = () => {
   }, [authState.isAuthenticated, authState.user]);
 
   /* -------------------------  Helpers  ----------------------------- */
-  const _renderEmptyState = (_message: string, _icon: keyof typeof Ionicons.glyphMap) => (
+  const renderEmptyState = (message: string, icon: keyof typeof Ionicons.glyphMap) => (
     <View style={styles.emptyContainer}>
-      <Ionicons name={_icon} size={_64} color="#ccc" />
+      <Ionicons name={icon} size={64} color="#ccc" />
       <Text style={styles.emptyTitle}>No Shows Found</Text>
-      <Text style={styles.emptyText}>{_message}</Text>
+      <Text style={styles.emptyText}>{message}</Text>
     </View>
   );
 
-  const _removeUpcoming = (id: string) =>
-    setUpcomingShows((_prev) => prev.filter((_s) => s.id !== id));
+  const removeUpcoming = (id: string) =>
+    setUpcomingShows((prev) => prev.filter((s) => s.id !== id));
 
-  const _openReviewForm = (_show: Show) => {
-    setSelectedShow(_show);
-    setReviewFormVisible(_true);
+  const openReviewForm = (show: Show) => {
+    setSelectedShow(show);
+    setReviewFormVisible(true);
   };
 
-  const _submitReview = async (rating: number, comment: string) => {
+  const submitReview = async (rating: number, comment: string) => {
     if (!selectedShow || !authState.user) return;
     
     try {
@@ -257,11 +257,11 @@ const MyShowsScreen: React.FC = () => {
         .select()
         .single();
         
-      if (_error) {
+      if (error) {
         throw error;
       }
       
-      if (_data) {
+      if (data) {
         const newReview: Review = {
           id: data.id,
           showId: data.show_id,
@@ -273,19 +273,19 @@ const MyShowsScreen: React.FC = () => {
           date: data.created_at,
         };
         
-        setReviews((_prev) => [...prev, newReview]);
-        setReviewFormVisible(_false);
-        setSelectedShow(_null);
+        setReviews((prev) => [...prev, newReview]);
+        setReviewFormVisible(false);
+        setSelectedShow(null);
         
         Alert.alert('Success', 'Your review has been submitted!');
       }
     } catch (err: any) {
-      console.error('Error submitting review:', _err);
+      console.error('Error submitting review:', err);
       Alert.alert('Error', 'Failed to submit your review. Please try again.');
     }
   };
   
-  const _navigateToShowDetail = (show: Show) => {
+  const navigateToShowDetail = (show: Show) => {
     // Navigate to show detail screen with correct parameter name
     // Temporarily bypass strict navigation typings until
     // proper typed navigation params are introduced
@@ -298,22 +298,22 @@ const MyShowsScreen: React.FC = () => {
    * local timezone offset so the calendar day shown matches the value
    * stored in the database (which is assumed to be UTC).
    */
-  const _formatDate = (dateString: string | Date): string => {
+  const formatDate = (dateString: string | Date): string => {
     if (!dateString) return '';
 
-    const _date = new Date(_dateString);
+    const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
 
     // shift by the timezone offset so we display the true calendar day
-    const _utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
     return utcDate.toLocaleDateString();
   };
 
   // FlatList item renderer for upcoming shows
-  const _renderUpcomingItem = ({ _item }: { item: Show }) => (
+  const renderUpcomingItem = ({ item }: { item: Show }) => (
     <TouchableOpacity 
       style={styles.card}
-      onPress={() => navigateToShowDetail(_item)}
+      onPress={() => navigateToShowDetail(item)}
     >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{item.title}</Text>
@@ -321,14 +321,14 @@ const MyShowsScreen: React.FC = () => {
           {showsWithBoothInfo[item.id] && (
             <TouchableOpacity 
               style={styles.boothButton}
-              onPress={() => navigateToShowDetail(_item)}
+              onPress={() => navigateToShowDetail(item)}
             >
-              <Ionicons name="business" size={_20} color="#007AFF" />
+              <Ionicons name="business" size={20} color="#007AFF" />
               <Text style={styles.boothText}>Booth Info</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={() => removeUpcoming(item.id)}>
-            <Ionicons name="remove-circle-outline" size={_22} color="#FF3B30" />
+            <Ionicons name="remove-circle-outline" size={22} color="#FF3B30" />
           </TouchableOpacity>
         </View>
       </View>
@@ -339,8 +339,8 @@ const MyShowsScreen: React.FC = () => {
   );
 
   // FlatList item renderer for past shows
-  const _renderPastItem = ({ _item }: { item: Show }) => {
-    const _alreadyReviewed = reviews.some((_r) => r.showId === item.id);
+  const renderPastItem = ({ item }: { item: Show }) => {
+    const alreadyReviewed = reviews.some((r) => r.showId === item.id);
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
@@ -349,15 +349,15 @@ const MyShowsScreen: React.FC = () => {
             {showsWithBoothInfo[item.id] && (
               <TouchableOpacity 
                 style={styles.boothButton}
-                onPress={() => navigateToShowDetail(_item)}
+                onPress={() => navigateToShowDetail(item)}
               >
-                <Ionicons name="business" size={_20} color="#007AFF" />
+                <Ionicons name="business" size={20} color="#007AFF" />
                 <Text style={styles.boothText}>Booth Info</Text>
               </TouchableOpacity>
             )}
             {!alreadyReviewed && (
-              <TouchableOpacity onPress={() => openReviewForm(_item)}>
-                <Ionicons name="create-outline" size={_22} color="#007AFF" />
+              <TouchableOpacity onPress={() => openReviewForm(item)}>
+                <Ionicons name="create-outline" size={22} color="#007AFF" />
               </TouchableOpacity>
             )}
           </View>
@@ -373,7 +373,7 @@ const MyShowsScreen: React.FC = () => {
         
         {alreadyReviewed && (
           <ReviewsList
-            reviews={reviews.filter((_r) => r.showId === item.id)}
+            reviews={reviews.filter((r) => r.showId === item.id)}
             emptyMessage="No reviews yet."
           />
         )}
@@ -427,16 +427,16 @@ const MyShowsScreen: React.FC = () => {
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={_64} color="#FF3B30" />
+          <Ionicons name="alert-circle" size={64} color="#FF3B30" />
           <Text style={styles.errorTitle}>Error</Text>
-          <Text style={styles.errorText}>{_error}</Text>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : (
         <FlatList
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           data={currentTab === 'upcoming' ? upcomingShows : pastShows}
-          keyExtractor={(_item) => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={currentTab === 'upcoming' ? renderUpcomingItem : renderPastItem}
           ListEmptyComponent={
             currentTab === 'upcoming'
@@ -456,10 +456,10 @@ const MyShowsScreen: React.FC = () => {
         <ReviewForm
           showId={selectedShow.id}
           seriesId={selectedShow.seriesId ?? ''}
-          onSubmit={_submitReview}
+          onSubmit={submitReview}
           onCancel={() => {
-            setReviewFormVisible(_false);
-            setSelectedShow(_null);
+            setReviewFormVisible(false);
+            setSelectedShow(null);
           }}
         />
       )}
@@ -467,7 +467,7 @@ const MyShowsScreen: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',

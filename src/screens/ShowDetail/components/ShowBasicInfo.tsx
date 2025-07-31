@@ -24,9 +24,9 @@ type InfoRowProps = {
  * A robust InfoRow component that ensures all text is properly wrapped
  * in Text components and handles all edge cases.
  */
-const InfoRow: React.FC<InfoRowProps> = ({ _icon, _text, children }) => {
+const InfoRow: React.FC<InfoRowProps> = ({ icon, text, children }) => {
   // Function to safely render content based on type
-  const _renderContent = () => {
+  const renderContent = () => {
     // If children are provided, handle them based on type
     if (children !== undefined && children !== null) {
       /* ------------------------------------------------------------------
@@ -35,12 +35,12 @@ const InfoRow: React.FC<InfoRowProps> = ({ _icon, _text, children }) => {
        * type passed in. This covers strings, numbers, elements, arrays,
        * and other renderable primitives without additional branching.
        * ----------------------------------------------------------------*/
-      return <>{_children}</>;
+      return <>{children}</>;
     }
     
     // If no children but text is provided, render it safely
     if (text !== undefined && text !== null) {
-      return <Text style={styles.infoText}>{_text}</Text>;
+      return <Text style={styles.infoText}>{text}</Text>;
     }
     
     // Fallback for no content
@@ -50,8 +50,8 @@ const InfoRow: React.FC<InfoRowProps> = ({ _icon, _text, children }) => {
   return (
     <View style={styles.infoRow}>
       <Ionicons
-        name={_icon}
-        size={_20}
+        name={icon}
+        size={20}
         color="#666666"
         style={styles.infoIcon}
       />
@@ -66,19 +66,19 @@ const InfoRow: React.FC<InfoRowProps> = ({ _icon, _text, children }) => {
  * A super-robust ShowBasicInfo component that ensures all text is properly
  * wrapped in Text components and all data access is safely guarded.
  */
-const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ _show }) => {
+const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ show }) => {
   // Ensure show object exists
-  const _safeShow = show || {};
+  const safeShow = show || {};
   
   // Safe getters for show properties with fallbacks
-  const _getTitle = () => {
-    const _title = safeShow.title;
+  const getTitle = () => {
+    const title = safeShow.title;
     if (typeof title === 'string') return title;
-    if (typeof title === 'number') return String(_title);
+    if (typeof title === 'number') return String(title);
     return 'Untitled Show';
   };
   
-  const _getLocation = () => {
+  const getLocation = () => {
     // Try address first, then location, with fallback
     if (typeof safeShow.address === 'string' && safeShow.address.trim() !== '') {
       return safeShow.address;
@@ -90,8 +90,8 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ _show }) => {
   };
   
   // Safe entry fee formatting with comprehensive type checking
-  const _formatEntryFee = () => {
-    const _fee = safeShow.entry_fee;
+  const formatEntryFee = () => {
+    const fee = safeShow.entry_fee;
     
     // Handle undefined or null
     if (fee === undefined || fee === null) {
@@ -110,13 +110,13 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ _show }) => {
       }
       
       // Try to parse as number if it looks like one
-      const _parsed = parseFloat(_fee);
+      const parsed = parseFloat(fee);
       if (!isNaN(parsed)) {
         return `Entry Fee: $${parsed.toFixed(2)}`;
       }
       
       // Otherwise return as is
-      return `Entry Fee: ${_fee}`;
+      return `Entry Fee: ${fee}`;
     }
     
     // Fallback for unexpected types
@@ -124,8 +124,8 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ _show }) => {
   };
   
   // Check if entry fee exists and should be displayed
-  const _shouldShowEntryFee = () => {
-    const _fee = safeShow.entry_fee;
+  const shouldShowEntryFee = () => {
+    const fee = safeShow.entry_fee;
     return fee !== undefined && fee !== null && fee !== '';
   };
 
@@ -149,7 +149,7 @@ const ShowBasicInfo: React.FC<ShowBasicInfoProps> = ({ _show }) => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#ffffff',
