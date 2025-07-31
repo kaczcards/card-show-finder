@@ -76,7 +76,7 @@ export const claimShow = async (
 
     // If the show is part of a series, claim the entire series
     if (showData.series_id) {
-      // eslint-disable-next-line no-console
+       
 console.warn(`Show ${_showId} is part of series ${showData.series_id}, claiming series instead`);
       const result = await showSeriesService.claimShowSeries(showData.series_id);
       

@@ -67,7 +67,7 @@ const MyShowsScreen: React.FC = () => {
         const favoriteShowIds =
           favRows && favRows.length > 0 ? favRows.map((r: any) => r.show_id) : [];
 
-        // eslint-disable-next-line no-console
+         
 console.warn(
           `[MyShows] Fetched ${favoriteShowIds.length} favourite show IDs for user ${userId}`
         );

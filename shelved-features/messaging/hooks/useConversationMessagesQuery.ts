@@ -92,9 +92,9 @@ export const useConversationMessagesQuery = (
     retryDelay: attempt => Math.min(1000 * 2 ** attempt, 30_000),
     // Log errors for easier debugging / observability
     onError: (err) => {
-      /* eslint-disable no-console */
+       
       console.error('[useConversationMessagesQuery] fetch error:', err);
-      /* eslint-enable no-console */
+       
     },
     // Mark conversation as read when messages are successfully fetched
     onSuccess: (data) => {

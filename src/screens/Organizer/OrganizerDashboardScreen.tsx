@@ -413,7 +413,7 @@ const OrganizerDashboardScreen: React.FC = () => {
   }, [isShowOrganizer, isLoading, activeTab]);
 
   // Render section items
-  const renderSectionItem = ({ item, section }: { item: SectionItem, section: SectionListData<SectionItem> }) => {
+  const renderSectionItem = ({ item: _item, section }: { item: SectionItem, section: SectionListData<SectionItem> }) => {
     const sectionType = section.type as SectionType;
 
     switch (sectionType) {

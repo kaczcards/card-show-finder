@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert, ScrollView, SafeAreaView, Dimensions,  } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert as _Alert, ScrollView, SafeAreaView, Dimensions,  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 // Use fallback map components that gracefully degrade when the native
 // react-native-maps module isn't available (e.g. running in Expo Go).
@@ -138,7 +138,7 @@ const AdminMapScreen: React.FC = () => {
     if (!selectedShow) return;
     
     setIsLoading(true);
-    const { success, error: updateError } = await updateShowCoordinates(
+    const { success: _success, error: updateError } = await updateShowCoordinates(
       selectedShow.id,
       newCoordinates
     );

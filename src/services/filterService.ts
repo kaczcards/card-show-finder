@@ -400,7 +400,7 @@ export const setDefaultFilterPreset = async (userId: string, presetId: string): 
     }
     
     // Update local cache
-    const presets = await loadFilterPresetsFromSupabase(userId);
+    const _presets = await loadFilterPresetsFromSupabase(userId);
     
     return true;
   } catch (error) {
@@ -461,7 +461,7 @@ export const syncFilters = async (userId: string): Promise<void> => {
     }
     
     // Get local presets
-    const localPresets = await loadFilterPresetsFromAsyncStorage(userId);
+    const _localPresets = await loadFilterPresetsFromAsyncStorage(userId);
     
     // Map server presets to our format
     const mappedServerPresets: FilterPreset[] = serverPresets.map(item => ({

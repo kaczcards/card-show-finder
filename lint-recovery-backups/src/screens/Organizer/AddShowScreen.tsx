@@ -284,11 +284,11 @@ const AddShowScreen: React.FC = () => {
 
   // Handle form submission
   const handleSubmit = async () => {
-    // eslint-disable-next-line no-console
+     
 console.warn('[AddShowScreen] Submit button pressed');
     
     if (!validateForm()) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[AddShowScreen] Form validation failed');
       return;
     }
@@ -305,11 +305,11 @@ console.warn('[AddShowScreen] Form validation failed');
       const fullStartDate = getFullDateForPostgres(startDate, startHour, startMinute, startPeriod);
       const fullEndDate = getFullDateForPostgres(endDate, endHour, endMinute, endPeriod);
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[AddShowScreen] Date values being sent:');
-      // eslint-disable-next-line no-console
+       
 console.warn('  - Start Date:', fullStartDate);
-      // eslint-disable-next-line no-console
+       
 console.warn('  - End Date:', fullEndDate);
 
       /* -----------------------------------------------------------
@@ -327,7 +327,7 @@ console.warn('  - End Date:', fullEndDate);
        * 2. Geocode the full street address → coordinates
        * --------------------------------------------------------- */
       const fullAddress = `${street}, ${city}, ${stateProv} ${zipCode}`;
-      // eslint-disable-next-line no-console
+       
 console.warn('[AddShowScreen] Attempting to geocode address:', fullAddress);
 
       let coords = null;
@@ -373,7 +373,7 @@ console.warn('[AddShowScreen] Attempting to geocode address:', fullAddress);
         }
       }
 
-      // eslint-disable-next-line no-console
+       
 console.warn('[AddShowScreen] Geocoding success:', coords);
       
       // ------------------------------------------------------------------
@@ -401,7 +401,7 @@ console.warn('[AddShowScreen] Geocoding success:', coords);
         p_image_url: null,
       };
 
-      // eslint-disable-next-line no-console
+       
 console.warn(
         '[AddShowScreen] Sending RPC payload:',
         JSON.stringify(rpcParams, null, 2),
@@ -427,7 +427,7 @@ console.warn(
         }
       }
 
-      // eslint-disable-next-line no-console
+       
 console.warn('[AddShowScreen] Show created successfully:', _data);
       
       Alert.alert(
@@ -480,13 +480,13 @@ console.warn('[AddShowScreen] Show created successfully:', _data);
 
   // Debug function to log date picker selection
   const logDateSelection = (type: 'start' | 'end', date: Date | undefined) => {
-    // eslint-disable-next-line no-console
+     
 console.warn(`[DatePicker] ${type} date selected:`, date);
-    // eslint-disable-next-line no-console
+     
 console.warn(`[DatePicker] Current startDate:`, startDate);
-    // eslint-disable-next-line no-console
+     
 console.warn(`[DatePicker] Current endDate:`, endDate);
-    // eslint-disable-next-line no-console
+     
 console.warn(`[DatePicker] Are dates equal:`, date && startDate && areSameDay(date, startDate));
   };
 

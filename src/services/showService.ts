@@ -129,7 +129,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     );
 
     // Default radius: 25 mi
-    const radius =
+    const _radius =
       typeof filters.radius === 'number' && !isNaN(filters.radius)
         ? filters.radius
         : 25;
@@ -793,7 +793,7 @@ const getDirectPaginatedShows = async (
  * Completely bypass all location filtering if we're still not getting results.
  * This ensures users always see shows even if there are issues with coordinates.
  */
-const getAllActiveShowsFallback = async (
+const _getAllActiveShowsFallback = async (
   params: PaginatedShowsParams
 ): Promise<PaginatedShowsResult> => {
   try {
@@ -885,7 +885,7 @@ const getAllActiveShowsFallback = async (
  * Calculate distance between two points using the Haversine formula
  * @returns Distance in miles
  */
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+const _calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 3958.8; // Earth's radius in miles
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;

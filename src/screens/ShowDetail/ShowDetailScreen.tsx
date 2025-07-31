@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
-import * as userRoleService from '../../services/userRoleService';
+import * as _userRoleService from '../../services/userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
 import { UserRole, Show as ShowType } from '../../types'; // Import enums & primary Show model
@@ -55,8 +55,8 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const nav = useNavigation<any>();
 
   // State for modals and UI elements
-  const [showSeries, setShowSeries] = useState<ShowSeries | null>(null);
-  const [loadingSeries, setLoadingSeries] = useState(false);
+  const [showSeries, _setShowSeries] = useState<ShowSeries | null>(null);
+  const [loadingSeries, _setLoadingSeries] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showDealerDetailModal, setShowDealerDetailModal] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(null);

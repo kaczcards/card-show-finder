@@ -156,9 +156,9 @@ const SentryErrorBoundary: React.FC<SentryErrorBoundaryProps> = ({
     // Log error in development
     if (__DEV__) {
       console.error('Error caught by SentryErrorBoundary:', _error);
-      // eslint-disable-next-line no-console
+       
 console.warn('Component stack:', componentStack);
-      // eslint-disable-next-line no-console
+       
 console.warn('Sentry event ID:', eventId);
     }
 

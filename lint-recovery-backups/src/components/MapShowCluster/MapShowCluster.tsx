@@ -90,7 +90,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
     Array.isArray(shows) ? shows.length : 0;
 
   // Log every render with show count & timestamp
-  // eslint-disable-next-line no-console
+   
 console.warn(
     `[MapShowCluster] Render @ ${renderTimestamp} – received ${currentShowCount} show(s)`
   );
@@ -103,7 +103,7 @@ console.warn(
 
   useEffect(() => {
     if (prevShowsCountRef.current !== currentShowCount) {
-      // eslint-disable-next-line no-console
+       
 console.warn(
         `[MapShowCluster] shows prop changed: ${prevShowsCountRef.current} → ${currentShowCount} @ ${new Date().toISOString()}`
       );
@@ -114,7 +114,7 @@ console.warn(
       !firstNonEmptyLoggedRef.current &&
       currentShowCount > 0
     ) {
-      // eslint-disable-next-line no-console
+       
 console.warn(
         '[MapShowCluster] First non-empty shows array received – initial timing issue should be resolved'
       );
@@ -138,7 +138,7 @@ console.warn(
   useEffect(() => {
     const targetShow = shows.find(show => show.id === DEBUG_SHOW_ID);
     if (targetShow) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[MapShowCluster] [DEBUG_SHOW] Target show is included in props:', {
         id: targetShow.id,
         title: targetShow.title,
@@ -199,25 +199,25 @@ console.warn('[MapShowCluster] [DEBUG_SHOW] Target show is included in props:', 
 
   // Debounced navigation function with enhanced debugging
   const navigateToShow = debounce((showId: string) => {
-    // eslint-disable-next-line no-console
+     
 console.warn('[DEBUG] View Details button pressed for show ID:', _showId);
-    // eslint-disable-next-line no-console
+     
 console.warn('[DEBUG] Current navigation state:', { isNavigating, pressedShowId });
     
     // If already navigating, ignore subsequent clicks
     if (isNavigating) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[DEBUG] Navigation already in progress, ignoring click');
       return;
     }
     
-    // eslint-disable-next-line no-console
+     
 console.warn('[DEBUG] Setting navigation state to active');
     setIsNavigating(true);
     setPressedShowId(_showId);
     
     try {
-      // eslint-disable-next-line no-console
+       
 console.warn('[DEBUG] Looking for show with ID:', _showId);
       const selectedShow = shows.find(show => show.id === _showId);
       
@@ -227,24 +227,24 @@ console.warn('[DEBUG] Looking for show with ID:', _showId);
         return;
       }
       
-      // eslint-disable-next-line no-console
+       
 console.warn('[DEBUG] Found show:', selectedShow.title);
       
       if (onCalloutPress) {
-        // eslint-disable-next-line no-console
+         
 console.warn('[DEBUG] Using provided onCalloutPress handler');
         onCalloutPress(selectedShow.id);
       } else if (navigation) {
         // Fallback to direct navigation if onCalloutPress is not provided
-        // eslint-disable-next-line no-console
+         
 console.warn('[DEBUG] onCalloutPress not provided, using direct navigation');
-        // eslint-disable-next-line no-console
+         
 console.warn('[DEBUG] Navigation object available:', !!navigation);
-        // eslint-disable-next-line no-console
+         
 console.warn('[DEBUG] Navigation state:', Object.keys(navigation));
         
         try {
-          // eslint-disable-next-line no-console
+           
 console.warn('[DEBUG] Attempting to navigate to ShowDetail screen');
           navigation.navigate('ShowDetail', { _showId });
         } catch (navError) {
@@ -260,10 +260,10 @@ console.warn('[DEBUG] Attempting to navigate to ShowDetail screen');
       Alert.alert('Error', 'Could not navigate to show details.');
     } finally {
       // Reset state after navigation (with slight delay for visual feedback)
-      // eslint-disable-next-line no-console
+       
 console.warn('[DEBUG] Setting timeout to reset navigation state');
       setTimeout(() => {
-        // eslint-disable-next-line no-console
+         
 console.warn('[DEBUG] Resetting navigation state');
         setIsNavigating(false);
         setPressedShowId(null);
@@ -275,7 +275,7 @@ console.warn('[DEBUG] Resetting navigation state');
   const renderMarker = (show: Show) => {
     // Debug target show
     if (show.id === DEBUG_SHOW_ID) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[MapShowCluster] [DEBUG_SHOW] Attempting to render target show marker');
     }
     
@@ -284,7 +284,7 @@ console.warn('[MapShowCluster] [DEBUG_SHOW] Attempting to render target show mar
     // Debug target show coordinate sanitization
     if (show.id === DEBUG_SHOW_ID) {
       if (safeCoords) {
-        // eslint-disable-next-line no-console
+         
 console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates passed sanitization:', safeCoords);
       } else {
         console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates FAILED sanitization, marker will not render');
@@ -304,7 +304,7 @@ console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates passed sanitization:', s
 
     // Debug target show successful render
     if (show.id === DEBUG_SHOW_ID) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[MapShowCluster] [DEBUG_SHOW] Successfully rendering marker for target show');
     }
 
@@ -323,7 +323,7 @@ console.warn('[MapShowCluster] [DEBUG_SHOW] Successfully rendering marker for ta
         {/* Entire callout is now clickable — navigates to ShowDetail */}
         <Callout
           onPress={() => {
-            // eslint-disable-next-line no-console
+             
 console.warn('[DEBUG] Callout pressed for show:', show.title);
             navigateToShow(show.id);
           }}
@@ -435,7 +435,7 @@ console.warn('[DEBUG] Callout pressed for show:', show.title);
   const showToPoint = (show: Show) => {
     // Debug target show
     if (show.id === DEBUG_SHOW_ID) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[MapShowCluster] [DEBUG_SHOW] Processing target show in showToPoint');
     }
     
@@ -444,7 +444,7 @@ console.warn('[MapShowCluster] [DEBUG_SHOW] Processing target show in showToPoin
     // Debug target show coordinate sanitization in showToPoint
     if (show.id === DEBUG_SHOW_ID) {
       if (safeCoords) {
-        // eslint-disable-next-line no-console
+         
 console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates passed sanitization in showToPoint:', safeCoords);
       } else {
         console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates FAILED sanitization in showToPoint, will be excluded from clustering');
@@ -476,7 +476,7 @@ console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates passed sanitization in s
   // Check for target show in incoming data
   const targetShow = shows.find(show => show.id === DEBUG_SHOW_ID);
   if (targetShow) {
-    // eslint-disable-next-line no-console
+     
 console.warn('[MapShowCluster] [DEBUG_SHOW] Target show found in shows array:', {
       id: targetShow.id,
       title: targetShow.title,
@@ -499,7 +499,7 @@ console.warn('[MapShowCluster] [DEBUG_SHOW] Target show found in shows array:', 
   const targetInValidShows = validShows.some(show => show.id === DEBUG_SHOW_ID);
   if (targetShow) {
     if (targetInValidShows) {
-      // eslint-disable-next-line no-console
+       
 console.warn('[MapShowCluster] [DEBUG_SHOW] Target show PASSED coordinate validation');
     } else {
       console.warn('[MapShowCluster] [DEBUG_SHOW] Target show FAILED coordinate validation and will be filtered out');
@@ -516,7 +516,7 @@ console.warn('[MapShowCluster] [DEBUG_SHOW] Target show PASSED coordinate valida
 
   // Debug output (only in development to avoid noisy production logs)
   if (__DEV__) {
-    // eslint-disable-next-line no-console
+     
 console.warn(
       `[MapShowCluster] Total shows received: ${totalShows}. ` +
         `Valid coordinates: ${validShows.length}. ` +

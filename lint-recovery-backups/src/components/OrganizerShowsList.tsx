@@ -58,7 +58,7 @@ const OrganizerShowsList = forwardRef<OrganizerShowsListRef, OrganizerShowsListP
     try {
       setLoading(true);
       setError(null);
-      // eslint-disable-next-line no-console
+       
 console.warn('[OrganizerShowsList] ➡️  Fetching organizer shows...');
 
       // 1️⃣  Get all series owned by this organizer
@@ -67,7 +67,7 @@ console.warn('[OrganizerShowsList] ➡️  Fetching organizer shows...');
       });
 
       if (!Array.isArray(mySeries) || mySeries.length === 0) {
-        // eslint-disable-next-line no-console
+         
 console.warn(
           `[OrganizerShowsList] Organizer ${organizerId} has no series.`,
         );
@@ -227,7 +227,7 @@ console.warn(
         };
       }) || [];
       
-      // eslint-disable-next-line no-console
+       
 console.warn(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${organizerId}`);
       setStandaloneShows(mappedStandaloneShows);
       
@@ -326,7 +326,7 @@ console.warn(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} stand
       return;
     }
     // To be implemented - show confirmation dialog and call API
-    // eslint-disable-next-line no-console
+     
 console.warn('Cancel show:', show.id);
   };
   
