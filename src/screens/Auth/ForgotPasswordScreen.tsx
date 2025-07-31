@@ -26,23 +26,23 @@ type AuthStackParamList = {
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
-const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
+const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   // State for form fields
-  const [email, _setEmail] = useState('');
+  const [email, setEmail] = useState('');
 
   // Get auth context
   const { authState, resetPassword, clearError } = useAuth();
   const { isLoading, error } = authState;
 
   // Validate email
-  const _validateEmail = () => {
+  const validateEmail = () => {
     if (!email) {
       Alert.alert('Error', 'Please enter your email address');
       return false;
     }
 
     // Simple email validation
-    const _emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Please enter a valid email address');
       return false;
@@ -52,13 +52,13 @@ const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
   };
 
   // Handle password reset
-  const _handleResetPassword = async () => {
+  const handleResetPassword = async () => {
     if (!validateEmail()) {
       return;
     }
 
     try {
-      await resetPassword(_email);
+      await resetPassword(email);
       Alert.alert(
         'Password Reset Email Sent',
         'Please check your email for instructions to reset your password.',
@@ -70,7 +70,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
   };
 
   // Clear any existing errors when navigating
-  const _handleNavigate = (screen: keyof AuthStackParamList) => {
+  const handleNavigate = (screen: keyof AuthStackParamList) => {
     clearError();
     navigation.navigate(screen);
   };
@@ -89,7 +89,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
             style={styles.backButton}
             onPress={() => handleNavigate('Login')}
           >
-            <Ionicons name="arrow-back" size={_24} color="#007AFF" />
+            <Ionicons name="arrow-back" size={24} color="#007AFF" />
           </TouchableOpacity>
 
           <View style={styles.logoContainer}>
@@ -109,21 +109,21 @@ const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
 
             {error ? (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{_error}</Text>
+                <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={_20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
                 placeholderTextColor="#999"
-                value={_email}
-                onChangeText={_setEmail}
+                value={email}
+                onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                autoCorrect={_false}
+                autoCorrect={false}
                 editable={!isLoading}
                 autoFocus
               />
@@ -131,8 +131,8 @@ const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
 
             <TouchableOpacity
               style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={_handleResetPassword}
-              disabled={_isLoading}
+              onPress={handleResetPassword}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
@@ -145,7 +145,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
               <Text style={styles.loginText}>Remember your password? </Text>
               <TouchableOpacity
                 onPress={() => handleNavigate('Login')}
-                disabled={_isLoading}
+                disabled={isLoading}
               >
                 <Text style={styles.loginLink}>Sign In</Text>
               </TouchableOpacity>
@@ -166,7 +166,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ _navigation }) => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',

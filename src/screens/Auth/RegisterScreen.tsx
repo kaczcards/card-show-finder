@@ -27,25 +27,25 @@ type AuthStackParamList = {
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
-const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
+const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   // State for form fields
-  const [email, _setEmail] = useState('');
-  const [password, _setPassword] = useState('');
-  const [confirmPassword, _setConfirmPassword] = useState('');
-  const [firstName, _setFirstName] = useState('');
-  const [lastName, _setLastName] = useState('');
-  const [homeZipCode, _setHomeZipCode] = useState('');
-  const [showPassword, setShowPassword] = useState(_false);
-  const [isSubmitting, setIsSubmitting] = useState(_false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [homeZipCode, setHomeZipCode] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.ATTENDEE);
 
   // Get auth context
   // FIX: Destructure authState from useAuth, then get error from authState
   const { register, authState, clearError } = useAuth();
-  const { _error } = authState; // Correctly access error from authState
+  const { error } = authState; // Correctly access error from authState
 
   // Validate form
-  const _validateForm = () => {
+  const validateForm = () => {
     if (!email || !password || !confirmPassword || !firstName || !homeZipCode) {
       Alert.alert('Error', 'Please fill in all required fields');
       return false;
@@ -57,14 +57,14 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
     }
 
     // Simple email validation
-    const _emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Please enter a valid email address');
       return false;
     }
 
     // ZIP code validation (US format - 5 digits)
-    const _zipRegex = /^\d{_5}$/;
+    const zipRegex = /^\d{5}$/;
     if (!zipRegex.test(homeZipCode)) {
       Alert.alert('Error', 'Please enter a valid 5-digit ZIP code');
       return false;
@@ -80,16 +80,16 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
   };
 
   // Handle registration
-  const _handleRegister = async () => {
+  const handleRegister = async () => {
     if (!validateForm()) {
       return;
     }
 
     try {
-      setIsSubmitting(_true);
+      setIsSubmitting(true);
       // TODO: update AuthContext.register signature to include role
       // @ts-ignore – temporary until context/ service updated
-      await register(_email, _password, firstName, lastName, homeZipCode, selectedRole);
+      await register(email, password, firstName, lastName, homeZipCode, selectedRole);
       Alert.alert(
         'Registration Successful',
         'Your account has been created. Please verify your email address.',
@@ -126,12 +126,12 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
       // --- Generic fallback ------------------------------------------
       Alert.alert('Registration Failed', message || 'Please try again');
     } finally {
-      setIsSubmitting(_false);
+      setIsSubmitting(false);
     }
   };
 
   // Clear any existing errors when navigating
-  const _handleNavigate = (screen: keyof AuthStackParamList) => {
+  const handleNavigate = (screen: keyof AuthStackParamList) => {
     clearError();
     navigation.navigate(screen);
   };
@@ -161,36 +161,36 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
 
             {error ? ( // This now correctly accesses error from authState
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{_error}</Text>
+                <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={_20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email *"
                 placeholderTextColor="#999"
-                value={_email}
-                onChangeText={_setEmail}
+                value={email}
+                onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                autoCorrect={_false}
+                autoCorrect={false}
                 editable={!isSubmitting}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={_20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password *"
                 placeholderTextColor="#999"
-                value={_password}
-                onChangeText={_setPassword}
+                value={password}
+                onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoCorrect={_false}
+                autoCorrect={false}
                 editable={!isSubmitting}
               />
               <TouchableOpacity
@@ -199,64 +199,64 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
               >
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={_20}
+                  size={20}
                   color="#666"
                 />
               </TouchableOpacity>
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={_20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Confirm Password *"
                 placeholderTextColor="#999"
-                value={_confirmPassword}
-                onChangeText={_setConfirmPassword}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoCorrect={_false}
+                autoCorrect={false}
                 editable={!isSubmitting}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={_20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="First Name *"
                 placeholderTextColor="#999"
-                value={_firstName}
-                onChangeText={_setFirstName}
-                autoCorrect={_false}
+                value={firstName}
+                onChangeText={setFirstName}
+                autoCorrect={false}
                 editable={!isSubmitting}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={_20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Last Name (_Optional)"
+                placeholder="Last Name (Optional)"
                 placeholderTextColor="#999"
-                value={_lastName}
-                onChangeText={_setLastName}
-                autoCorrect={_false}
+                value={lastName}
+                onChangeText={setLastName}
+                autoCorrect={false}
                 editable={!isSubmitting}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="location-outline" size={_20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="location-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Home ZIP Code *"
                 placeholderTextColor="#999"
-                value={_homeZipCode}
-                onChangeText={_setHomeZipCode}
+                value={homeZipCode}
+                onChangeText={setHomeZipCode}
                 keyboardType="numeric"
-                maxLength={_5}
-                autoCorrect={_false}
+                maxLength={5}
+                autoCorrect={false}
                 editable={!isSubmitting}
               />
             </View>
@@ -267,9 +267,9 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
             <TouchableOpacity
               style={styles.roleOption}
               onPress={() => setSelectedRole(UserRole.ATTENDEE)}
-              disabled={_isSubmitting}
+              disabled={isSubmitting}
             >
-              <Ionicons name="person-outline" size={_24} color="#666" style={styles.roleIcon} />
+              <Ionicons name="person-outline" size={24} color="#666" style={styles.roleIcon} />
               <View style={styles.roleTextContainer}>
                 <Text style={styles.roleLabel}>Attendee</Text>
                 <Text style={styles.roleDescription}>
@@ -283,7 +283,7 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
                     ? 'radio-button-on'
                     : 'radio-button-off'
                 }
-                size={_22}
+                size={22}
                 color="#007AFF"
               />
             </TouchableOpacity>
@@ -292,11 +292,11 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
             <TouchableOpacity
               style={styles.roleOption}
               onPress={() => setSelectedRole(UserRole.DEALER)}
-              disabled={_isSubmitting}
+              disabled={isSubmitting}
             >
               <Ionicons
                 name="briefcase-outline"
-                size={_24}
+                size={24}
                 color="#666"
                 style={styles.roleIcon}
               />
@@ -311,7 +311,7 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
                 name={
                   selectedRole === UserRole.DEALER ? 'radio-button-on' : 'radio-button-off'
                 }
-                size={_22}
+                size={22}
                 color="#007AFF"
               />
             </TouchableOpacity>
@@ -321,8 +321,8 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
 
             <TouchableOpacity
               style={[styles.button, isSubmitting && styles.buttonDisabled]}
-              onPress={_handleRegister}
-              disabled={_isSubmitting}
+              onPress={handleRegister}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <ActivityIndicator color="#fff" />
@@ -335,7 +335,7 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
               <Text style={styles.loginText}>Already have an account? </Text>
               <TouchableOpacity
                 onPress={() => handleNavigate('Login')}
-                disabled={_isSubmitting}
+                disabled={isSubmitting}
               >
                 <Text style={styles.loginLink}>Sign In</Text>
               </TouchableOpacity>
@@ -347,7 +347,7 @@ const RegisterScreen: React.FC<Props> = ({ _navigation }) => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
