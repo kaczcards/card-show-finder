@@ -9,7 +9,7 @@ import {
   Alert,
   Platform,
   Linking,
-  RefreshControl,
+  RefreshControl as _RefreshControl,
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

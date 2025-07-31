@@ -71,7 +71,8 @@ export const useShowDetail = (
   const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isClaimingShow, _setIsClaimingShow] = useState(false);
-  const [isShowClaimed, setIsShowClaimed] = useState(false);
+  // Tracks whether the show has already been claimed by an organizer
+  const [_isShowClaimed, setIsShowClaimed] = useState(false);
   const [participatingDealers, setParticipatingDealers] = useState<Dealer[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
   

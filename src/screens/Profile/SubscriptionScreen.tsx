@@ -29,7 +29,7 @@ const SubscriptionScreen: React.FC = () => {
   const { authState, refreshUserRole } = useAuth(); // Destructure refreshUserRole from useAuth
   const { user } = authState;
   const navigation = useNavigation();
-  const { width } = useWindowDimensions();
+  const { width: _width } = useWindowDimensions();
   
   const [loading, setLoading] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);

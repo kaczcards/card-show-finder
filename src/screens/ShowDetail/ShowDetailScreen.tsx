@@ -7,8 +7,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  Linking,
-  Share
+  Linking as _Linking,
+  Share as _Share
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CommonActions, useNavigation } from '@react-navigation/native';

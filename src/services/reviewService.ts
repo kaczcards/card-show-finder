@@ -8,7 +8,7 @@
  */
 
 import { supabase } from '../supabase';
-import { User } from '../types';
+import { User as _User } from '../types';
 
 /**
  * Review type definition based on the database schema

@@ -25,7 +25,7 @@ const RootNavigator: React.FC = () => {
   const { isAuthenticated, isLoading } = authState;
   
   // Get theme from context
-  const { theme } = useTheme();
+  const { theme: _theme } = useTheme();
 
   // Root stack that will hold the main app and the admin tools
   const RootStack = createNativeStackNavigator();

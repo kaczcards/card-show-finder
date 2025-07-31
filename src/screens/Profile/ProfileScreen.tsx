@@ -13,7 +13,7 @@ const ProfileScreen: React.FC = () => {
   // Pull favoriteCount from authState so it can be displayed below.
   // We intentionally omit `authState.error` from UI display here; each action
   // (e.g., saveChanges) surfaces its own errors inline.
-  const { user, isLoading, favoriteCount } = authState;
+  const { user, isLoading, favoriteCount: _favoriteCount } = authState;
   const navigation = useNavigation();
   
   // State for edit mode
@@ -25,7 +25,7 @@ const ProfileScreen: React.FC = () => {
   const [isPasswordResetLoading, setIsPasswordResetLoading] = useState(false);
   // Admin status
   const [isAdmin, _setIsAdmin] = useState(false);
-  const [checkingAdmin, _setCheckingAdmin] = useState(false);
+  const [_checkingAdmin, _setCheckingAdmin] = useState(false);
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');
