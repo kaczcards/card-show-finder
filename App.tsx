@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+// Intentionally unused – kept here for future navigation container instrumentation
+import { NavigationContainer as _NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Global toast notifications
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
@@ -133,10 +134,10 @@ export default function App() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       const TEST_URL = 'https://jsonplaceholder.typicode.com/todos/1';
-      console.log('[Diagnostics] Pinging public endpoint:', TEST_URL);
+      console.warn('[Diagnostics] Pinging public endpoint:', TEST_URL);
       try {
         const resp = await fetch(TEST_URL, { signal: controller.signal });
-        console.log(
+        console.warn(
           `[Diagnostics] Fetch completed – status: ${resp.status} ${resp.ok ? '(OK)' : '(ERR)'}`
         );
         if (!resp.ok) {
@@ -145,7 +146,7 @@ export default function App() {
           return;
         }
         const data = await resp.json();
-        console.log('[Diagnostics] Response JSON:', data);
+        console.warn('[Diagnostics] Response JSON:', data);
         setNetStatus('success');
       } catch (err: any) {
         const msg =

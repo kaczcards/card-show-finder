@@ -9,7 +9,7 @@ import {
   Animated,
   Dimensions,
   PanResponder,
-  Platform,
+  Platform as _Platform,
   Switch,
   TextInput,
 } from 'react-native';
@@ -48,9 +48,9 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   const [maxEntryFeeText, setMaxEntryFeeText] = useState('');
 
   // Date picker state
-  const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [datePickerType, setDatePickerType] = useState<'start' | 'end'>('start');
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [_datePickerVisible, _setDatePickerVisible] = useState(false);
+  const [_datePickerType, _setDatePickerType] = useState<'start' | 'end'>('start');
+  const [_selectedDate, _setSelectedDate] = useState<Date | null>(null);
 
   // Reset local filters when the component becomes visible
   useEffect(() => {
@@ -269,7 +269,7 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   };
 
   // Temporarily handle showing the date picker - just update the text fields manually
-  const handleShowDatePicker = (type: 'start' | 'end') => {
+  const _handleShowDatePicker = (type: 'start' | 'end') => {
      
 console.warn(`Would show date picker for ${type} date`);
     // Simply provide a text field instruction instead of showing the date picker

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
-import * as Sentry from 'sentry-expo';
+import * as Sentry from 'sentry-expo'; // Temporarily disabled
 import { getSentryErrorBoundary, captureException } from '../services/sentryConfig';
 
 // Get the Sentry ErrorBoundary component
