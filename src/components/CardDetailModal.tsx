@@ -38,8 +38,8 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [isLoading, setIsLoading] = useState(_false);
-  const [_imagePickerVisible, setImagePickerVisible] = useState(_false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [_imagePickerVisible, setImagePickerVisible] = useState(false);
 
   // Initialize form with card data when modal opens
   useEffect(() => {
@@ -78,7 +78,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
   // Handle image selection from camera
   const _takePhoto = async () => {
     try {
-      setImagePickerVisible(_false);
+      setImagePickerVisible(false);
       const _result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -105,7 +105,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
   // Handle image selection from gallery
   const _pickImage = async () => {
     try {
-      setImagePickerVisible(_false);
+      setImagePickerVisible(false);
       const _result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -137,7 +137,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
     }
 
     try {
-      setIsLoading(_true);
+      setIsLoading(true);
       
       const _updatedCard: Partial<UserCard> = {
         imageUrl,
@@ -147,11 +147,11 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
       };
 
       await onSave(_updatedCard);
-      setIsLoading(_false);
+      setIsLoading(false);
       onClose();
     } catch (_error) {
       console.error('Error saving card:', _error);
-      setIsLoading(_false);
+      setIsLoading(false);
       Alert.alert('Error', 'Failed to save card. Please try again.');
     }
   };
@@ -160,14 +160,14 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
   const _renderImagePickerOptions = () => (
     <Modal
       visible={_imagePickerVisible}
-      transparent={_true}
+      transparent={true}
       animationType="fade"
-      onRequestClose={() => setImagePickerVisible(_false)}
+      onRequestClose={() => setImagePickerVisible(false)}
     >
       <TouchableOpacity
         style={styles.imagePickerOverlay}
         activeOpacity={_1}
-        onPress={() => setImagePickerVisible(_false)}
+        onPress={() => setImagePickerVisible(false)}
       >
         <View style={styles.imagePickerContainer}>
           <TouchableOpacity style={styles.imagePickerOption} onPress={_takePhoto}>
@@ -186,7 +186,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
           
           <TouchableOpacity
             style={[styles.imagePickerOption, styles.imagePickerCancelOption]}
-            onPress={() => setImagePickerVisible(_false)}
+            onPress={() => setImagePickerVisible(false)}
           >
             <Text style={styles.imagePickerCancelText}>Cancel</Text>
           </TouchableOpacity>
@@ -199,7 +199,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
     <Modal
       visible={_visible}
       animationType="slide"
-      transparent={_false}
+      transparent={false}
       onRequestClose={_onClose}
     >
       <KeyboardAvoidingView
@@ -241,7 +241,7 @@ const CardDetailModal: React.FC<CardDetailModalProps> = ({
             )}
             <TouchableOpacity
               style={styles.editImageButton}
-              onPress={() => setImagePickerVisible(_true)}
+              onPress={() => setImagePickerVisible(true)}
             >
               <Ionicons
                 name={imageUrl ? "camera" : "add-circle"}

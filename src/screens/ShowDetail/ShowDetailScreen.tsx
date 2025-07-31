@@ -56,9 +56,9 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
 
   // State for modals and UI elements
   const [showSeries, _setShowSeries] = useState<ShowSeries | null>(null);
-  const [_loadingSeries, _setLoadingSeries] = useState(_false);
-  const [showReviewForm, setShowReviewForm] = useState(_false);
-  const [_showDealerDetailModal, setShowDealerDetailModal] = useState(_false);
+  const [_loadingSeries, _setLoadingSeries] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [_showDealerDetailModal, setShowDealerDetailModal] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<{ id: string; name: string } | null>(null);
 
   // ------------------------------------------------------------------
@@ -187,7 +187,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   // Handle dealer interactions
   const _handleViewDealerDetails = (dealerId: string, dealerName: string) => {
     setSelectedDealer({ id: dealerId, name: dealerName });
-    setShowDealerDetailModal(_true);
+    setShowDealerDetailModal(true);
   };
 
   // Handle show management
@@ -263,7 +263,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         onToggleFavorite={_toggleFavorite}
         onOpenMap={_openMapLocation}
         onShare={_shareShow}
-        onReview={() => setShowReviewForm(_true)}
+        onReview={() => setShowReviewForm(true)}
           show={_parsedShow}
         />
       )}
@@ -296,7 +296,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         {/* Dealers List */}
         <DealersList
           dealers={_participatingDealers}
-          isLoading={_false}
+          isLoading={false}
           onViewDealerDetails={_handleViewDealerDetails}
         />
         
@@ -316,7 +316,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       {selectedDealer && (
         <DealerDetailModal
           isVisible={_showDealerDetailModal}
-          onClose={() => setShowDealerDetailModal(_false)}
+          onClose={() => setShowDealerDetailModal(false)}
           dealerId={selectedDealer.id}
           showId={_showId}
           dealerName={selectedDealer.name}
@@ -328,7 +328,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           showId={_showId}
           seriesId={showSeries.id}
           onSubmit={() => {}}
-          onCancel={() => setShowReviewForm(_false)}
+          onCancel={() => setShowReviewForm(false)}
         />
       )}
     </ScrollView>

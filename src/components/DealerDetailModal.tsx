@@ -27,7 +27,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
   _dealerName,
 }) => {
   const [boothInfo, setBoothInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(_true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,8 +37,8 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
 
     const _fetchBoothInfo = async () => {
       try {
-        setLoading(_true);
-        setError(_null);
+        setLoading(true);
+        setError(null);
 
         // Primary query for this dealer / show pair
         const { _data, error: _fetchError } = await supabase
@@ -51,7 +51,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
         if (_fetchError) {
           console.error('Error fetching booth info:', _fetchError);
           setError('Failed to load booth information.');
-          setBoothInfo(_null);
+          setBoothInfo(null);
           return;
         }
 
@@ -59,9 +59,9 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
       } catch (err: any) {
         console.error('Unexpected error in fetchBoothInfo:', _err);
         setError(err.message || 'An unexpected error occurred.');
-        setBoothInfo(_null);
+        setBoothInfo(null);
       } finally {
-        setLoading(_false);
+        setLoading(false);
       }
     };
 
@@ -71,7 +71,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
   return (
     <Modal
       animationType="slide"
-      transparent={_true}
+      transparent={true}
       visible={_isVisible}
       onRequestClose={_onClose}
     >

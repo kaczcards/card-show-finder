@@ -30,7 +30,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
   isLoading = false,
 }) => {
   const [content, setContent] = useState('');
-  const [isSaving, setIsSaving] = useState(_false);
+  const [isSaving, setIsSaving] = useState(false);
   const [sharingShowId, setSharingShowId] = useState<string | null>(null);
   const [sharedShows, setSharedShows] = useState<string[]>([]);
 
@@ -49,7 +49,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
     }
 
     try {
-      setIsSaving(_true);
+      setIsSaving(true);
       
       let result;
       if (_wantList) {
@@ -60,7 +60,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         result = await createWantList(_userId, _content);
       }
 
-      setIsSaving(_false);
+      setIsSaving(false);
 
       if (result.error) {
         throw result.error;
@@ -71,7 +71,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         Alert.alert('Success', 'Your want list has been saved successfully.');
       }
     } catch (_error) {
-      setIsSaving(_false);
+      setIsSaving(false);
       console.error('Error saving want list:', _error);
       Alert.alert('Error', 'Failed to save your want list. Please try again.');
     }
@@ -84,7 +84,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
       
       const _result = await shareWantList(_userId, _showId);
       
-      setSharingShowId(_null);
+      setSharingShowId(null);
       
       if (result.error) {
         throw result.error;
@@ -96,7 +96,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
         Alert.alert('Success', 'Your want list has been shared with MVP dealers at this show.');
       }
     } catch (_error) {
-      setSharingShowId(_null);
+      setSharingShowId(null);
       console.error('Error sharing want list:', _error);
       Alert.alert('Error', 'Failed to share your want list. Please try again.');
     }
@@ -208,7 +208,7 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
             data={_upcomingShows}
             renderItem={_renderShowItem}
             keyExtractor={(_item) => item.id}
-            scrollEnabled={_false} // Prevent nested scrolling issues
+            scrollEnabled={false} // Prevent nested scrolling issues
             ListEmptyComponent={
               <Text style={styles.emptyText}>
                 You don't have any upcoming shows. Add shows to your calendar to share your want list with dealers.

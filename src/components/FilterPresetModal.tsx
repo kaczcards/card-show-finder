@@ -69,7 +69,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
     try {
       if (!userId) return;
       setLoading(true);
-      setError(_null);
+      setError(null);
       const _userPresets = await loadFilterPresetsFromSupabase(_userId);
       setPresets(_userPresets);
     } catch (err: any) {
@@ -94,7 +94,7 @@ const FilterPresetModal: React.FC<FilterPresetModalProps> = ({
 
     try {
       setSavingPreset(true);
-      setError(_null);
+      setError(null);
 
       // Check if a preset with this name already exists
       const _existingPreset = presets.find(

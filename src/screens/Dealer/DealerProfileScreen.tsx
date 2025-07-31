@@ -45,11 +45,11 @@ const DealerProfileScreen: React.FC<{
   const { user: currentUser } = useAuth() as any;
   
   const [dealer, setDealer] = useState<DealerProfile | null>(null);
-  const [_loading, setLoading] = useState(_true);
-  const [error, setError] = useState(_null);
+  const [_loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   // Booth information (specific to a show registration)
   const [boothInfo, setBoothInfo] = useState<any>(null);
-  const [loadingBoothInfo, setLoadingBoothInfo] = useState(_false);
+  const [loadingBoothInfo, setLoadingBoothInfo] = useState(false);
   
   // Load dealer profile
   useEffect(() => {
@@ -59,7 +59,7 @@ const DealerProfileScreen: React.FC<{
     ): Promise<void> => {
       if (!dId || !sId) return;
       try {
-        setLoadingBoothInfo(_true);
+        setLoadingBoothInfo(true);
         const { _data, _error } = await supabase
           .from('show_participants')
           .select('*')
@@ -75,13 +75,13 @@ const DealerProfileScreen: React.FC<{
       } catch (_err) {
         console.error('Unexpected error in fetchBoothInfo:', _err);
       } finally {
-        setLoadingBoothInfo(_false);
+        setLoadingBoothInfo(false);
       }
     };
 
     const _loadDealerProfile = async () => {
       try {
-        setLoading(_true);
+        setLoading(true);
         const _profile = await getDealerProfile(_dealerId);
         setDealer(_profile);
 
@@ -94,7 +94,7 @@ const DealerProfileScreen: React.FC<{
         // Cast to any so TS accepts the string assignment
         setError('Failed to load dealer profile' as any);
       } finally {
-        setLoading(_false);
+        setLoading(false);
       }
     };
     

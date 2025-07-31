@@ -32,8 +32,8 @@ const MyShowsScreen: React.FC = () => {
   const [pastShows, setPastShows] = useState<Show[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
-  const [reviewFormVisible, setReviewFormVisible] = useState(_false);
-  const [loading, setLoading] = useState(_true);
+  const [reviewFormVisible, setReviewFormVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // Track which shows have dealer booth info
@@ -44,8 +44,8 @@ const MyShowsScreen: React.FC = () => {
     
     const _fetchUserShows = async () => {
       try {
-        setLoading(_true);
-        setError(_null);
+        setLoading(true);
+        setError(null);
         
         const _userId = authState.user?.id;
         const _currentDate = new Date().toISOString();
@@ -217,7 +217,7 @@ const MyShowsScreen: React.FC = () => {
         console.error('Error in fetchUserShows:', _err);
         setError('Failed to load your shows. Please try again later.');
       } finally {
-        setLoading(_false);
+        setLoading(false);
       }
     };
     
@@ -238,7 +238,7 @@ const MyShowsScreen: React.FC = () => {
 
   const _openReviewForm = (_show: Show) => {
     setSelectedShow(_show);
-    setReviewFormVisible(_true);
+    setReviewFormVisible(true);
   };
 
   const _submitReview = async (rating: number, comment: string) => {
@@ -274,8 +274,8 @@ const MyShowsScreen: React.FC = () => {
         };
         
         setReviews((_prev) => [...prev, newReview]);
-        setReviewFormVisible(_false);
-        setSelectedShow(_null);
+        setReviewFormVisible(false);
+        setSelectedShow(null);
         
         Alert.alert('Success', 'Your review has been submitted!');
       }
@@ -458,8 +458,8 @@ const MyShowsScreen: React.FC = () => {
           seriesId={selectedShow.seriesId ?? ''}
           onSubmit={_submitReview}
           onCancel={() => {
-            setReviewFormVisible(_false);
-            setSelectedShow(_null);
+            setReviewFormVisible(false);
+            setSelectedShow(null);
           }}
         />
       )}

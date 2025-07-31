@@ -39,8 +39,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   return (
     <Modal
       animationType="slide"
-      transparent={_true}
-      visible={_true} // This component is always visible when rendered
+      transparent={true}
+      visible={true} // This component is always visible when rendered
       onRequestClose={_onCancel}
     >
       <View style={styles.centeredView}>

@@ -31,8 +31,8 @@ const SubscriptionScreen: React.FC = () => {
   const _navigation = useNavigation();
   const { _width } = useWindowDimensions();
   
-  const [loading, setLoading] = useState(_false);
-  const [processingPayment, setProcessingPayment] = useState(_false);
+  const [loading, setLoading] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
   const [timeRemaining, setTimeRemaining] = useState<{ days: number, hours: number } | null>(null);
@@ -78,7 +78,7 @@ const SubscriptionScreen: React.FC = () => {
   const _loadSubscriptionDetails = () => {
     if (!user) return;
     
-    setLoading(_true);
+    setLoading(true);
     try {
       const _details = getSubscriptionDetails(_user);
       setSubscriptionDetails(_details);
@@ -104,7 +104,7 @@ const SubscriptionScreen: React.FC = () => {
       console.error('Error loading subscription details:', _error);
       Alert.alert('Error', 'Failed to load subscription details');
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   };
   
@@ -116,7 +116,7 @@ const SubscriptionScreen: React.FC = () => {
     }
     if (!user || !selectedPlan) return;
     
-    setProcessingPayment(_true);
+    setProcessingPayment(true);
     try {
       const _result = await initiateSubscriptionPurchase(user.id, selectedPlan.id);
       
@@ -134,7 +134,7 @@ const SubscriptionScreen: React.FC = () => {
       console.error('Error purchasing subscription:', _error);
       Alert.alert('Error', error.message || 'Failed to process payment');
     } finally {
-      setProcessingPayment(_false);
+      setProcessingPayment(false);
     }
   };
   
@@ -145,7 +145,7 @@ const SubscriptionScreen: React.FC = () => {
     }
     if (!user || !selectedPlan) return;
     
-    setProcessingPayment(_true);
+    setProcessingPayment(true);
     try {
       const _result = await renewSubscription(user.id, selectedPlan.id);
       
@@ -163,7 +163,7 @@ const SubscriptionScreen: React.FC = () => {
       console.error('Error renewing subscription:', _error);
       Alert.alert('Error', error.message || 'Failed to renew subscription');
     } finally {
-      setProcessingPayment(_false);
+      setProcessingPayment(false);
     }
   };
   
@@ -183,7 +183,7 @@ const SubscriptionScreen: React.FC = () => {
           text: 'Yes, Cancel',
           style: 'destructive',
           onPress: async () => {
-            setLoading(_true);
+            setLoading(true);
             try {
               const _result = await cancelSubscription(user.id);
               
@@ -201,7 +201,7 @@ const SubscriptionScreen: React.FC = () => {
               console.error('Error cancelling subscription:', _error);
               Alert.alert('Error', error.message || 'Failed to cancel subscription');
             } finally {
-              setLoading(_false);
+              setLoading(false);
             }
           }
         }
@@ -443,7 +443,7 @@ const SubscriptionScreen: React.FC = () => {
       <View style={styles.comparisonContainer}>
         <Text style={styles.sectionTitle}>Plan Comparison</Text>
         
-        <ScrollView horizontal showsHorizontalScrollIndicator={_false}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.comparisonTable}>
             {/* Header Row */}
             <View style={styles.comparisonRow}>

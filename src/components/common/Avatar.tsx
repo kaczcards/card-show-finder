@@ -28,8 +28,8 @@ const Avatar: React.FC<AvatarProps> = ({
   imageStyle,
   textStyle,
 }) => {
-  const [isLoading, setIsLoading] = useState(_false);
-  const [hasError, setHasError] = useState(_false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Get initials from name
   const _getInitials = (): string => {
@@ -94,11 +94,11 @@ const Avatar: React.FC<AvatarProps> = ({
             },
             imageStyle,
           ]}
-          onLoadStart={() => setIsLoading(_true)}
-          onLoadEnd={() => setIsLoading(_false)}
+          onLoadStart={() => setIsLoading(true)}
+          onLoadEnd={() => setIsLoading(false)}
           onError={() => {
-            setHasError(_true);
-            setIsLoading(_false);
+            setHasError(true);
+            setIsLoading(false);
           }}
         />
         {isLoading && (

@@ -2,7 +2,7 @@
  * Geocode Existing Shows Script
  * 
  * This script finds all shows in the database that have addresses but missing
- * or invalid coordinates (_null, _undefined, or near 0,0) and geocodes them.
+ * or invalid coordinates (null, _undefined, or near 0,0) and geocodes them.
  * 
  * Usage:
  * 1. Make sure you're logged in to Supabase (this uses the existing client)
@@ -71,7 +71,7 @@ const _calculateEta = (stats: GeocodingStats): string => {
 };
 
 /**
- * Check if coordinates are missing or invalid (_null, _undefined, or near 0,0)
+ * Check if coordinates are missing or invalid (null, _undefined, or near 0,0)
  */
 const _hasInvalidCoordinates = (show: Show): boolean => {
   // Check if coordinates are missing

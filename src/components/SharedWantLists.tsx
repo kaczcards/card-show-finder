@@ -41,20 +41,20 @@ interface SharedWantList {
 const SharedWantLists: React.FC<SharedWantListsProps> = ({ _showId }) => {
   const { _user } = useAuth().authState;
   const [lists, setLists] = useState<SharedWantList[]>([]);
-  const [_loading, setLoading] = useState(_true);
+  const [_loading, setLoading] = useState(true);
   const [_error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const _fetchWantLists = useCallback(async () => {
     if (!user) {
       setError('You must be logged in to view want lists.');
-      setLoading(_false);
+      setLoading(false);
       return;
     }
 
     try {
-      setLoading(_true);
-      setError(_null);
+      setLoading(true);
+      setError(null);
       const { data, error: fetchError } = await getSharedWantListsForDealer(user.id, _showId);
 
       if (_fetchError) {
@@ -66,7 +66,7 @@ const SharedWantLists: React.FC<SharedWantListsProps> = ({ _showId }) => {
       console.error('Error fetching shared want lists:', _err);
       setError('Failed to load want lists. Please try again.');
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   }, [user, showId]);
 

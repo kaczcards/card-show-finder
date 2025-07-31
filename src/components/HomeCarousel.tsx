@@ -198,7 +198,7 @@ const _HomeCarousel = ({ _onShowPress }: HomeCarouselProps) => {
         keyExtractor={(_item) => item.id}
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={_false}
+        showsHorizontalScrollIndicator={false}
         snapToInterval={ITEM_WIDTH + 20} // width + margin
         decelerationRate="fast"
         contentContainerStyle={styles.flatListContent}
@@ -208,7 +208,7 @@ const _HomeCarousel = ({ _onShowPress }: HomeCarouselProps) => {
         )}
         onViewableItemsChanged={_onViewableItemsChanged}
         viewabilityConfig={_viewabilityConfig}
-        removeClippedSubviews={_false}
+        removeClippedSubviews={false}
       />
       {renderPagination()}
     </View>
