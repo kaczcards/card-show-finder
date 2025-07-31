@@ -1,8 +1,10 @@
 import ShowParticipationScreen from './ShowParticipationScreen';
+import DealerProfileScreen from './DealerProfileScreen';
 
-export { ShowParticipationScreen };
+export { ShowParticipationScreen, DealerProfileScreen };
 
 // Export default for direct import
 export default {
-  _ShowParticipationScreen
+  ShowParticipationScreen,
+  DealerProfileScreen,
 };
