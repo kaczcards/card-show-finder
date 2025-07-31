@@ -30,33 +30,33 @@ interface AttendeeWantListsProps {
 
 const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
   userId,
-  _userRole,
+  userRole,
   shows = [],
   initialShowId,
 }) => {
   // State for want lists data
   const [wantLists, setWantLists] = useState<WantListWithUser[]>([]);
-  const [_totalCount, setTotalCount] = useState<number>(0);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
-  const [_pageSize] = useState<number>(10);
+  const [pageSize] = useState<number>(10);
   const [hasMore, setHasMore] = useState<boolean>(false);
   
   // State for UI
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [_isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedShowId, setSelectedShowId] = useState<string | undefined>(initialShowId);
 
   // Function to load want lists
-  const _loadWantLists = useCallback(async (
+  const loadWantLists = useCallback(async (
     pageNum: number = 1,
     refresh: boolean = false,
     search: string = searchTerm,
-    _showId: string | undefined = selectedShowId
+    showId: string | undefined = selectedShowId
   ) => {
     try {
-      if (_refresh) {
+      if (refresh) {
         setIsRefreshing(true);
       } else if (!refresh && pageNum === 1) {
         setIsLoading(true);
@@ -67,10 +67,10 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
       let result;
       
       // If a specific show is selected, use the show-specific function
-      if (_showId) {
+      if (showId) {
         result = await getWantListsForShow(
-          _userId,
-          _showId,
+          userId,
+          showId,
           pageNum,
           pageSize,
           search
@@ -112,8 +112,8 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
         setPage(result.data.page);
         setHasMore(result.data.hasMore);
       }
-    } catch (_err) {
-      console.error('Error loading want lists:', _err);
+    } catch (err) {
+      console.error('Error loading want lists:', err);
       setError(err instanceof Error ? err.message : 'Failed to load want lists');
     } finally {
       setIsLoading(false);
@@ -123,35 +123,35 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
 
   // Load data when component mounts or filters change
   useEffect(() => {
-    loadWantLists(_1, false);
-  }, [_loadWantLists]);
+    loadWantLists(1, false);
+  }, [loadWantLists]);
 
   // Handle search with debounce
-  const _handleSearch = debounce((text: string) => {
-    setSearchTerm(_text);
-    loadWantLists(_1, false, text);
+  const handleSearch = debounce((text: string) => {
+    setSearchTerm(text);
+    loadWantLists(1, false, text);
   }, 500);
 
   // Handle show selection
-  const _handleShowChange = (showId: string) => {
+  const handleShowChange = (showId: string) => {
     setSelectedShowId(showId === 'all' ? undefined : showId);
-    loadWantLists(_1, false, searchTerm, showId === 'all' ? undefined : showId);
+    loadWantLists(1, false, searchTerm, showId === 'all' ? undefined : showId);
   };
 
   // Handle refresh
-  const _handleRefresh = () => {
-    loadWantLists(_1, true);
+  const handleRefresh = () => {
+    loadWantLists(1, true);
   };
 
   // Handle pagination
-  const _handleLoadMore = () => {
+  const handleLoadMore = () => {
     if (hasMore && !isLoading) {
       loadWantLists(page + 1);
     }
   };
 
   // Render a want list item
-  const _renderWantListItem = ({ _item }: { item: WantListWithUser }) => {
+  const renderWantListItem = ({ item }: { item: WantListWithUser }) => {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
@@ -185,12 +185,12 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
   };
 
   // Render empty state
-  const _renderEmptyState = () => {
-    if (_isLoading) return null;
+  const renderEmptyState = () => {
+    if (isLoading) return null;
     
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="list-outline" size={_48} color="#ccc" />
+        <Ionicons name="list-outline" size={48} color="#ccc" />
         <Text style={styles.emptyText}>No want lists found</Text>
         <Text style={styles.emptySubtext}>
           {searchTerm 
@@ -203,8 +203,8 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
     );
   };
 
-  // Render header components (_title, _search, filter, error)
-  const _renderHeader = () => {
+  // Render header components (title, search, filter, error)
+  const renderHeader = () => {
     return (
       <>
         {/* Header with title */}
@@ -224,23 +224,23 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
         {/* Search and filter section */}
         <View style={styles.filterContainer}>
           <View style={styles.searchContainer}>
-            <Ionicons name="search" size={_20} color="#666" style={styles.searchIcon} />
+            <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search want lists..."
               placeholderTextColor="#999"
-              onChangeText={_handleSearch}
-              defaultValue={_searchTerm}
+              onChangeText={handleSearch}
+              defaultValue={searchTerm}
             />
             {searchTerm ? (
               <TouchableOpacity 
                 onPress={() => {
                   setSearchTerm('');
-                  loadWantLists(_1, false, '');
+                  loadWantLists(1, false, '');
                 }}
                 style={styles.clearButton}
               >
-                <Ionicons name="close-circle" size={_18} color="#999" />
+                <Ionicons name="close-circle" size={18} color="#999" />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -253,10 +253,10 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
                 <Picker
                   selectedValue={selectedShowId || 'all'}
                   style={styles.picker}
-                  onValueChange={(_itemValue) => handleShowChange(itemValue.toString())}
+                  onValueChange={(itemValue) => handleShowChange(itemValue.toString())}
                 >
                   <Picker.Item label="All Shows" value="all" />
-                  {shows.map((_show) => (
+                  {shows.map((show) => (
                     <Picker.Item 
                       key={show.id} 
                       label={show.title} 
@@ -272,11 +272,11 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
         {/* Error message */}
         {error ? (
           <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={_24} color="#FF3B30" />
-            <Text style={styles.errorText}>{_error}</Text>
+            <Ionicons name="alert-circle" size={24} color="#FF3B30" />
+            <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity 
               style={styles.retryButton}
-              onPress={() => loadWantLists(_1, true)}
+              onPress={() => loadWantLists(1, true)}
             >
               <Text style={styles.retryText}>Retry</Text>
             </TouchableOpacity>
@@ -295,7 +295,7 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
   };
 
   // Render footer (loading indicator for pagination and pagination info)
-  const _renderFooter = () => {
+  const renderFooter = () => {
     return (
       <>
         {/* Loading indicator for pagination */}
@@ -310,7 +310,7 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
         {wantLists.length > 0 && (
           <View style={styles.paginationInfo}>
             <Text style={styles.paginationText}>
-              Showing {wantLists.length} of {_totalCount} want lists
+              Showing {wantLists.length} of {totalCount} want lists
             </Text>
           </View>
         )}
@@ -321,19 +321,19 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
   return (
     <View style={styles.container}>
       <FlatList
-        data={_wantLists}
-        renderItem={_renderWantListItem}
-        keyExtractor={(_item) => item.id}
+        data={wantLists}
+        renderItem={renderWantListItem}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={_renderHeader}
-        ListEmptyComponent={_renderEmptyState}
-        ListFooterComponent={_renderFooter}
-        onEndReached={_handleLoadMore}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmptyState}
+        ListFooterComponent={renderFooter}
+        onEndReached={handleLoadMore}
         onEndReachedThreshold={0.2}
         refreshControl={
           <RefreshControl
-            refreshing={_isRefreshing}
-            onRefresh={_handleRefresh}
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
             colors={['#0057B8']}
             tintColor="#0057B8"
           />
@@ -345,7 +345,7 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
 
 // Styles --------------------------------------------------------------------
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',

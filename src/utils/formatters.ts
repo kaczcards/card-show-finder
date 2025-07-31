@@ -8,13 +8,13 @@
  * @param dateValue Date object or ISO string
  * @returns Formatted date string (e.g., "Jul 16")
  */
-export const _formatDate = (dateValue: Date | string | null | undefined): string => {
+export const formatDate = (dateValue: Date | string | null | undefined): string => {
   if (!dateValue) {
     return 'TBD';
   }
 
   try {
-    const _date = new Date(_dateValue);
+    const date = new Date(dateValue);
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
@@ -26,8 +26,8 @@ export const _formatDate = (dateValue: Date | string | null | undefined): string
       month: 'short', 
       day: 'numeric' 
     });
-  } catch (_err) {
-    console.error('Error formatting date:', _err);
+  } catch (err) {
+    console.error('Error formatting date:', err);
     return 'Error';
   }
 };
@@ -37,19 +37,19 @@ export const _formatDate = (dateValue: Date | string | null | undefined): string
  * @param fee Entry fee amount (number or string)
  * @returns Formatted fee string (e.g., "Free Entry" or "Entry: $5")
  */
-export const _formatEntryFee = (fee: number | string | null | undefined): string => {
+export const formatEntryFee = (fee: number | string | null | undefined): string => {
   // Handle null, undefined, empty string, or NaN
   if (
     fee === null || 
     fee === undefined || 
     fee === '' || 
-    (typeof fee === 'number' && isNaN(_fee))
+    (typeof fee === 'number' && isNaN(fee))
   ) {
     return 'Free Entry';
   }
 
   // Convert string to number if needed
-  const _feeNumber = typeof fee === 'string' ? parseFloat(_fee) : fee;
+  const feeNumber = typeof fee === 'string' ? parseFloat(fee) : fee;
 
   // If conversion failed or fee is zero/negative, show as free
   if (isNaN(feeNumber) || feeNumber <= 0) {
@@ -65,7 +65,7 @@ export const _formatEntryFee = (fee: number | string | null | undefined): string
  * @param timeString Time string (e.g., "14:30:00")
  * @returns Formatted time string (e.g., "2:30 PM")
  */
-export const _formatTime = (timeString: string | null | undefined): string => {
+export const formatTime = (timeString: string | null | undefined): string => {
   if (!timeString) {
     return '';
   }
@@ -79,11 +79,11 @@ export const _formatTime = (timeString: string | null | undefined): string => {
       // Create a dummy date with the time
       const [hours, minutes] = timeString.split(':');
       time = new Date();
-      time.setHours(parseInt(hours, _10));
-      time.setMinutes(parseInt(minutes, _10));
+      time.setHours(parseInt(hours, 10));
+      time.setMinutes(parseInt(minutes, 10));
     } else {
       // Full datetime string
-      time = new Date(_timeString);
+      time = new Date(timeString);
     }
 
     // Check if time is valid
@@ -97,8 +97,8 @@ export const _formatTime = (timeString: string | null | undefined): string => {
       minute: '2-digit',
       hour12: true 
     });
-  } catch (_err) {
-    console.error('Error formatting time:', _err);
+  } catch (err) {
+    console.error('Error formatting time:', err);
     return '';
   }
 };
@@ -108,19 +108,19 @@ export const _formatTime = (timeString: string | null | undefined): string => {
  * @param price Price amount
  * @returns Formatted price string (e.g., "$10" or "Free")
  */
-export const _formatPrice = (price: number | string | null | undefined): string => {
+export const formatPrice = (price: number | string | null | undefined): string => {
   // Handle null, undefined, empty string, or NaN
   if (
     price === null || 
     price === undefined || 
     price === '' || 
-    (typeof price === 'number' && isNaN(_price))
+    (typeof price === 'number' && isNaN(price))
   ) {
     return 'Free';
   }
 
   // Convert string to number if needed
-  const _priceNumber = typeof price === 'string' ? parseFloat(_price) : price;
+  const priceNumber = typeof price === 'string' ? parseFloat(price) : price;
 
   // If conversion failed or price is zero/negative, show as free
   if (isNaN(priceNumber) || priceNumber <= 0) {

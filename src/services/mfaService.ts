@@ -74,15 +74,14 @@ export class MFAService {
   async startEnrollment(): Promise<MFAEnrollmentResponse> {
     try {
       const { data, error } = await this.callMFAEndpoint<MFAEnrollmentResponse>("enroll", {}, "GET");
-      
-      if (_error) {
+      if (error) {
         throw new Error(error.message);
       }
       
       return data;
-    } catch (_error) {
-      console.error("Failed to start MFA enrollment:", _error);
-      throw error;
+    } catch (err) {
+      console.error("Failed to start MFA enrollment:", err);
+      throw err;
     }
   }
 
@@ -98,15 +97,14 @@ export class MFAService {
         code,
         challengeId
       });
-      
-      if (_error) {
+      if (error) {
         throw new Error(error.message);
       }
       
       return data;
-    } catch (_error) {
-      console.error("Failed to verify MFA setup:", _error);
-      throw error;
+    } catch (err) {
+      console.error("Failed to verify MFA setup:", err);
+      throw err;
     }
   }
 
@@ -125,14 +123,14 @@ export class MFAService {
         sessionId
       });
       
-      if (_error) {
+      if (error) {
         throw new Error(error.message);
       }
       
       return data;
-    } catch (_error) {
-      console.error("Failed to authenticate with MFA:", _error);
-      throw error;
+    } catch (err) {
+      console.error("Failed to authenticate with MFA:", err);
+      throw err;
     }
   }
 
@@ -150,15 +148,14 @@ export class MFAService {
         userId,
         sessionId
       });
-      
-      if (_error) {
+      if (error) {
         throw new Error(error.message);
       }
       
       return data;
-    } catch (_error) {
-      console.error("Failed to validate recovery code:", _error);
-      throw error;
+    } catch (err) {
+      console.error("Failed to validate recovery code:", err);
+      throw err;
     }
   }
 
@@ -167,20 +164,20 @@ export class MFAService {
    * @param code - Optional TOTP code for verification (required for non-admin users)
    * @returns Result of the operation
    */
-  async disableMFA(_code?: string): Promise<{ success: boolean; message: string }> {
+  async disableMFA(code?: string): Promise<{ success: boolean; message: string }> {
     try {
       const { data, error } = await this.callMFAEndpoint<{ success: boolean; message: string }>("disable", {
-        _code
+        code
       });
       
-      if (_error) {
+      if (error) {
         throw new Error(error.message);
       }
       
       return data;
-    } catch (_error) {
-      console.error("Failed to disable MFA:", _error);
-      throw error;
+    } catch (err) {
+      console.error("Failed to disable MFA:", err);
+      throw err;
     }
   }
 
@@ -192,14 +189,14 @@ export class MFAService {
     try {
       const { data, error } = await this.callMFAEndpoint<MFAStatusResponse>("status", {}, "GET");
       
-      if (_error) {
+      if (error) {
         throw new Error(error.message);
       }
       
       return data;
-    } catch (_error) {
-      console.error("Failed to get MFA status:", _error);
-      throw error;
+    } catch (err) {
+      console.error("Failed to get MFA status:", err);
+      throw err;
     }
   }
 
@@ -208,20 +205,20 @@ export class MFAService {
    * @param code - TOTP code for verification
    * @returns New recovery codes
    */
-  async regenerateRecoveryCodes(_code: string): Promise<MFAVerificationResponse> {
+  async regenerateRecoveryCodes(code: string): Promise<MFAVerificationResponse> {
     try {
       const { data, error } = await this.callMFAEndpoint<MFAVerificationResponse>("regenerate-recovery-codes", {
-        _code
+        code
       });
       
-      if (_error) {
+      if (error) {
         throw new Error(error.message);
       }
       
       return data;
-    } catch (_error) {
-      console.error("Failed to regenerate recovery codes:", _error);
-      throw error;
+    } catch (err) {
+      console.error("Failed to regenerate recovery codes:", err);
+      throw err;
     }
   }
 
@@ -230,22 +227,22 @@ export class MFAService {
    * @param userId - User ID to check
    * @returns Whether MFA is required
    */
-  async isMFARequired(_userId: string): Promise<boolean> {
+  async isMFARequired(userId: string): Promise<boolean> {
     try {
       // Get user profile to check if MFA is enabled
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("mfa_enabled, mfa_verified")
-        .eq("id", _userId)
+        .eq("id", userId)
         .single();
       
-      if (_error) {
+      if (error) {
         throw new Error(error.message);
       }
       
       return profile?.mfa_enabled && profile?.mfa_verified;
-    } catch (_error) {
-      console.error("Failed to check if MFA is required:", _error);
+    } catch (err) {
+      console.error("Failed to check if MFA is required:", err);
       return false; // Default to not requiring MFA on error
     }
   }
@@ -264,23 +261,23 @@ export class MFAService {
   ): Promise<{ data: T; error: Error | null }> {
     try {
       // Get the current session
-      const { data: { _session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
         throw new Error("No active session");
       }
       
-      const _url = `${this.baseUrl}/${_endpoint}`;
-      const _headers = {
+      const url = `${this.baseUrl}/${endpoint}`;
+      const headers = {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${session.access_token}`
       };
       
       let response;
       if (method === "GET") {
-        response = await fetch(_url, { headers, method });
+        response = await fetch(url, { headers, method });
       } else {
-        response = await fetch(_url, {
+        response = await fetch(url, {
           method,
           headers,
           body: JSON.stringify(body)
@@ -288,17 +285,17 @@ export class MFAService {
       }
       
       if (!response.ok) {
-        const _errorData = await response.json();
+        const errorData = await response.json();
         throw new Error(errorData.error || `HTTP error ${response.status}`);
       }
       
-      const _data = await response.json();
+      const data = await response.json();
       return { data: data as T, error: null };
-    } catch (_error) {
-      return { data: {} as T, error: error as Error };
+    } catch (err) {
+      return { data: {} as T, error: err as Error };
     }
   }
 }
 
 // Export a singleton instance
-export const _mfaService = new MFAService();
+export const mfaService = new MFAService();
