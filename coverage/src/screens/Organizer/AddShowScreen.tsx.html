@@ -1054,7 +1054,8 @@
 <a name='L989'></a><a href='#L989'>989</a>
 <a name='L990'></a><a href='#L990'>990</a>
 <a name='L991'></a><a href='#L991'>991</a>
-<a name='L992'></a><a href='#L992'>992</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L992'></a><a href='#L992'>992</a>
+<a name='L993'></a><a href='#L993'>993</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1518,6 +1519,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2173,7 +2175,7 @@ const AddShowScreen: React.FC = <span class="cstat-no" title="statement not cove
   };
 &nbsp;
   // Format a date for PostgreSQL (YYYY-MM-DD format)
-  const formatDateForPostgres = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>ate: Date): string =&gt; {</span>
+  const _formatDateForPostgres = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>ate: Date): string =&gt; {</span>
     const year = <span class="cstat-no" title="statement not covered" >date.getFullYear();</span>
     const month = <span class="cstat-no" title="statement not covered" >String(date.getMonth() + 1).padStart(2, '0');</span>
     const day = <span class="cstat-no" title="statement not covered" >String(date.getDate()).padStart(2, '0');</span>
@@ -2329,10 +2331,10 @@ const AddShowScreen: React.FC = <span class="cstat-no" title="statement not cove
 &nbsp;
   // Handle form submission
   const handleSubmit = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    console.log('[AddShowScreen] Submit button pressed');</span>
+<span class="cstat-no" title="statement not covered" >    console.warn('[AddShowScreen] Submit button pressed');</span>
     
 <span class="cstat-no" title="statement not covered" >    if (!validateForm()) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log('[AddShowScreen] Form validation failed');</span>
+<span class="cstat-no" title="statement not covered" >      console.warn('[AddShowScreen] Form validation failed');</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
 &nbsp;
@@ -2348,9 +2350,9 @@ const AddShowScreen: React.FC = <span class="cstat-no" title="statement not cove
       const fullStartDate = <span class="cstat-no" title="statement not covered" >getFullDateForPostgres(startDate, startHour, startMinute, startPeriod);</span>
       const fullEndDate = <span class="cstat-no" title="statement not covered" >getFullDateForPostgres(endDate, endHour, endMinute, endPeriod);</span>
       
-<span class="cstat-no" title="statement not covered" >      console.log('[AddShowScreen] Date values being sent:');</span>
-<span class="cstat-no" title="statement not covered" >      console.log('  - Start Date:', fullStartDate);</span>
-<span class="cstat-no" title="statement not covered" >      console.log('  - End Date:', fullEndDate);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn('[AddShowScreen] Date values being sent:');</span>
+<span class="cstat-no" title="statement not covered" >      console.warn('  - Start Date:', fullStartDate);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn('  - End Date:', fullEndDate);</span>
 &nbsp;
       /* -----------------------------------------------------------
        * 1. Validate address format before geocoding
@@ -2367,7 +2369,7 @@ const AddShowScreen: React.FC = <span class="cstat-no" title="statement not cove
        * 2. Geocode the full street address → coordinates
        * --------------------------------------------------------- */
       const fullAddress = <span class="cstat-no" title="statement not covered" >`${street}, ${city}, ${stateProv} ${zipCode}`;</span>
-<span class="cstat-no" title="statement not covered" >      console.log('[AddShowScreen] Attempting to geocode address:', fullAddress);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn('[AddShowScreen] Attempting to geocode address:', fullAddress);</span>
 &nbsp;
       let coords = <span class="cstat-no" title="statement not covered" >null;</span>
 <span class="cstat-no" title="statement not covered" >      try {</span>
@@ -2412,7 +2414,7 @@ const AddShowScreen: React.FC = <span class="cstat-no" title="statement not cove
         }
       }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.log('[AddShowScreen] Geocoding success:', coords);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn('[AddShowScreen] Geocoding success:', coords);</span>
       
       // ------------------------------------------------------------------
       //  Build parameters for RPC (create_show_with_coordinates)
@@ -2436,10 +2438,10 @@ const AddShowScreen: React.FC = <span class="cstat-no" title="statement not cove
             : null,
         p_categories: categories.length &gt; 0 ? categories : null,
         p_series_id: seriesId || null,
-        p_image_url: null,
+        p_imageurl: null,
       };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.log(</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(</span>
         '[AddShowScreen] Sending RPC payload:',
         JSON.stringify(rpcParams, null, 2),
       );
@@ -2464,7 +2466,7 @@ const AddShowScreen: React.FC = <span class="cstat-no" title="statement not cove
         }
       }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.log('[AddShowScreen] Show created successfully:', data);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn('[AddShowScreen] Show created successfully:', data);</span>
       
 <span class="cstat-no" title="statement not covered" >      Alert.alert(</span>
         'Success',
@@ -2509,17 +2511,18 @@ const AddShowScreen: React.FC = <span class="cstat-no" title="statement not cove
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      await showSeriesService.debugShowsTableColumns();</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert('Debug', 'Schema columns logged to console.');</span>
-    } catch (e) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_e) {
 <span class="cstat-no" title="statement not covered" >      Alert.alert('Debug Error', 'Failed to run schema debug helper.');</span>
     }
   }, []);
 &nbsp;
   // Debug function to log date picker selection
   const logDateSelection = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(t</span>ype: 'start' | 'end', date: Date | undefined) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`[DatePicker] ${type} date selected:`, date);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`[DatePicker] Current startDate:`, startDate);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`[DatePicker] Current endDate:`, endDate);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`[DatePicker] Are dates equal:`, date &amp;&amp; startDate &amp;&amp; areSameDay(date, startDate));</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(`[DatePicker] ${type} date selected:`, date);</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(`[DatePicker] Current startDate:`, startDate);</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(`[DatePicker] Current endDate:`, endDate);</span>
+<span class="cstat-no" title="statement not covered" >    console.warn(`[DatePicker] Are dates equal:`, date &amp;&amp; startDate &amp;&amp; areSameDay(date, startDate));</span>
   };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
@@ -3043,7 +3046,7 @@ export default AddShowScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.767Z
+                at 2025-07-31T19:28:55.556Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

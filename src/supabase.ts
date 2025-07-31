@@ -110,7 +110,6 @@ export type { User, Session } from '@supabase/supabase-js';
 // underscore.  Re-export them here so existing imports continue to work
 // while new code can adopt the explicit “private” underscore versions.
 
-// eslint-disable-next-line import/prefer-default-export
 export const supabase = _supabase;
 export const isSupabaseInitialized = _isSupabaseInitialized;
 export const getSupabase = _getSupabase;

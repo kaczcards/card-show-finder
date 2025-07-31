@@ -951,7 +951,10 @@
 <a name='L886'></a><a href='#L886'>886</a>
 <a name='L887'></a><a href='#L887'>887</a>
 <a name='L888'></a><a href='#L888'>888</a>
-<a name='L889'></a><a href='#L889'>889</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L889'></a><a href='#L889'>889</a>
+<a name='L890'></a><a href='#L890'>890</a>
+<a name='L891'></a><a href='#L891'>891</a>
+<a name='L892'></a><a href='#L892'>892</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1010,6 +1013,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1177,6 +1181,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1273,6 +1278,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1839,7 +1845,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect, useCallback, useRef as _useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -1898,7 +1904,8 @@ const OrganizerShowsList = <span class="cstat-no" title="statement not covered" 
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      setLoading(true);</span>
 <span class="cstat-no" title="statement not covered" >      setError(null);</span>
-<span class="cstat-no" title="statement not covered" >      console.log('[OrganizerShowsList] ➡️  Fetching organizer shows...');</span>
+       
+<span class="cstat-no" title="statement not covered" >console.warn('[OrganizerShowsList] ➡️  Fetching organizer shows...');</span>
 &nbsp;
       // 1️⃣  Get all series owned by this organizer
       const mySeries = <span class="cstat-no" title="statement not covered" >await showSeriesService.getAllShowSeries({</span>
@@ -1906,7 +1913,7 @@ const OrganizerShowsList = <span class="cstat-no" title="statement not covered" 
       });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (!Array.isArray(mySeries) || mySeries.length === 0) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log(</span>
+<span class="cstat-no" title="statement not covered" >        console.warn(</span>
           `[OrganizerShowsList] Organizer ${organizerId} has no series.`,
         );
       }
@@ -2065,7 +2072,8 @@ const OrganizerShowsList = <span class="cstat-no" title="statement not covered" 
         };
       }) || [];
       
-<span class="cstat-no" title="statement not covered" >      console.log(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${organizerId}`);</span>
+       
+<span class="cstat-no" title="statement not covered" >console.warn(`[OrganizerShowsList] Fetched ${mappedStandaloneShows.length} standalone shows for organizer ${organizerId}`);</span>
 <span class="cstat-no" title="statement not covered" >      setStandaloneShows(mappedStandaloneShows);</span>
       
       // Initialize expanded state for all series
@@ -2163,7 +2171,8 @@ const OrganizerShowsList = <span class="cstat-no" title="statement not covered" 
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
     // To be implemented - show confirmation dialog and call API
-<span class="cstat-no" title="statement not covered" >    console.log('Cancel show:', show.id);</span>
+     
+<span class="cstat-no" title="statement not covered" >console.warn('Cancel show:', show.id);</span>
   };
   
   // Navigate to series details
@@ -2734,7 +2743,7 @@ export default OrganizerShowsList;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-24T23:49:35.546Z
+                at 2025-07-31T19:28:55.373Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
