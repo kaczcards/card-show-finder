@@ -57,12 +57,12 @@ export const useConversationsQuery = (userId: string | null) => {
         return await messagingService.getConversations(userId);
       } catch (err) {
         // Log and fallback to legacy service
-        /* eslint-disable no-console */
+         
         console.warn(
           '[useConversationsQuery] RPC failed, falling back to service:',
           err,
         );
-        /* eslint-enable no-console */
+         
         return await messagingService.getConversations(userId);
       }
     },
@@ -74,9 +74,9 @@ export const useConversationsQuery = (userId: string | null) => {
     retryDelay: attempt => Math.min(1000 * 2 ** attempt, 30_000),
     // Log the error for observability
     onError: (err) => {
-      /* eslint-disable no-console */
+       
       console.error('[useConversationsQuery] fetch error:', err);
-      /* eslint-enable no-console */
+       
     },
   });
 

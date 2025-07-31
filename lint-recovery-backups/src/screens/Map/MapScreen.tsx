@@ -98,7 +98,7 @@ const MapScreen: React.FC<MapScreenProps> = ({
       if (!hasPermission) {
         const granted = await locationService.requestLocationPermissions();
         if (!granted) {
-          // eslint-disable-next-line no-console
+           
 console.warn('Location permission denied');
           // Show toast notification if falling back to ZIP code
           if (user?.homeZipCode) {
@@ -116,11 +116,11 @@ console.warn('Location permission denied');
       const location = await locationService.getCurrentLocation();
 
       if (location) {
-        // eslint-disable-next-line no-console
+         
 console.warn('Got user location:', location);
         return location;
       } else if (user && user.homeZipCode) {
-        // eslint-disable-next-line no-console
+         
 console.warn('Falling back to user ZIP code:', user.homeZipCode);
         showLocationFailedToast(user.homeZipCode);
         
@@ -258,7 +258,7 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
           longitude: userLocation.longitude,
       };
 
-      // eslint-disable-next-line no-console
+       
 console.warn('[MapScreen] Filters being used:', currentFilters);
 
       /* ------------------------------------------------------------------
@@ -274,7 +274,7 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
 
       const showsData = result.data || [];
       setShows(showsData);
-      // eslint-disable-next-line no-console
+       
 console.warn(
         `[MapScreen] Successfully fetched ${showsData.length} shows (using production solution)`
       );
@@ -455,7 +455,7 @@ console.warn(
    */
   const isEntryFree = (fee: any): boolean => {
     // Diagnostic log – remove or reduce verbosity once confirmed working
-    // eslint-disable-next-line no-console
+     
 console.warn(
       `[MapScreen] [DEBUG] entryFee raw value:`,
       fee,

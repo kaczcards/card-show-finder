@@ -76,7 +76,7 @@ export default class FixedClusteredMapView extends PureComponent {
     })
 
     // get formatted GeoPoints for cluster
-    const _rawData = dataset.map(item => itemToGeoJSONFeature(_item, this.props.accessor))
+    const _rawData = dataset.map(_item => itemToGeoJSONFeature(_item, this.props.accessor))
 
     // load geopoints into SuperCluster
     this.index.load(rawData)
@@ -118,7 +118,7 @@ export default class FixedClusteredMapView extends PureComponent {
     const _children = this.index.getLeaves(cluster.properties.cluster_id, this.props.clusterPressMaxChildren)
     const _markers = children.map(c => c.properties.item)
 
-    const _coordinates = markers.map(item => getCoordinatesFromItem(_item, this.props.accessor, false))
+    const _coordinates = markers.map(_item => getCoordinatesFromItem(_item, this.props.accessor, false))
 
     // fit right around them, considering edge padding
     this.mapview.fitToCoordinates(coordinates, { edgePadding: this.props.edgePadding })
@@ -127,7 +127,7 @@ export default class FixedClusteredMapView extends PureComponent {
   }
 
   render() {
-    const { style, ...props } = this.props
+    const { style: _style, ...props } = this.props
 
     return (
       <MapView

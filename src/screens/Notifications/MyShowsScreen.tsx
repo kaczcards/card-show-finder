@@ -48,7 +48,7 @@ const MyShowsScreen: React.FC = () => {
         setError(null);
         
         const userId = authState.user?.id;
-        const currentDate = new Date().toISOString();
+        const _currentDate = new Date().toISOString();
 
         /* -----------------------------------------------------------
          * Get favourite show IDs from user_favorite_shows join table

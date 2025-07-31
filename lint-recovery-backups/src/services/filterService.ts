@@ -60,7 +60,7 @@ export const saveTemporaryFilters = async (
       getTempFiltersKey(userId), 
       JSON.stringify(filtersToStore)
     );
-    // eslint-disable-next-line no-console
+     
 console.warn('Temporary filters saved to AsyncStorage');
   } catch (_error) {
     console.error('Error saving temporary filters:', _error);

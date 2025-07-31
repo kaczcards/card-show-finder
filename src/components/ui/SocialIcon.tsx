@@ -73,7 +73,7 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   };
 
   // Map of platform to brand color
-  const getPlatformColor = (): string => {
+  const _getPlatformColor = (): string => {
     switch (platform) {
       case 'whatnot':
         return '#FF001F';

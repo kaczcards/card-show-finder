@@ -113,7 +113,7 @@ const ProfileScreen: React.FC = () => {
 
       // Success path – column exists
       const count = data?.favorite_shows_count ?? 0;
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Fetched favorite_shows_count:', count);
       setLocalFavoriteCount(count);
     } catch (err) {
@@ -127,7 +127,7 @@ console.warn('[ProfileScreen] Fetched favorite_shows_count:', count);
    * ------------------------------------------------------------------ */
   useFocusEffect(
     useCallback(() => {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
       fetchFavoriteCount();
       // no cleanup needed
@@ -287,7 +287,7 @@ console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
       });
       
       setIsEditMode(false);
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Profile updated successfully');
       Alert.alert('Success', 'Profile updated successfully');
     } catch (err: any) {
@@ -386,7 +386,7 @@ console.warn('[ProfileScreen] Profile updated successfully');
     
     // Special case for the specific user ID that needs to show as Dealer
     if (user?.id === '7d792f27-9112-4837-926f-42e4eb1f0577') {
-      // eslint-disable-next-line no-console
+       
 console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
       return 'Dealer';
     }
@@ -417,7 +417,7 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    // eslint-disable-next-line no-console
+     
 console.warn('[ProfileScreen] Opening URL:', formattedUrl);
 
     Linking.openURL(formattedUrl).catch(err => {

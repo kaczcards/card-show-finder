@@ -111,7 +111,7 @@ async function authenticate() {
         'Error: SUPABASE_URL (or EXPO_PUBLIC_SUPABASE_URL) environment variable is not set.'
       )
     );
-    console.log(
+    console.warn(
       'Please create a .env file with your Supabase credentials, e.g.\n' +
         'EXPO_PUBLIC_SUPABASE_URL=https://<project>.supabase.co\n' +
         'EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon-key>'
@@ -124,7 +124,7 @@ async function authenticate() {
     return;
   }
 
-  console.log(chalk.yellow('Authentication required.'));
+  console.warn(chalk.yellow('Authentication required.'));
   
   const { email, password } = await inquirer.prompt([
     {
@@ -187,60 +187,60 @@ function truncate(str, length = 30) {
 
 // Display show details
 function displayShow(show) {
-  console.log('\n' + chalk.bold.underline(`Show Details: ${show.raw_payload.name || 'Unnamed Show'}`));
+  console.warn('\n' + chalk.bold.underline(`Show Details: ${show.raw_payload.name || 'Unnamed Show'}`));
   
   // Basic info
-  console.log(chalk.bold('Basic Info:'));
-  console.log(`  ${chalk.dim('ID:')} ${show.id}`);
-  console.log(`  ${chalk.dim('Source:')} ${show.source_url}`);
-  console.log(`  ${chalk.dim('Created:')} ${formatDate(show.created_at)}`);
+  console.warn(chalk.bold('Basic Info:'));
+  console.warn(`  ${chalk.dim('ID:')} ${show.id}`);
+  console.warn(`  ${chalk.dim('Source:')} ${show.source_url}`);
+  console.warn(`  ${chalk.dim('Created:')} ${formatDate(show.created_at)}`);
   
   // Raw payload
-  console.log(chalk.bold('\nExtracted Data:'));
+  console.warn(chalk.bold('\nExtracted Data:'));
   const payload = show.raw_payload;
-  console.log(`  ${chalk.dim('Name:')} ${payload.name || 'N/A'}`);
-  console.log(`  ${chalk.dim('Dates:')} ${payload.startDate || 'N/A'} ${payload.endDate ? `to ${payload.endDate}` : ''}`);
-  console.log(`  ${chalk.dim('Venue:')} ${payload.venueName || 'N/A'}`);
-  console.log(`  ${chalk.dim('Location:')} ${[payload.address, payload.city, payload.state].filter(Boolean).join(', ') || 'N/A'}`);
-  console.log(`  ${chalk.dim('Entry Fee:')} ${payload.entryFee || 'N/A'}`);
-  console.log(`  ${chalk.dim('Contact:')} ${payload.contactInfo || 'N/A'}`);
-  console.log(`  ${chalk.dim('URL:')} ${payload.url || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Name:')} ${payload.name || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Dates:')} ${payload.startDate || 'N/A'} ${payload.endDate ? `to ${payload.endDate}` : ''}`);
+  console.warn(`  ${chalk.dim('Venue:')} ${payload.venueName || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Location:')} ${[payload.address, payload.city, payload.state].filter(Boolean).join(', ') || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Entry Fee:')} ${payload.entryFee || 'N/A'}`);
+  console.warn(`  ${chalk.dim('Contact:')} ${payload.contactInfo || 'N/A'}`);
+  console.warn(`  ${chalk.dim('URL:')} ${payload.url || 'N/A'}`);
   
   if (payload.description) {
-    console.log(`  ${chalk.dim('Description:')}`);
-    console.log(`    ${payload.description.replace(/\n/g, '\n    ')}`);
+    console.warn(`  ${chalk.dim('Description:')}`);
+    console.warn(`    ${payload.description.replace(/\n/g, '\n    ')}`);
   }
   
   // Quality assessment
   if (show.quality) {
-    console.log(chalk.bold('\nQuality Assessment:'));
+    console.warn(chalk.bold('\nQuality Assessment:'));
     const scoreColor = show.quality.score >= 80 ? 'green' : (show.quality.score >= 50 ? 'yellow' : 'red');
-    console.log(`  ${chalk.dim('Score:')} ${chalk[scoreColor](show.quality.score)}/100`);
+    console.warn(`  ${chalk.dim('Score:')} ${chalk[scoreColor](show.quality.score)}/100`);
     
     if (show.quality.issues.length > 0) {
-      console.log(`  ${chalk.dim('Issues:')}`);
+      console.warn(`  ${chalk.dim('Issues:')}`);
       show.quality.issues.forEach(issue => {
-        console.log(`    - ${issue}`);
+        console.warn(`    - ${issue}`);
       });
     }
     
     if (show.quality.recommendations.length > 0) {
-      console.log(`  ${chalk.dim('Recommendations:')}`);
+      console.warn(`  ${chalk.dim('Recommendations:')}`);
       show.quality.recommendations.forEach(rec => {
-        console.log(`    - ${rec}`);
+        console.warn(`    - ${rec}`);
       });
     }
   }
   
   // Potential duplicates
   if (show.duplicates && show.duplicates.length > 0) {
-    console.log(chalk.bold('\nPotential Duplicates:'));
+    console.warn(chalk.bold('\nPotential Duplicates:'));
     show.duplicates.forEach((dup, i) => {
-      console.log(`  ${i + 1}. ${dup.name} (${dup.startDate}) - ID: ${dup.id}`);
+      console.warn(`  ${i + 1}. ${dup.name} (${dup.startDate}) - ID: ${dup.id}`);
     });
   }
   
-  console.log(); // Empty line at the end
+  console.warn(); // Empty line at the end
 }
 
 // List pending shows
@@ -264,7 +264,7 @@ async function listPendingShows(options) {
     spinner.succeed(`Loaded ${shows.length} pending shows (${pagination.total} total)`);
     
     if (shows.length === 0) {
-      console.log(chalk.yellow('No pending shows found.'));
+      console.warn(chalk.yellow('No pending shows found.'));
       return;
     }
     
@@ -297,7 +297,7 @@ async function listPendingShows(options) {
     
     table.printTable();
     
-    console.log(`Page ${options.page} of ${Math.ceil(pagination.total / pagination.limit)}`);
+    console.warn(`Page ${options.page} of ${Math.ceil(pagination.total / pagination.limit)}`);
     
     // Pagination or show details prompt
     const { action } = await inquirer.prompt([
@@ -380,7 +380,7 @@ async function showActions(show) {
       });
       
       spinner.succeed('Show approved successfully');
-      console.log(chalk.green('The show has been approved and will be processed by the normalizer.'));
+      console.warn(chalk.green('The show has been approved and will be processed by the normalizer.'));
     } catch (error) {
       spinner.fail('Failed to approve show');
       console.error(chalk.red(error.response?.data?.error || error.message));
@@ -468,10 +468,10 @@ async function showActions(show) {
     }
     
     // Confirm changes
-    console.log(chalk.bold('\nUpdated Show Data:'));
+    console.warn(chalk.bold('\nUpdated Show Data:'));
     Object.entries(payload).forEach(([key, value]) => {
       if (value) {
-        console.log(`  ${chalk.dim(key + ':')} ${value}`);
+        console.warn(`  ${chalk.dim(key + ':')} ${value}`);
       }
     });
     
@@ -504,7 +504,7 @@ async function showActions(show) {
         });
         
         spinner.succeed('Show edited and approved successfully');
-        console.log(chalk.green('The show has been updated, approved, and will be processed by the normalizer.'));
+        console.warn(chalk.green('The show has been updated, approved, and will be processed by the normalizer.'));
       } catch (error) {
         spinner.fail('Failed to edit and approve show');
         console.error(chalk.red(error.response?.data?.error || error.message));
@@ -533,7 +533,7 @@ async function batchOperations(options) {
     spinner.succeed(`Loaded ${shows.length} pending shows for batch operation`);
     
     if (shows.length === 0) {
-      console.log(chalk.yellow('No pending shows found matching the criteria.'));
+      console.warn(chalk.yellow('No pending shows found matching the criteria.'));
       return;
     }
     
@@ -632,7 +632,7 @@ async function batchOperations(options) {
     }
     
     if (selectedIndices.length === 0) {
-      console.log(chalk.yellow('No shows selected.'));
+      console.warn(chalk.yellow('No shows selected.'));
       return;
     }
     
@@ -704,7 +704,7 @@ async function batchOperations(options) {
     ]);
     
     if (!confirm) {
-      console.log(chalk.yellow('Operation cancelled.'));
+      console.warn(chalk.yellow('Operation cancelled.'));
       return;
     }
     
@@ -720,10 +720,10 @@ async function batchOperations(options) {
       });
       
       spinner.succeed(`Batch ${action} completed successfully`);
-      console.log(chalk.green(`${response.data.shows.length} shows were ${action === 'approve' ? 'approved' : 'rejected'}.`));
+      console.error(chalk.green(`${response.data.shows.length} shows were ${action === 'approve' ? 'approved' : 'rejected'}.`));
       
       if (action === 'approve') {
-        console.log(chalk.green('The shows have been approved and will be processed by the normalizer.'));
+        console.warn(chalk.green('The shows have been approved and will be processed by the normalizer.'));
       }
     } catch (error) {
       spinner.fail(`Failed to perform batch ${action}`);
@@ -752,10 +752,10 @@ async function viewStatistics(options) {
     spinner.succeed('Statistics loaded successfully');
     
     // Display feedback stats
-    console.log(chalk.bold.underline(`\nFeedback Statistics (Last ${params.days} days):`));
+    console.warn(chalk.bold.underline(`\nFeedback Statistics (Last ${params.days} days):`));
     
     if (feedback.length === 0) {
-      console.log(chalk.yellow('No feedback data available for this period.'));
+      console.warn(chalk.yellow('No feedback data available for this period.'));
     } else {
       const feedbackTable = new Table({
         columns: [
@@ -786,10 +786,10 @@ async function viewStatistics(options) {
     }
     
     // Display source stats
-    console.log(chalk.bold.underline(`\nSource Statistics (Last ${params.days} days):`));
+    console.warn(chalk.bold.underline(`\nSource Statistics (Last ${params.days} days):`));
     
     if (sources.length === 0) {
-      console.log(chalk.yellow('No source data available for this period.'));
+      console.warn(chalk.yellow('No source data available for this period.'));
     } else {
       const sourceTable = new Table({
         columns: [
@@ -828,11 +828,11 @@ async function viewStatistics(options) {
     }
     
     // Recommendations based on stats
-    console.log(chalk.bold.underline('\nRecommendations:'));
+    console.warn(chalk.bold.underline('\nRecommendations:'));
     
     if (feedback.length > 0) {
       const topIssue = feedback[0];
-      console.log(`1. Focus on fixing "${topIssue.tag}" issues (${topIssue.percentage}% of feedback).`);
+      console.warn(`1. Focus on fixing "${topIssue.tag}" issues (${topIssue.percentage}% of feedback).`);
       
       // Find sources with low approval rates
       const lowApprovalSources = sources
@@ -841,21 +841,21 @@ async function viewStatistics(options) {
       
       if (lowApprovalSources.length > 0) {
         const worstSource = lowApprovalSources[0];
-        console.log(`2. Consider tuning the scraper for ${new URL(worstSource.source_url).hostname.replace('www.', '')} (only ${worstSource.approval_rate}% approval rate).`);
+        console.warn(`2. Consider tuning the scraper for ${new URL(worstSource.source_url).hostname.replace('www.', '')} (only ${worstSource.approval_rate}% approval rate).`);
       }
       
       // Check for common issues
       const dateFormatIssue = feedback.find(f => f.tag === 'DATE_FORMAT');
       if (dateFormatIssue && dateFormatIssue.percentage > 20) {
-        console.log(`3. Improve date parsing in the scraper (${dateFormatIssue.percentage}% of shows have date format issues).`);
+        console.warn(`3. Improve date parsing in the scraper (${dateFormatIssue.percentage}% of shows have date format issues).`);
       }
       
       const multiEventIssue = feedback.find(f => f.tag === 'MULTI_EVENT_COLLAPSE');
       if (multiEventIssue && multiEventIssue.percentage > 10) {
-        console.log(`4. Reduce chunk size for HTML processing (${multiEventIssue.percentage}% of shows have multiple events collapsed).`);
+        console.warn(`4. Reduce chunk size for HTML processing (${multiEventIssue.percentage}% of shows have multiple events collapsed).`);
       }
     } else {
-      console.log(chalk.yellow('Not enough data to generate recommendations.'));
+      console.warn(chalk.yellow('Not enough data to generate recommendations.'));
     }
   } catch (error) {
     spinner.fail('Failed to load statistics');
@@ -876,31 +876,31 @@ async function findDuplicates() {
     spinner.succeed(`Found ${duplicates.length} potential duplicate pairs`);
     
     if (duplicates.length === 0) {
-      console.log(chalk.yellow('No potential duplicates found.'));
+      console.warn(chalk.yellow('No potential duplicates found.'));
       return;
     }
     
     // Display duplicates
-    console.log(chalk.bold.underline('\nPotential Duplicates:'));
+    console.warn(chalk.bold.underline('\nPotential Duplicates:'));
     
     duplicates.forEach((dup, index) => {
-      console.log(chalk.bold(`\nDuplicate Pair #${index + 1} (${Math.round(dup.similarity * 100)}% similar):`));
+      console.warn(chalk.bold(`\nDuplicate Pair #${index + 1} (${Math.round(dup.similarity * 100)}% similar):`));
       
-      console.log(chalk.dim('Show 1:'));
-      console.log(`  ID: ${dup.id1}`);
-      console.log(`  Name: ${dup.name1}`);
-      console.log(`  Date: ${dup.start_date1}`);
-      console.log(`  Location: ${[dup.city1, dup.state1].filter(Boolean).join(', ')}`);
-      console.log(`  Source: ${dup.source_url1}`);
-      console.log(`  Created: ${formatDate(dup.created_at1)}`);
+      console.warn(chalk.dim('Show 1:'));
+      console.warn(`  ID: ${dup.id1}`);
+      console.warn(`  Name: ${dup.name1}`);
+      console.warn(`  Date: ${dup.start_date1}`);
+      console.warn(`  Location: ${[dup.city1, dup.state1].filter(Boolean).join(', ')}`);
+      console.warn(`  Source: ${dup.source_url1}`);
+      console.warn(`  Created: ${formatDate(dup.created_at1)}`);
       
-      console.log(chalk.dim('\nShow 2:'));
-      console.log(`  ID: ${dup.id2}`);
-      console.log(`  Name: ${dup.name2}`);
-      console.log(`  Date: ${dup.start_date2}`);
-      console.log(`  Location: ${[dup.city2, dup.state2].filter(Boolean).join(', ')}`);
-      console.log(`  Source: ${dup.source_url2}`);
-      console.log(`  Created: ${formatDate(dup.created_at2)}`);
+      console.warn(chalk.dim('\nShow 2:'));
+      console.warn(`  ID: ${dup.id2}`);
+      console.warn(`  Name: ${dup.name2}`);
+      console.warn(`  Date: ${dup.start_date2}`);
+      console.warn(`  Location: ${[dup.city2, dup.state2].filter(Boolean).join(', ')}`);
+      console.warn(`  Source: ${dup.source_url2}`);
+      console.warn(`  Created: ${formatDate(dup.created_at2)}`);
       
       // Resolve duplicates
       inquirer.prompt([
@@ -922,7 +922,7 @@ async function findDuplicates() {
             // Continue to next duplicate
             return;
           } else {
-            console.log(chalk.green('Finished reviewing duplicates.'));
+            console.warn(chalk.green('Finished reviewing duplicates.'));
             return;
           }
         }
@@ -965,7 +965,7 @@ async function findDuplicates() {
           if (index < duplicates.length - 1) {
             // Continue
           } else {
-            console.log(chalk.green('Finished reviewing duplicates.'));
+            console.warn(chalk.green('Finished reviewing duplicates.'));
           }
         } catch (error) {
           actionSpinner.fail('Failed to resolve duplicate');
@@ -1179,7 +1179,7 @@ async function exportData(options) {
 
 // Main menu
 async function mainMenu() {
-  console.log(chalk.bold.green('\nCard Show Finder - Admin Review CLI'));
+  console.warn(chalk.bold.green('\nCard Show Finder - Admin Review CLI'));
   
   const { action } = await inquirer.prompt([
     {
@@ -1198,7 +1198,7 @@ async function mainMenu() {
   ]);
   
   if (action === 'exit') {
-    console.log(chalk.green('Goodbye!'));
+    console.warn(chalk.green('Goodbye!'));
     process.exit(0);
   }
   

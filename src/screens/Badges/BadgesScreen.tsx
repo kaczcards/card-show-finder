@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,  } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity as _TouchableOpacity, SafeAreaView,  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const BadgesScreen: React.FC = () => {

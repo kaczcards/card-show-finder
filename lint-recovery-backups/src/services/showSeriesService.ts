@@ -42,7 +42,7 @@ export const showSeriesService = {
     const { data, error } = await query;
 
     // Debug log the raw response
-    // eslint-disable-next-line no-console
+     
 console.warn('[showSeriesService.getAllShowSeries] Raw Supabase response:', {
       dataType: Array.isArray(_data) ? 'array' : typeof data,
       length: Array.isArray(_data) ? data.length : 'n/a',
@@ -183,7 +183,7 @@ console.warn('[showSeriesService.getAllShowSeries] Raw Supabase response:', {
     const { data, error } = await query;
 
     // Debug log the raw response
-    // eslint-disable-next-line no-console
+     
 console.warn('[showSeriesService.getUnclaimedShows] Raw Supabase response:', {
       dataType: Array.isArray(_data) ? 'array' : typeof data,
       length: Array.isArray(_data) ? data.length : 'n/a',
@@ -526,10 +526,10 @@ console.warn('[showSeriesService.getUnclaimedShows] Raw Supabase response:', {
           '[debugShowsTableColumns] Table returned zero rows.  ' +
           'Column keys may be incomplete if the cache is stale.',
         );
-        // eslint-disable-next-line no-console
+         
 console.warn('[debugShowsTableColumns] Raw response keys:', Object.keys(_data ?? {}));
       } else {
-        // eslint-disable-next-line no-console
+         
 console.warn(
           '[debugShowsTableColumns] Column keys detected:',
           Object.keys(_data[0]),
