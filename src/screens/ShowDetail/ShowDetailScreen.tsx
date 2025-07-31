@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
-import * as _userRoleService from '../../services/_userRoleService';
+import * as userRoleService from '../../services/userRoleService';
 import DealerDetailModal from '../../components/DealerDetailModal';
 import ReviewForm from '../../components/ReviewForm';
 import { UserRole, Show as ShowType } from '../../types'; // Import enums & primary Show model
