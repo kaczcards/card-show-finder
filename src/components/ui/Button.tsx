@@ -1,4 +1,4 @@
-import React, { _useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -59,9 +59,9 @@ interface ButtonProps {
  * with support for different variants, loading states, and animations.
  */
 const Button: React.FC<ButtonProps> = ({
-  _variant = 'primary',
-  _label,
-  _onPress,
+  variant = 'primary',
+  label,
+  onPress,
   disabled = false,
   loading = false,
   style,
@@ -72,10 +72,10 @@ const Button: React.FC<ButtonProps> = ({
   const { theme } = useTheme();
   
   // Animation value for scale
-  const _scaleValue = useRef(new Animated.Value(1)).current;
+  const scaleValue = useRef(new Animated.Value(1)).current;
   
   // Get button styles based on variant
-  const _buttonStyle = theme.components.buttons[_variant];
+  const buttonStyle = theme.components.buttons[variant];
   
   // Setup animation handlers if animated is true
   // When animations are disabled, this will remain undefined
@@ -100,7 +100,7 @@ const Button: React.FC<ButtonProps> = ({
     <Animated.View style={animationHandlers?.style}>
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={_onPress}
+        onPress={onPress}
         disabled={disabled || loading}
         style={_containerStyle}
         {...(animated
