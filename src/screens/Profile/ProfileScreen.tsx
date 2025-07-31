@@ -12,9 +12,9 @@ const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole, resetPassword } = useAuth();
   // Pull favoriteCount from authState so it can be displayed below.
   // We intentionally omit `authState.error` from UI display here; each action
-  // (e.g., _saveChanges) surfaces its own errors inline.
-  const { user, isLoading, _favoriteCount } = authState;
-  const _navigation = useNavigation();
+  // (e.g., saveChanges) surfaces its own errors inline.
+  const { user, isLoading, favoriteCount } = authState;
+  const navigation = useNavigation();
   
   // State for edit mode
   const [isEditMode, setIsEditMode] = useState(false);
@@ -24,8 +24,8 @@ const ProfileScreen: React.FC = () => {
   // Password reset loading
   const [isPasswordResetLoading, setIsPasswordResetLoading] = useState(false);
   // Admin status
-  const [isAdmin, _setIsAdmin] = useState(false);
-  const [_checkingAdmin, _setCheckingAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(false);
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -44,7 +44,7 @@ const ProfileScreen: React.FC = () => {
   // Favorite shows – local count & helper
   // ---------------------------------------------------------------------------
   // State for favorite shows count
-  const [_localFavoriteCount, setLocalFavoriteCount] = useState(_0);
+  const [localFavoriteCount, setLocalFavoriteCount] = useState(0);
 
   /**
    * Fetch the authoritative favourite-show count from the DB.
@@ -52,9 +52,9 @@ const ProfileScreen: React.FC = () => {
    * back to counting rows in `user_favorite_shows` when the column does
    * not exist (e.g. migration hasn't run yet).
    */
-  const _fetchFavoriteCount = useCallback(async () => {
+  const fetchFavoriteCount = useCallback(async () => {
     if (!user?.id) {
-      setLocalFavoriteCount(_0);
+      setLocalFavoriteCount(0);
       return;
     }
 
@@ -68,16 +68,16 @@ const ProfileScreen: React.FC = () => {
         .eq('id', user.id)
         .single();
 
-      if (_error) {
+      if (error) {
         console.warn(
-          '[_ProfileScreen] Error fetching favorite_shows_count:',
+          '[ProfileScreen] Error fetching favorite_shows_count:',
           error.message
         );
 
         /* 42703 = column does not exist -> migration not applied yet  */
         if (error.code === '42703') {
           console.warn(
-            '[_ProfileScreen] Falling back to counting records in user_favorite_shows'
+            '[ProfileScreen] Falling back to counting records in user_favorite_shows'
           );
 
           /* -----------------------------------------------------------
@@ -85,16 +85,16 @@ const ProfileScreen: React.FC = () => {
            * --------------------------------------------------------- */
           const {
             count,
-            error: _countError,
+            error: countError,
           } = await supabase
             .from('user_favorite_shows')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id);
 
-          if (_countError) {
+          if (countError) {
             console.error(
-              '[_ProfileScreen] Error counting favorites:',
-              _countError
+              '[ProfileScreen] Error counting favorites:',
+              countError
             );
             return;
           }
@@ -105,19 +105,19 @@ const ProfileScreen: React.FC = () => {
 
         // Other errors – log and exit early
         console.error(
-          '[_ProfileScreen] Unexpected error fetching favorite_shows_count:',
-          _error
+          '[ProfileScreen] Unexpected error fetching favorite_shows_count:',
+          error
         );
         return;
       }
 
       // Success path – column exists
-      const _count = data?.favorite_shows_count ?? 0;
+      const count = data?.favorite_shows_count ?? 0;
        
-console.warn('[_ProfileScreen] Fetched favorite_shows_count:', _count);
-      setLocalFavoriteCount(_count);
-    } catch (_err) {
-      console.error('[_ProfileScreen] Unexpected error in fetchFavoriteCount:', _err);
+console.warn('[ProfileScreen] Fetched favorite_shows_count:', count);
+      setLocalFavoriteCount(count);
+    } catch (err) {
+      console.error('[ProfileScreen] Unexpected error in fetchFavoriteCount:', err);
       // keep previous count on unexpected error
     }
   }, [user?.id]);
@@ -128,14 +128,14 @@ console.warn('[_ProfileScreen] Fetched favorite_shows_count:', _count);
   useFocusEffect(
     useCallback(() => {
        
-console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
+console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
       fetchFavoriteCount();
       // no cleanup needed
     }, [fetchFavoriteCount, user])
   );
   
   // Handle logout
-  const _handleLogout = async () => {
+  const handleLogout = async () => {
     try {
       await logout();
       // The auth context will handle navigation to the login screen
@@ -145,8 +145,8 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
   };
   
   // Toggle edit mode
-  const _toggleEditMode = () => {
-    if (_isEditMode) {
+  const toggleEditMode = () => {
+    if (isEditMode) {
       // If exiting edit mode, reset fields to current values
       setFirstName(user?.firstName || '');
       setLastName(user?.lastName || '');
@@ -163,7 +163,7 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
   };
   
   // Validate form
-  const _validateForm = () => {
+  const validateForm = () => {
     // ---- Basic required fields ---------------------------------------------
     if (!firstName.trim()) {
       Alert.alert('Error', 'First name is required');
@@ -171,15 +171,15 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
     }
 
     // ZIP code validation (US format - 5 digits)
-    const _zipRegex = /^\d{_5}$/;
+    const zipRegex = /^\d{5}$/;
     if (!zipRegex.test(homeZipCode.trim())) {
       Alert.alert('Error', 'Please enter a valid 5-digit ZIP code');
       return false;
     }
 
     // Phone validation (optional – allow punctuation then strip)
-    if (_phoneNumber) {
-      const _cleaned = phoneNumber.replace(/\D/g, '');
+    if (phoneNumber) {
+      const cleaned = phoneNumber.replace(/\D/g, '');
       if (cleaned && cleaned.length !== 10) {
         Alert.alert('Error', 'Please enter a valid 10-digit phone number');
         return false;
@@ -189,12 +189,12 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
     /* ----------------------------------------------------------------------
      * Social links — lenient validation + normalisation
      * -------------------------------------------------------------------- */
-    const _simpleDomainRegex =
+    const simpleDomainRegex =
       /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
-    const _validateAndNormalizeUrl = (
+    const validateAndNormalizeUrl = (
       url: string,
-      _platformLabel: string,
+      platformLabel: string,
     ): string | undefined | false => {
       if (!url.trim()) return undefined; // treat empty as undefined
 
@@ -204,9 +204,9 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
       }
 
       // Remove leading www. for validation
-      const _domainPart = url.trim().replace(/^www\./i, '');
+      const domainPart = url.trim().replace(/^www\./i, '');
       if (!simpleDomainRegex.test(domainPart)) {
-        Alert.alert('Error', `Please enter a valid ${_platformLabel} URL`);
+        Alert.alert('Error', `Please enter a valid ${platformLabel} URL`);
         return false;
       }
 
@@ -214,55 +214,55 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
       return `https://${url.trim()}`;
     };
 
-    const _normalizedFacebook = validateAndNormalizeUrl(
-      _facebookUrl,
+    const normalizedFacebook = validateAndNormalizeUrl(
+      facebookUrl,
       'Facebook',
     );
     if (normalizedFacebook === false) return false;
 
-    const _normalizedInstagram = validateAndNormalizeUrl(
-      _instagramUrl,
+    const normalizedInstagram = validateAndNormalizeUrl(
+      instagramUrl,
       'Instagram',
     );
     if (normalizedInstagram === false) return false;
 
-    const _normalizedTwitter = validateAndNormalizeUrl(
-      _twitterUrl,
+    const normalizedTwitter = validateAndNormalizeUrl(
+      twitterUrl,
       'Twitter/X',
     );
     if (normalizedTwitter === false) return false;
 
-    const _normalizedWhatnot = validateAndNormalizeUrl(
-      _whatnotUrl,
+    const normalizedWhatnot = validateAndNormalizeUrl(
+      whatnotUrl,
       'Whatnot',
     );
     if (normalizedWhatnot === false) return false;
 
-    const _normalizedEbay = validateAndNormalizeUrl(
-      _ebayStoreUrl,
+    const normalizedEbay = validateAndNormalizeUrl(
+      ebayStoreUrl,
       'eBay store',
     );
     if (normalizedEbay === false) return false;
 
     // Persist normalized values into state so `saveChanges` uses them
-    if (normalizedFacebook !== undefined) setFacebookUrl(_normalizedFacebook);
-    if (normalizedInstagram !== undefined) setInstagramUrl(_normalizedInstagram);
-    if (normalizedTwitter !== undefined) setTwitterUrl(_normalizedTwitter);
-    if (normalizedWhatnot !== undefined) setWhatnotUrl(_normalizedWhatnot);
-    if (normalizedEbay !== undefined) setEbayStoreUrl(_normalizedEbay);
+    if (normalizedFacebook !== undefined) setFacebookUrl(normalizedFacebook);
+    if (normalizedInstagram !== undefined) setInstagramUrl(normalizedInstagram);
+    if (normalizedTwitter !== undefined) setTwitterUrl(normalizedTwitter);
+    if (normalizedWhatnot !== undefined) setWhatnotUrl(normalizedWhatnot);
+    if (normalizedEbay !== undefined) setEbayStoreUrl(normalizedEbay);
 
     return true;
   };
   
   // Save profile changes
-  const _saveChanges = async () => {
+  const saveChanges = async () => {
     if (!validateForm()) {
       return;
     }
     
     try {
       setIsSubmitting(true);
-      console.warn('[_ProfileScreen] Saving profile changes:', {
+      console.warn('[ProfileScreen] Saving profile changes:', {
         firstName,
         lastName: lastName || undefined,
         homeZipCode,
@@ -288,10 +288,10 @@ console.warn('[_ProfileScreen] Screen focused – refreshing counts/badges');
       
       setIsEditMode(false);
        
-console.warn('[_ProfileScreen] Profile updated successfully');
+console.warn('[ProfileScreen] Profile updated successfully');
       Alert.alert('Success', 'Profile updated successfully');
     } catch (err: any) {
-      console.error('[_ProfileScreen] Error updating profile:', _err);
+      console.error('[ProfileScreen] Error updating profile:', err);
       Alert.alert('Update Failed', err.message || 'Please try again');
     } finally {
       setIsSubmitting(false);
@@ -299,11 +299,11 @@ console.warn('[_ProfileScreen] Profile updated successfully');
   };
 
   // Force-refresh JWT / role - This function is fine and used by the button
-  const _handleRefreshRole = async () => {
+  const handleRefreshRole = async () => {
     try {
       setIsRefreshingRole(true);
-      const _success = await refreshUserRole();
-      if (_success) {
+      const success = await refreshUserRole();
+      if (success) {
         Alert.alert('Session Refreshed', 'Your account information has been updated.');
       } else {
         Alert.alert('Refresh Failed', 'Unable to refresh session right now. Please try again later.');
@@ -316,7 +316,7 @@ console.warn('[_ProfileScreen] Profile updated successfully');
   };
 
   // Handle password change
-  const _handlePasswordChange = async () => {
+  const handlePasswordChange = async () => {
     if (!user?.email) {
       Alert.alert('Error', 'No email address found for your account.');
       return;
@@ -332,7 +332,7 @@ console.warn('[_ProfileScreen] Profile updated successfully');
       );
       
     } catch (error: any) {
-      console.error('[_ProfileScreen] Error sending password reset:', _error);
+      console.error('[ProfileScreen] Error sending password reset:', error);
       Alert.alert('Password Reset Failed', error.message || 'Please try again later.');
     } finally {
       setIsPasswordResetLoading(false);
@@ -340,18 +340,18 @@ console.warn('[_ProfileScreen] Profile updated successfully');
   };
   
   // Format phone number for display
-  const _formatPhoneNumber = (phone: string) => {
-    const _cleaned = phone.replace(/\D/g, '');
+  const formatPhoneNumber = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, _3)}) ${cleaned.slice(3, _6)}-${cleaned.slice(6)}`;
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
     }
     return phone;
   };
   
   // Check if user is a dealer (using current user directly)
-  const _isDealer = () => {
+  const isDealer = () => {
     if (!user) return false;
-    const _dealerLike =
+    const dealerLike =
       user.role === UserRole.DEALER ||
       user.role === UserRole.MVP_DEALER ||
       user.role === UserRole.SHOW_ORGANIZER ||
@@ -359,7 +359,7 @@ console.warn('[_ProfileScreen] Profile updated successfully');
       user.accountType === 'organizer';
 
     /* Debug logging to diagnose access-control issues */
-    console.warn('[_ProfileScreen] isDealer check', {
+    console.warn('[ProfileScreen] isDealer check', {
       userId: user.id,
       role: user.role,
       accountType: user.accountType,
@@ -370,7 +370,7 @@ console.warn('[_ProfileScreen] Profile updated successfully');
   };
   
   // Check if user can edit social media links (only MVP Dealers and Show Organizers)
-  const _canEditSocialMedia = () => {
+  const canEditSocialMedia = () => {
     if (!user) return false;
     return (
       user.role === UserRole.MVP_DEALER || 
@@ -379,19 +379,19 @@ console.warn('[_ProfileScreen] Profile updated successfully');
   };
   
   // Get role display name
-  const _getRoleDisplayName = (_role: UserRole) => {
+  const getRoleDisplayName = (role: UserRole) => {
     // Debug logging to track what role is being passed
-    console.warn('[_ProfileScreen] getRoleDisplayName called with role:', _role, 
+    console.warn('[ProfileScreen] getRoleDisplayName called with role:', role, 
       'for user ID:', user?.id);
     
     // Special case for the specific user ID that needs to show as Dealer
     if (user?.id === '7d792f27-9112-4837-926f-42e4eb1f0577') {
        
-console.warn('[_ProfileScreen] Forcing display as Dealer for specific user ID');
+console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
       return 'Dealer';
     }
     
-    switch (_role) {
+    switch (role) {
       case UserRole.ATTENDEE:
         return 'Attendee';
       case UserRole.DEALER:
@@ -402,26 +402,26 @@ console.warn('[_ProfileScreen] Forcing display as Dealer for specific user ID');
         return 'Show Organizer';
       default:
         // Add a console log here to debug what 'role' is if it hits 'Unknown'
-        console.warn('Unknown UserRole encountered:', _role);
+        console.warn('Unknown UserRole encountered:', role);
         return 'Unknown';
     }
   };
 
   // Helper function to open a URL with robust protocol handling
-  const _openUrl = (url: string | undefined) => {
+  const openUrl = (url: string | undefined) => {
     if (!url) return;
 
     // Auto-prefix protocol if the user omitted it
-    let _formattedUrl = url.trim();
+    let formattedUrl = url.trim();
     if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = `https://${_formattedUrl}`;
+      formattedUrl = `https://${formattedUrl}`;
     }
 
      
-console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
+console.warn('[ProfileScreen] Opening URL:', formattedUrl);
 
-    Linking.openURL(formattedUrl).catch(_err => {
-      console.error('Error opening URL:', _err);
+    Linking.openURL(formattedUrl).catch(err => {
+      console.error('Error opening URL:', err);
       Alert.alert(
         'Cannot Open Link',
         'The link could not be opened. Please check that it is a valid URL.',
@@ -431,7 +431,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
   };
 
   // Navigate to Admin Map screen
-  const _navigateToAdminMap = () => {
+  const navigateToAdminMap = () => {
     // Navigate directly to the Admin stack; deep linking param removed
     navigation.navigate('Admin' as never);
   };
@@ -448,7 +448,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
   /* ------------------------------------------------------------------ */
   /* Debug – log role + dealer status each render                        */
   /* ------------------------------------------------------------------ */
-  console.warn('[_ProfileScreen] render', {
+  console.warn('[ProfileScreen] render', {
     userId: user.id,
     role: user.role,
     accountType: user.accountType,
@@ -482,12 +482,12 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
           
           <TouchableOpacity
             style={styles.editButton}
-            onPress={_toggleEditMode}
-            disabled={_isSubmitting}
+            onPress={toggleEditMode}
+            disabled={isSubmitting}
           >
             <Ionicons
               name={isEditMode ? "close-outline" : "create-outline"}
-              size={_20}
+              size={20}
               color="white"
             />
             <Text style={styles.editButtonText}>
@@ -506,8 +506,8 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                 <Text style={styles.inputLabel}>First Name *</Text>
                 <TextInput
                   style={styles.input}
-                  value={_firstName}
-                  onChangeText={_setFirstName}
+                  value={firstName}
+                  onChangeText={setFirstName}
                   placeholder="First Name"
                   editable={!isSubmitting}
                 />
@@ -517,9 +517,9 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                 <Text style={styles.inputLabel}>Last Name</Text>
                 <TextInput
                   style={styles.input}
-                  value={_lastName}
-                  onChangeText={_setLastName}
-                  placeholder="Last Name (_Optional)"
+                  value={lastName}
+                  onChangeText={setLastName}
+                  placeholder="Last Name (Optional)"
                   editable={!isSubmitting}
                 />
               </View>
@@ -528,11 +528,11 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                 <Text style={styles.inputLabel}>Home ZIP Code *</Text>
                 <TextInput
                   style={styles.input}
-                  value={_homeZipCode}
-                  onChangeText={_setHomeZipCode}
+                  value={homeZipCode}
+                  onChangeText={setHomeZipCode}
                   placeholder="ZIP Code"
                   keyboardType="numeric"
-                  maxLength={_5}
+                  maxLength={5}
                   editable={!isSubmitting}
                 />
               </View>
@@ -541,9 +541,9 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                 <Text style={styles.inputLabel}>Phone Number</Text>
                 <TextInput
                   style={styles.input}
-                  value={_phoneNumber}
-                  onChangeText={_setPhoneNumber}
-                  placeholder="Phone Number (_Optional)"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  placeholder="Phone Number (Optional)"
                   keyboardType="phone-pad"
                   editable={!isSubmitting}
                 />
@@ -551,8 +551,8 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
               
               <TouchableOpacity
                 style={[styles.saveButton, isSubmitting && styles.buttonDisabled]}
-                onPress={_saveChanges}
-                disabled={_isSubmitting}
+                onPress={saveChanges}
+                disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <ActivityIndicator color="white" size="small" />
@@ -564,7 +564,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
           ) : (
             <View style={styles.infoList}>
               <View style={styles.infoItem}>
-                <Ionicons name="person-outline" size={_20} color="#666" />
+                <Ionicons name="person-outline" size={20} color="#666" />
                 <View style={styles.infoTextContainer}>
                   <Text style={styles.infoLabel}>Name</Text>
                   <Text style={styles.infoValue}>
@@ -574,7 +574,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
               </View>
               
               <View style={styles.infoItem}>
-                <Ionicons name="mail-outline" size={_20} color="#666" />
+                <Ionicons name="mail-outline" size={20} color="#666" />
                 <View style={styles.infoTextContainer}>
                   <Text style={styles.infoLabel}>Email</Text>
                   <Text style={styles.infoValue}>{user.email}</Text>
@@ -582,7 +582,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
               </View>
               
               <View style={styles.infoItem}>
-                <Ionicons name="location-outline" size={_20} color="#666" />
+                <Ionicons name="location-outline" size={20} color="#666" />
                 <View style={styles.infoTextContainer}>
                   <Text style={styles.infoLabel}>Home ZIP Code</Text>
                   <Text style={styles.infoValue}>{user.homeZipCode}</Text>
@@ -591,7 +591,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
               
               {user.phoneNumber && (
                 <View style={styles.infoItem}>
-                  <Ionicons name="call-outline" size={_20} color="#666" />
+                  <Ionicons name="call-outline" size={20} color="#666" />
                   <View style={styles.infoTextContainer}>
                     <Text style={styles.infoLabel}>Phone</Text>
                     <Text style={styles.infoValue}>{formatPhoneNumber(user.phoneNumber)}</Text>
@@ -613,8 +613,8 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                   <Text style={styles.inputLabel}>Facebook Profile URL</Text>
                   <TextInput
                     style={styles.input}
-                    value={_facebookUrl}
-                    onChangeText={_setFacebookUrl}
+                    value={facebookUrl}
+                    onChangeText={setFacebookUrl}
                     placeholder="https://facebook.com/username"
                     keyboardType="url"
                     autoCapitalize="none"
@@ -626,8 +626,8 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                   <Text style={styles.inputLabel}>Instagram Profile URL</Text>
                   <TextInput
                     style={styles.input}
-                    value={_instagramUrl}
-                    onChangeText={_setInstagramUrl}
+                    value={instagramUrl}
+                    onChangeText={setInstagramUrl}
                     placeholder="https://instagram.com/username"
                     keyboardType="url"
                     autoCapitalize="none"
@@ -639,8 +639,8 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                   <Text style={styles.inputLabel}>Twitter/X Profile URL</Text>
                   <TextInput
                     style={styles.input}
-                    value={_twitterUrl}
-                    onChangeText={_setTwitterUrl}
+                    value={twitterUrl}
+                    onChangeText={setTwitterUrl}
                     placeholder="https://twitter.com/username"
                     keyboardType="url"
                     autoCapitalize="none"
@@ -654,8 +654,8 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                       <Text style={styles.inputLabel}>Whatnot Store URL</Text>
                       <TextInput
                         style={styles.input}
-                        value={_whatnotUrl}
-                        onChangeText={_setWhatnotUrl}
+                        value={whatnotUrl}
+                        onChangeText={setWhatnotUrl}
                         placeholder="https://whatnot.com/user/username"
                         keyboardType="url"
                         autoCapitalize="none"
@@ -667,8 +667,8 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                       <Text style={styles.inputLabel}>eBay Store URL</Text>
                       <TextInput
                         style={styles.input}
-                        value={_ebayStoreUrl}
-                        onChangeText={_setEbayStoreUrl}
+                        value={ebayStoreUrl}
+                        onChangeText={setEbayStoreUrl}
                         placeholder="https://ebay.com/usr/storename"
                         keyboardType="url"
                         autoCapitalize="none"
@@ -684,7 +684,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                  !user.whatnotUrl && !user.ebayStoreUrl ? (
                   <View style={styles.emptyState}>
                     <Text style={styles.emptyStateText}>No social media links added yet</Text>
-                    <TouchableOpacity onPress={_toggleEditMode}>
+                    <TouchableOpacity onPress={toggleEditMode}>
                       <Text style={styles.emptyStateActionText}>Add links</Text>
                     </TouchableOpacity>
                   </View>
@@ -692,7 +692,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                   <>
                     {user.facebookUrl && (
                       <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.facebookUrl)}>
-                        <Ionicons name="logo-facebook" size={_20} color="#1877F2" />
+                        <Ionicons name="logo-facebook" size={20} color="#1877F2" />
                         <View style={styles.infoTextContainer}>
                           <Text style={styles.infoLabel}>Facebook</Text>
                           <Text style={styles.infoValueLink}>{user.facebookUrl}</Text>
@@ -702,7 +702,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                     
                     {user.instagramUrl && (
                       <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.instagramUrl)}>
-                        <Ionicons name="logo-instagram" size={_20} color="#C13584" />
+                        <Ionicons name="logo-instagram" size={20} color="#C13584" />
                         <View style={styles.infoTextContainer}>
                           <Text style={styles.infoLabel}>Instagram</Text>
                           <Text style={styles.infoValueLink}>{user.instagramUrl}</Text>
@@ -712,7 +712,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                     
                     {user.twitterUrl && (
                       <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.twitterUrl)}>
-                        <Ionicons name="logo-twitter" size={_20} color="#1DA1F2" />
+                        <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
                         <View style={styles.infoTextContainer}>
                           <Text style={styles.infoLabel}>Twitter/X</Text>
                           <Text style={styles.infoValueLink}>{user.twitterUrl}</Text>
@@ -724,7 +724,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                       <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.whatnotUrl)}>
                         <SocialIcon 
                           platform="whatnot" 
-                          size={_20} 
+                          size={20} 
                           onPress={() => openUrl(user.whatnotUrl)} 
                           style={{backgroundColor: 'transparent'}}
                         />
@@ -739,7 +739,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
                       <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.ebayStoreUrl)}>
                         <SocialIcon 
                           platform="ebay" 
-                          size={_20} 
+                          size={20} 
                           onPress={() => openUrl(user.ebayStoreUrl)} 
                           style={{backgroundColor: 'transparent'}}
                         />
@@ -762,7 +762,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
           
           <View style={styles.infoList}>
             <View style={styles.infoItem}>
-              <Ionicons name="shield-checkmark-outline" size={_20} color="#666" />
+              <Ionicons name="shield-checkmark-outline" size={20} color="#666" />
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Account Type</Text>
                 {/* Display user.role directly, as it should now be correct from Supabase */}
@@ -771,14 +771,14 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
             </View>
             
             <View style={styles.infoItem}>
-              <Ionicons name="calendar-outline" size={_20} color="#666" />
+              <Ionicons name="calendar-outline" size={20} color="#666" />
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Member Since</Text>
                 <Text style={styles.infoValue}>
                   {(() => {
                     // Ensure the day shown matches the value in the DB
-                    const _date = new Date(user.createdAt);
-                    const _utcDate = new Date(
+                    const date = new Date(user.createdAt);
+                    const utcDate = new Date(
                       date.getTime() + date.getTimezoneOffset() * 60 * 1000
                     );
                     return utcDate.toLocaleDateString();
@@ -788,18 +788,18 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
             </View>
             
             <View style={styles.infoItem}>
-              <Ionicons name="checkmark-circle-outline" size={_20} color="#666" />
+              <Ionicons name="checkmark-circle-outline" size={20} color="#666" />
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Email Verified</Text>
                 <View style={styles.verificationStatus}>
                   {user.isEmailVerified ? (
                     <>
-                      <Ionicons name="checkmark-circle" size={_16} color="#4CAF50" />
+                      <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                       <Text style={[styles.verificationText, { color: '#4CAF50' }]}>Verified</Text>
                     </>
                   ) : (
                     <>
-                      <Ionicons name="close-circle" size={_16} color="#F44336" />
+                      <Ionicons name="close-circle" size={16} color="#F44336" />
                       <Text style={[styles.verificationText, { color: '#F44336' }]}>Not Verified</Text>
                     </>
                   )}
@@ -816,7 +816,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               {/* Use authoritative DB-backed favourite count */}
-              <Text style={styles.statValue}>{_localFavoriteCount}</Text>
+              <Text style={styles.statValue}>{localFavoriteCount}</Text>
               <Text style={styles.statLabel}>Favorite Shows</Text>
             </View>
             
@@ -835,13 +835,13 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
           {isAdmin && (
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={_navigateToAdminMap}
+              onPress={navigateToAdminMap}
             >
-              <Ionicons name="construct-outline" size={_20} color="#007AFF" />
+              <Ionicons name="construct-outline" size={20} color="#007AFF" />
               <Text style={styles.actionButtonText}>Admin: Coordinate Validation</Text>
               <Ionicons
                 name="chevron-forward"
-                size={_20}
+                size={20}
                 color="#ccc"
                 style={styles.actionButtonIcon}
               />
@@ -854,11 +854,11 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
               style={styles.actionButton}
               onPress={() => navigation.navigate('ShowParticipationScreen' as never)}
             >
-              <Ionicons name="storefront-outline" size={_20} color="#007AFF" />
+              <Ionicons name="storefront-outline" size={20} color="#007AFF" />
               <Text style={styles.actionButtonText}>Manage Show Participation</Text>
               <Ionicons
                 name="chevron-forward"
-                size={_20}
+                size={20}
                 color="#ccc"
                 style={styles.actionButtonIcon}
               />
@@ -870,11 +870,11 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
             style={styles.actionButton}
             onPress={() => navigation.navigate('SubscriptionScreen' as never)}
           >
-            <Ionicons name="star-outline" size={_20} color="#007AFF" />
+            <Ionicons name="star-outline" size={20} color="#007AFF" />
             <Text style={styles.actionButtonText}>Manage Subscription</Text>
             <Ionicons
               name="chevron-forward"
-              size={_20}
+              size={20}
               color="#ccc"
               style={styles.actionButtonIcon}
             />
@@ -882,40 +882,40 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
           
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={_handlePasswordChange}
-            disabled={_isPasswordResetLoading}
+            onPress={handlePasswordChange}
+            disabled={isPasswordResetLoading}
           >
             {isPasswordResetLoading ? (
               <ActivityIndicator size="small" color="#007AFF" style={{ marginHorizontal: 2 }} />
             ) : (
-              <Ionicons name="lock-closed-outline" size={_20} color="#007AFF" />
+              <Ionicons name="lock-closed-outline" size={20} color="#007AFF" />
             )}
             <Text style={styles.actionButtonText}>Change Password</Text>
-            <Ionicons name="chevron-forward" size={_20} color="#ccc" style={styles.actionButtonIcon} />
+            <Ionicons name="chevron-forward" size={20} color="#ccc" style={styles.actionButtonIcon} />
           </TouchableOpacity>
 
           {/* Refresh Session */}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={_handleRefreshRole}
-            disabled={_isRefreshingRole}
+            onPress={handleRefreshRole}
+            disabled={isRefreshingRole}
           >
             {isRefreshingRole ? (
               <ActivityIndicator size="small" color="#007AFF" style={{ marginHorizontal: 2 }} />
             ) : (
-              <Ionicons name="refresh-outline" size={_20} color="#007AFF" />
+              <Ionicons name="refresh-outline" size={20} color="#007AFF" />
             )}
             <Text style={styles.actionButtonText}>Refresh Session</Text>
             <Ionicons
               name="chevron-forward"
-              size={_20}
+              size={20}
               color="#ccc"
               style={styles.actionButtonIcon}
             />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.logoutButton} onPress={_handleLogout}>
-            <Ionicons name="log-out-outline" size={_20} color="#FF3B30" />
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
             <Text style={styles.logoutButtonText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -924,7 +924,7 @@ console.warn('[_ProfileScreen] Opening URL:', _formattedUrl);
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',

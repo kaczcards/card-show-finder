@@ -14,7 +14,7 @@ import SentryTester from '../components/SentryTester';
  * that they are properly captured in the Sentry dashboard.
  */
 const SentryTestScreen: React.FC = () => {
-  const _navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   // Set navigation options
   React.useLayoutEffect(() => {
@@ -22,7 +22,7 @@ const SentryTestScreen: React.FC = () => {
       headerTitle: 'Sentry Testing',
       headerBackTitle: 'Back',
     });
-  }, [_navigation]);
+  }, [navigation]);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
@@ -52,7 +52,7 @@ const SentryTestScreen: React.FC = () => {
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
