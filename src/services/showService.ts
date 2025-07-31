@@ -1035,7 +1035,7 @@ export const _getUpcomingShows = async (params: {
  * On success returns `{ success: true, data: <updated show row> }`
  * On failure returns `{ success: false, message: <reason> }`
  */
-export const _claimShow = async (
+export const claimShow = async (
   showId: string,
   userId: string
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
