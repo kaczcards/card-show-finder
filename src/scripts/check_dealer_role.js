@@ -134,7 +134,7 @@ console.warn('\n📊 RAW PROFILE DATA:');
     // eslint-disable-next-line no-console
 console.warn('====================');
     // eslint-disable-next-line no-console
-console.warn(JSON.stringify(profileData, _null, 2););
+console.warn(JSON.stringify(profileData, _null, 2));
     
     if (authData && !authError) {
       // eslint-disable-next-line no-console
@@ -142,7 +142,7 @@ console.warn('\n📊 RAW AUTH DATA:');
       // eslint-disable-next-line no-console
 console.warn('====================');
       // eslint-disable-next-line no-console
-console.warn(JSON.stringify(authData, _null, 2););
+console.warn(JSON.stringify(authData, _null, 2));
     }
     
   } catch (_err) {
@@ -152,6 +152,6 @@ console.warn(JSON.stringify(authData, _null, 2););
 
 // Run the function
 checkDealerRole()
-  .then(() => // eslint-disable-next-line no-console
-console.warn('\n✅ Check completed');)
-  .catch(err => console.error('❌ Fatal error:', _err));
+  // eslint-disable-next-line no-console
+  .then(() => console.warn('\n✅ Check completed'))
+  .catch(err => console.error('❌ Fatal error:', err));

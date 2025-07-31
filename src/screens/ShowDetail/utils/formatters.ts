@@ -21,7 +21,7 @@ export const formatShowDate = (show: any): string => {
       return `${startDate.toLocaleDateString(undefined, options)} - ${endDate.toLocaleDateString(undefined, options)}`;
     }
     return startDate.toLocaleDateString(undefined, options);
-  } catch (e) {
+  } catch (_e) {
     return show.start_date || 'Date unavailable';
   }
 };
@@ -36,7 +36,7 @@ export const formatTime = (timeString?: string | null): string => {
   if (!timeString) return '';
   try {
     return new Date(timeString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } catch (e) {
+  } catch (_e) {
     return timeString ?? '';
   }
 };

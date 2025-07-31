@@ -77,6 +77,7 @@ console.warn(`\nUser has role: ${data.role}`);
 
 // Run the function
 checkUserRole()
-  .then(() => // eslint-disable-next-line no-console
-console.warn('\nDone!');)
-  .catch(err => console.error('Fatal error:', _err));
+  // eslint-disable-next-line no-console
+  .then(() => console.warn('\nDone!'))
+  // Preserve original error logging semantics
+  .catch((err) => console.error('Fatal error:', err));

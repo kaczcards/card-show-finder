@@ -409,7 +409,7 @@ const CollectionScreen: React.FC = () => {
   
   // Render item for FlatList (AttendeeWantLists)
   const renderItem = useCallback(
-    ({ item }: { item: { id: string } }) => {
+    ({ item: _item }: { item: { id: string } }) => {
     const isPrivileged =
       user?.role === UserRole.MVP_DEALER ||
       user?.role === UserRole.SHOW_ORGANIZER;

@@ -174,7 +174,7 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
                 (address.city || address.subregion || address.region || undefined) : 
                 undefined;
               showGpsLocationToast(locationName);
-            } catch (e) {
+            } catch (_e) {
               showGpsLocationToast();
             }
           }
