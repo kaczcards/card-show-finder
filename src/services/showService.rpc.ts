@@ -450,7 +450,7 @@ export const _getFavoriteShows = async (_userId: string): Promise<Show[]> => {
  * 
  * @param userId User ID
  * @param showId Show ID
- * @param isFavorite Whether to favorite (_true) or unfavorite (_false)
+ * @param isFavorite Whether to favorite (true) or unfavorite (false)
  * @returns Success status
  */
 export const _toggleFavoriteShow = async (

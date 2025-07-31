@@ -57,8 +57,8 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, _onCancel }) => {
 
   // Start the enrollment process by getting a QR code
   const _startEnrollment = async () => {
-    setLoading(_true);
-    setError(_null);
+    setLoading(true);
+    setError(null);
     
     try {
       const _data = await mfaService.startEnrollment();
@@ -66,7 +66,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, _onCancel }) => {
     } catch (_err) {
       setError(`Failed to start MFA enrollment: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   };
 
@@ -77,8 +77,8 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, _onCancel }) => {
       return;
     }
 
-    setLoading(_true);
-    setError(_null);
+    setLoading(true);
+    setError(null);
     
     try {
       const _result = await mfaService.verifySetup(verificationCode, enrollmentData.challengeId);
@@ -92,7 +92,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, _onCancel }) => {
     } catch (_err) {
       setError(`Verification failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
-      setLoading(_false);
+      setLoading(false);
     }
   };
 
@@ -100,11 +100,11 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, _onCancel }) => {
   const _copyRecoveryCodes = () => {
     const _codesText = recoveryCodes.join('\n');
     Clipboard.setString(codesText);
-    setCopiedToClipboard(_true);
+    setCopiedToClipboard(true);
     
     // Reset the copied state after 3 seconds
     setTimeout(() => {
-      setCopiedToClipboard(_false);
+      setCopiedToClipboard(false);
     }, 3000);
   };
 
@@ -243,7 +243,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, _onCancel }) => {
         placeholder="000000"
         keyboardType="number-pad"
         maxLength={_6}
-        autoFocus={_true}
+        autoFocus={true}
       />
       
       {error ? <Text style={styles.errorText}>{_error}</Text> : null}

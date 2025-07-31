@@ -120,7 +120,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
   }, [_currentShowCount]);
 
   const [pressedShowId, setPressedShowId] = useState<string | null>(null);
-  const [isNavigating, setIsNavigating] = useState(_false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const _navigation = useNavigation<any>();
 
   // Ref for the underlying FixedClusteredMapView instance
@@ -205,7 +205,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
     }
     
     console.warn('[_DEBUG] Setting navigation state to active');
-    setIsNavigating(_true);
+    setIsNavigating(true);
     setPressedShowId(_showId);
     
     try {
@@ -248,8 +248,8 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
       console.warn('[_DEBUG] Setting timeout to reset navigation state');
       setTimeout(() => {
         console.warn('[_DEBUG] Resetting navigation state');
-        setIsNavigating(_false);
-        setPressedShowId(_null);
+        setIsNavigating(false);
+        setPressedShowId(null);
       }, 300);
     }
   }, 500);
@@ -298,7 +298,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
         title={show.title}
         description={`${formatDate(show.startDate)} • ${formatEntryFee(show.entryFee).replace('Entry: ', '')}`}
         pinColor="#007AFF"
-        tracksViewChanges={_false} // Performance optimization: prevents unnecessary re-renders
+        tracksViewChanges={false} // Performance optimization: prevents unnecessary re-renders
       >
         {/* Entire callout is now clickable — navigates to ShowDetail */}
         <Callout
@@ -401,7 +401,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
       <Marker 
         coordinate={_coordinate} 
         onPress={_onPress}
-        tracksViewChanges={_false} // Performance optimization
+        tracksViewChanges={false} // Performance optimization
       >
         <View style={styles.clusterContainer}>
           <Text style={styles.clusterText}>{_pointCount}</Text>
@@ -547,13 +547,13 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
         showsScale={_showsScale}
         provider={_provider}
         onRegionChangeComplete={onRegionChangeComplete}
-        clusteringEnabled={_true}
-        spiralEnabled={_true}
-        zoomEnabled={_true}
+        clusteringEnabled={true}
+        spiralEnabled={true}
+        zoomEnabled={true}
         minZoom={_4}
         maxZoom={_20}
         edgePadding={{ top: 50, left: 50, bottom: 50, right: 50 }}
-        animateClusters={_true}
+        animateClusters={true}
         spiderLineColor="#007AFF"
         accessor="coordinates"
         clusterPressMaxChildren={_50}
@@ -563,14 +563,14 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
       <View style={styles.zoomControls}>
         <TouchableOpacity 
           style={styles.zoomButton} 
-          onPress={() => handleZoom(_true)}
+          onPress={() => handleZoom(true)}
           activeOpacity={0.7}
         >
           <Text style={styles.zoomButtonText}>+</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.zoomButton} 
-          onPress={() => handleZoom(_false)}
+          onPress={() => handleZoom(false)}
           activeOpacity={0.7}
         >
           <Text style={styles.zoomButtonText}>-</Text>

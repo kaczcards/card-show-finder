@@ -57,12 +57,12 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
   ) => {
     try {
       if (_refresh) {
-        setIsRefreshing(_true);
+        setIsRefreshing(true);
       } else if (!refresh && pageNum === 1) {
-        setIsLoading(_true);
+        setIsLoading(true);
       }
       
-      setError(_null);
+      setError(null);
       
       let result;
       
@@ -116,31 +116,31 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
       console.error('Error loading want lists:', _err);
       setError(err instanceof Error ? err.message : 'Failed to load want lists');
     } finally {
-      setIsLoading(_false);
-      setIsRefreshing(_false);
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, [userId, userRole, pageSize, searchTerm, selectedShowId]);
 
   // Load data when component mounts or filters change
   useEffect(() => {
-    loadWantLists(_1, _false);
+    loadWantLists(_1, false);
   }, [_loadWantLists]);
 
   // Handle search with debounce
   const _handleSearch = debounce((text: string) => {
     setSearchTerm(_text);
-    loadWantLists(_1, _false, text);
+    loadWantLists(_1, false, text);
   }, 500);
 
   // Handle show selection
   const _handleShowChange = (showId: string) => {
     setSelectedShowId(showId === 'all' ? undefined : showId);
-    loadWantLists(_1, _false, searchTerm, showId === 'all' ? undefined : showId);
+    loadWantLists(_1, false, searchTerm, showId === 'all' ? undefined : showId);
   };
 
   // Handle refresh
   const _handleRefresh = () => {
-    loadWantLists(_1, _true);
+    loadWantLists(_1, true);
   };
 
   // Handle pagination
@@ -236,7 +236,7 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
               <TouchableOpacity 
                 onPress={() => {
                   setSearchTerm('');
-                  loadWantLists(_1, _false, '');
+                  loadWantLists(_1, false, '');
                 }}
                 style={styles.clearButton}
               >
@@ -276,7 +276,7 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
             <Text style={styles.errorText}>{_error}</Text>
             <TouchableOpacity 
               style={styles.retryButton}
-              onPress={() => loadWantLists(_1, _true)}
+              onPress={() => loadWantLists(_1, true)}
             >
               <Text style={styles.retryText}>Retry</Text>
             </TouchableOpacity>

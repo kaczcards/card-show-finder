@@ -139,7 +139,7 @@ const MyShowsScreen: React.FC = () => {
   const [_pastShows] = useState<Show[]>(dummyPast);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
-  const [reviewFormVisible, setReviewFormVisible] = useState(_false);
+  const [reviewFormVisible, setReviewFormVisible] = useState(false);
 
   /* -------------------------  Helpers  ----------------------------- */
   /**
@@ -176,7 +176,7 @@ const MyShowsScreen: React.FC = () => {
 
   const _openReviewForm = (_show: Show) => {
     setSelectedShow(_show);
-    setReviewFormVisible(_true);
+    setReviewFormVisible(true);
   };
 
   const _submitReview = (rating: number, comment: string) => {
@@ -193,8 +193,8 @@ const MyShowsScreen: React.FC = () => {
         date: new Date().toISOString(),
       };
       setReviews((_prev) => [...prev, newReview]);
-      setReviewFormVisible(_false);
-      setSelectedShow(_null);
+      setReviewFormVisible(false);
+      setSelectedShow(null);
     }
   };
 
@@ -321,8 +321,8 @@ const MyShowsScreen: React.FC = () => {
           seriesId={selectedShow.seriesId ?? ''}
           onSubmit={_submitReview}
           onCancel={() => {
-            setReviewFormVisible(_false);
-            setSelectedShow(_null);
+            setReviewFormVisible(false);
+            setSelectedShow(null);
           }}
         />
       )}

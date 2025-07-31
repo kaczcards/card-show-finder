@@ -32,9 +32,9 @@ const DealerProfileScreen: React.FC = () => {
 
   // State for dealer profile
   const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(_true);
-  const [isEditMode, setIsEditMode] = useState(_false);
-  const [isSaving, setIsSaving] = useState(_false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form state
@@ -54,15 +54,15 @@ const DealerProfileScreen: React.FC = () => {
     if (user?.id) {
       fetchDealerProfile();
     } else {
-      setIsLoading(_false);
+      setIsLoading(false);
     }
   }, [user?.id]);
 
   // Fetch dealer profile from Supabase
   const _fetchDealerProfile = async () => {
     try {
-      setIsLoading(_true);
-      setError(_null);
+      setIsLoading(true);
+      setError(null);
 
       const { data, error } = await supabase
         .from('dealer_profiles')
@@ -96,7 +96,7 @@ const DealerProfileScreen: React.FC = () => {
       console.error('Error fetching dealer profile:', _err);
       setError(err.message || 'Failed to load dealer profile');
     } finally {
-      setIsLoading(_false);
+      setIsLoading(false);
     }
   };
 
@@ -209,8 +209,8 @@ const DealerProfileScreen: React.FC = () => {
     }
 
     try {
-      setIsSaving(_true);
-      setError(_null);
+      setIsSaving(true);
+      setError(null);
 
       const _profileData = {
         user_id: user?.id,
@@ -250,14 +250,14 @@ const DealerProfileScreen: React.FC = () => {
 
       // Refresh dealer profile data
       await fetchDealerProfile();
-      setIsEditMode(_false);
+      setIsEditMode(false);
       Alert.alert('Success', 'Dealer profile saved successfully');
     } catch (err: any) {
       console.error('Error saving dealer profile:', _err);
       setError(err.message || 'Failed to save dealer profile');
       Alert.alert('Error', 'Failed to save dealer profile. Please try again.');
     } finally {
-      setIsSaving(_false);
+      setIsSaving(false);
     }
   };
 

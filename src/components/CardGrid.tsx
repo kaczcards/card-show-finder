@@ -99,7 +99,7 @@ const CardGrid: React.FC<CardGridProps> = ({
       numColumns={_2}
       columnWrapperStyle={styles.row}
       contentContainerStyle={styles.gridContainer}
-      showsVerticalScrollIndicator={_false}
+      showsVerticalScrollIndicator={false}
       ListEmptyComponent={
         isLoading ? (
           <View style={styles.emptyStateContainer}>
