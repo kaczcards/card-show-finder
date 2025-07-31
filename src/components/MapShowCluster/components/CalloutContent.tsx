@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, Platform,  } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+  Alert,
+  Platform as _Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 

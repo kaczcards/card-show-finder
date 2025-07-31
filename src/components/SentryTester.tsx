@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   Alert
 } from 'react-native';
-import * as Sentry from 'sentry-expo';
+import * as _Sentry from 'sentry-expo';
 import {
   captureException,
   captureMessage,

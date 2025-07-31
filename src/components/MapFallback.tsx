@@ -8,7 +8,7 @@ import {
   Platform,
   TouchableOpacity,
   ScrollView,
-  NativeModules,
+  NativeModules as _NativeModules,
 } from 'react-native';
 
 /**
@@ -97,13 +97,13 @@ export const isNativeMapsAvailable = (): boolean => {
         try {
           TurboModuleRegistry.getEnforcing('RNMapsAirModule');
           return true;
-        } catch (e) {
+        } catch {
           return false;
         }
       })();
       
     return !!hasModule;
-  } catch (error) {
+  } catch {
     // If any error occurs, assume the module is not available
     return false;
   }
@@ -259,7 +259,7 @@ export const Marker: React.FC<MarkerProps> = (props) => {
       const RealMarker = RNMaps.Marker;
       
       return <RealMarker {...props} />;
-    } catch (error) {
+    } catch {
       // Fall through to fallback
     }
   }
@@ -279,7 +279,7 @@ export const Callout: React.FC<CalloutProps> = (props) => {
       const RealCallout = RNMaps.Callout;
       
       return <RealCallout {...props} />;
-    } catch (error) {
+    } catch {
       // Fall through to fallback
     }
   }

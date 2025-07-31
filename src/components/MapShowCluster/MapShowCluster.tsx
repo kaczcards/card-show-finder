@@ -28,7 +28,7 @@ import { formatDate, formatEntryFee } from '../../utils/formatters';
 import { sanitizeCoordinates } from '../../utils/coordinateUtils'; 
 import { debounce } from '../../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../../supabase';
+import { supabase as _supabase } from '../../supabase';
 
 /* ------------------------------------------------------------------
  * Debugging aid – track a single show end-to-end
@@ -147,7 +147,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
   }, [shows]);
   
   // Function to open maps with native app
-  const openMaps = (address: string) => {
+  const _openMaps = (address: string) => {
     if (!address) return;
 
     // Use platform-specific URL scheme
