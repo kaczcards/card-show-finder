@@ -69,7 +69,7 @@ const Button: React.FC<ButtonProps> = ({
   animated = true,
 }) => {
   // Get theme from context
-  const { _theme } = useTheme();
+  const { theme } = useTheme();
   
   // Animation value for scale
   const _scaleValue = useRef(new Animated.Value(1)).current;

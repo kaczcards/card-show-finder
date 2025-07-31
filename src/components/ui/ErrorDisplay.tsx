@@ -45,13 +45,13 @@ interface ErrorDisplayProps {
 const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   type = 'inline',
   _title = 'Error',
-  _message,
+  message,
   onRetry,
-  _retryText = 'Retry',
+  retryText = 'Retry',
   style,
 }) => {
   // Get theme from context
-  const { _theme } = useTheme();
+  const { theme } = useTheme();
 
   /***************************************************
    * Split rendering into two separate components so
@@ -63,16 +63,16 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
    * Inline (_compact) error component
    */
   const InlineError: React.FC = () => {
-    const _inlineStyle = theme.components.errorStates.inline;
+    const inlineStyle = theme.components.errorStates.inline;
 
     return (
       <View style={[inlineStyle.container, style]}>
         <Ionicons
           name="alert-circle"
-          size={_20}
+          size={20}
           style={inlineStyle.icon}
         />
-        <Text style={inlineStyle.text}>{_message}</Text>
+        <Text style={inlineStyle.text}>{message}</Text>
       </View>
     );
   };
@@ -81,24 +81,24 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
    * Full-screen error component
    */
   const FullScreenError: React.FC = () => {
-    const _fullScreenStyle = theme.components.errorStates.fullScreen;
+    const fullScreenStyle = theme.components.errorStates.fullScreen;
 
     return (
       <View style={[fullScreenStyle.container, style]}>
         <Ionicons
           name="alert-circle-outline"
-          size={_60}
+          size={60}
           style={fullScreenStyle.icon}
         />
         <Text style={fullScreenStyle.title}>{_title}</Text>
-        <Text style={fullScreenStyle.message}>{_message}</Text>
+        <Text style={fullScreenStyle.message}>{message}</Text>
 
         {onRetry && (
           <TouchableOpacity
             style={fullScreenStyle.button.container}
-            onPress={_onRetry}
+            onPress={onRetry}
           >
-            <Text style={fullScreenStyle.button.text}>{_retryText}</Text>
+            <Text style={fullScreenStyle.button.text}>{retryText}</Text>
           </TouchableOpacity>
         )}
       </View>
