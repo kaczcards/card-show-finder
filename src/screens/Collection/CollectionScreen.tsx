@@ -16,10 +16,10 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import {
-  getUserWantList,
-  createWantList,
-  updateWantList,
-  shareWantList,
+  getUserWantList as _getUserWantList,
+  createWantList as _createWantList,
+  updateWantList as _updateWantList,
+  shareWantList as _shareWantList,
 } from '../../services/collectionService';
 import { getUpcomingShows } from '../../services/showService';
 import { supabase } from '../../supabase';
@@ -96,8 +96,8 @@ const CollectionScreen: React.FC = () => {
       }
 
       // Find the one with the inventory prefix
-      const inventoryItem = data?.find(item => 
-        item.content && item.content.startsWith(INVENTORY_PREFIX)
+      const inventoryItem = data?.find(_item => 
+        _item.content && _item.content.startsWith(INVENTORY_PREFIX)
       );
       
       if (inventoryItem) {
@@ -186,8 +186,8 @@ const CollectionScreen: React.FC = () => {
       }
       
       // Find the first want list that doesn't have the inventory prefix
-      const regularWantList = data?.find(item => 
-        !item.content || !item.content.startsWith(INVENTORY_PREFIX)
+      const regularWantList = data?.find(_item => 
+        !_item.content || !_item.content.startsWith(INVENTORY_PREFIX)
       );
       
       if (regularWantList) {
@@ -443,7 +443,7 @@ const CollectionScreen: React.FC = () => {
         <FlatList
           data={flatListData}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(_item) => _item.id}
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.flatListContent}
           keyboardShouldPersistTaps="handled"

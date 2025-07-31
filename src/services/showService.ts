@@ -1077,7 +1077,11 @@ export const claimShow = async (
      * 1. Atomically flag the show as claimed IF not yet claimed
      *    — PostgREST will return 0 rows if the condition fails.
      * ------------------------------------------------------ */
-    const { data: updatedShow, error: updateError, count } = await supabase
+    const {
+      data: updatedShow,
+      error: updateError,
+      count: _count,
+    } = await supabase
         .from('shows')
         .update({
           claimed: true,

@@ -36,7 +36,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [isResending, setIsResending] = useState(false);
 
   // Get auth context
-  const { login, clearError, error, isLoading, isAuthenticated } = useAuth();
+  const { login, clearError, error, isLoading, isAuthenticated: _isAuthenticated } = useAuth();
 
   // Handle login
   const handleLogin = async () => {

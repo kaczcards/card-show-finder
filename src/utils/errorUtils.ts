@@ -7,7 +7,7 @@ import {
   getUserFriendlyMessage,
   handleSupabaseError,
   logError,
-  withErrorHandling
+  withErrorHandling as _withErrorHandling
 } from '../services/errorService';
 
 /**

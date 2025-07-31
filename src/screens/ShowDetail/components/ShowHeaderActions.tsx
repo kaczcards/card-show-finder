@@ -6,7 +6,7 @@ import { Show } from '../../../types';
 
 interface ShowHeaderActionsProps {
   isFavorite: boolean;
-  isCurrentUserOrganizer: boolean;
+  _isCurrentUserOrganizer: boolean;
   onToggleFavorite: () => void;
   onOpenMap: () => void;
   onShare: () => void;
@@ -17,7 +17,7 @@ interface ShowHeaderActionsProps {
 
 const ShowHeaderActions: React.FC<ShowHeaderActionsProps> = ({
   isFavorite,
-  isCurrentUserOrganizer,
+  _isCurrentUserOrganizer,
   onToggleFavorite,
   onOpenMap,
   onShare,
