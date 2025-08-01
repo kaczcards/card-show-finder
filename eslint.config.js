@@ -92,6 +92,9 @@ module.exports = [
       'setup-*.js',
       'test-*.js',
       'verify-*.js',
+      'search-specific-show.js',
+      'simple-admin-functions.js',
+      'simple-security-test-runner.js',
       'install-*.js',
       'create-*.js',
       'insert-*.js',
@@ -129,6 +132,9 @@ module.exports = [
       
       // Shelved features
       'shelved-features/**',
+      
+      // Supabase edge functions
+      'supabase/functions/**',
       
       // Other files
       // Prevent double-nested path linting (CI clones inside card-show-finder directory)
