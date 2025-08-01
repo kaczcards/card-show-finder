@@ -74,20 +74,29 @@ export const isInTrialPeriod = (user: User): boolean => {
  * @returns Object with days, hours remaining or null if no active subscription
  */
 export const getSubscriptionTimeRemaining = (user: User): { days: number, hours: number } | null => {
-  if (!hasActiveSubscription(user) || !user.subscriptionExpiry) {
+  // If we don't even have an expiry date we cannot compute anything
+  if (!user?.subscriptionExpiry) {
     return null;
   }
-  
-  const now = new Date();
+
   const expiryDate = new Date(user.subscriptionExpiry);
+
+  // Guard against corrupted / unparsable dates
+  if (Number.isNaN(expiryDate.getTime())) {
+    return null;
+  }
+
+  const now = new Date();
   const diffMs = expiryDate.getTime() - now.getTime();
-  
-  // If already expired
-  if (diffMs <= 0) return { days: 0, hours: 0 };
-  
+
+  // If already expired, return explicit zero time remaining object
+  if (diffMs <= 0) {
+    return { days: 0, hours: 0 };
+  }
+
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  
+
   return { days, hours };
 };
 
@@ -128,15 +137,20 @@ export const getSubscriptionDetails = (user: User): {
     return null;
   }
   
-  // Find the plan that matches the user's account type
-  const planType = user.accountType === 'dealer' 
-    ? SubscriptionPlanType.DEALER 
-    : SubscriptionPlanType.ORGANIZER;
-    
-  // Default to the annual plan as it's the most common
-  const plan = SUBSCRIPTION_PLANS.find(p => 
-    p.type === planType && p.duration === SubscriptionDuration.ANNUAL
-  ) || null;
+  // Resolve plan type safely – unknown account types yield null plan
+  let plan: SubscriptionPlan | null = null;
+  if (user.accountType === 'dealer' || user.accountType === 'organizer') {
+    const planType =
+      user.accountType === 'dealer'
+        ? SubscriptionPlanType.DEALER
+        : SubscriptionPlanType.ORGANIZER;
+
+    // Default to the annual plan as it's the most common
+    plan =
+      SUBSCRIPTION_PLANS.find(
+        (p) => p.type === planType && p.duration === SubscriptionDuration.ANNUAL,
+      ) || null;
+  }
   
   // Check if user is in trial period
   const isTrialPeriod = isInTrialPeriod(user);
@@ -145,12 +159,22 @@ export const getSubscriptionDetails = (user: User): {
   const isPaid = user.paymentStatus === 'paid' || 
                 (hasActiveSubscription(user) && !isTrialPeriod);
   
+  // Determine expiry date object (may be invalid Date)
+  const expiryObj = user.subscriptionExpiry
+    ? new Date(user.subscriptionExpiry)
+    : null;
+
+  const expiryValid = expiryObj !== null && !Number.isNaN(expiryObj.getTime());
+
+  // Active status uses both subscription flag and valid expiry date
+  const active = hasActiveSubscription(user) && expiryValid;
+
   return {
     accountType: user.accountType,
     status: user.subscriptionStatus,
-    expiry: user.subscriptionExpiry ? new Date(user.subscriptionExpiry) : null,
-    isActive: hasActiveSubscription(user),
-    timeRemaining: getSubscriptionTimeRemaining(user),
+    expiry: expiryObj,
+    isActive: active,
+    timeRemaining: active ? getSubscriptionTimeRemaining(user) : getSubscriptionTimeRemaining(user),
     plan,
     isPaid,
     isTrialPeriod
