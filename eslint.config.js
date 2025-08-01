@@ -112,6 +112,16 @@ module.exports = [
       // Test directories
       'e2e/**',
       '__mocks__/**',
+
+      // ------------------------------------------------------------------
+      // Debug-only files (explicit & pattern-based)
+      // ------------------------------------------------------------------
+      // Specific files that triggered lint failures
+      'debug_scraper_detailed.js',
+      'analyze-show-series.js',
+      // Generic debug patterns
+      '**/*.debug.*',
+      '**/debug_*',
       
       // Shelved features
       'shelved-features/**',

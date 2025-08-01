@@ -812,7 +812,7 @@ describe('errorService', () => {
       // Act
       try {
         await wrappedFn('arg1');
-      } catch (_) {
+      } catch {
         // Expected to throw
       }
       
