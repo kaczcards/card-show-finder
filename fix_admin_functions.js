@@ -342,7 +342,7 @@ async function makeUserAdmin(userId) {
 
   try {
     // First check if the user_roles table exists
-    const { data: tableExists, error: tableError } = await supabase
+    const { data: _tableExists, error: tableError } = await supabase
       .from('user_roles')
       .select('count(*)', { count: 'exact', head: true });
 
@@ -405,7 +405,7 @@ async function makeUserAdmin(userId) {
     }
 
     // Insert admin role for the user
-    const { data, error } = await supabase
+    const { data: _data, error } = await supabase
       .from('user_roles')
       .insert([
         { user_id: userId, role: 'admin' }

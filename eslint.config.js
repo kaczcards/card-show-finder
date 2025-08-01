@@ -96,6 +96,9 @@ module.exports = [
       'create-*.js',
       'insert-*.js',
       'validate-*.js',
+      // Explicit utility scripts that still slipped through
+      'add-styles.js',
+      'check-show-coordinates.js',
       
       // Config files
       '*.config.js',
@@ -127,6 +130,8 @@ module.exports = [
       'shelved-features/**',
       
       // Other files
+      // Prevent double-nested path linting (CI clones inside card-show-finder directory)
+      'card-show-finder/**',
       '*.lock',
       '*.log',
       '*.md',
