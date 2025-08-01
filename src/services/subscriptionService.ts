@@ -376,6 +376,21 @@ export const checkAndUpdateSubscriptionStatus = async (
     if (fetchError || !userData) {
       return false;
     }
+
+    /* ------------------------------------------------------------------
+     * Validate we actually have the minimum fields required to evaluate
+     * the subscription.  In some edge-cases (e.g. very old accounts or
+     * partially-migrated test fixtures) the profile row can exist while
+     * critical columns are `null` or empty.  When that happens we should
+     * bail out early and *not* attempt to run an update query.
+     * ------------------------------------------------------------------ */
+    if (
+      !userData.subscription_expiry ||            // no expiry date stored
+      !userData.subscription_status ||            // missing status field
+      !userData.account_type                      // missing account type
+    ) {
+      return false;
+    }
     
     // If the user doesn't have a subscription or it's already marked as expired, do nothing
     if (
