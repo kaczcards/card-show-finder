@@ -29,6 +29,7 @@ jobs:
         with:
           persist-credentials: true
           fetch-depth: 0  # fetch full history so later git commands don't fail
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -55,6 +56,7 @@ jobs:
         with:
           persist-credentials: true
           fetch-depth: 0  # ensure entire git history is available
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -99,6 +101,7 @@ jobs:
         with:
           persist-credentials: true
           fetch-depth: 0  # allow db job to access full git history
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -174,6 +177,7 @@ jobs:
         with:
           persist-credentials: true
           fetch-depth: 0  # detox & e2e jobs sometimes need full git info
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -229,6 +233,7 @@ jobs:
         with:
           persist-credentials: true
           fetch-depth: 0  # build verification may rely on tags/commits
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
