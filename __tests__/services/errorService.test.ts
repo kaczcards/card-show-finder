@@ -67,7 +67,7 @@ describe('errorService', () => {
   });
 
   describe('Error Configuration', () => {
-    test('should apply partial configuration changes', () => {
+    test('should apply partial configuration changes', async () => {
       // Arrange & Act
       configureErrorService({
         enableConsoleLogging: false,
@@ -77,6 +77,8 @@ describe('errorService', () => {
       // Create an error to test configuration
       const error = createValidationError('Test validation error');
       logError(error);
+      // wait briefly for asynchronous storage operation to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
       
       // Assert
       expect(consoleErrorSpy).not.toHaveBeenCalled(); // Console logging disabled
