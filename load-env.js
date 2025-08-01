@@ -20,7 +20,7 @@ const path = require('path');
 const envPath = path.join(__dirname, 'scraper', '.env');
 const alternateEnvPath = path.join(__dirname, '.env');
 
-console.log('🔍 Looking for environment file...');
+console.warn('🔍 Looking for environment file...');
 
 // Check if .env file exists
 if (!fs.existsSync(envPath) && !fs.existsSync(alternateEnvPath)) {
@@ -35,7 +35,7 @@ if (!fs.existsSync(envPath) && !fs.existsSync(alternateEnvPath)) {
 
 // Determine which file to use
 const fileToUse = fs.existsSync(envPath) ? envPath : alternateEnvPath;
-console.log(`✅ Found .env file at: ${fileToUse}`);
+console.warn(`✅ Found .env file at: ${fileToUse}`);
 
 try {
   // Read the .env file
@@ -68,14 +68,14 @@ try {
         ? value.substring(0, 4) + '...' + value.substring(value.length - 4)
         : value;
       
-      console.log(`✅ Loaded: ${key}=${displayValue}`);
+      console.warn(`✅ Loaded: ${key}=${displayValue}`);
     }
   }
   
-  console.log(`\n🎉 Successfully loaded ${loadedVars} environment variables!`);
-  console.log('🚀 You can now run commands like:');
-  console.log('   npm run scraper:inspect');
-  console.log('   npm run scraper:csv');
+  console.warn(`\n🎉 Successfully loaded ${loadedVars} environment variables!`);
+  console.warn('🚀 You can now run commands like:');
+  console.warn('   npm run scraper:inspect');
+  console.warn('   npm run scraper:csv');
   
   // Set a flag to indicate env vars are loaded
   process.env.ENV_LOADED = 'true';
