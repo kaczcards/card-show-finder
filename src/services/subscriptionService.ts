@@ -74,6 +74,20 @@ export const isInTrialPeriod = (user: User): boolean => {
  * @returns Object with days, hours remaining or null if no active subscription
  */
 export const getSubscriptionTimeRemaining = (user: User): { days: number, hours: number } | null => {
+  /* ------------------------------------------------------------------
+   * 1. Bail-out cases – users that should never have a subscription
+   * ------------------------------------------------------------------ */
+  if (!user || user.accountType === 'collector') {
+    return null;
+  }
+
+  /* ------------------------------------------------------------------
+   * 2. Inactive subscription statuses
+   * ------------------------------------------------------------------ */
+  if (user.subscriptionStatus !== 'active') {
+    return null;
+  }
+
   // If we don't even have an expiry date we cannot compute anything
   if (!user?.subscriptionExpiry) {
     return null;
@@ -374,6 +388,21 @@ export const checkAndUpdateSubscriptionStatus = async (
       .single();
     
     if (fetchError || !userData) {
+      return false;
+    }
+
+    /* ------------------------------------------------------------------
+     * Validate we actually have the minimum fields required to evaluate
+     * the subscription.  In some edge-cases (e.g. very old accounts or
+     * partially-migrated test fixtures) the profile row can exist while
+     * critical columns are `null` or empty.  When that happens we should
+     * bail out early and *not* attempt to run an update query.
+     * ------------------------------------------------------------------ */
+    if (
+      !userData.subscription_expiry ||            // no expiry date stored
+      !userData.subscription_status ||            // missing status field
+      !userData.account_type                      // missing account type
+    ) {
       return false;
     }
     
