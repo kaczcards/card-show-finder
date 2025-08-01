@@ -38,13 +38,19 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          set -x
+          npm ci
 
       - name: Run ESLint
-        run: npm run lint
+        run: |
+          set -x
+          npm run lint
 
       - name: Run TypeScript type check
-        run: npm run typecheck
+        run: |
+          set -x
+          npm run typecheck
 
   unit-tests:
     name: Unit Tests
@@ -65,10 +71,14 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          set -x
+          npm ci
 
       - name: Run Jest tests
-        run: npm test -- --coverage
+        run: |
+          set -x
+          npm test -- --coverage
 
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
@@ -110,15 +120,19 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          set -x
+          npm ci
 
       - name: Install PostgreSQL client
         run: |
+          set -x
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
       - name: Install Supabase CLI
         run: |
+          set -x
           #--------------------------------------------------------------
           # Robust Supabase CLI installation
           # 1) Clean npm cache and set registry
@@ -160,12 +174,15 @@ jobs:
 
       - name: Setup database schema
         run: |
+          set -x
           psql -h localhost -U postgres -d postgres -f supabase/migrations/20250722000000_canonical_database_consolidation.sql
         env:
           PGPASSWORD: postgres
 
       - name: Run database security tests
-        run: npm run test:db:security
+        run: |
+          set -x
+          npm run test:db:security
 
   e2e-tests:
     name: E2E Tests
