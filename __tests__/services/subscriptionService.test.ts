@@ -27,7 +27,6 @@ import {
   canAccessOrganizerFeatures,
 } from '../../src/services/subscriptionService';
 import { User } from '../../src/types';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { SubscriptionPlanType as _SubscriptionPlanType, SubscriptionDuration as _SubscriptionDuration } from '../../src/services/subscriptionTypes';
 
 // Mock the supabase client
