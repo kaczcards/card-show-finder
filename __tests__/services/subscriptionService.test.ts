@@ -5,7 +5,11 @@
  * robust error handling in the subscription management flow.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// Prefixed with underscore to satisfy the ESLint rule that allows intentionally
+// unused variables to begin with “_”.  These imports are kept for potential
+// future use (e.g. when adding tests that rely on AsyncStorage mocks) but are
+// not referenced in the current test suite.
+import _AsyncStorage from '@react-native-async-storage/async-storage';
 import MockDate from 'mockdate';
 import {
   hasActiveSubscription,
@@ -23,7 +27,8 @@ import {
   canAccessOrganizerFeatures,
 } from '../../src/services/subscriptionService';
 import { User } from '../../src/types';
-import { SubscriptionPlanType, SubscriptionDuration } from '../../src/services/subscriptionTypes';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { SubscriptionPlanType as _SubscriptionPlanType, SubscriptionDuration as _SubscriptionDuration } from '../../src/services/subscriptionTypes';
 
 // Mock the supabase client
 jest.mock('../../src/supabase', () => ({
