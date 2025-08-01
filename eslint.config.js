@@ -99,6 +99,7 @@ module.exports = [
       // Explicit utility scripts that still slipped through
       'add-styles.js',
       'check-show-coordinates.js',
+      'load-env.js',
       
       // Config files
       '*.config.js',
@@ -163,7 +164,11 @@ module.exports = [
     },
     rules: {
       // Basic rules to get started
-      'no-unused-vars': 'warn',
+      // Respect underscore-prefixed intentionally-unused vars/args
+      'no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'react/jsx-uses-react': 'error',
       'react/jsx-uses-vars': 'error',
