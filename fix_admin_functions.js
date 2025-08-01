@@ -69,7 +69,7 @@ async function executeSql(sql) {
  * Create the missing database functions
  */
 async function createDatabaseFunctions() {
-  console.log('Step 1: Creating missing database functions...');
+  console.warn('Step 1: Creating missing database functions...');
 
   // Combined SQL to create everything in one transaction
   const fullSql = `
@@ -213,19 +213,22 @@ async function createDatabaseFunctions() {
   try {
     // Write SQL to a file for debugging
     fs.writeFileSync('admin_setup.sql', fullSql);
-    console.log('SQL script written to admin_setup.sql for reference');
+    console.warn('SQL script written to admin_setup.sql for reference');
 
     // Try direct SQL execution through Supabase API
-    console.log('Executing SQL directly...');
+    console.warn('Executing SQL directly...');
     
     // First try using Supabase's built-in query method
     try {
-      const { data, error } = await supabase.from('_sql').select('*').execute(fullSql);
+      const { data: _data, error } = await supabase
+        .from('_sql')
+        .select('*')
+        .execute(fullSql);
       if (error) {
         console.error('Error executing SQL with Supabase client:', error.message);
         throw new Error(error.message);
       }
-      console.log('✅ Database setup completed successfully using Supabase client');
+      console.warn('✅ Database setup completed successfully using Supabase client');
       return true;
     } catch (clientError) {
       console.error('Supabase client SQL execution failed, trying alternative method:', clientError.message);
@@ -236,7 +239,7 @@ async function createDatabaseFunctions() {
         console.error('Alternative SQL execution method also failed:', result.error);
         
         // Last resort: Try to create just the table and insert admin manually
-        console.log('Attempting simplified table creation...');
+        console.warn('Attempting simplified table creation...');
         const simpleTableSql = `
           CREATE TABLE IF NOT EXISTS public.user_roles (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -255,11 +258,11 @@ async function createDatabaseFunctions() {
           return false;
         }
         
-        console.log('✅ Basic table created, will attempt direct insertion');
+        console.warn('✅ Basic table created, will attempt direct insertion');
         return true;
       }
       
-      console.log('✅ Database setup completed successfully using alternative method');
+      console.warn('✅ Database setup completed successfully using alternative method');
       return true;
     }
   } catch (err) {
@@ -272,7 +275,7 @@ async function createDatabaseFunctions() {
  * Find user ID by email
  */
 async function findUserIdByEmail(email) {
-  console.log(`Step 2: Finding user ID for email: ${email}...`);
+  console.warn(`Step 2: Finding user ID for email: ${email}...`);
   
   try {
     // First try to find in profiles table
@@ -283,7 +286,9 @@ async function findUserIdByEmail(email) {
       .single();
 
     if (profileData) {
-      console.log(`✅ Found user in profiles: ${profileData.first_name} ${profileData.last_name} (${profileData.email})`);
+      console.warn(
+        `✅ Found user in profiles: ${profileData.first_name} ${profileData.last_name} (${profileData.email})`
+      );
       return profileData.id;
     }
 
@@ -301,7 +306,7 @@ async function findUserIdByEmail(email) {
       } else if (authData && authData.users) {
         const user = authData.users.find(u => u.email === email);
         if (user) {
-          console.log(`✅ Found user in auth.users: ${user.email}`);
+          console.warn(`✅ Found user in auth.users: ${user.email}`);
           return user.id;
         }
       }
@@ -314,7 +319,7 @@ async function findUserIdByEmail(email) {
       const sql = `SELECT id, email FROM auth.users WHERE email = '${email}';`;
       const result = await executeSql(sql);
       if (result.success && result.data && result.data.length > 0) {
-        console.log(`✅ Found user via SQL: ${result.data[0].email}`);
+        console.warn(`✅ Found user via SQL: ${result.data[0].email}`);
         return result.data[0].id;
       }
     } catch (sqlError) {
@@ -333,7 +338,7 @@ async function findUserIdByEmail(email) {
  * Make a user an admin
  */
 async function makeUserAdmin(userId) {
-  console.log(`Step 3: Making user ${userId} an admin...`);
+  console.warn(`Step 3: Making user ${userId} an admin...`);
 
   try {
     // First check if the user_roles table exists
@@ -343,7 +348,7 @@ async function makeUserAdmin(userId) {
 
     // If table doesn't exist, we'll get an error
     if (tableError && tableError.message.includes('relation "user_roles" does not exist')) {
-      console.log('User roles table does not exist yet, creating it directly...');
+      console.warn('User roles table does not exist yet, creating it directly...');
       
       // Create the table directly with SQL
       const createTableSql = `
@@ -363,7 +368,7 @@ async function makeUserAdmin(userId) {
         console.error('Failed to create user_roles table:', result.error);
         
         // Try direct insertion with SQL as a last resort
-        console.log('Attempting direct SQL insertion...');
+        console.warn('Attempting direct SQL insertion...');
         const insertSql = `
           INSERT INTO public.user_roles (user_id, role)
           VALUES ('${userId}', 'admin')
@@ -376,7 +381,7 @@ async function makeUserAdmin(userId) {
           return false;
         }
         
-        console.log(`✅ Admin role assigned to user ${userId} via direct SQL`);
+        console.warn(`✅ Admin role assigned to user ${userId} via direct SQL`);
         return true;
       }
     }
@@ -390,13 +395,13 @@ async function makeUserAdmin(userId) {
       .single();
 
     if (existingRole) {
-      console.log(`✅ User ${userId} already has admin role.`);
+      console.warn(`✅ User ${userId} already has admin role.`);
       return true;
     }
 
     if (roleError && roleError.code !== 'PGRST116') {
       // PGRST116 is "not found" which is expected if the user doesn't have the role yet
-      console.log('User does not have admin role yet, will add it');
+      console.warn('User does not have admin role yet, will add it');
     }
 
     // Insert admin role for the user
@@ -410,7 +415,7 @@ async function makeUserAdmin(userId) {
       console.error('Error assigning admin role:', error.message);
       
       // Try direct insertion with SQL as a last resort
-      console.log('Attempting direct SQL insertion...');
+      console.warn('Attempting direct SQL insertion...');
       const insertSql = `
         INSERT INTO public.user_roles (user_id, role)
         VALUES ('${userId}', 'admin')
@@ -423,11 +428,11 @@ async function makeUserAdmin(userId) {
         return false;
       }
       
-      console.log(`✅ Admin role assigned to user ${userId} via direct SQL`);
+      console.warn(`✅ Admin role assigned to user ${userId} via direct SQL`);
       return true;
     }
 
-    console.log(`✅ Successfully assigned admin role to user: ${userId}`);
+    console.warn(`✅ Successfully assigned admin role to user: ${userId}`);
     return true;
   } catch (err) {
     console.error('Unexpected error making user admin:', err.message);
@@ -439,8 +444,8 @@ async function makeUserAdmin(userId) {
  * Main function to run all steps
  */
 async function main() {
-  console.log('=== Starting Admin Functions Fix ===');
-  console.log(`Using Supabase URL: ${supabaseUrl}`);
+  console.warn('=== Starting Admin Functions Fix ===');
+  console.warn(`Using Supabase URL: ${supabaseUrl}`);
   
   // Step 1: Create database functions
   const functionsCreated = await createDatabaseFunctions();
@@ -462,10 +467,10 @@ async function main() {
     process.exit(1);
   }
   
-  console.log('=== Admin Functions Fix Complete ===');
-  console.log(`✅ Database functions created: ${functionsCreated ? 'Yes' : 'Partially'}`);
-  console.log(`✅ Admin user created: ${ADMIN_EMAIL} (${userId})`);
-  console.log('You should now be able to access admin features in the app.');
+  console.warn('=== Admin Functions Fix Complete ===');
+  console.warn(`✅ Database functions created: ${functionsCreated ? 'Yes' : 'Partially'}`);
+  console.warn(`✅ Admin user created: ${ADMIN_EMAIL} (${userId})`);
+  console.warn('You should now be able to access admin features in the app.');
 }
 
 // Run the main function
