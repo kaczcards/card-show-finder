@@ -342,12 +342,12 @@ describe('Edge Cases and Async Operations', () => {
         const validatedData = await Promise.resolve(data);
         
         // Step 2: Transform (will fail)
-        const transformedData = await Promise.reject(new Error('Transform failed'));
+        const _transformedData = await Promise.reject(new Error('Transform failed'));
         
         // Step 3: Save (should never execute)
-        const savedData = await Promise.resolve({ ...transformedData, saved: true });
+        const _savedData = await Promise.resolve({ ..._transformedData, saved: true });
         
-        return savedData;
+        return _savedData;
       };
       
       // Act & Assert
@@ -1110,8 +1110,8 @@ describe('Edge Cases and Async Operations', () => {
       // Act
       const result1 = memoizedCalculation(10, 20);
       const result2 = memoizedCalculation(5, 10);
-      const result3 = memoizedCalculation(10, 20); // Should use cached result
-      const result4 = memoizedCalculation(5, 10);  // Should use cached result
+      const _result3 = memoizedCalculation(10, 20); // Should use cached result
+      const _result4 = memoizedCalculation(5, 10);  // Should use cached result
       
       // Assert
       expect(result1).toBe(memoizedCalculation(10, 20));

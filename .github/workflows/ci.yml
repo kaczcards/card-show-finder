@@ -280,7 +280,7 @@ jobs:
 
       - name: Send Slack notification
         if: env.SLACK_WEBHOOK_URL != ''
-        uses: 8398a7/action-slack@v4
+        uses: 8398a7/action-slack@v3
         with:
           status: ${{ env.STATUS }}
           fields: repo,message,commit,author,action,eventName,ref,workflow
