@@ -6,45 +6,123 @@ module.exports = [
   // Base configuration
   {
     ignores: [
+      // Node and build directories
       'node_modules/**',
       'ios/**',
       'android/**',
       'build/**',
       'dist/**',
       '.expo/**',
+      '.expo-shared/**',
+      'web-build/**',
       'coverage/**',
-      // cache & generated
+      
+      // All backup directories patterns
+      '*-backups/**',
+      '*backup*/**',
+      '**/*-backups/**',
+      '**/*backup*/**',
+      
+      // Specific backup directories
+      'admin-cli-fixes-backups/**',
+      'quick-fixes-backups/**',
+      'automated-fixes-backups/**',
+      'lint-fix-backups/**',
+      'lint-recovery-backups/**',
+      'unused-cleanup-backups/**',
+      'unused-vars-fixes-backups/**',
+      'console-logs-backups/**',
+      'import-export-fixes-backups/**',
+      'temp_backup/**',
+      
+      // Temp directories and build artifacts
+      'temp-*/**',
+      'temp-export/**',
+      'temp-test-build/**',
+      '_expo/**',
+      '**/_expo/**',
+      
+      // Cache directories
       '.jest-cache/**',
       '.jest/**',
-      // large script / tooling directories
-      'scripts/**',
-      'e2e/**',
-      // database & misc utility scripts
-      'apply-*.js',
-      'add-styles.js',
-      'check-show-coordinates.js',
-      'geocode-shows.js',
-      // migrations & duplicated project dir
+      '.cache/**',
+      '.npm/**',
+      '.babel-cache/**',
+      'jest-cache/**',
+      
+      // E2E test artifacts
+      'e2e/artifacts/**',
+      'e2e/reports/**',
+      
+      // Generated and backup files
+      '**/*.generated.*',
+      '**/*.bak',
+      '**/*.bak-*',
+      '**/*.js.map',
+      '**/*.d.ts.map',
+      '**/*.js.bundle',
+      '**/*.tsbuildinfo',
+      
+      // Admin and CLI files
+      'admin_*.js',
+      'admin-*.js',
+      
+      // SQL files and migrations
+      '**/*.sql',
       'db_migrations/**',
-      'card-show-finder/**',
-      // debug-only files
-      'debug-*.ts',
+      'supabase/migrations/**',
+      'sql/**',
+      
+      // Shell scripts
+      '**/*.sh',
+      
+      // Utility scripts in root directory
+      'apply-*.js',
+      'add-*.js',
+      'check-*.js',
+      'geocode-*.js',
       'debug-*.js',
-      // additional one-off utility / maintenance scripts
+      'debug-*.ts',
       'fix-*.js',
       'find-*.js',
       'run-*.js',
       'quick-*.js',
       'modify-*.js',
       'direct-*.js',
+      'setup-*.js',
+      'test-*.js',
+      'verify-*.js',
+      'install-*.js',
+      'create-*.js',
+      'insert-*.js',
+      'validate-*.js',
+      
+      // Config files
+      '*.config.js',
       'jest.setup.js',
-      '*_service.js',
-      '*_admin*.js',
-      // backup / disabled test files
-      '__tests__/**/*.bak',
-      '**/*.config.js',
+      'metro.config.js',
+      'babel.config.js',
+      
+      // Scraper directory
+      'scraper/**',
+      
+      // Scripts directory
+      'scripts/**',
+      
+      // Test directories
+      'e2e/**',
+      '__mocks__/**',
+      
+      // Shelved features
+      'shelved-features/**',
+      
+      // Other files
       '*.lock',
       '*.log',
+      '*.md',
+      '.env*',
+      '.gitignore',
+      '.eslintignore'
     ]
   },
   

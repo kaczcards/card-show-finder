@@ -339,7 +339,7 @@ describe('Edge Cases and Async Operations', () => {
       // Arrange
       const processData = async (data: any) => {
         // Step 1: Validate
-        const validatedData = await Promise.resolve(data);
+        const _validatedData = await Promise.resolve(data);
         
         // Step 2: Transform (will fail)
         const _transformedData = await Promise.reject(new Error('Transform failed'));
@@ -592,7 +592,7 @@ describe('Edge Cases and Async Operations', () => {
       
       // Act
       const executionOrder: number[] = [];
-      const results = await Promise.all(
+      const _results = await Promise.all(
         priorityQueue.map(item => {
           return item.operation().then(result => {
             executionOrder.push(item.id);
