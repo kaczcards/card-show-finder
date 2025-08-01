@@ -472,6 +472,8 @@ describe('errorService', () => {
       // Act
       const error = createValidationError('Test error');
       await logError(error);
+      // wait briefly for asynchronous storage operation to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
       
       // Assert
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -865,6 +867,8 @@ describe('errorService', () => {
       // Act
       const appError = handleSupabaseError(error);
       await logError(appError);
+      // wait briefly for asynchronous storage operation to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
       
       // Assert - should not throw when stringifying
       expect(AsyncStorage.setItem).toHaveBeenCalled();
@@ -909,6 +913,8 @@ describe('errorService', () => {
       // Act
       const error = createValidationError('Test error');
       await logError(error);
+      // wait briefly for asynchronous storage operation to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
       
       // Assert
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -926,6 +932,8 @@ describe('errorService', () => {
       // Act
       const appError = handleSupabaseError(unusualError);
       await logError(appError);
+      // wait briefly for asynchronous storage operation to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
       
       // Assert - should not throw when storing
       expect(AsyncStorage.setItem).toHaveBeenCalled();
@@ -998,6 +1006,8 @@ describe('errorService', () => {
         );
         
         await logError(error);
+        // wait briefly for asynchronous storage operation to complete
+        await new Promise(resolve => setTimeout(resolve, 10));
       }
       
       const endTime = performance.now();
