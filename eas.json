@@ -9,8 +9,7 @@
       "distribution": "internal",
       "channel": "development",
       "cache": {
-        "key": "dev-${{ github.sha }}",
-        "cacheDefaultPaths": true
+        "key": "dev-${{ github.sha }}"
       },
       "env": {
         "APP_ENV": "development"
