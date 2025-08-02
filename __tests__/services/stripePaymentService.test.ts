@@ -5,13 +5,13 @@
  * robust error handling in the payment processing flow.
  */
 
-import { 
-  initializeStripe, 
-  createPaymentSheetForSubscription, 
-  processSubscriptionUpdate 
-} from '../../src/services/stripePaymentService';
 import { SubscriptionPlan, SubscriptionPlanType, SubscriptionDuration } from '../../src/services/subscriptionTypes';
 import { UserRole } from '../../src/services/userRoleService';
+
+// These will be populated via a dynamic import **after** we finish env-var setup
+let initializeStripe: any;
+let createPaymentSheetForSubscription: any;
+let processSubscriptionUpdate: any;
 
 // Mock the supabase client
 jest.mock('../../src/supabase', () => ({
@@ -89,9 +89,32 @@ beforeEach(() => {
   // Reset all mocks
   jest.clearAllMocks();
   
+  // Provide a sane default for `supabase.auth.getSession` so tests start with
+  // a valid structure (individual tests can override this as needed).
+  const supabaseMock = require('../../src/supabase').supabase;
+  supabaseMock.auth.getSession.mockResolvedValue({
+    data: { session: { access_token: 'mock_access_token' } },
+    error: null,
+  });
+  
   // Mock console methods to prevent noise in test output
   jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+  /**
+   * Re-require the stripePaymentService module *after* the environment
+   * variables have been (re)configured and `jest.resetModules()` has cleared
+   * the module cache.  Using `jest.isolateModules` guarantees the module is
+   * evaluated in a fresh context and avoids the need for asynchronous
+   * `import()` (which requires the experimental-vm-modules flag in Jest).
+   */
+  jest.isolateModules(() => {
+    const stripeService = require('../../src/services/stripePaymentService');
+    initializeStripe = stripeService.initializeStripe;
+    createPaymentSheetForSubscription =
+      stripeService.createPaymentSheetForSubscription;
+    processSubscriptionUpdate = stripeService.processSubscriptionUpdate;
+  });
 });
 
 afterEach(() => {
@@ -144,10 +167,17 @@ describe('stripePaymentService', () => {
     test('should return false when publishable key is missing', () => {
       // Arrange
       delete process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-      
+      // Re-import the module with the updated environment so the constant
+      // inside stripePaymentService is evaluated with the *current* value.
+      let testInitializeStripe: any;
+      jest.isolateModules(() => {
+        const stripeService = require('../../src/services/stripePaymentService');
+        testInitializeStripe = stripeService.initializeStripe;
+      });
+
       // Act
-      const result = initializeStripe();
-      
+      const result = testInitializeStripe();
+
       // Assert
       expect(result).toBe(false);
       expect(console.error).toHaveBeenCalledWith(
@@ -158,10 +188,16 @@ describe('stripePaymentService', () => {
     test('should return false when publishable key is empty', () => {
       // Arrange
       process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY = '';
-      
+      // Re-import the module with the updated environment
+      let testInitializeStripe: any;
+      jest.isolateModules(() => {
+        const stripeService = require('../../src/services/stripePaymentService');
+        testInitializeStripe = stripeService.initializeStripe;
+      });
+
       // Act
-      const result = initializeStripe();
-      
+      const result = testInitializeStripe();
+
       // Assert
       expect(result).toBe(false);
       expect(console.error).toHaveBeenCalledWith(
