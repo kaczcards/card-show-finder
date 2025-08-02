@@ -309,52 +309,28 @@ jobs:
 
           echo "🔍 Actual .env file contents (with lengths):"
           while IFS= read -r line; do
-            if [[ $line == *\"=\"* ]]; then
-              key=\"${line%%=*}\"
-              value=\"${line#*=}\"
-              echo \"$key=***REDACTED*** (length: ${#value})\"
+            if [[ $line == *"="* ]]; then
+              key="${line%%=*}"
+              value="${line#*=}"
+              echo "$key=***REDACTED*** (length: ${#value})"
             fi
           done < .env
           echo ""
 
           # ──────────────────────────────────────────────────────────────
-          # 2.  Silence "dirty git tree" warnings that cause non-zero
-          #     exit codes when the prebuild regenerates native folders.
+          # 2.  Silence git warnings by staging everything that will be
+          #     generated during prebuild.
           # ──────────────────────────────────────────────────────────────
-          # Configure git to completely ignore dirty status warnings
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"  
-          git config --global init.defaultBranch main
           git config --global advice.addIgnoredFile false
-          git config --global advice.detachedHead false
           git config --global --add safe.directory "$(pwd)"
-
-          # Initialize a temporary git repo to isolate from main repo status
-          mkdir -p /tmp/expo-temp
-          cd /tmp/expo-temp
-          git init --quiet
-          git config user.email "github-actions@github.com"
-          git config user.name "GitHub Actions"
-
-          # Copy necessary files to temp directory  
-          cp -r "$GITHUB_WORKSPACE"/* . 2>/dev/null || true
-          cp -r "$GITHUB_WORKSPACE"/.* . 2>/dev/null || true
-
-          # Create fresh .env in temp location
-          echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}" > .env
-          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}" >> .env  
-          echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" >> .env
-          echo "EXPO_PUBLIC_SENTRY_DSN=${EXPO_PUBLIC_SENTRY_DSN}" >> .env
-          echo "SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}" >> .env
-
-          # Add everything to git to avoid dirty warnings
-          git add . && git commit --quiet -m "temp commit for prebuild" || true
+          git add .env 2>/dev/null || true
+          git add ios/ android/ 2>/dev/null || true
 
           # ──────────────────────────────────────────────────────────────
           # 3.  Run prebuild (iOS) & immediately verify key settings.
           # ──────────────────────────────────────────────────────────────
           npx expo prebuild --platform ios --clean
-
+          
           grep -q "\"expo.jsEngine\": \"hermes\"" ios/Podfile.properties.json
           grep -q "\"newArchEnabled\": \"false\"" ios/Podfile.properties.json
 
