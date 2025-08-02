@@ -136,13 +136,11 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
         run: |
           # 1️⃣  Write a throw-away .env file for Expo / dotenv
-          cat > .env << 'EOF'
-          EXPO_PUBLIC_SUPABASE_URL=${{ env.EXPO_PUBLIC_SUPABASE_URL }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
-          EXPO_PUBLIC_SENTRY_DSN=${{ env.EXPO_PUBLIC_SENTRY_DSN }}
-          SUPABASE_SERVICE_KEY=${{ env.SUPABASE_SERVICE_KEY }}
-          EOF
+          echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}"            >  .env
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}"  >> .env
+          echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" >> .env
+          echo "EXPO_PUBLIC_SENTRY_DSN=${EXPO_PUBLIC_SENTRY_DSN}"                >> .env
+          echo "SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}"                    >> .env
 
           # 2️⃣  Configure git to ignore dirty-tree warnings & stage .env
           git config --global --add safe.directory "$(pwd)"
