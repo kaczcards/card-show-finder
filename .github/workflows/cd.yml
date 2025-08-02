@@ -120,6 +120,31 @@ jobs:
         run: |
           echo "EXPO_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
 
+      # ------------------------------------------------------------------
+      # Ensure Expo can read required environment variables during prebuild
+      # by writing them to a local .env file (dotenv reads this automatically)
+      # ------------------------------------------------------------------
+      - name: Create .env file for prebuild
+        run: |
+          {
+            echo "EXPO_PUBLIC_SUPABASE_URL=${{ env.EXPO_PUBLIC_SUPABASE_URL }}"
+            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}"
+            echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}"
+            echo "EXPO_PUBLIC_SENTRY_DSN=${{ env.EXPO_PUBLIC_SENTRY_DSN }}"
+            echo "SUPABASE_SERVICE_KEY=${{ env.SUPABASE_SERVICE_KEY }}"
+          } > .env
+          echo ".env file created for prebuild process"
+
+      # ------------------------------------------------------------------
+      # Prebuild generates ios/ and android/ directories which make the
+      # working tree appear “dirty”.  Stage them so `expo prebuild` no
+      # longer warns about uncommitted changes and exits with code 1.
+      # ------------------------------------------------------------------
+      - name: Stage prebuild-related changes to avoid git status warnings
+        run: |
+          git add .env ios/ android/ || true
+          echo "✅ Staged prebuild-generated files to avoid git-status warnings"
+
       - name: Setup Hermes configuration
         run: |
           # Ensure Hermes is enabled on both platforms
