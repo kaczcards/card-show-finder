@@ -444,10 +444,45 @@ jobs:
             echo "PROFILE=staging" >> $GITHUB_ENV
           fi
 
+      # ------------------------------------------------------------------
+      # Dynamically create or update EAS environment variables so the
+      # remote build workers have access to the same secrets we use in
+      # GitHub Actions.  We fall back to `env:update` when the variable
+      # already exists to keep this step idempotent.
+      # ------------------------------------------------------------------
+      - name: Create EAS environment variables for build
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ env.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN: ${{ env.EXPO_PUBLIC_SENTRY_DSN }}
+          SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
+        run: |
+          echo "🔧 Setting up EAS environment variables for '${{ env.PROFILE }}' environment..."
+
+          set -euo pipefail
+
+          eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_URL --value "${EXPO_PUBLIC_SUPABASE_URL}" --visibility plain-text --non-interactive \
+            || eas env:update --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_URL --value "${EXPO_PUBLIC_SUPABASE_URL}" --non-interactive
+
+          eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "${EXPO_PUBLIC_SUPABASE_ANON_KEY}" --visibility sensitive --non-interactive \
+            || eas env:update --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "${EXPO_PUBLIC_SUPABASE_ANON_KEY}" --non-interactive
+
+          eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" --visibility sensitive --non-interactive \
+            || eas env:update --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" --non-interactive
+
+          eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SENTRY_DSN --value "${EXPO_PUBLIC_SENTRY_DSN}" --visibility sensitive --non-interactive \
+            || eas env:update --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SENTRY_DSN --value "${EXPO_PUBLIC_SENTRY_DSN}" --non-interactive
+
+          eas env:create --environment "${{ env.PROFILE }}" --name SUPABASE_SERVICE_KEY --value "${SUPABASE_SERVICE_KEY}" --visibility secret --non-interactive \
+            || eas env:update --environment "${{ env.PROFILE }}" --name SUPABASE_SERVICE_KEY --value "${SUPABASE_SERVICE_KEY}" --non-interactive
+
+          echo "✅ EAS environment variables configured for '${{ env.PROFILE }}' environment."
+
       - name: Build preview (EAS)
         run: |
-          eas build --platform all --profile ${{ env.PROFILE }} --non-interactive --no-wait
-          echo "✅ Build verification successful for ${{ env.PROFILE }} profile"
+          eas build --platform all --profile "${{ env.PROFILE }}" --non-interactive --no-wait
+          echo "✅ Build verification successful for '${{ env.PROFILE }}' profile"
 
   notify:
     name: Notify on completion
