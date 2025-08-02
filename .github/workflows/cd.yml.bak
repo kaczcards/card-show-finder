@@ -95,10 +95,76 @@ jobs:
           BUILD_ID=$(date +'%Y%m%d%H%M%S')-$(echo $GITHUB_SHA | cut -c1-7)
           echo "build_id=${BUILD_ID}" >> $GITHUB_OUTPUT
 
+  validate-database:
+    name: Validate Database Migrations
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install Supabase CLI
+        run: |
+          #--------------------------------------------------------------------
+          # Robust Supabase CLI installation
+          # 1) Clean npm cache & ensure registry
+          # 2) Retry npm install (3 attempts)
+          # 3) Fallback to direct binary download if npm fails
+          #--------------------------------------------------------------------
+
+          set -e
+
+          npm cache clean --force
+          npm config set registry https://registry.npmjs.org/
+
+          install_via_npm() {
+            echo "Attempting npm installation (attempt $1)…"
+            npm install -g supabase@latest --verbose
+          }
+
+          success=false
+          for i in 1 2 3; do
+            if install_via_npm "$i"; then
+              success=true
+              break
+            else
+              echo "❌ npm installation failed on attempt $i"
+              sleep 5
+            fi
+          done
+
+          if [ "$success" = false ]; then
+            echo "⚡ Falling back to direct binary download…"
+            SUPABASE_VERSION="1.200.3"
+            curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_VERSION}/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
+            tar -xzf supabase.tar.gz
+            sudo mv supabase /usr/local/bin/supabase
+            chmod +x /usr/local/bin/supabase
+          fi
+
+          echo "✅ Supabase CLI version: $(supabase --version)"
+
+      - name: Run database security validation
+        run: npm run test:security:verbose
+
   build-and-submit:
     name: Build and Submit
     runs-on: ubuntu-latest
-    needs: determine-environment
+    needs: [determine-environment, validate-database]
     environment: ${{ needs.determine-environment.outputs.environment }}
     steps:
       - name: Checkout repository

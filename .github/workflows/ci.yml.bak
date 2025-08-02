@@ -120,40 +120,47 @@ jobs:
       - name: Install Supabase CLI
         run: |
           #--------------------------------------------------------------
-          # Supabase CLI installation (binary download only)
+          # Robust Supabase CLI installation
+          # 1) Clean npm cache and set registry
+          # 2) Retry npm install up to 3 times
+          # 3) Fallback to direct binary download if npm fails
           #--------------------------------------------------------------
-          set -euo pipefail
 
-          SUPABASE_VERSION="2.33.9"
-          BIN_DIR="/usr/local/bin"
+          set -e
 
-          echo "🧹 Removing any existing Supabase binary …"
-          sudo rm -f "${BIN_DIR}/supabase" || true
+          npm cache clean --force
+          npm config set registry https://registry.npmjs.org/
 
-          echo "⬇️  Downloading Supabase CLI v${SUPABASE_VERSION} …"
-          TMP_DIR="$(mktemp -d)"
-          curl -Ls "https://github.com/supabase/cli/releases/download/v${SUPABASE_VERSION}/supabase_linux_amd64.tar.gz" \
-            -o "${TMP_DIR}/supabase.tar.gz"
+          install_via_npm() {
+            echo "Attempting npm installation (attempt $1)…"
+            npm install -g supabase@latest --verbose
+          }
 
-          echo "📦 Extracting archive …"
-          tar -xzf "${TMP_DIR}/supabase.tar.gz" -C "${TMP_DIR}"
+          success=false
+          for i in 1 2 3; do
+            if install_via_npm "$i"; then
+              success=true
+              break
+            else
+              echo "❌ npm installation failed on attempt $i"
+              sleep 5
+            fi
+          done
 
-          echo "🚚 Installing binary to ${BIN_DIR} …"
-          sudo mv "${TMP_DIR}/supabase" "${BIN_DIR}/supabase"
-          sudo chmod +x "${BIN_DIR}/supabase"
+          if [ "$success" = false ]; then
+            echo "⚡ Falling back to direct binary download…"
+            SUPABASE_VERSION="1.200.3"
+            curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_VERSION}/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
+            tar -xzf supabase.tar.gz
+            sudo mv supabase /usr/local/bin/supabase
+            chmod +x /usr/local/bin/supabase
+          fi
 
-          echo "🧽 Cleaning up …"
-          rm -rf "${TMP_DIR}"
-
-          echo "✅ Supabase CLI installed: $(supabase --version)"
+          echo "✅ Supabase CLI version: $(supabase --version)"
 
       - name: Setup database schema
         run: |
-          # Create the dedicated test database
-          psql -h localhost -U postgres -d postgres -c "CREATE DATABASE card_show_finder_test;"
-
-          # Run migrations against the test database
-          psql -h localhost -U postgres -d card_show_finder_test -f supabase/migrations/20250722000000_canonical_database_consolidation.sql
+          psql -h localhost -U postgres -d postgres -f supabase/migrations/20250722000000_canonical_database_consolidation.sql
         env:
           PGPASSWORD: postgres
 
