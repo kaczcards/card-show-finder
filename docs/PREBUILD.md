@@ -67,8 +67,30 @@ Arguments
 | CocoaPods step skipped on macOS                              | Make sure Xcode command-line tools are installed (`xcode-select`) |
 | Build fails in CI                                            | Use `npm run prebuild:both --if-present` before `eas build`        |
 | Android build complains about namespace/package              | Run `npm run prebuild:android:clean` to regenerate Gradle configs  |
+| _“Missing environment variable …” **warning** while running_ `expo prebuild` | Normal during **local** runs – see explanation below               |
 
 ---
+
+### Why you may still see “Missing environment variable …” warnings
+
+When you execute any `expo *` command, **Expo evaluates `app.config.js` immediately**.  
+Our `scripts/prebuild.sh` loads `.env` _after_ that evaluation step, so `app.config.js` doesn’t see the
+variables yet and prints warnings such as:
+
+```
+[app.config.js] Missing environment variable: EXPO_PUBLIC_SUPABASE_URL
+```
+
+During **local development** these warnings are harmless – the shell script finishes loading the
+variables _before_ the actual prebuild work begins, so the native projects are generated with the
+correct values.  
+If you want to verify, run:
+
+```bash
+npm run prebuild:ios:clean && echo $EXPO_PUBLIC_SUPABASE_URL
+```
+
+You’ll see the variable is present even though the warning appeared earlier.
 
 ## 6  Usage scenarios
 
