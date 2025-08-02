@@ -313,8 +313,14 @@ describe('subscriptionService', () => {
     });
     
     test('should handle edge case with exactly 7 days remaining', () => {
-      const sevenDaysFromNow = new Date();
-      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      // Use a millisecond-precise calculation to guarantee exactly
+      // 7 * 24 * 60 * 60 * 1000 ms (= 168 hours) ahead of "now".
+      // This avoids fractional-day rounding errors that could
+      // produce 6.999… days and incorrectly pass the `< 7` check.
+      const now = new Date();
+      const sevenDaysFromNow = new Date(
+        now.getTime() + 7 * 24 * 60 * 60 * 1000,
+      );
       
       const user: User = {
         id: 'user-123',
