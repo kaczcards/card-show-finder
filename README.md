@@ -5,7 +5,7 @@ Built with **React Native (Expo)** + **Supabase** so one code-base runs everywhe
 
 ---
 
-## Table of Contents
+# Table of Contents #
 1. Features
 2. Tech Stack
 3. Prerequisites
