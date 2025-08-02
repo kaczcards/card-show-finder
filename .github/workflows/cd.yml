@@ -121,43 +121,45 @@ jobs:
           echo "EXPO_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
 
       # ------------------------------------------------------------------
-      # Ensure Expo can read required environment variables during prebuild
-      # by writing them to a local .env file (dotenv reads this automatically)
+      # Consolidated prebuild & Hermes configuration step
+      #   • Creates temporary .env so Expo can read variables
+      #   • Silences git dirty-tree warnings
+      #   • Runs `expo prebuild --clean`
+      #   • Verifies and enforces Hermes settings on both platforms
       # ------------------------------------------------------------------
-      - name: Create .env file for prebuild
-        run: |
-          {
-            echo "EXPO_PUBLIC_SUPABASE_URL=${{ env.EXPO_PUBLIC_SUPABASE_URL }}"
-            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}"
-            echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}"
-            echo "EXPO_PUBLIC_SENTRY_DSN=${{ env.EXPO_PUBLIC_SENTRY_DSN }}"
-            echo "SUPABASE_SERVICE_KEY=${{ env.SUPABASE_SERVICE_KEY }}"
-          } > .env
-          echo ".env file created for prebuild process"
-
-      # ------------------------------------------------------------------
-      # Prebuild generates ios/ and android/ directories which make the
-      # working tree appear “dirty”.  Stage them so `expo prebuild` no
-      # longer warns about uncommitted changes and exits with code 1.
-      # ------------------------------------------------------------------
-      - name: Stage prebuild-related changes to avoid git status warnings
-        run: |
-          git add .env ios/ android/ || true
-          echo "✅ Staged prebuild-generated files to avoid git-status warnings"
-
       - name: Setup Hermes configuration
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ env.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN: ${{ env.EXPO_PUBLIC_SENTRY_DSN }}
+          SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
         run: |
-          # Ensure Hermes is enabled on both platforms
+          # 1️⃣  Write a throw-away .env file for Expo / dotenv
+          cat > .env << 'EOF'
+          EXPO_PUBLIC_SUPABASE_URL=${{ env.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN=${{ env.EXPO_PUBLIC_SENTRY_DSN }}
+          SUPABASE_SERVICE_KEY=${{ env.SUPABASE_SERVICE_KEY }}
+          EOF
+
+          # 2️⃣  Configure git to ignore dirty-tree warnings & stage .env
+          git config --global --add safe.directory "$(pwd)"
+          git add .env || true
+
+          # 3️⃣  Run prebuild ‑ this regenerates ios/ & android/
           npx expo prebuild --clean
-          
-          # Verify iOS configuration
-          if [ -f "ios/Podfile.properties.json" ]; then
-            jq '.["expo.jsEngine"]="hermes" | .["newArchEnabled"]="false"' ios/Podfile.properties.json > ios/Podfile.properties.json.tmp
+
+          # 4️⃣  Enforce Hermes / New-Arch settings (iOS)
+          if [[ -f ios/Podfile.properties.json ]]; then
+            jq '."expo.jsEngine"="hermes" | ."newArchEnabled"="false"' \
+              ios/Podfile.properties.json > ios/Podfile.properties.json.tmp
             mv ios/Podfile.properties.json.tmp ios/Podfile.properties.json
           fi
-          
-          # Verify Android configuration
-          if [ -f "android/gradle.properties" ]; then
+
+          # 5️⃣  Enforce Hermes / New-Arch settings (Android)
+          if [[ -f android/gradle.properties ]]; then
             sed -i.bak 's/hermesEnabled=false/hermesEnabled=true/g' android/gradle.properties
             sed -i.bak 's/newArchEnabled=true/newArchEnabled=false/g' android/gradle.properties
           fi
