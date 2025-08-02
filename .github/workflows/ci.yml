@@ -462,20 +462,20 @@ jobs:
 
           set -euo pipefail
 
-          eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_URL --value "${EXPO_PUBLIC_SUPABASE_URL}" --visibility plain-text --non-interactive \
-            || eas env:update --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_URL --value "${EXPO_PUBLIC_SUPABASE_URL}" --non-interactive
+          eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_URL --value "${EXPO_PUBLIC_SUPABASE_URL}" --visibility plaintext --non-interactive \
+            || eas env:update --environment "${{ env.PROFILE }}" --variable-name EXPO_PUBLIC_SUPABASE_URL --value "${EXPO_PUBLIC_SUPABASE_URL}" --non-interactive
 
           eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "${EXPO_PUBLIC_SUPABASE_ANON_KEY}" --visibility sensitive --non-interactive \
-            || eas env:update --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "${EXPO_PUBLIC_SUPABASE_ANON_KEY}" --non-interactive
+            || eas env:update --environment "${{ env.PROFILE }}" --variable-name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "${EXPO_PUBLIC_SUPABASE_ANON_KEY}" --non-interactive
 
           eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" --visibility sensitive --non-interactive \
-            || eas env:update --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" --non-interactive
+            || eas env:update --environment "${{ env.PROFILE }}" --variable-name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" --non-interactive
 
           eas env:create --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SENTRY_DSN --value "${EXPO_PUBLIC_SENTRY_DSN}" --visibility sensitive --non-interactive \
-            || eas env:update --environment "${{ env.PROFILE }}" --name EXPO_PUBLIC_SENTRY_DSN --value "${EXPO_PUBLIC_SENTRY_DSN}" --non-interactive
+            || eas env:update --environment "${{ env.PROFILE }}" --variable-name EXPO_PUBLIC_SENTRY_DSN --value "${EXPO_PUBLIC_SENTRY_DSN}" --non-interactive
 
           eas env:create --environment "${{ env.PROFILE }}" --name SUPABASE_SERVICE_KEY --value "${SUPABASE_SERVICE_KEY}" --visibility secret --non-interactive \
-            || eas env:update --environment "${{ env.PROFILE }}" --name SUPABASE_SERVICE_KEY --value "${SUPABASE_SERVICE_KEY}" --non-interactive
+            || eas env:update --environment "${{ env.PROFILE }}" --variable-name SUPABASE_SERVICE_KEY --value "${SUPABASE_SERVICE_KEY}" --non-interactive
 
           echo "✅ EAS environment variables configured for '${{ env.PROFILE }}' environment."
 
