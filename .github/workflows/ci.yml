@@ -285,7 +285,7 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
         run: |
           # ──────────────────────────────────────────────────────────────
-          # 1.  Create a throw-away .env file so Expo’s dotenv loader
+          # 1.  Create a throw-away .env file so Expo's dotenv loader
           #     can pick up the variables during `expo prebuild`.
           # ──────────────────────────────────────────────────────────────
           echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}"        >  .env
@@ -295,18 +295,60 @@ jobs:
           echo "SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}"                >> .env
 
           # ──────────────────────────────────────────────────────────────
-          # Debug: Verify .env file was created correctly
+          # Debug: Verify .env file and environment variables
           # ──────────────────────────────────────────────────────────────
           echo "✅ .env file created with $(cat .env | wc -l) lines:"
           cat .env | sed 's/=.*/=***REDACTED***/' || echo "Failed to read .env file"
           echo ""
 
+          echo "🔍 Environment variable status:"
+          echo "EXPO_PUBLIC_SUPABASE_URL length: ${#EXPO_PUBLIC_SUPABASE_URL}"
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY length: ${#EXPO_PUBLIC_SUPABASE_ANON_KEY}"
+          echo "First 10 chars of SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:10}..."
+          echo ""
+
+          echo "🔍 Actual .env file contents (with lengths):"
+          while IFS= read -r line; do
+            if [[ $line == *\"=\"* ]]; then
+              key=\"${line%%=*}\"
+              value=\"${line#*=}\"
+              echo \"$key=***REDACTED*** (length: ${#value})\"
+            fi
+          done < .env
+          echo ""
+
           # ──────────────────────────────────────────────────────────────
-          # 2.  Silence “dirty git tree” warnings that cause non-zero
+          # 2.  Silence "dirty git tree" warnings that cause non-zero
           #     exit codes when the prebuild regenerates native folders.
           # ──────────────────────────────────────────────────────────────
+          # Configure git to completely ignore dirty status warnings
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"  
+          git config --global init.defaultBranch main
+          git config --global advice.addIgnoredFile false
+          git config --global advice.detachedHead false
           git config --global --add safe.directory "$(pwd)"
-          git add .env || true
+
+          # Initialize a temporary git repo to isolate from main repo status
+          mkdir -p /tmp/expo-temp
+          cd /tmp/expo-temp
+          git init --quiet
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+
+          # Copy necessary files to temp directory  
+          cp -r "$GITHUB_WORKSPACE"/* . 2>/dev/null || true
+          cp -r "$GITHUB_WORKSPACE"/.* . 2>/dev/null || true
+
+          # Create fresh .env in temp location
+          echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}" > .env
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}" >> .env  
+          echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" >> .env
+          echo "EXPO_PUBLIC_SENTRY_DSN=${EXPO_PUBLIC_SENTRY_DSN}" >> .env
+          echo "SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}" >> .env
+
+          # Add everything to git to avoid dirty warnings
+          git add . && git commit --quiet -m "temp commit for prebuild" || true
 
           # ──────────────────────────────────────────────────────────────
           # 3.  Run prebuild (iOS) & immediately verify key settings.
@@ -325,7 +367,7 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
         run: |
           # ──────────────────────────────────────────────────────────────
-          # 1. Create .env file so Expo’s dotenv loader picks variables
+          # 1. Create .env file so Expo's dotenv loader picks variables
           #    during `expo prebuild` for Android.
           # ──────────────────────────────────────────────────────────────
           echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}"        >  .env
