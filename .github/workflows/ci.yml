@@ -479,9 +479,21 @@ jobs:
 
           echo "✅ EAS environment variables configured for '${{ env.PROFILE }}' environment."
 
+      # ------------------------------------------------------------------
+      # Ensure Android credentials (keystore) exist BEFORE kicking off the
+      # non-interactive build so EAS won't attempt to generate them and fail.
+      # ------------------------------------------------------------------
+      - name: Setup EAS credentials
+        run: |
+          echo "🔧 Setting up EAS credentials for Android ('${{ env.PROFILE }}' profile)…"
+          # Attempt to ensure credentials exist; ignore exit code if they do.
+          eas credentials --platform android --profile "${{ env.PROFILE }}" --non-interactive || true
+
       - name: Build preview (EAS)
         run: |
-          eas build --platform all --profile "${{ env.PROFILE }}" --non-interactive --no-wait
+          # Use --freeze-credentials to prevent EAS from trying to generate
+          # new credentials during the build (which fails in non-interactive mode)
+          eas build --platform all --profile "${{ env.PROFILE }}" --non-interactive --no-wait --freeze-credentials
           echo "✅ Build verification successful for '${{ env.PROFILE }}' profile"
 
   notify:
