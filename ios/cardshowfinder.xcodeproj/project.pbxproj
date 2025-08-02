@@ -8,28 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		384B87DCA8F92714589C229E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 16666466EE95235719FC2C16 /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		65D2F65676EEEB09D3CC76ED /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9878AB389657C887F0E8733 /* ExpoModulesProvider.swift */; };
+		722FFB895D9F726EBDF2D312 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE4F851867073D8608A7683 /* ExpoModulesProvider.swift */; };
+		8A9444898D3A71606AEE27B8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 47156DBDE4F6AC4F3E85EB81 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		D43FF08889C75187AA7B534A /* libPods-cardshowfinder.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 76A6A049BB60B2096CC9BC40 /* libPods-cardshowfinder.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		FD0B4A74FF6B16835A6A89F4 /* libPods-cardshowfinder.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C623C1122323DDB74D819B1 /* libPods-cardshowfinder.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0AE4F851867073D8608A7683 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-cardshowfinder/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* cardshowfinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cardshowfinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = cardshowfinder/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = cardshowfinder/Info.plist; sourceTree = "<group>"; };
-		16666466EE95235719FC2C16 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = cardshowfinder/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		76A6A049BB60B2096CC9BC40 /* libPods-cardshowfinder.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-cardshowfinder.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2343DA7EF5B77C1ECA804C09 /* Pods-cardshowfinder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cardshowfinder.debug.xcconfig"; path = "Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder.debug.xcconfig"; sourceTree = "<group>"; };
+		47156DBDE4F6AC4F3E85EB81 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = cardshowfinder/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		4C623C1122323DDB74D819B1 /* libPods-cardshowfinder.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-cardshowfinder.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		663EC98954EFDB90C24B087C /* Pods-cardshowfinder.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cardshowfinder.release.xcconfig"; path = "Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = cardshowfinder/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		DA06ED816DC20BAD1A4B60B1 /* Pods-cardshowfinder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cardshowfinder.debug.xcconfig"; path = "Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder.debug.xcconfig"; sourceTree = "<group>"; };
-		E9878AB389657C887F0E8733 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-cardshowfinder/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = cardshowfinder/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* cardshowfinder-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "cardshowfinder-Bridging-Header.h"; path = "cardshowfinder/cardshowfinder-Bridging-Header.h"; sourceTree = "<group>"; };
-		F5F51442A20AAB0F630A011C /* Pods-cardshowfinder.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cardshowfinder.release.xcconfig"; path = "Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D43FF08889C75187AA7B534A /* libPods-cardshowfinder.a in Frameworks */,
+				FD0B4A74FF6B16835A6A89F4 /* libPods-cardshowfinder.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,7 +53,15 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				16666466EE95235719FC2C16 /* PrivacyInfo.xcprivacy */,
+				47156DBDE4F6AC4F3E85EB81 /* PrivacyInfo.xcprivacy */,
+			);
+			name = cardshowfinder;
+			sourceTree = "<group>";
+		};
+		29BF9FEF94363629DE4D1C71 /* cardshowfinder */ = {
+			isa = PBXGroup;
+			children = (
+				0AE4F851867073D8608A7683 /* ExpoModulesProvider.swift */,
 			);
 			name = cardshowfinder;
 			sourceTree = "<group>";
@@ -62,35 +70,19 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				76A6A049BB60B2096CC9BC40 /* libPods-cardshowfinder.a */,
+				4C623C1122323DDB74D819B1 /* libPods-cardshowfinder.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		30EC834A6DB9468D4BF6CF20 /* Pods */ = {
+		7C2A23A764B8FD0714E6DEC9 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				DA06ED816DC20BAD1A4B60B1 /* Pods-cardshowfinder.debug.xcconfig */,
-				F5F51442A20AAB0F630A011C /* Pods-cardshowfinder.release.xcconfig */,
+				2343DA7EF5B77C1ECA804C09 /* Pods-cardshowfinder.debug.xcconfig */,
+				663EC98954EFDB90C24B087C /* Pods-cardshowfinder.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
-			sourceTree = "<group>";
-		};
-		58C8D9A3A934489CA1785D3A /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				792CA5411F8CFD87103ACBE5 /* cardshowfinder */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		792CA5411F8CFD87103ACBE5 /* cardshowfinder */ = {
-			isa = PBXGroup;
-			children = (
-				E9878AB389657C887F0E8733 /* ExpoModulesProvider.swift */,
-			);
-			name = cardshowfinder;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -107,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				30EC834A6DB9468D4BF6CF20 /* Pods */,
-				58C8D9A3A934489CA1785D3A /* ExpoModulesProviders */,
+				7C2A23A764B8FD0714E6DEC9 /* Pods */,
+				FB6AF74162B74D1E37B02068 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -132,6 +124,14 @@
 			path = cardshowfinder/Supporting;
 			sourceTree = "<group>";
 		};
+		FB6AF74162B74D1E37B02068 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				29BF9FEF94363629DE4D1C71 /* cardshowfinder */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -140,7 +140,7 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "cardshowfinder" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				E80F62758B995FE997E18336 /* [Expo] Configure project */,
+				8D0E2A17A6FA823CE2C2EC26 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
@@ -195,7 +195,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				384B87DCA8F92714589C229E /* PrivacyInfo.xcprivacy in Resources */,
+				8A9444898D3A71606AEE27B8 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -343,7 +343,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-cardshowfinder/Pods-cardshowfinder-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		E80F62758B995FE997E18336 /* [Expo] Configure project */ = {
+		8D0E2A17A6FA823CE2C2EC26 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -370,7 +370,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				65D2F65676EEEB09D3CC76ED /* ExpoModulesProvider.swift in Sources */,
+				722FFB895D9F726EBDF2D312 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -379,7 +379,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DA06ED816DC20BAD1A4B60B1 /* Pods-cardshowfinder.debug.xcconfig */;
+			baseConfigurationReference = 2343DA7EF5B77C1ECA804C09 /* Pods-cardshowfinder.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -415,7 +415,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F5F51442A20AAB0F630A011C /* Pods-cardshowfinder.release.xcconfig */;
+			baseConfigurationReference = 663EC98954EFDB90C24B087C /* Pods-cardshowfinder.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

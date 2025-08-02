@@ -62,7 +62,13 @@
     "test:full": "npm-run-all -s test:ci test:e2e:auth test:e2e:core test:e2e:edge test:perf test:sec",
     "test:segments": "node scripts/test-segments.js",
     "build:web": "expo export:web",
-    "preview": "expo start --no-dev --minify"
+    "preview": "expo start --no-dev --minify",
+    "prebuild:ios": "./scripts/prebuild.sh ios",
+    "prebuild:android": "./scripts/prebuild.sh android",
+    "prebuild:both": "./scripts/prebuild.sh both",
+    "prebuild:ios:clean": "./scripts/prebuild.sh ios --clean",
+    "prebuild:android:clean": "./scripts/prebuild.sh android --clean",
+    "prebuild:both:clean": "./scripts/prebuild.sh both --clean"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.1.2",
