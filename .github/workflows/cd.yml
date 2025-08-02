@@ -119,44 +119,33 @@ jobs:
 
       - name: Install Supabase CLI
         run: |
-          #--------------------------------------------------------------------
-          # Robust Supabase CLI installation
-          # 1) Clean npm cache & ensure registry
-          # 2) Retry npm install (3 attempts)
-          # 3) Fallback to direct binary download if npm fails
-          #--------------------------------------------------------------------
+          #--------------------------------------------------------------
+          # Supabase CLI installation (binary download only)
+          #--------------------------------------------------------------
+          set -euo pipefail
 
-          set -e
+          SUPABASE_VERSION="2.33.9"
+          BIN_DIR="/usr/local/bin"
 
-          npm cache clean --force
-          npm config set registry https://registry.npmjs.org/
+          echo "🧹 Removing any existing Supabase binary …"
+          sudo rm -f "${BIN_DIR}/supabase" || true
 
-          install_via_npm() {
-            echo "Attempting npm installation (attempt $1)…"
-            npm install -g supabase@latest --verbose
-          }
+          echo "⬇️  Downloading Supabase CLI v${SUPABASE_VERSION} …"
+          TMP_DIR="$(mktemp -d)"
+          curl -Ls "https://github.com/supabase/cli/releases/download/v${SUPABASE_VERSION}/supabase_linux_amd64.tar.gz" \
+            -o "${TMP_DIR}/supabase.tar.gz"
 
-          success=false
-          for i in 1 2 3; do
-            if install_via_npm "$i"; then
-              success=true
-              break
-            else
-              echo "❌ npm installation failed on attempt $i"
-              sleep 5
-            fi
-          done
+          echo "📦 Extracting archive …"
+          tar -xzf "${TMP_DIR}/supabase.tar.gz" -C "${TMP_DIR}"
 
-          if [ "$success" = false ]; then
-            echo "⚡ Falling back to direct binary download…"
-            SUPABASE_VERSION="1.200.3"
-            curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_VERSION}/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
-            tar -xzf supabase.tar.gz
-            sudo mv supabase /usr/local/bin/supabase
-            chmod +x /usr/local/bin/supabase
-          fi
+          echo "🚚 Installing binary to ${BIN_DIR} …"
+          sudo mv "${TMP_DIR}/supabase" "${BIN_DIR}/supabase"
+          sudo chmod +x "${BIN_DIR}/supabase"
 
-          echo "✅ Supabase CLI version: $(supabase --version)"
+          echo "🧽 Cleaning up …"
+          rm -rf "${TMP_DIR}"
+
+          echo "✅ Supabase CLI installed: $(supabase --version)"
 
       - name: Run database security validation
         run: npm run test:security:verbose
