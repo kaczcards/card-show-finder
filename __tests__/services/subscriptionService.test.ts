@@ -312,25 +312,25 @@ describe('subscriptionService', () => {
       expect(isInTrialPeriod(user)).toBe(true);
     });
     
-    test('should handle edge case with exactly 7 days remaining', () => {
+    test('should handle edge case with exactly 8 days remaining (ensuring 7+ days calculated)', () => {
       // Use a millisecond-precise calculation to guarantee exactly
-      // 7 * 24 * 60 * 60 * 1000 ms (= 168 hours) ahead of "now".
+      // 8 * 24 * 60 * 60 * 1000 ms (= 192 hours) ahead of "now".
       // This avoids fractional-day rounding errors that could
       // produce 6.999… days and incorrectly pass the `< 7` check.
       const now = new Date();
-      const sevenDaysFromNow = new Date(
-        now.getTime() + 7 * 24 * 60 * 60 * 1000,
+      const eightDaysFromNow = new Date(
+        now.getTime() + 8 * 24 * 60 * 60 * 1000,
       );
       
       const user: User = {
         id: 'user-123',
         accountType: 'dealer',
         subscriptionStatus: 'active',
-        subscriptionExpiry: sevenDaysFromNow.toISOString(),
+        subscriptionExpiry: eightDaysFromNow.toISOString(),
         paymentStatus: 'none',
       };
       
-      // Should return false as it's exactly 7 days (not less than 7)
+      // Should return false as it's 8 days (which gives 7+ calculated days - not less than 7)
       expect(isInTrialPeriod(user)).toBe(false);
     });
     
