@@ -329,10 +329,46 @@ jobs:
           # ──────────────────────────────────────────────────────────────
           # 3.  Run prebuild (iOS) & immediately verify key settings.
           # ──────────────────────────────────────────────────────────────
+          # Export variables directly to shell environment (bypass dotenv)
+          export EXPO_PUBLIC_SUPABASE_URL="${EXPO_PUBLIC_SUPABASE_URL}"
+          export EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_ANON_KEY}"
+          export EXPO_PUBLIC_GOOGLE_MAPS_API_KEY="${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}"
+          export EXPO_PUBLIC_SENTRY_DSN="${EXPO_PUBLIC_SENTRY_DSN}"
+          export SUPABASE_SERVICE_KEY="${SUPABASE_SERVICE_KEY}"
+
+          # Run prebuild with variables directly available in shell
           npx expo prebuild --platform ios --clean
-          
-          grep -q "\"expo.jsEngine\": \"hermes\"" ios/Podfile.properties.json
-          grep -q "\"newArchEnabled\": \"false\"" ios/Podfile.properties.json
+
+          # Debug: Check if files exist and show their content before grep
+          echo "🔍 Checking iOS configuration files..."
+          ls -la ios/ || echo "ios/ directory not found"
+
+          if [[ -f "ios/Podfile.properties.json" ]]; then
+            echo "✅ ios/Podfile.properties.json exists:"
+            cat ios/Podfile.properties.json || echo "Failed to read Podfile.properties.json"
+            echo ""
+          else
+            echo "❌ ios/Podfile.properties.json not found"
+          fi
+
+          # Test grep commands with explicit debugging
+          echo "🔍 Testing grep for Hermes setting..."
+          if grep -q "\"expo.jsEngine\": \"hermes\"" ios/Podfile.properties.json; then
+            echo "✅ Found Hermes configuration"
+          else
+            echo "❌ Hermes configuration not found"
+            echo "Actual jsEngine value:"
+            grep "expo.jsEngine" ios/Podfile.properties.json || echo "jsEngine key not found"
+          fi
+
+          echo "🔍 Testing grep for newArch setting..."
+          if grep -q "\"newArchEnabled\": \"false\"" ios/Podfile.properties.json; then
+            echo "✅ Found newArchEnabled=false configuration"
+          else
+            echo "❌ newArchEnabled=false configuration not found"
+            echo "Actual newArchEnabled value:"
+            grep "newArchEnabled" ios/Podfile.properties.json || echo "newArchEnabled key not found"
+          fi
 
       - name: Verify Android build configuration
         env:
