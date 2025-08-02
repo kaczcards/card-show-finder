@@ -248,36 +248,97 @@ jobs:
       # Ensure Expo can read required environment variables during prebuild
       # by writing them to a local .env file (dotenv reads this automatically)
       # ------------------------------------------------------------------
-      - name: Create .env file for prebuild
+      - name: Configure git and environment for prebuild
         run: |
-          {
-            echo "EXPO_PUBLIC_SUPABASE_URL=${{ env.EXPO_PUBLIC_SUPABASE_URL }}"
-            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}"
-            echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}"
-            echo "EXPO_PUBLIC_SENTRY_DSN=${{ env.EXPO_PUBLIC_SENTRY_DSN }}"
-            echo "SUPABASE_SERVICE_KEY=${{ env.SUPABASE_SERVICE_KEY }}"
-          } > .env
-          echo ".env file created for prebuild process"
+          # Configure git to avoid warnings when adding ignored files
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global advice.addIgnoredFile false
 
-      # ------------------------------------------------------------------
-      # Prebuild generates ios/ and android/ directories which make the
-      # working tree appear “dirty”.  Stage them so `expo prebuild` no
-      # longer warns about uncommitted changes and exits with code 1.
-      # ------------------------------------------------------------------
-      - name: Stage prebuild-related changes to avoid git status warnings
-        run: |
+          # Create .env with required variables
+          cat > .env << 'EOF'
+          EXPO_PUBLIC_SUPABASE_URL=${{ env.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN=${{ env.EXPO_PUBLIC_SENTRY_DSN }}
+          SUPABASE_SERVICE_KEY=${{ env.SUPABASE_SERVICE_KEY }}
+          EOF
+          echo "✅ Created .env file with $(wc -l < .env) vars"
+
+          # Export variables to current shell (backup)
+          export EXPO_PUBLIC_SUPABASE_URL="${{ env.EXPO_PUBLIC_SUPABASE_URL }}"
+          export EXPO_PUBLIC_SUPABASE_ANON_KEY="${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}"
+          export EXPO_PUBLIC_GOOGLE_MAPS_API_KEY="${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}"
+          export EXPO_PUBLIC_SENTRY_DSN="${{ env.EXPO_PUBLIC_SENTRY_DSN }}"
+          export SUPABASE_SERVICE_KEY="${{ env.SUPABASE_SERVICE_KEY }}"
+
+          # Stage generated files to silence git dirty warnings
           git add .env ios/ android/ || true
-          echo "✅ Staged prebuild-generated files to avoid git-status warnings"
+          echo "✅ Staged prebuild-generated files"
 
       - name: Verify iOS build configuration
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ env.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN: ${{ env.EXPO_PUBLIC_SENTRY_DSN }}
+          SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
         run: |
+          # ──────────────────────────────────────────────────────────────
+          # 1.  Create a throw-away .env file so Expo’s dotenv loader
+          #     can pick up the variables during `expo prebuild`.
+          # ──────────────────────────────────────────────────────────────
+          cat > .env << 'EOF'
+          EXPO_PUBLIC_SUPABASE_URL=${{ env.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN=${{ env.EXPO_PUBLIC_SENTRY_DSN }}
+          SUPABASE_SERVICE_KEY=${{ env.SUPABASE_SERVICE_KEY }}
+          EOF
+
+          # ──────────────────────────────────────────────────────────────
+          # 2.  Silence “dirty git tree” warnings that cause non-zero
+          #     exit codes when the prebuild regenerates native folders.
+          # ──────────────────────────────────────────────────────────────
+          git config --global --add safe.directory "$(pwd)"
+          git add .env || true
+
+          # ──────────────────────────────────────────────────────────────
+          # 3.  Run prebuild (iOS) & immediately verify key settings.
+          # ──────────────────────────────────────────────────────────────
           npx expo prebuild --platform ios --clean
+
           grep -q "\"expo.jsEngine\": \"hermes\"" ios/Podfile.properties.json
           grep -q "\"newArchEnabled\": \"false\"" ios/Podfile.properties.json
 
       - name: Verify Android build configuration
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ env.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN: ${{ env.EXPO_PUBLIC_SENTRY_DSN }}
+          SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
         run: |
+          # ──────────────────────────────────────────────────────────────
+          # 1. Create .env file so Expo’s dotenv loader picks variables
+          #    during `expo prebuild` for Android.
+          # ──────────────────────────────────────────────────────────────
+          cat > .env << 'EOF'
+          EXPO_PUBLIC_SUPABASE_URL=${{ env.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN=${{ env.EXPO_PUBLIC_SENTRY_DSN }}
+          SUPABASE_SERVICE_KEY=${{ env.SUPABASE_SERVICE_KEY }}
+          EOF
+
+          # Silence dirty–tree warnings
+          git add .env || true
+
+          # ──────────────────────────────────────────────────────────────
+          # 2. Run prebuild (Android) & verify key Gradle settings.
+          # ──────────────────────────────────────────────────────────────
           npx expo prebuild --platform android --clean
+
           grep -q "hermesEnabled=true" android/gradle.properties
           grep -q "newArchEnabled=false" android/gradle.properties
 
