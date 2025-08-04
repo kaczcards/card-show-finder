@@ -458,26 +458,62 @@ jobs:
           EXPO_PUBLIC_SENTRY_DSN: ${{ env.EXPO_PUBLIC_SENTRY_DSN }}
           SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
         run: |
-          echo "🔧 Setting up EAS environment variables for 'development' environment..."
-
+          echo "🔧 Syncing EAS environment variables for 'development'..."
           set -euo pipefail
 
-          eas env:create --environment development --name EXPO_PUBLIC_SUPABASE_URL --value "${EXPO_PUBLIC_SUPABASE_URL}" --visibility plaintext --non-interactive \
-            || eas env:update --environment development --variable-name EXPO_PUBLIC_SUPABASE_URL --value "${EXPO_PUBLIC_SUPABASE_URL}" --non-interactive
+          # ------------------------------------------------------------
+          # 1. Fetch existing variables once to avoid multiple requests
+          # ------------------------------------------------------------
+          echo "📥  Fetching existing variables from EAS …"
+          EXISTING_JSON="$(eas env:list --environment development --json --non-interactive)"
+          echo "${EXISTING_JSON}" | jq -r '.[].name' > /tmp/existing-vars.txt
 
-          eas env:create --environment development --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "${EXPO_PUBLIC_SUPABASE_ANON_KEY}" --visibility sensitive --non-interactive \
-            || eas env:update --environment development --variable-name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "${EXPO_PUBLIC_SUPABASE_ANON_KEY}" --non-interactive
+          # ------------------------------------------------------------
+          # 2. Declare desired variables ( name | value | visibility )
+          # ------------------------------------------------------------
+          declare -A VAR_MAP=(
+            [EXPO_PUBLIC_SUPABASE_URL]="${EXPO_PUBLIC_SUPABASE_URL}"
+            [EXPO_PUBLIC_SUPABASE_ANON_KEY]="${EXPO_PUBLIC_SUPABASE_ANON_KEY}"
+            [EXPO_PUBLIC_GOOGLE_MAPS_API_KEY]="${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}"
+            [EXPO_PUBLIC_SENTRY_DSN]="${EXPO_PUBLIC_SENTRY_DSN}"
+            [SUPABASE_SERVICE_KEY]="${SUPABASE_SERVICE_KEY}"
+          )
 
-          eas env:create --environment development --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" --visibility sensitive --non-interactive \
-            || eas env:update --environment development --variable-name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}" --non-interactive
+          declare -A VIS_MAP=(
+            [EXPO_PUBLIC_SUPABASE_URL]="plaintext"
+            [EXPO_PUBLIC_SUPABASE_ANON_KEY]="sensitive"
+            [EXPO_PUBLIC_GOOGLE_MAPS_API_KEY]="sensitive"
+            [EXPO_PUBLIC_SENTRY_DSN]="sensitive"
+            [SUPABASE_SERVICE_KEY]="secret"
+          )
 
-          eas env:create --environment development --name EXPO_PUBLIC_SENTRY_DSN --value "${EXPO_PUBLIC_SENTRY_DSN}" --visibility sensitive --non-interactive \
-            || eas env:update --environment development --variable-name EXPO_PUBLIC_SENTRY_DSN --value "${EXPO_PUBLIC_SENTRY_DSN}" --non-interactive
+          # ------------------------------------------------------------
+          # 3. Create or update each variable idempotently
+          # ------------------------------------------------------------
+          while IFS= read -r NAME; do
+            VALUE="${VAR_MAP[$NAME]}"
+            VIS="${VIS_MAP[$NAME]}"
 
-          eas env:create --environment development --name SUPABASE_SERVICE_KEY --value "${SUPABASE_SERVICE_KEY}" --visibility secret --non-interactive \
-            || eas env:update --environment development --variable-name SUPABASE_SERVICE_KEY --value "${SUPABASE_SERVICE_KEY}" --non-interactive
+            if grep -q "^${NAME}$" /tmp/existing-vars.txt; then
+              echo "🔄  Updating ${NAME} …"
+              eas env:update \
+                --environment development \
+                --variable-name "${NAME}" \
+                --value "${VALUE}" \
+                --non-interactive \
+                --force >/dev/null
+            else
+              echo "➕  Creating ${NAME} …"
+              eas env:create \
+                --environment development \
+                --name "${NAME}" \
+                --value "${VALUE}" \
+                --visibility "${VIS}" \
+                --non-interactive >/dev/null
+            fi
+          done < <(printf '%s\n' "${!VAR_MAP[@]}")
 
-          echo "✅ EAS environment variables configured for 'development' environment."
+          echo "✅ Environment variables are up-to-date."
 
       # ------------------------------------------------------------------
       # Ensure Android credentials (keystore) exist BEFORE kicking off the
