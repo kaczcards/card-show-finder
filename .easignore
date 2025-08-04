@@ -1,0 +1,74 @@
+# EAS Build Ignore File
+# Reduces upload size by excluding files not needed for builds
+
+# Ignore native project folders to ensure prebuild config is respected
+/android
+/ios
+
+# Documentation
+*.md
+docs/
+ADMIN_*.md
+README*.md
+PR_*.md
+*_GUIDE.md
+*_SUMMARY.md
+*_REPORT.md
+*_INSTRUCTIONS.md
+*_FIX.md
+*_TESTING.md
+
+# Development and test files
+__tests__/
+__mocks__/
+e2e/
+coverage/
+test/
+.jest-cache/
+
+# Scripts and utilities
+scripts/
+*.sh
+*.js
+!index.js
+!metro.config.js
+!babel.config.js
+!app.config.js
+!jest.config.js
+!jest.setup.js
+
+# Backups and temporary files
+*-backups/
+temp_backup/
+temp-export/
+temp-test-build/
+*.bak
+*backup*.*
+
+# Debug files and logs
+debug-output/
+*-logs-backups/
+*.log
+debug-*.js
+debug_*.js
+test-*.js
+
+# Database and SQL files
+*.sql
+db_migrations/
+supabase/migrations/
+supabase/functions/
+
+# Version control
+.git/
+.github/
+
+# Patch files
+*.patch
+
+# Other unnecessary files
+scraper/
+shelved-features/
+lint-*-backups/
+unused-*-backups/
+fix-*-backups/

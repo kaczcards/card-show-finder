@@ -67,7 +67,7 @@ module.exports = {
   newArchEnabled: true,
   scheme: "cardshowfinder",
   splash: {
-    image: "./assets/splash.jpg",
+    image: "./assets/splash.png",
     resizeMode: "cover",
     backgroundColor: "#ffffff"
   },
@@ -172,26 +172,7 @@ module.exports = {
     ],
     // "sentry-expo"                        // ← Temporarily disabled while debugging runtime crash
   ],
-  /* Sentry post-publish hook to upload sourcemaps */
-  hooks: {
-    postPublish: [
-      {
-        file: "sentry-expo/upload-sourcemaps",
-        config: {
-          /**
-           * ------------------------------------------------------------------
-           * Set your Sentry **organization slug** here.
-           * You can find it in the Sentry web UI:
-           *   Settings ▸ Organization Settings ▸ General Settings ▸ “Slug”
-           * Example:  "my-startup"  (do **not** include quotes when you paste)
-           * ------------------------------------------------------------------
-           */
-          organization: "triforce-studios-llc",
-          project: "card-show-finder",
-          authToken: process.env.SENTRY_AUTH_TOKEN,
-        }
-      }
-    ]
-  }
+  // Note: Expo's "hooks" field was removed because it is not a valid
+  // app configuration field and caused schema validation errors
 };
 
