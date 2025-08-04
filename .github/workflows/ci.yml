@@ -450,7 +450,7 @@ jobs:
       # GitHub Actions.  We fall back to `env:update` when the variable
       # already exists to keep this step idempotent.
       # ------------------------------------------------------------------
-      - name: Create EAS environment variables for build (development)
+      - name: Sync EAS environment variables (development)
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ env.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ env.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
@@ -458,20 +458,11 @@ jobs:
           EXPO_PUBLIC_SENTRY_DSN: ${{ env.EXPO_PUBLIC_SENTRY_DSN }}
           SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
         run: |
-          echo "🔧 Syncing EAS environment variables for 'development'..."
-          set -euo pipefail
+          echo "🔧 Syncing EAS env vars for 'development' (force overwrite if they exist) …"
+          # We don't want this step to fail the whole build, so disable immediate exit on error.
+          set +e
 
-          # ------------------------------------------------------------
-          # 1. Fetch existing variables once to avoid multiple requests
-          # ------------------------------------------------------------
-          echo "📥  Fetching existing variables from EAS …"
-          EXISTING_JSON="$(eas env:list --environment development --json --non-interactive)"
-          echo "${EXISTING_JSON}" | jq -r '.[].name' > /tmp/existing-vars.txt
-
-          # ------------------------------------------------------------
-          # 2. Declare desired variables ( name | value | visibility )
-          # ------------------------------------------------------------
-          declare -A VAR_MAP=(
+          declare -A _VARS=(
             [EXPO_PUBLIC_SUPABASE_URL]="${EXPO_PUBLIC_SUPABASE_URL}"
             [EXPO_PUBLIC_SUPABASE_ANON_KEY]="${EXPO_PUBLIC_SUPABASE_ANON_KEY}"
             [EXPO_PUBLIC_GOOGLE_MAPS_API_KEY]="${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}"
@@ -479,7 +470,7 @@ jobs:
             [SUPABASE_SERVICE_KEY]="${SUPABASE_SERVICE_KEY}"
           )
 
-          declare -A VIS_MAP=(
+          declare -A _VIS=(
             [EXPO_PUBLIC_SUPABASE_URL]="plaintext"
             [EXPO_PUBLIC_SUPABASE_ANON_KEY]="sensitive"
             [EXPO_PUBLIC_GOOGLE_MAPS_API_KEY]="sensitive"
@@ -487,33 +478,24 @@ jobs:
             [SUPABASE_SERVICE_KEY]="secret"
           )
 
-          # ------------------------------------------------------------
-          # 3. Create or update each variable idempotently
-          # ------------------------------------------------------------
-          while IFS= read -r NAME; do
-            VALUE="${VAR_MAP[$NAME]}"
-            VIS="${VIS_MAP[$NAME]}"
+          for NAME in "${!_VARS[@]}"; do
+            VAL="${_VARS[$NAME]}"
+            VIS="${_VIS[$NAME]}"
 
-            if grep -q "^${NAME}$" /tmp/existing-vars.txt; then
-              echo "🔄  Updating ${NAME} …"
-              eas env:update \
-                --environment development \
-                --variable-name "${NAME}" \
-                --value "${VALUE}" \
-                --non-interactive \
-                --force >/dev/null
-            else
-              echo "➕  Creating ${NAME} …"
-              eas env:create \
-                --environment development \
-                --name "${NAME}" \
-                --value "${VALUE}" \
-                --visibility "${VIS}" \
-                --non-interactive >/dev/null
+            echo "➡️  Setting $NAME (visibility: $VIS)…"
+            eas env:create \
+              --environment development \
+              --name "$NAME" \
+              --value "$VAL" \
+              --visibility "$VIS" \
+              --force \
+              --non-interactive
+            if [ $? -ne 0 ]; then
+              echo "⚠️  Warning: Failed to set $NAME — continuing (build will still proceed)."
             fi
-          done < <(printf '%s\n' "${!VAR_MAP[@]}")
+          done
 
-          echo "✅ Environment variables are up-to-date."
+          echo "✅ EAS environment variable sync step completed."
 
       # ------------------------------------------------------------------
       # Ensure Android credentials (keystore) exist BEFORE kicking off the
