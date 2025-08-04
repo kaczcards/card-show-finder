@@ -169,9 +169,8 @@ fs.writeFileSync(path.join(reportDir, 'run-metadata.json'), JSON.stringify(runMe
         const detoxArgs = [
           'test',
           '--configuration', options.device,
-          // Use Detox's --specs flag (forwards to Jest testPathPattern) instead of the
-          // non-existent Jest --file flag that caused “Unrecognized option \"file\"”
-          '--specs', testPath,
+          // Pass the test file path directly; Detox forwards this to Jest
+          testPath,
           '--artifacts-location', path.join(reportDir, 'artifacts', batch.name),
           '--record-logs', 'all',
           '--take-screenshots', 'all',

@@ -20,16 +20,6 @@ const {
   clearTextInput,
 } = require('./helpers/testHelpers');
 
-// Import custom matchers
-const {
-  toBeVisible,
-  toExist,
-  toHaveText,
-  toHaveValue,
-  toBeEnabled,
-  toBeDisabled,
-} = require('./helpers/customMatchers');
-
 // Import test data
 const {
   TEST_USER_CREDENTIALS,
@@ -140,16 +130,6 @@ const errorHandler = {
     this.errors = [];
   },
 };
-
-// Add custom matchers to Jest
-expect.extend({
-  toBeVisible,
-  toExist,
-  toHaveText,
-  toHaveValue,
-  toBeEnabled,
-  toBeDisabled,
-});
 
 // Expose globals for tests
 global.navigateTo = navigateTo;
