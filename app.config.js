@@ -82,8 +82,11 @@ module.exports = {
      */
     // Temporarily disable Hermes while investigating runtime crash
     jsEngine: "jsc",
+    // Required by App Store Connect: declare encryption usage.
     infoPlist: {
-      NSLocationWhenInUseUsageDescription: "Allow Card Show Finder to access your location so we can display nearby card shows."
+      NSLocationWhenInUseUsageDescription:
+        "Allow Card Show Finder to access your location so we can display nearby card shows.",
+      ITSAppUsesNonExemptEncryption: false,
     },
     /* ------------------------------------------------------------------
      * Universal Links (iOS) – ensure password-reset email links open
