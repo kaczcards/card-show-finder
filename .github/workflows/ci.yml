@@ -516,8 +516,8 @@ jobs:
         run: |
           echo "🚀 Building with development profile to avoid keystore issues..."
           
-          # Try building with development profile which should have fewer credential requirements
-          eas build --platform all --profile development --non-interactive --no-wait
+          # Build Android only; iOS credentials are not configured for non-interactive development builds
+          eas build --platform android --profile development --non-interactive --no-wait
           echo "✅ Build verification successful for development profile"
 
   notify:
