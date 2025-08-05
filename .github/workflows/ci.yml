@@ -205,8 +205,14 @@ jobs:
           cd ios && pod install && cd ..
           npm run test:e2e:build
 
-      - name: Run E2E tests (auth batch)
-        run: npm run test:e2e:auth
+      # ------------------------------------------------------------------
+      # Run a lightweight smoke test batch FIRST to quickly verify that the
+      # Detox/Jest framework and freshly-built app binary are working.  This
+      # helps surface environment or configuration issues earlier and avoids
+      # spending CI minutes on longer test suites if the framework is broken.
+      # ------------------------------------------------------------------
+      - name: Run E2E smoke test
+        run: npm run test:e2e:smoke
 
       - name: Upload E2E test artifacts
         uses: actions/upload-artifact@v4

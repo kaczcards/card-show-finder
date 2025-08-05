@@ -21,6 +21,19 @@ module.exports = {
    */
   batches: [
     // =========================================
+    // BATCH 0: Smoke / Framework Verification
+    // =========================================
+    {
+      name: "smoke",
+      description: "Quick smoke test to verify Detox/Jest framework is functioning",
+      testFiles: [
+        "smoke.test.js"
+      ],
+      estimatedTime: 5, // minutes
+      tags: ["smoke", "critical"],
+      priority: 0
+    },
+    // =========================================
     // BATCH 1: Basic Authentication Flows
     // =========================================
     {

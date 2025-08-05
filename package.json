@@ -29,6 +29,7 @@
     "test:e2e:all": "node e2e/scripts/run-all-batches.js",
     "test:e2e:auth": "npm run test:e2e:batch -- --batch auth-basic",
     "test:e2e:auth-advanced": "npm run test:e2e:batch -- --batch auth-advanced",
+    "test:e2e:smoke": "npm run test:e2e:batch -- --batch smoke",
     "test:e2e:tag": "npm run test:e2e:batch -- --tag",
     "test:e2e:core": "npm run test:e2e:batch -- --batch core",
     "test:e2e:edge": "npm run test:e2e:batch -- --batch edge",
