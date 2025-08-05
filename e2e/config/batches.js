@@ -27,6 +27,14 @@ module.exports = {
       name: "smoke",
       description: "Quick smoke test to verify Detox/Jest framework is functioning",
       testFiles: [
+        // Run the ultra-minimal launch test first, followed by the connectivity
+        // diagnostics test, then the text-based UI smoke test. This three-step
+        // approach lets us progressively identify where a failure occurs:
+        // 1️⃣ minimal  – app can launch at all
+        // 2️⃣ basic    – Detox/device connectivity works
+        // 3️⃣ smoke    – basic UI is rendered and interactable
+        "minimal.test.js",
+        "basic.test.js",
         "smoke.test.js"
       ],
       estimatedTime: 5, // minutes
