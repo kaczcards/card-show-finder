@@ -9,7 +9,6 @@ module.exports = {
       setupTimeout: 120000,
       reportSpecs: true,
       reportWorkerAssign: true,
-      testEnvironment: 'node',
       testRunner: 'jest-circus/runner'
     }
   },
