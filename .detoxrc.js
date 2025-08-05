@@ -30,7 +30,7 @@ module.exports = {
       device: {
         // Use a broadly-available simulator that exists on GitHub Actions macOS images.
         type: 'iPhone 14',
-        os: 'iOS 16.4'
+        os: 'iOS 17.2'
       }
     }
   },

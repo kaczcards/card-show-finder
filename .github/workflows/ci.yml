@@ -162,7 +162,8 @@ jobs:
 
   e2e-tests:
     name: E2E Tests
-    runs-on: macos-latest
+    # Use the default macOS-14 image (includes a compatible Xcode version)
+    runs-on: macos-14
     needs: [unit-tests, database-tests]
     steps:
       - name: Checkout repository
@@ -190,7 +191,7 @@ jobs:
           path: |
             ios/build
             ~/Library/Developer/Xcode/DerivedData
-          key: ${{ runner.os }}-detox-build-${{ hashFiles('ios/Podfile.lock') }}
+          key: ${{ runner.os }}-detox-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-detox-build-
 
@@ -218,7 +219,7 @@ jobs:
           EOF
 
           echo "🏗️  Running Expo prebuild for iOS …"
-          npx expo prebuild --platform ios --clean --non-interactive
+          CI=1 npx expo prebuild --platform ios --clean
 
           echo "✅ Expo prebuild complete"
 
