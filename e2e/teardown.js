@@ -22,12 +22,12 @@ const artifactsDir = path.join(process.cwd(), 'e2e', 'artifacts');
 // Clean up test data from database
 async function cleanupTestDatabase() {
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Supabase credentials not found. Skipping test database cleanup.');
+    console.warn('[E2E-Teardown] Supabase credentials not found. Skipping test database cleanup.');
     return;
   }
 
   try {
-    console.log('Starting test database cleanup...');
+    console.log('[E2E-Teardown] Starting test database cleanup...');
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Get test data from global object
@@ -35,7 +35,7 @@ async function cleanupTestDatabase() {
     const testShows = global.__DETOX_GLOBAL__?.TEST_SHOWS;
     
     if (!testUser || !testShows) {
-      console.warn('Test data not found in global object. Skipping database cleanup.');
+      console.warn('[E2E-Teardown] Test data not found in global object. Skipping database cleanup.');
       return;
     }
     
@@ -46,33 +46,33 @@ async function cleanupTestDatabase() {
     });
     
     if (authError) {
-      console.warn(`Failed to authenticate as test user: ${authError.message}`);
+      console.warn(`[E2E-Teardown] Failed to authenticate as test user: ${authError.message}`);
     } else {
       const userId = authData?.user?.id;
       
       if (userId) {
         // Clean up any favorites created by test user
         await supabase.from('user_favorite_shows').delete().eq('userid', userId);
-        console.log('Cleaned up test user favorites');
+        console.log('[E2E-Teardown] Cleaned up test user favorites');
         
         // Clean up any want lists created by test user
         await supabase.from('want_lists').delete().eq('userid', userId);
-        console.log('Cleaned up test user want lists');
+        console.log('[E2E-Teardown] Cleaned up test user want lists');
         
         // Clean up any show participants created by test user
         await supabase.from('show_participants').delete().eq('userid', userId);
-        console.log('Cleaned up test user show participants');
+        console.log('[E2E-Teardown] Cleaned up test user show participants');
         
         // Clean up profile
         await supabase.from('profiles').delete().eq('id', userId);
-        console.log('Cleaned up test user profile');
+        console.log('[E2E-Teardown] Cleaned up test user profile');
         
         // Delete the user account
         const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
         if (deleteError) {
-          console.warn(`Failed to delete test user: ${deleteError.message}`);
+          console.warn(`[E2E-Teardown] Failed to delete test user: ${deleteError.message}`);
         } else {
-          console.log('Deleted test user account');
+          console.log('[E2E-Teardown] Deleted test user account');
         }
       }
     }
@@ -88,7 +88,7 @@ async function cleanupTestDatabase() {
           .limit(1);
         
         if (showQueryError) {
-          console.warn(`Failed to find test show "${show.name}": ${showQueryError.message}`);
+          console.warn(`[E2E-Teardown] Failed to find test show "${show.name}": ${showQueryError.message}`);
         } else if (showData && showData.length > 0) {
           const showId = showData[0].id;
           
@@ -105,24 +105,26 @@ async function cleanupTestDatabase() {
             .eq('id', showId);
           
           if (deleteShowError) {
-            console.warn(`Failed to delete test show "${show.name}": ${deleteShowError.message}`);
+            console.warn(`[E2E-Teardown] Failed to delete test show "${show.name}": ${deleteShowError.message}`);
           } else {
-            console.log(`Deleted test show "${show.name}"`);
+            console.log(`[E2E-Teardown] Deleted test show "${show.name}"`);
           }
         }
       }
     }
     
-    console.log('Test database cleanup completed successfully');
+    console.log('[E2E-Teardown] Test database cleanup completed successfully');
   } catch (err) {
-    console.error('Error cleaning up test database:', err);
+    console.error('[E2E-Teardown] Error cleaning up test database:', err.message);
+    console.log('[E2E-Teardown] Continuing with teardown process despite database cleanup error');
+    // Don't rethrow - we want to continue with teardown even if DB cleanup fails
   }
 }
 
 // Generate test report
 function generateTestReport() {
   try {
-    console.log('Generating test report...');
+    console.log('[E2E-Teardown] Generating test report...');
     
     const reportPath = path.join(artifactsDir, 'test-report.json');
     
@@ -146,31 +148,32 @@ function generateTestReport() {
     // Write test report to file
     fs.writeFileSync(reportPath, JSON.stringify(testResults, null, 2));
     
-    console.log(`Test report generated: ${reportPath}`);
-    console.log(`Test summary: ${testResults.passed} passed, ${testResults.failed} failed, ${testResults.skipped} skipped`);
-    console.log(`Total duration: ${totalDuration}ms`);
+    console.log(`[E2E-Teardown] Test report generated: ${reportPath}`);
+    console.log(`[E2E-Teardown] Test summary: ${testResults.passed} passed, ${testResults.failed} failed, ${testResults.skipped} skipped`);
+    console.log(`[E2E-Teardown] Total duration: ${totalDuration}ms`);
   } catch (err) {
-    console.error('Error generating test report:', err);
+    console.error('[E2E-Teardown] Error generating test report:', err.message);
+    // Continue with teardown despite error
   }
 }
 
 // Log performance metrics
 function logPerformanceMetrics() {
   try {
-    console.log('Logging performance metrics...');
+    console.log('[E2E-Teardown] Logging performance metrics...');
     
     // Get performance data from global object
     const performance = global.__DETOX_GLOBAL__?.PERFORMANCE;
     
     if (!performance || !performance.enabled) {
-      console.log('Performance monitoring was not enabled. Skipping metrics logging.');
+      console.log('[E2E-Teardown] Performance monitoring was not enabled. Skipping metrics logging.');
       return;
     }
     
     const { measurements, thresholds, logPath } = performance;
     
     if (!measurements || !measurements.length) {
-      console.log('No performance measurements were collected.');
+      console.log('[E2E-Teardown] No performance measurements were collected.');
       return;
     }
     
@@ -243,10 +246,10 @@ function logPerformanceMetrics() {
       thresholds,
     }, null, 2));
     
-    console.log(`Performance report generated: ${reportPath}`);
+    console.log(`[E2E-Teardown] Performance report generated: ${reportPath}`);
     
     // Log performance summary
-    console.log('Performance Summary:');
+    console.log('[E2E-Teardown] Performance Summary:');
     console.log(`- CPU: Avg ${stats.cpu.avg.toFixed(2)}% (Max: ${stats.cpu.max}%, Threshold: ${thresholds.cpu}%)`);
     console.log(`- Memory: Avg ${stats.memory.avg.toFixed(2)}MB (Max: ${stats.memory.max}MB, Threshold: ${thresholds.memory}MB)`);
     console.log(`- App Startup: ${stats.startupTime.value}ms (Threshold: ${thresholds.startupTime}ms)`);
@@ -273,30 +276,31 @@ function logPerformanceMetrics() {
     }
     
     if (warnings.length > 0) {
-      console.log('\nPerformance Warnings:');
+      console.log('\n[E2E-Teardown] Performance Warnings:');
       warnings.forEach(warning => console.log(`- ${warning}`));
     } else {
-      console.log('\nAll performance metrics are within acceptable thresholds');
+      console.log('\n[E2E-Teardown] All performance metrics are within acceptable thresholds');
     }
   } catch (err) {
-    console.error('Error logging performance metrics:', err);
+    console.error('[E2E-Teardown] Error logging performance metrics:', err.message);
+    // Continue with teardown despite error
   }
 }
 
 // Clean up artifacts
 function cleanupArtifacts() {
   try {
-    console.log('Checking artifacts cleanup configuration...');
+    console.log('[E2E-Teardown] Checking artifacts cleanup configuration...');
     
     // Check if we should clean up artifacts
     const shouldCleanup = process.env.DETOX_CLEANUP_ARTIFACTS === 'true';
     
     if (!shouldCleanup) {
-      console.log('Artifacts cleanup is disabled. Skipping.');
+      console.log('[E2E-Teardown] Artifacts cleanup is disabled. Skipping.');
       return;
     }
     
-    console.log('Cleaning up artifacts...');
+    console.log('[E2E-Teardown] Cleaning up artifacts...');
     
     // Get list of files to keep
     const keepFiles = [
@@ -328,36 +332,54 @@ function cleanupArtifacts() {
       }
     }
     
-    console.log(`Cleaned up ${deletedCount} artifact files`);
+    console.log(`[E2E-Teardown] Cleaned up ${deletedCount} artifact files`);
   } catch (err) {
-    console.error('Error cleaning up artifacts:', err);
+    console.error('[E2E-Teardown] Error cleaning up artifacts:', err.message);
+    // Continue with teardown despite error
   }
 }
 
 // Main teardown function
 module.exports = async () => {
-  console.log('Starting Detox E2E test teardown');
+  console.log('[E2E-Teardown] Starting Detox E2E test teardown');
   
   try {
-    // Clean up test database
-    await cleanupTestDatabase();
+    // Clean up test database - this is now optional and won't block other teardown steps
+    try {
+      await cleanupTestDatabase();
+    } catch (dbError) {
+      console.error('[E2E-Teardown] Database cleanup failed but continuing with other teardown steps:', dbError.message);
+    }
     
     // Generate test report
-    generateTestReport();
+    try {
+      generateTestReport();
+    } catch (reportError) {
+      console.error('[E2E-Teardown] Test report generation failed but continuing:', reportError.message);
+    }
     
     // Log performance metrics
-    logPerformanceMetrics();
+    try {
+      logPerformanceMetrics();
+    } catch (perfError) {
+      console.error('[E2E-Teardown] Performance metrics logging failed but continuing:', perfError.message);
+    }
     
     // Clean up artifacts if configured
-    cleanupArtifacts();
+    try {
+      cleanupArtifacts();
+    } catch (artifactsError) {
+      console.error('[E2E-Teardown] Artifacts cleanup failed but continuing:', artifactsError.message);
+    }
     
     // Detox cleanup is automatically handled by the Jest runner in Detox v20+.
     // (Calling detox.cleanup() manually would throw an error.)
-    console.log('Detox cleanup handled automatically by the test runner');
+    console.log('[E2E-Teardown] Detox cleanup handled automatically by the test runner');
   } catch (err) {
-    console.error('Error during teardown:', err);
-    // Continue with teardown process despite errors
+    console.error('[E2E-Teardown] Error during teardown:', err.message);
+    // We still want to exit cleanly even if there were errors
+    console.log('[E2E-Teardown] Teardown process completed with errors');
   }
   
-  console.log('Detox E2E test teardown completed');
+  console.log('[E2E-Teardown] Detox E2E test teardown completed');
 };

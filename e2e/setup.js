@@ -66,7 +66,23 @@ if (!fs.existsSync(artifactsDir)) {
 // Supabase test data setup function
 async function setupTestDatabase() {
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Supabase credentials not found. Skipping test database setup.');
+    // CI/CD environments (or local dev machines) often do not expose real Supabase
+    // credentials.  Instead of failing hard – which blocks *all* E2E execution – fall
+    // back to a **local-only mock** data strategy so tests that don’t strictly depend on
+    // remote data can still execute.  This allows us to surface other structural issues
+    // (navigation, rendering, etc.) without requiring a working backend.
+    console.warn(
+      '[E2E-Setup] Supabase credentials not found.  Using mock test data and ' +
+      'skipping remote database setup.',
+    );
+
+    // Even though we aren’t seeding the remote DB, tests still expect these globals
+    // to exist.  Populate them with the in-memory fixtures defined at the top of
+    // this file.
+    global.__DETOX_GLOBAL__ = global.__DETOX_GLOBAL__ || {};
+    global.__DETOX_GLOBAL__.TEST_USER = TEST_USER;
+    global.__DETOX_GLOBAL__.TEST_SHOWS = TEST_SHOWS;
+
     return;
   }
 
