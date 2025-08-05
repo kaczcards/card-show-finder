@@ -30,8 +30,8 @@ module.exports = {
       type: 'ios.simulator',
       device: {
         // Use a simulator that's definitely available in GitHub Actions
-        type: 'iPhone 14',
-        os: 'iOS 16.4'
+        type: 'iPhone 15',
+        os: 'iOS 17.2'
       }
     }
   },

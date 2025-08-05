@@ -63,8 +63,13 @@ module.exports = {
    * with the new architecture, so we enable it here to avoid
    * runtime module resolution errors (e.g. RNMapsAirModule).
    * ------------------------------------------------------------------
+   *
+   * Temporarily **disabled** due to Swift compilation failures in CI
+   * (ExpoModulesCore under Xcode 15 on GA runners).  Re-enable once
+   * the underlying issue is resolved and E2E tests are green again.
+   * ------------------------------------------------------------------
    */
-  newArchEnabled: true,
+  newArchEnabled: false,
   scheme: "cardshowfinder",
   splash: {
     image: "./assets/splash.png",
