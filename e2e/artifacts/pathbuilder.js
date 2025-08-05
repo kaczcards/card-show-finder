@@ -38,6 +38,16 @@ class DetoxPathBuilder {
    * @returns {string} - Path where the artifact should be stored
    */
   buildPathForTestArtifact(testSummary, artifactName, artifactExtension = '') {
+    // ------------------------------------------------------------------
+    // Normalise artifactName
+    // Detox plugins sometimes pass `undefined`, objects, or numbers here,
+    // which will throw when we later call `.includes()`.  Convert anything
+    // non-string into a safe empty string.
+    // ------------------------------------------------------------------
+    if (typeof artifactName !== 'string') {
+      artifactName = '';
+    }
+
     // Get root directory from environment or use default
     const rootDir = process.env.DETOX_ARTIFACTS_PATH || path.join(process.cwd(), 'e2e', 'artifacts');
     
@@ -94,13 +104,17 @@ class DetoxPathBuilder {
           artifactType = 'misc';
       }
     } else if (artifactName) {
-      if (artifactName.includes('log')) {
+      // Only attempt substring checks when artifactName is non-empty.
+      if (artifactName && artifactName.includes('log')) {
         artifactType = 'logs';
-      } else if (artifactName.includes('screenshot')) {
+      } else if (artifactName && artifactName.includes('screenshot')) {
         artifactType = 'screenshots';
-      } else if (artifactName.includes('video')) {
+      } else if (artifactName && artifactName.includes('video')) {
         artifactType = 'videos';
-      } else if (artifactName.includes('report') || artifactName.includes('timeline')) {
+      } else if (
+        (artifactName && artifactName.includes('report')) ||
+        (artifactName && artifactName.includes('timeline'))
+      ) {
         artifactType = 'reports';
       }
     }
