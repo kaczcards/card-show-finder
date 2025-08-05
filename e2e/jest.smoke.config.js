@@ -30,9 +30,10 @@ module.exports = {
     '^.+\\.(js|ts|tsx)$': 'babel-jest',
   },
   
-  // Use Detox' recommended after-env setup file instead of custom global setup/teardown.
-  // This keeps the config standard and avoids timing issues seen in custom bootstrapping.
-  setupFilesAfterEnv: ['detox/runners/jest/setup.js'],
+  // Detox v20+ handles runtime setup automatically via the dedicated
+  // globalSetup / globalTeardown scripts – no setupFilesAfterEnv needed.
+  globalSetup: 'detox/runners/jest/globalSetup',
+  globalTeardown: 'detox/runners/jest/globalTeardown',
   
   // Simple test sequence - no retries or complex patterns
   maxWorkers: 1,
