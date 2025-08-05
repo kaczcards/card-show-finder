@@ -182,9 +182,11 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  
-  // Get current test info
-  const testName = expect.getState().currentTestName;
+  // Get current test info - with safe fallback if API not available
+  const testInfo = global.jasmine || global.jest;
+  const testName = (typeof expect.getState === 'function' && expect.getState()?.currentTestName) || 
+                   (testInfo?.currentTest?.fullName) || 
+                   'unknown-test';
   
   // Start performance monitoring for this test
   if (process.env.DETOX_PERF_MONITOR === 'true') {
@@ -200,9 +202,27 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  // Get current test info
-  const testName = expect.getState().currentTestName;
-  const testStatus = expect.getState().testPath ? 'passed' : 'failed';
+  // Get current test info - with safe fallback if API not available
+  const testInfo = global.jasmine || global.jest;
+  const testName = (typeof expect.getState === 'function' && expect.getState()?.currentTestName) || 
+                   (testInfo?.currentTest?.fullName) || 
+                   'unknown-test';
+  
+  // Determine test status more reliably
+  let testStatus = 'unknown';
+  try {
+    // Different ways to detect test status depending on the test runner
+    if (typeof expect.getState === 'function') {
+      const state = expect.getState();
+      testStatus = state && !state.suppressedErrors && state.suppressedErrors.length === 0 ? 'passed' : 'failed';
+    } else if (testInfo?.currentTest) {
+      testStatus = testInfo.currentTest.failedExpectations && 
+                  testInfo.currentTest.failedExpectations.length === 0 ? 'passed' : 'failed';
+    }
+  } catch (e) {
+    console.log('Could not determine test status:', e.message);
+    testStatus = 'unknown';
+  }
   
   // End performance monitoring for this test
   if (process.env.DETOX_PERF_MONITOR === 'true') {
@@ -254,8 +274,8 @@ afterAll(async () => {
   // Log test end time
   console.log(`Test Suite Completed: ${new Date().toISOString()}`);
   
-  // Cleanup Detox
-  await detox.cleanup();
+  // Cleanup is now handled automatically by Detox in v20+
+  // No need to call detox.cleanup() manually
 });
 
 // Export test helpers for use in test files
