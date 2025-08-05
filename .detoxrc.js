@@ -28,8 +28,9 @@ module.exports = {
     'simulator': {
       type: 'ios.simulator',
       device: {
-        type: 'iPhone 16 Plus',
-        os: 'iOS 18.5'
+        // Use a broadly-available simulator that exists on GitHub Actions macOS images.
+        type: 'iPhone 14',
+        os: 'iOS 16.4'
       }
     }
   },
@@ -40,25 +41,10 @@ module.exports = {
       artifacts: {
         rootDir: './e2e/artifacts',
         plugins: {
-          log: { enabled: true },
           screenshot: {
             enabled: true,
-            shouldTakeAutomaticSnapshots: true,
-            keepOnlyFailedTestsArtifacts: false,
-            takeWhen: {
-              testStart: false,
-              testDone: true,
-              testFail: true
-            }
-          },
-          video: {
-            enabled: false
-          },
-          instruments: {
-            enabled: true
-          },
-          timeline: {
-            enabled: true
+            // keep only artifacts for failing tests to save disk space
+            keepOnlyFailedTestsArtifacts: true
           }
         }
       },
@@ -73,10 +59,7 @@ module.exports = {
         }
       },
       session: {
-        debugSynchronization: 10000,
-        autoStart: true,
-        server: 'ws://localhost:8099',
-        sessionId: 'test'
+        autoStart: true
       }
     },
     'ios.sim.release': {
@@ -85,25 +68,9 @@ module.exports = {
       artifacts: {
         rootDir: './e2e/artifacts',
         plugins: {
-          log: { enabled: true },
           screenshot: {
             enabled: true,
-            shouldTakeAutomaticSnapshots: true,
-            keepOnlyFailedTestsArtifacts: true,
-            takeWhen: {
-              testStart: false,
-              testDone: true,
-              testFail: true
-            }
-          },
-          video: {
-            enabled: false
-          },
-          instruments: {
-            enabled: true
-          },
-          timeline: {
-            enabled: true
+            keepOnlyFailedTestsArtifacts: true
           }
         }
       },
@@ -118,32 +85,7 @@ module.exports = {
         }
       },
       session: {
-        debugSynchronization: 5000,
-        autoStart: true,
-        server: 'ws://localhost:8099',
-        sessionId: 'test'
-      }
-    }
-  },
-  artifacts: {
-    pathBuilder: './e2e/artifacts/pathbuilder.js',
-    plugins: {
-      log: {
-        enabled: true,
-        keepOnlyFailedTestsArtifacts: false
-      },
-      screenshot: {
-        enabled: true,
-        shouldTakeAutomaticSnapshots: true,
-        keepOnlyFailedTestsArtifacts: false,
-        takeWhen: {
-          testStart: false,
-          testDone: true,
-          testFail: true
-        }
-      },
-      video: {
-        enabled: false
+        autoStart: true
       }
     }
   },
@@ -157,16 +99,7 @@ module.exports = {
     }
   },
   environment: {
-    // Environment variables for isolated test data
-    DETOX_TEST_MODE: 'true',
-    EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_TEST_SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL,
-    EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_TEST_SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
-    EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.EXPO_PUBLIC_TEST_GOOGLE_MAPS_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
-    // For test isolation, use a dedicated test database if available
-    DETOX_USE_ISOLATED_DATA: 'true',
-    // Performance settings
-    DETOX_PERF_MONITOR: 'true',
-    DETOX_PERF_THRESHOLD_CPU: '80',
-    DETOX_PERF_THRESHOLD_MEMORY: '500'
+    // Minimal environment needed for CI
+    DETOX_TEST_MODE: 'true'
   }
 };
