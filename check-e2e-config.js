@@ -14,7 +14,11 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 // Root project directory
-const rootDir = path.resolve(__dirname, '..');
+// This script lives in the project root, so `__dirname` already *is*
+// the correct root directory.  Resolving `..` moves us one level up
+// and breaks all path checks when the script is executed from within
+// the repository.  Use `__dirname` directly instead.
+const rootDir = __dirname;
 const e2eDir = path.join(rootDir, 'e2e');
 
 // Configuration files to check
