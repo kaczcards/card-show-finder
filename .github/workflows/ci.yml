@@ -191,7 +191,9 @@ jobs:
           path: |
             ios/build
             ~/Library/Developer/Xcode/DerivedData
-          key: ${{ runner.os }}-detox-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json') }}
+          # Include xcode-version.txt so cache automatically busts when the
+          # GitHub Actions macOS image (and therefore Xcode) upgrades.
+          key: ${{ runner.os }}-detox-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json', 'xcode-version.txt') }}
           restore-keys: |
             ${{ runner.os }}-detox-build-
 
