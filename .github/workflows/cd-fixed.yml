@@ -263,6 +263,7 @@ jobs:
           
           # 5. Set environment variables to force local credentials
           echo "EXPO_USE_LOCAL_CREDENTIALS=1" >> $GITHUB_ENV
+          echo "EAS_NO_CREDENTIALS_VALIDATION=1" >> $GITHUB_ENV
           echo "EAS_LOCAL_BUILD_ARTIFACTS_DIR=$(pwd)/build-artifacts" >> $GITHUB_ENV
           echo "EAS_LOCAL_GRADLE_PROPERTIES_PATH=$(pwd)/android/gradle.properties" >> $GITHUB_ENV
           
@@ -290,24 +291,30 @@ jobs:
               --non-interactive \
               --no-wait
           else
-            echo "ℹ️  Skipping iOS build for internal distribution environment (${{
-              needs.determine-environment.outputs.environment }})."
+            echo "ℹ️  Skipping iOS build for internal distribution environment (${{ needs.determine-environment.outputs.environment }})."
           fi
           
-          # Build Android with development profile which has credentials
-          # Use the development profile which is confirmed to have valid credentials
-          ANDROID_PROFILE="development"
+          # For Android, use the staging profile if we're in staging environment
+          # instead of always using development profile
+          if [[ "${{ needs.determine-environment.outputs.environment }}" == "staging" ]]; then
+            ANDROID_PROFILE="staging"
+          else
+            ANDROID_PROFILE="${USE_DEV_PROFILE_FOR_ANDROID:-${{ needs.determine-environment.outputs.environment }}}"
+          fi
+          
           echo "🤖 Building Android app with profile: $ANDROID_PROFILE"
           
           # Force local credentials by setting environment variables
           export EXPO_USE_LOCAL_CREDENTIALS=1
           export EAS_NO_CREDENTIALS_VALIDATION=1
           
+          # Add verbose flag for more debugging information
           eas build \
             --platform android \
             --profile $ANDROID_PROFILE \
             --non-interactive \
             --local \
+            --verbose \
             --wait
           
           echo "✅ Build commands completed"
