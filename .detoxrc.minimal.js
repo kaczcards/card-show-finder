@@ -30,8 +30,18 @@ module.exports = {
       type: 'ios.simulator',
       device: {
         // Use a simulator that's definitely available in GitHub Actions
-        type: 'iPhone 15',
-        os: 'iOS 18.5'
+        /**
+         * Do NOT pin an explicit iOS runtime here.  GitHub Actions runners
+         * frequently update Xcode and the available simulator runtimes.
+         * Let Detox pick whichever runtime exists for the given device type.
+         *
+         * We explicitly choose **iPhone 15** because it is the newest model
+         * that ships with *all* current GitHub Actions macOS runner images
+         * (Xcode 15 & 16).  By not pinning an OS version, Detox can use
+         * whichever iOS runtime is available, preventing \"device not found\"
+         * errors when Apple/Actions update their images.
+         */
+        type: 'iPhone 15'
       }
     }
   },
