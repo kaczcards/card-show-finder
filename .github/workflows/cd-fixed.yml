@@ -330,7 +330,10 @@ jobs:
           echo "✅ Build commands completed"
 
       - name: Submit to app stores
-        if: ${{ needs.determine-environment.outputs.environment == 'staging' || needs.determine-environment.outputs.environment == 'production' }}
+        # Only submit when building **production** artifacts.
+        # Staging and preview environments are intended for TestFlight /
+        # internal distribution and should not be auto-submitted.
+        if: ${{ needs.determine-environment.outputs.environment == 'production' }}
         run: |
           eas submit \
             --platform all \
