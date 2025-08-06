@@ -7,7 +7,6 @@
  * to minimize potential points of failure.
  */
 
-const { detox } = require('detox');
 const adapter = require('detox/runners/jest/adapter');
 
 module.exports = async function() {
@@ -17,10 +16,10 @@ module.exports = async function() {
     // Clean up Jest adapter
     await adapter.afterAll();
     console.log('✅ Jest adapter cleaned up');
-    
-    // Clean up Detox
-    await detox.cleanup();
-    console.log('✅ Detox cleaned up successfully');
+
+    // Detox v20+ performs cleanup automatically when the
+    // test runner exits, so no manual `detox.cleanup()` call
+    // is required (and the API has been removed).
   } catch (error) {
     console.error('⚠️ Error during minimal Detox teardown:', error.message);
     console.error(error);
