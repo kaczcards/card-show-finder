@@ -153,7 +153,15 @@ global.TEST_LOCATIONS = TEST_LOCATIONS;
 global.TEST_SEARCH_QUERIES = TEST_SEARCH_QUERIES;
 
 // Set up Jest hooks
-beforeAll(async () => {
+/* ------------------------------------------------------------------ *
+ * Jest lifecycle hooks are only available when this file is executed
+ * within a Jest context.  When the file is `require`-d by tools such
+ * as the configuration validator, those globals are **undefined**.
+ * Guard each hook so the file can be safely imported anywhere.
+ * ------------------------------------------------------------------ */
+
+if (typeof beforeAll !== 'undefined') {
+  beforeAll(async () => {
   // Detox initialization is handled automatically by the jest-circus environment (Detox v20+)
   
   // Create artifacts directory if it doesn't exist
@@ -179,7 +187,8 @@ beforeAll(async () => {
   
   // Log test start time
   console.log(`Test Suite Started: ${new Date().toISOString()}`);
-});
+  });
+}
 
 /**
  * Safely resolve the current test name in a way that **never throws**.
@@ -216,7 +225,8 @@ function safeGetCurrentTestName() {
   return 'unknown-test';
 }
 
-beforeEach(async () => {
+if (typeof beforeEach !== 'undefined') {
+  beforeEach(async () => {
   // Resolve current test name defensively
   const testName = safeGetCurrentTestName();
   
@@ -231,9 +241,11 @@ beforeEach(async () => {
   
   // Log test start
   console.log(`Starting test: ${testName}`);
-});
+  });
+}
 
-afterEach(async () => {
+if (typeof afterEach !== 'undefined') {
+  afterEach(async () => {
   // Resolve current test name defensively
   const testName = safeGetCurrentTestName();
   
@@ -287,9 +299,11 @@ afterEach(async () => {
   }
   
   // Nothing extra required for jest-circus afterEach
-});
+  });
+}
 
-afterAll(async () => {
+if (typeof afterAll !== 'undefined') {
+  afterAll(async () => {
   // End performance monitoring for app startup
   const startupTime = performanceMonitor.endMeasurement('startupTime');
   console.log(`App startup time: ${startupTime}ms`);
@@ -305,7 +319,8 @@ afterAll(async () => {
   
   // Cleanup is now handled automatically by Detox in v20+
   // No need to call detox.cleanup() manually
-});
+  });
+}
 
 // Export test helpers for use in test files
 module.exports = {
