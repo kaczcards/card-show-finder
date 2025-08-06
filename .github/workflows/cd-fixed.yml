@@ -38,7 +38,7 @@ env:
   # Set to "true" to temporarily disable Android builds (e.g. while waiting for
   # Google Play approval or API key provisioning).  Can be configured in
   # Repository → Settings → Variables or passed via workflow _dispatch_.
-  SKIP_ANDROID_BUILD: ${{ vars.SKIP_ANDROID_BUILD || '' }}
+  SKIP_ANDROID_BUILD: ${{ vars.SKIP_ANDROID_BUILD || 'false' }}
 
 jobs:
   determine-environment:
@@ -324,7 +324,6 @@ jobs:
             --profile $ANDROID_PROFILE \
             --non-interactive \
             --local \
-            --verbose \
             --wait
           fi
           
