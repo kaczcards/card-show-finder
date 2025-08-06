@@ -6,10 +6,11 @@ module.exports = {
   testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
   testTimeout: 120000, // 2-minute timeout is usually enough for a single E2E test
   
-  // Setup and teardown files
-  globalSetup: '<rootDir>/e2e/setup.js',
-  globalTeardown: '<rootDir>/e2e/teardown.js',
-  setupFilesAfterEnv: ['<rootDir>/e2e/init.js'],
+  // Detox v20+ handles init/cleanup via dedicated hooks – use built-in scripts.
+  globalSetup: 'detox/runners/jest/globalSetup',
+  globalTeardown: 'detox/runners/jest/globalTeardown',
+  // `setupFilesAfterEnv` is no longer required – keeping it causes duplicate / early
+  // initialisation that leads to expect.getState and jest context errors.
   
   // Run tests serially – Detox doesn’t support parallelism well
   maxWorkers: 1,
