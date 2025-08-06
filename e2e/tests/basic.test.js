@@ -43,9 +43,17 @@ describe('Basic Detox Connectivity Test', () => {
     console.log('🔍 BASIC TEST: Checking device object...');
     
     // Simply verify the device object exists and has expected methods
-    expect(device).toBeDefined();
-    expect(typeof device.launchApp).toBe('function');
-    expect(typeof device.reloadReactNative).toBe('function');
+    if (!device) {
+      throw new Error('Device object is undefined – Detox not initialised?');
+    }
+
+    if (typeof device.launchApp !== 'function') {
+      throw new Error('device.launchApp is not a function – Detox APIs unavailable');
+    }
+
+    if (typeof device.reloadReactNative !== 'function') {
+      throw new Error('device.reloadReactNative is not a function – Detox APIs unavailable');
+    }
     
     // Log device info for debugging
     try {
@@ -66,8 +74,12 @@ describe('Basic Detox Connectivity Test', () => {
       const anyElement = element(by.text('ANY_TEXT_THAT_MAY_NOT_EXIST'));
       
       // Check if the element query returns an object with expected methods
-      expect(anyElement).toBeDefined();
-      expect(typeof anyElement.tap).toBe('function');
+      if (!anyElement) {
+        throw new Error('Element query returned undefined');
+      }
+      if (typeof anyElement.tap !== 'function') {
+        throw new Error('Element object is missing expected methods');
+      }
       
       console.log('✅ BASIC TEST: Element query executed successfully');
       
