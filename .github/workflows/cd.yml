@@ -83,10 +83,11 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           else
-            # Generate version based on date and commit hash
-            TIMESTAMP=$(date +'%Y%m%d.%H%M')
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            echo "version=${TIMESTAMP}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+            # Auto-generate Apple-compatible version string (major.minor.build)
+            # We keep major/minor static (1.0) and derive an ever-increasing
+            # numeric BUILD_NUMBER from the current UTC timestamp (YYYYMMDDHHMM).
+            BUILD_NUMBER=$(date -u +'%Y%m%d%H%M')
+            echo "version=1.0.${BUILD_NUMBER}" >> $GITHUB_OUTPUT
           fi
 
       - name: Generate build ID
@@ -217,12 +218,17 @@ jobs:
           set -e
           
           # Build iOS with the determined environment profile
-          echo "🍎 Building iOS app with profile: ${{ needs.determine-environment.outputs.environment }}"
-          eas build \
-            --platform ios \
-            --profile ${{ needs.determine-environment.outputs.environment }} \
-            --non-interactive \
-            --no-wait
+          if [[ "${{ needs.determine-environment.outputs.environment }}" == "production" ]]; then
+            echo "🍎 Building iOS app with profile: production"
+            eas build \
+              --platform ios \
+              --profile production \
+              --non-interactive \
+              --no-wait
+          else
+            echo "ℹ️  Skipping iOS build for internal distribution environment (${{
+              needs.determine-environment.outputs.environment }})."
+          fi
           
           # Build Android with development profile (which has credentials) or fallback to specified environment
           ANDROID_PROFILE="${USE_DEV_PROFILE_FOR_ANDROID:-${{ needs.determine-environment.outputs.environment }}}"
