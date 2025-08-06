@@ -1,4 +1,4 @@
-name: Continuous Deployment
+name: Continuous Deployment (Fixed)
 
 on:
   push:
@@ -218,7 +218,7 @@ jobs:
       - name: Debug - Confirm workflow version
         run: |
           echo "=========================================="
-          echo "🧪 DEBUG: Using UPDATED workflow version!"
+          echo "🧪 DEBUG: Using FIXED WORKFLOW VERSION (cd-fixed.yml)!"
           echo "🧪 DEBUG: About to generate temporary keystore"
           echo "🧪 DEBUG: Current working directory: $(pwd)"
           echo "🧪 DEBUG: Files in current directory:"
@@ -294,7 +294,7 @@ jobs:
               needs.determine-environment.outputs.environment }})."
           fi
           
-          # Build Android with development profile (which has credentials) or fallback to specified environment
+          # Build Android with development profile which has credentials
           # Use the development profile which is confirmed to have valid credentials
           ANDROID_PROFILE="development"
           echo "🤖 Building Android app with profile: $ANDROID_PROFILE"
