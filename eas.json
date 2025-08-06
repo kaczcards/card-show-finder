@@ -22,7 +22,7 @@
       "android": {
         "gradleCommand": ":app:assembleDebug",
         "resourceClass": "medium",
-        "autoIncrement": "versionCode",
+        "autoIncrement": false,
         "credentialsSource": "remote",
         "buildType": "apk"
       }
@@ -44,9 +44,9 @@
       },
       "android": {
         "resourceClass": "large",
-        "autoIncrement": "versionCode",
+        "autoIncrement": false,
         "credentialsSource": "remote",
-        "buildType": "app-bundle"
+        "buildType": "apk"
       }
     },
     "staging": {
@@ -68,9 +68,9 @@
       },
       "android": {
         "resourceClass": "large",
-        "autoIncrement": "versionCode",
+        "autoIncrement": false,
         "credentialsSource": "remote",
-        "buildType": "app-bundle"
+        "buildType": "apk"
       }
     },
     "production": {
@@ -89,7 +89,7 @@
       },
       "android": {
         "resourceClass": "large",
-        "autoIncrement": "versionCode",
+        "autoIncrement": false,
         "credentialsSource": "remote",
         "buildType": "app-bundle"
       }
