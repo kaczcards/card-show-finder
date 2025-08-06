@@ -233,8 +233,8 @@ jobs:
           fi
           
           # Build Android with development profile (which has credentials) or fallback to specified environment
-          # Use the staging profile explicitly to avoid variable-expansion issues
-          ANDROID_PROFILE="staging"
+          # Use the development profile which is confirmed to have valid credentials
+          ANDROID_PROFILE="development"
           echo "🤖 Building Android app with profile: $ANDROID_PROFILE"
           eas build \
             --platform android \
