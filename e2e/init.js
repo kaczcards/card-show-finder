@@ -181,12 +181,44 @@ beforeAll(async () => {
   console.log(`Test Suite Started: ${new Date().toISOString()}`);
 });
 
+/**
+ * Safely resolve the current test name in a way that **never throws**.
+ * Falls back to sensible defaults when Jest internals are unavailable
+ * or when running under a different test-runner implementation.
+ *
+ * @returns {string} Resolved test name or 'unknown-test'
+ */
+function safeGetCurrentTestName() {
+  try {
+    // Newer Jest versions (expect.getState exists)
+    if (typeof expect !== 'undefined'
+      && expect !== null
+      && typeof expect.getState === 'function') {
+      const state = expect.getState();
+      if (state && typeof state.currentTestName === 'string') {
+        return state.currentTestName;
+      }
+    }
+
+    // Jasmine fallback (older Detox < v20 or custom envs)
+    if (global.jasmine?.currentTest?.fullName) {
+      return global.jasmine.currentTest.fullName;
+    }
+
+    // jest-circus or worker context
+    if (global.jest?.currentTest?.fullName) {
+      return global.jest.currentTest.fullName;
+    }
+  } catch {
+    /* swallow */ /* eslint-disable-line no-empty */
+  }
+
+  return 'unknown-test';
+}
+
 beforeEach(async () => {
-  // Get current test info - with safe fallback if API not available
-  const testInfo = global.jasmine || global.jest;
-  const testName = (typeof expect.getState === 'function' && expect.getState()?.currentTestName) || 
-                   (testInfo?.currentTest?.fullName) || 
-                   'unknown-test';
+  // Resolve current test name defensively
+  const testName = safeGetCurrentTestName();
   
   // Start performance monitoring for this test
   if (process.env.DETOX_PERF_MONITOR === 'true') {
@@ -202,11 +234,8 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  // Get current test info - with safe fallback if API not available
-  const testInfo = global.jasmine || global.jest;
-  const testName = (typeof expect.getState === 'function' && expect.getState()?.currentTestName) || 
-                   (testInfo?.currentTest?.fullName) || 
-                   'unknown-test';
+  // Resolve current test name defensively
+  const testName = safeGetCurrentTestName();
   
   // Determine test status more reliably
   let testStatus = 'unknown';
