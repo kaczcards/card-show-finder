@@ -233,7 +233,8 @@ jobs:
           fi
           
           # Build Android with development profile (which has credentials) or fallback to specified environment
-          ANDROID_PROFILE="${USE_DEV_PROFILE_FOR_ANDROID:-${{ needs.determine-environment.outputs.environment }}}"
+          # Use the staging profile explicitly to avoid variable-expansion issues
+          ANDROID_PROFILE="staging"
           echo "🤖 Building Android app with profile: $ANDROID_PROFILE"
           eas build \
             --platform android \
