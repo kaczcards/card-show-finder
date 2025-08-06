@@ -18,6 +18,14 @@ env:
   SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
   EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
   EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.EXPO_PUBLIC_SENTRY_DSN }}
+  # ------------------------------------------------------------------
+  #  TEMPORARY FLAG — Skip Android build steps while keystore issues
+  #  are being resolved.  Set to “false” or remove when you want the
+  #  CI pipeline to run Android builds again.
+  #  NOTE: prefer repository-level variable `SKIP_ANDROID_BUILD` once
+  #  the CD workflow logic is finalised.
+  # ------------------------------------------------------------------
+  SKIP_ANDROID_BUILD: 'true'
 
 jobs:
   lint-and-typecheck:
@@ -614,11 +622,20 @@ jobs:
 
       - name: Build preview (EAS)
         run: |
-          echo "🚀 Building with development profile to avoid keystore issues..."
-          
-          # Build Android only; iOS credentials are not configured for non-interactive development builds
-          eas build --platform android --profile development --non-interactive --no-wait
-          echo "✅ Build verification successful for development profile"
+          echo "🚀 Build-verification step (development profile)"
+          echo "⚙️  SKIP_ANDROID_BUILD=${SKIP_ANDROID_BUILD}"
+
+          if [[ "${SKIP_ANDROID_BUILD}" == "true" ]]; then
+            echo "⚠️  SKIP_ANDROID_BUILD=true — Android build verification skipped."
+          else
+            # Build Android only; iOS credentials are not configured for non-interactive development builds
+            eas build \
+              --platform android \
+              --profile development \
+              --non-interactive \
+              --no-wait
+            echo "✅ Build verification successful for development profile"
+          fi
 
   notify:
     name: Notify on completion
