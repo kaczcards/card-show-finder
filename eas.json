@@ -23,8 +23,30 @@
         "gradleCommand": ":app:assembleDebug",
         "resourceClass": "medium",
         "autoIncrement": "versionCode",
-        "credentialsSource": "local",
+        "credentialsSource": "remote",
         "buildType": "apk"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "developmentClient": false,
+      "channel": "preview",
+      "env": {
+        "APP_ENV": "preview"
+      },
+      "cache": {
+        "key": "preview-${{ github.sha }}"
+      },
+      "ios": {
+        "resourceClass": "m-medium",
+        "autoIncrement": "buildNumber",
+        "scheme": "cardshowfinderPreview"
+      },
+      "android": {
+        "resourceClass": "large",
+        "autoIncrement": "versionCode",
+        "credentialsSource": "remote",
+        "buildType": "app-bundle"
       }
     },
     "staging": {
