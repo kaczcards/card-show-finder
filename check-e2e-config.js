@@ -28,7 +28,6 @@ const configFiles = {
   setup: path.join(e2eDir, 'setup.js'),
   teardown: path.join(e2eDir, 'teardown.js'),
   init: path.join(e2eDir, 'init.js'),
-  batchRunner: path.join(e2eDir, 'scripts', 'run-batch.js'),
   batches: path.join(e2eDir, 'config', 'batches.js'),
   reporter: path.join(e2eDir, 'reporters', 'detox-reporter.js')
 };
