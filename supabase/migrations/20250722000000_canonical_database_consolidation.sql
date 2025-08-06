@@ -213,6 +213,48 @@ COMMENT ON FUNCTION create_geography_point(FLOAT, FLOAT) IS 'Creates a PostGIS g
 -- SECTION 2: CRITICAL DATABASE FUNCTIONS
 -- ================================================================
 
+
+-- ----------------------------------------------------------------
+-- exec_sql: Utility helper used by maintenance / admin scripts
+-- ----------------------------------------------------------------
+-- This SECURITY DEFINER function allows trusted automation scripts
+-- (e.g. Supabase CLI, CI utilities) to execute arbitrary SQL with
+-- robust error handling.  It returns a JSONB payload indicating
+-- success or failure so callers can programmatically react.
+--
+-- NOTE:  It is *not* granted to regular application roles; only the
+-- `service_role` gets EXECUTE permission.
+-- ----------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION exec_sql(sql_query TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  result JSONB;
+BEGIN
+  EXECUTE sql_query;
+  result := '{"success": true}'::JSONB;
+  RETURN result;
+EXCEPTION
+  WHEN OTHERS THEN
+    result := jsonb_build_object(
+      'success', false,
+      'error',  SQLERRM,
+      'detail', SQLSTATE
+    );
+    RETURN result;
+END;
+$$;
+
+-- Grant to service_role only (used by CI / admin tooling)
+GRANT EXECUTE ON FUNCTION exec_sql(TEXT) TO service_role;
+
+COMMENT ON FUNCTION exec_sql(TEXT) IS
+'Execute arbitrary SQL with JSONB success/error response.
+SECURITY DEFINER so it runs with elevated privileges.
+Intended solely for trusted automation (service_role).';
 -- 1. Get Paginated Shows Function (Stable Version)
 DROP FUNCTION IF EXISTS public.get_paginated_shows;
 
