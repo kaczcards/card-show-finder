@@ -73,7 +73,7 @@ Run it any time:
 node scripts/check-simulators.js
 ```
 
-> CI step **“Validate E2E configuration”** already executes this script.
+> CI step **"Validate E2E configuration"** already executes this script.
 
 ## 4  Impact on CI
 
@@ -112,7 +112,7 @@ node scripts/check-simulators.js
 | Symptom                                            | Checklist                                                                 |
 |----------------------------------------------------|---------------------------------------------------------------------------|
 | `Failed to find a device …`                        | • Run `node scripts/check-simulators.js` <br>• Confirm device exists      |
-| Detox hangs on *“Installing app”*                  | • Run `xcrun simctl erase all` locally <br>• Ensure pod install succeeded |
+| Detox hangs on *"Installing app"*                  | • Run `xcrun simctl erase all` locally <br>• Ensure pod install succeeded |
 | Simulator boots then immediately shuts down        | • Clean build (`detox clean-framework-cache`) <br>• Re-run build step     |
 | CI job times out before tests start                | • Verify `ios.build` path in `.detoxrc.js` <br>• Check cache restore logs |
 
@@ -143,12 +143,12 @@ TypeError: expect(...).toBeDefined is not a function
 * **Detox** patches the global `expect()` function with its own version that
   understands *UI-element* matchers (`toBeVisible()`, `toExist()`, etc.).
 * Standard **Jest** matchers like `toBeDefined()` or `toBe()` are **not**
-  implemented on Detox’s `expect`, so calling them throws.
+  implemented on Detox's `expect`, so calling them throws.
 
 ### 8.2  Fix
 
 * Replace regular Jest assertions in Detox tests with **plain JavaScript
-  checks** or import Jest’s expect under a different name if you truly need
+  checks** or import Jest's expect under a different name if you truly need
   them.  
   Example taken from `e2e/tests/basic.test.js`:
 
@@ -169,7 +169,7 @@ TypeError: expect(...).toBeDefined is not a function
 ### 8.3  Take-aways
 
 1. **Do not mix Jest matchers in Detox tests** unless you explicitly import
-   Jest’s `expect` with a different identifier.
+   Jest's `expect` with a different identifier.
 2. When writing quick connectivity / smoke tests, prefer **simple runtime
    checks** (`if (!obj) throw …`) over matchers.
 3. When you **do** need Jest assertions (e.g. validating helper functions in
@@ -181,3 +181,47 @@ TypeError: expect(...).toBeDefined is not a function
    ```
 
    and call `jestExpect()` instead of `expect()`.
+
+## 9  Final Issue – Expo Development Menu in CI
+
+After fixing the device configuration and assertion issues, the **smoke tests**
+still failed with:
+
+```
+Test Failed: Timed out while waiting for expectation: TOBEVISIBLE WITH MATCHER(text == "Sign In") TIMEOUT(20s)
+```
+
+### 9.1  Root cause
+
+* The app was launching into **Expo's development build menu** instead of the actual app
+* The view hierarchy showed elements like "card-show-finder Development Build", "Start a local development server", etc.
+* This happens because Debug builds with Expo's development client enabled will show the dev menu when no development server is available (which is the case in CI)
+
+### 9.2  Fix
+
+* Use a **Release** configuration for the app build instead of Debug
+* This produces a production-like binary that skips the Expo development client UI entirely
+* We still use the standard `cardshowfinder` scheme, just with Release configuration
+
+Changes to `.detoxrc.js` and `.detoxrc.minimal.js`:
+
+```diff
+-binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/cardshowfinder.app',
+-build: 'xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build'
++binaryPath: 'ios/build/Build/Products/Release-iphonesimulator/cardshowfinder.app',
++build: 'xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Release -sdk iphonesimulator -derivedDataPath ios/build'
+```
+
+### 9.3  Why this works
+
+* **Debug** builds with Expo include the development client, which shows the dev menu when no server is connected
+* **Release** builds exclude the development client entirely, launching directly into the app
+* This is the simplest and most reliable approach for CI environments where no development server is running
+* No need to create or maintain separate schemes - just use the standard scheme with the right configuration
+
+### 9.4  Take-aways
+
+1. **Always use Release configuration** for E2E tests in CI environments
+2. Avoid Debug builds with Expo development client in automated tests
+3. If you need to debug test issues, use the Release build with debug symbols rather than a Debug build with dev client
+4. The symptom of this issue is always the same: tests timeout waiting for UI elements because they're stuck on the Expo dev menu
