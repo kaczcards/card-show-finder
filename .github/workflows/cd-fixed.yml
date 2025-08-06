@@ -193,6 +193,8 @@ jobs:
           echo '${{ secrets.ANDROID_SERVICE_ACCOUNT_KEY }}' > ./android-service-account.json
 
       - name: Setup EAS Android credentials
+        # Skip this entire step when Android builds are explicitly disabled
+        if: env.SKIP_ANDROID_BUILD != 'true'
         run: |
           echo "🔍 Checking EAS Android credentials status..."
           
@@ -225,6 +227,7 @@ jobs:
       # ------------------------------------------------------------------
       # 🔍 DEBUG – confirm we are running the expected, up-to-date workflow
       # ------------------------------------------------------------------
+      # Skip keystore generation if Android build is disabled
       - name: Debug - Confirm workflow version
         run: |
           echo "=========================================="
@@ -246,6 +249,7 @@ jobs:
       # NOTE: This block can be removed after proper keystore(s) are uploaded
       #       to EAS for every build profile (see IMMEDIATE_FIX_DEPLOYMENT.md).
       - name: Generate temporary keystore for CI
+        if: env.SKIP_ANDROID_BUILD != 'true'
         run: |
           echo "🔧 Generating temporary keystore for CI build…"
           
@@ -287,6 +291,7 @@ jobs:
 
       - name: Build app with EAS
         run: |
+          echo "⚙️  DEBUG: SKIP_ANDROID_BUILD=${SKIP_ANDROID_BUILD}"
           echo "🚀 Starting EAS build process..."
           
           # Set default error handling
