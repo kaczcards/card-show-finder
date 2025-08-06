@@ -100,6 +100,36 @@
         "credentialsSource": "remote",
         "buildType": "app-bundle"
       }
+    },
+
+    /* --------------------------------------------------------------------
+       DEBUG PROFILE  (temporary – no keystore / unsigned build)
+       ----------------------------------------------------------
+       Purpose: generate an **unsigned debug APK** for internal QA while
+       we wait for final Google Play keystore / API approvals.
+       • Uses :app:assembleDebug so no signing is required
+       • withoutCredentials = true skips Expo credential checks entirely
+       • credentialsSource = local prevents any remote lookup
+       ------------------------------------------------------------------ */
+    "debug": {
+      "environment": "development",
+      "distribution": "internal",
+      "developmentClient": false,
+      "channel": "debug",
+      "env": {
+        "APP_ENV": "debug"
+      },
+      "cache": {
+        "key": "debug-${{ github.sha }}"
+      },
+      "android": {
+        "gradleCommand": ":app:assembleDebug",
+        "buildType": "apk",
+        "credentialsSource": "local",
+        "withoutCredentials": true,
+        "resourceClass": "medium",
+        "autoIncrement": false
+      }
     }
   },
   "submit": {
