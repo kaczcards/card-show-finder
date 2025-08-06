@@ -181,13 +181,59 @@ jobs:
         run: |
           echo '${{ secrets.ANDROID_SERVICE_ACCOUNT_KEY }}' > ./android-service-account.json
 
+      - name: Setup EAS Android credentials
+        run: |
+          echo "🔍 Checking EAS Android credentials status..."
+          
+          # Get project info and credentials status
+          echo "📋 Project information:"
+          eas project:info || echo "⚠️ Could not get project info"
+          
+          # Try to list Android credentials to check if they exist
+          echo "🔐 Checking Android credentials:"
+          ANDROID_CREDS_OUTPUT=$(eas credentials:list --platform android --json 2>&1) || true
+          echo "$ANDROID_CREDS_OUTPUT" | grep -q "keystore" && HAS_KEYSTORE=true || HAS_KEYSTORE=false
+          
+          if [[ "$HAS_KEYSTORE" == "true" ]]; then
+            echo "✅ Android keystore found on EAS servers"
+          else
+            echo "⚠️ No Android keystore found on EAS servers"
+            echo "⚠️ Will use development profile for Android builds which should have credentials configured"
+            echo "USE_DEV_PROFILE_FOR_ANDROID=true" >> $GITHUB_ENV
+          fi
+          
+          # Always set this to ensure we use remote credentials
+          echo "EAS_NO_VCS=1" >> $GITHUB_ENV
+          
+          # Log the environment for debugging
+          echo "🌍 Environment: ${{ needs.determine-environment.outputs.environment }}"
+          echo "📱 Android build profile: ${USE_DEV_PROFILE_FOR_ANDROID:-${{ needs.determine-environment.outputs.environment }}}"
+
       - name: Build app with EAS
         run: |
+          echo "🚀 Starting EAS build process..."
+          
+          # Set default error handling
+          set -e
+          
+          # Build iOS with the determined environment profile
+          echo "🍎 Building iOS app with profile: ${{ needs.determine-environment.outputs.environment }}"
           eas build \
-            --platform all \
+            --platform ios \
             --profile ${{ needs.determine-environment.outputs.environment }} \
             --non-interactive \
+            --no-wait
+          
+          # Build Android with development profile (which has credentials) or fallback to specified environment
+          ANDROID_PROFILE="${USE_DEV_PROFILE_FOR_ANDROID:-${{ needs.determine-environment.outputs.environment }}}"
+          echo "🤖 Building Android app with profile: $ANDROID_PROFILE"
+          eas build \
+            --platform android \
+            --profile $ANDROID_PROFILE \
+            --non-interactive \
             --wait
+          
+          echo "✅ Build commands completed"
 
       - name: Submit to app stores
         if: ${{ needs.determine-environment.outputs.environment == 'staging' || needs.determine-environment.outputs.environment == 'production' }}
