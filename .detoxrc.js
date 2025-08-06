@@ -15,13 +15,31 @@ module.exports = {
   apps: {
     'ios.debug': {
       type: 'ios.app',
-      binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/cardshowfinder.app',
-      build: 'xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build'
+      /*
+       * Use a **Release** build so the generated binary is production-like and
+       * skips the Expo development-client menu that appears in Debug builds.
+       * We still keep the configuration entry name `ios.debug` to minimise
+       * downstream changes, but the contents now point at the Release
+       * artefacts.
+       */
+      binaryPath: 'ios/build/Build/Products/Release-iphonesimulator/cardshowfinder.app',
+      build:
+        'xcodebuild -workspace ios/cardshowfinder.xcworkspace ' +
+        '-scheme cardshowfinder ' +
+        '-configuration Release ' +
+        '-sdk iphonesimulator ' +
+        '-derivedDataPath ios/build'
     },
     'ios.release': {
       type: 'ios.app',
       binaryPath: 'ios/build/Build/Products/Release-iphonesimulator/cardshowfinder.app',
-      build: 'xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Release -sdk iphonesimulator -derivedDataPath ios/build'
+      // Standard production scheme / configuration
+      build:
+        'xcodebuild -workspace ios/cardshowfinder.xcworkspace ' +
+        '-scheme cardshowfinder ' +
+        '-configuration Release ' +
+        '-sdk iphonesimulator ' +
+        '-derivedDataPath ios/build'
     }
   },
   devices: {
