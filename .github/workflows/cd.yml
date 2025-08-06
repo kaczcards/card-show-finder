@@ -212,6 +212,29 @@ jobs:
           echo "🌍 Environment: ${{ needs.determine-environment.outputs.environment }}"
           echo "📱 Android build profile: ${USE_DEV_PROFILE_FOR_ANDROID:-${{ needs.determine-environment.outputs.environment }}}"
 
+      # ------------------------------------------------------------------
+      # 🛠  TEMPORARY KEYSTORE WORKAROUND
+      # ------------------------------------------------------------------
+      # Remote Android credentials stored on EAS are intermittently failing
+      # with: “Generating a new Keystore is not supported in --non-interactive mode”.
+      # Until credentials are repaired, we generate a throw-away keystore that
+      # is **only** used for CI builds and never shipped to end-users.
+      #
+      # NOTE: This block can be removed after proper keystore(s) are uploaded
+      #       to EAS for every build profile (see IMMEDIATE_FIX_DEPLOYMENT.md).
+      - name: Generate temporary keystore for CI
+        run: |
+          echo "🔧 Generating temporary keystore for CI build…"
+          mkdir -p android/app
+          keytool -genkeypair -v \
+            -keystore android/app/upload-keystore.jks \
+            -storepass android_keystore_password \
+            -alias upload \
+            -keypass android_keystore_password \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Card Show Finder, OU=Mobile, O=KaczCards, L=CI, S=CI, C=US"
+          echo "🔐 Temporary keystore generated (android/app/upload-keystore.jks)"
+
       - name: Build app with EAS
         run: |
           echo "🚀 Starting EAS build process..."
@@ -240,6 +263,7 @@ jobs:
             --platform android \
             --profile $ANDROID_PROFILE \
             --non-interactive \
+            --local \
             --wait
           
           echo "✅ Build commands completed"
