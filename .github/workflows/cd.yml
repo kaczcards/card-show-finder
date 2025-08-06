@@ -200,7 +200,9 @@ jobs:
           else
             echo "⚠️ No Android keystore found on EAS servers"
             echo "⚠️ Will use development profile for Android builds which should have credentials configured"
-            echo "USE_DEV_PROFILE_FOR_ANDROID=true" >> $GITHUB_ENV
+            # Flag with actual profile name instead of boolean to avoid
+            # accidental 'true' literal being treated as a profile.
+            echo "USE_DEV_PROFILE_FOR_ANDROID=development" >> $GITHUB_ENV
           fi
           
           # Always set this to ensure we use remote credentials
@@ -231,7 +233,8 @@ jobs:
           fi
           
           # Build Android with development profile (which has credentials) or fallback to specified environment
-          ANDROID_PROFILE="${USE_DEV_PROFILE_FOR_ANDROID:-${{ needs.determine-environment.outputs.environment }}}"
+          # Use the staging profile explicitly to avoid variable-expansion issues
+          ANDROID_PROFILE="staging"
           echo "🤖 Building Android app with profile: $ANDROID_PROFILE"
           eas build \
             --platform android \
