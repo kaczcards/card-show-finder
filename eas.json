@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "environment": "development",
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
@@ -28,6 +29,7 @@
       }
     },
     "preview": {
+      "environment": "preview",
       "distribution": "internal",
       "developmentClient": false,
       "channel": "preview",
@@ -52,6 +54,7 @@
       }
     },
     "staging": {
+      "environment": "staging",
       "distribution": "internal",
       "developmentClient": false,
       "channel": "staging",
@@ -72,10 +75,12 @@
         "resourceClass": "large",
         "autoIncrement": false,
         "credentialsSource": "remote",
+        "withoutCredentials": true,
         "buildType": "apk"
       }
     },
     "production": {
+      "environment": "production",
       "channel": "production",
       "developmentClient": false,
       "env": {
