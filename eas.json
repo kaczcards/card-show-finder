@@ -44,8 +44,10 @@
       },
       "android": {
         "resourceClass": "large",
-        "autoIncrement": false,
+        "autoIncrement": "versionCode",
         "credentialsSource": "remote",
+        "withoutCredentials": false,
+        "gradleCommand": ":app:bundleRelease",
         "buildType": "apk"
       }
     },
