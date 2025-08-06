@@ -162,7 +162,9 @@ jobs:
 
   e2e-tests:
     name: E2E Tests
-    # Use the default macOS-14 image (includes a compatible Xcode version)
+    # Use the default macOS-14 runner. The Xcode-selection step below will
+    # attempt to pick the newest installed Xcode (16.x if present) or fall
+    # back gracefully if unavailable.
     runs-on: macos-14
     needs: [unit-tests, database-tests]
     steps:
@@ -179,10 +181,45 @@ jobs:
       # --------------------------------------------------------------
       - name: Select Xcode version
         run: |
-          XCODE_VERSION=$(cat xcode-version.txt)
-          echo "🔧 Using Xcode version: ${XCODE_VERSION}"
-          sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer"
+          set -euo pipefail
+
+          REQUESTED_VERSION=$(cat xcode-version.txt | tr -d '[:space:]')
+          echo "🔧 Requested Xcode version: ${REQUESTED_VERSION}"
+
+          echo "📱 Available Xcode installations:"
+          ls -1 /Applications/ | grep -E "Xcode_[0-9]+\.[0-9]+\.app" || echo "No alternate Xcode installs found"
+
+          SELECTED_DIR=""
+
+          # Use requested if it exists
+          if [ -d "/Applications/Xcode_${REQUESTED_VERSION}.app" ]; then
+            SELECTED_DIR="/Applications/Xcode_${REQUESTED_VERSION}.app/Contents/Developer"
+            echo "✅ Found Xcode ${REQUESTED_VERSION}"
+
+          # Otherwise grab latest 16.x
+          elif ls /Applications/Xcode_16*.app 1> /dev/null 2>&1; then
+            LATEST_16=$(ls -1 /Applications/Xcode_16*.app | sort -V | tail -1 | xargs basename)
+            SELECTED_DIR="/Applications/${LATEST_16}/Contents/Developer"
+            echo "⚠️  Falling back to ${LATEST_16}"
+
+          # Finally fall back to latest 15.x
+          elif ls /Applications/Xcode_15*.app 1> /dev/null 2>&1; then
+            LATEST_15=$(ls -1 /Applications/Xcode_15*.app | sort -V | tail -1 | xargs basename)
+            SELECTED_DIR="/Applications/${LATEST_15}/Contents/Developer"
+            echo "⚠️  Falling back to ${LATEST_15} (iOS 18 APIs may be unavailable)"
+
+          else
+            echo "❌ No suitable alternate Xcode found, using system default"
+          fi
+
+          if [ -n "${SELECTED_DIR}" ]; then
+            sudo xcode-select -s "${SELECTED_DIR}"
+          fi
+
+          echo "🔍 Final Xcode configuration:"
           xcodebuild -version
+          echo "🔍 Available iOS SDKs:"
+          xcodebuild -showsdks | grep iphoneos
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
