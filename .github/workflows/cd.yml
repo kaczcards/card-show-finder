@@ -213,6 +213,19 @@ jobs:
           echo "📱 Android build profile: ${USE_DEV_PROFILE_FOR_ANDROID:-${{ needs.determine-environment.outputs.environment }}}"
 
       # ------------------------------------------------------------------
+      # 🔍 DEBUG – confirm we are running the expected, up-to-date workflow
+      # ------------------------------------------------------------------
+      - name: Debug - Confirm workflow version
+        run: |
+          echo "=========================================="
+          echo "🧪 DEBUG: Using UPDATED workflow version!"
+          echo "🧪 DEBUG: About to generate temporary keystore"
+          echo "🧪 DEBUG: Current working directory: $(pwd)"
+          echo "🧪 DEBUG: Files in current directory:"
+          ls -la
+          echo "=========================================="
+
+      # ------------------------------------------------------------------
       # 🛠  TEMPORARY KEYSTORE WORKAROUND
       # ------------------------------------------------------------------
       # Remote Android credentials stored on EAS are intermittently failing
