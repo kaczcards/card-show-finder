@@ -127,3 +127,57 @@ attach the log when opening an issue.
   https://github.com/actions/runner-images
 * applesimutils – CLI used internally by Detox  
   https://github.com/wix/AppleSimulatorUtils
+
+## 8  Additional Issue – Jest `expect()` vs Detox `expect()`
+
+Shortly after the device-allocation problem was solved, the **basic
+connectivity test** started failing with messages such as:
+
+```
+[object Object] is not a Detox matcher
+TypeError: expect(...).toBeDefined is not a function
+```
+
+### 8.1  Root cause
+
+* **Detox** patches the global `expect()` function with its own version that
+  understands *UI-element* matchers (`toBeVisible()`, `toExist()`, etc.).
+* Standard **Jest** matchers like `toBeDefined()` or `toBe()` are **not**
+  implemented on Detox’s `expect`, so calling them throws.
+
+### 8.2  Fix
+
+* Replace regular Jest assertions in Detox tests with **plain JavaScript
+  checks** or import Jest’s expect under a different name if you truly need
+  them.  
+  Example taken from `e2e/tests/basic.test.js`:
+
+  ```diff
+-expect(device).toBeDefined();
+-expect(typeof device.launchApp).toBe('function');
++if (!device) {
++  throw new Error('Device object is undefined – Detox not initialised?');
++}
++if (typeof device.launchApp !== 'function') {
++  throw new Error('device.launchApp is not a function – Detox APIs unavailable');
++}
+  ```
+
+* The same strategy was applied to element queries—check that the returned
+  object exists and has the expected methods instead of using `toBeDefined`.
+
+### 8.3  Take-aways
+
+1. **Do not mix Jest matchers in Detox tests** unless you explicitly import
+   Jest’s `expect` with a different identifier.
+2. When writing quick connectivity / smoke tests, prefer **simple runtime
+   checks** (`if (!obj) throw …`) over matchers.
+3. When you **do** need Jest assertions (e.g. validating helper functions in
+   Detox tests), use:
+
+   ```js
+   // top of the test file
+   const {expect: jestExpect} = require('@jest/globals');
+   ```
+
+   and call `jestExpect()` instead of `expect()`.
