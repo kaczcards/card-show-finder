@@ -173,6 +173,17 @@ jobs:
           fetch-depth: 0  # detox & e2e jobs sometimes need full git info
           token: ${{ secrets.GH_PAT }}
 
+      # --------------------------------------------------------------
+      # Ensure the runner is using the Xcode version defined in
+      # `xcode-version.txt` so that the correct iOS SDK is available.
+      # --------------------------------------------------------------
+      - name: Select Xcode version
+        run: |
+          XCODE_VERSION=$(cat xcode-version.txt)
+          echo "🔧 Using Xcode version: ${XCODE_VERSION}"
+          sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer"
+          xcodebuild -version
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
