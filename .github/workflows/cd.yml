@@ -295,7 +295,6 @@ jobs:
             --profile $ANDROID_PROFILE \
             --non-interactive \
             --local \
-            --local-build-options="gradlePath=./gradlew" \
             --wait
           
           echo "✅ Build commands completed"
