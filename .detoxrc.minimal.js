@@ -21,8 +21,22 @@ module.exports = {
   apps: {
     'ios.debug': {
       type: 'ios.app',
-      binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/cardshowfinder.app',
-      build: 'xcodebuild -workspace ios/cardshowfinder.xcworkspace -scheme cardshowfinder -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build'
+      /*
+       * Build a **Release** binary (scheme: cardshowfinder, configuration: Release)
+       * so the generated app skips the Expo Dev-Launcher screen that appears
+       * in Debug/development-client builds.  Using a production-like binary is
+       * the simplest and most reliable way to ensure the UI shown in tests is
+       * the actual app, not the Expo development menu.
+       *
+       * We keep the Detox entry name `ios.debug` to avoid downstream changes,
+       * but its contents now point at Release artefacts.
+       */
+      binaryPath: 'ios/build/Build/Products/Release-iphonesimulator/cardshowfinder.app',
+      build: 'xcodebuild -workspace ios/cardshowfinder.xcworkspace ' +
+             '-scheme cardshowfinder ' +
+             '-configuration Release ' +
+             '-sdk iphonesimulator ' +
+             '-derivedDataPath ios/build'
     }
   },
   devices: {
