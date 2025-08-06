@@ -35,6 +35,10 @@ env:
   SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
   EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
   EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.EXPO_PUBLIC_SENTRY_DSN }}
+  # Set to "true" to temporarily disable Android builds (e.g. while waiting for
+  # Google Play approval or API key provisioning).  Can be configured in
+  # Repository → Settings → Variables or passed via workflow _dispatch_.
+  SKIP_ANDROID_BUILD: ${{ vars.SKIP_ANDROID_BUILD || '' }}
 
 jobs:
   determine-environment:
@@ -304,7 +308,13 @@ jobs:
           
           echo "🤖 Building Android app with profile: $ANDROID_PROFILE"
           
-          # Force local credentials by setting environment variables
+          # ------------------------------------------------------------------
+          # Optional short-circuit: skip Android build entirely when requested.
+          # ------------------------------------------------------------------
+          if [[ "${SKIP_ANDROID_BUILD}" == "true" ]]; then
+            echo "⚠️  SKIP_ANDROID_BUILD=true — Android build skipped for this run."
+          else
+            # Force local credentials by setting environment variables
           export EXPO_USE_LOCAL_CREDENTIALS=1
           export EAS_NO_CREDENTIALS_VALIDATION=1
           
@@ -316,6 +326,7 @@ jobs:
             --local \
             --verbose \
             --wait
+          fi
           
           echo "✅ Build commands completed"
 
