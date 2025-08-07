@@ -1,73 +1,7 @@
-# Gitleaks v8 Configuration for Card Show Finder
-title = "Card Show Finder Security Configuration"
+title = "Card Show Finder"
 
 [allowlist]
-description = "Allowlist for legitimate non-secret files"
-
-# Allow test files with fake credentials
 paths = [
   ".env.test",
-  ".env.example", 
-  "**/example.env",
-  "**/sample.env",
-  "scraper/.env.example",
-  "docs/environment-setup.md",
-  "docs/api-keys.md",
-  "README-messaging-system.md",
-  "README-api-usage.md",
-  "fix_scraping_sources.sql",
-  "**/test/fixtures/**",
-  "**/tests/fixtures/**",
-  "**/cypress/fixtures/**",
-  "**/jest/__fixtures__/**"
-]
-
-# Allow documentation with placeholder examples
-regexes = [
-  # Test/placeholder patterns
-  '''test_eyJ[A-Za-z0-9+/=]+''',
-  '''placeholder''',
-  '''example\.com''',
-  '''your_[a-zA-Z_]+_here''',
-  '''REDACTED''',
-  
-  # Documentation examples
-  '''<project>''',
-  '''your-project-ref''',
-  
-  # Very low entropy strings that aren't real secrets
-  '''Bearer \*\*\*''',
-  '''\*\*\*;3;m[A-Za-z0-9]{6}''',
-  
-  # Example/placeholder JWT patterns
-  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.placeholder''',
-  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.example''',
-  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.test''',
-  
-  # Example API keys with test prefixes
-  '''test_[A-Za-z0-9_\-]{10,}''',
-  '''example_[A-Za-z0-9_\-]{10,}''',
-  '''placeholder_[A-Za-z0-9_\-]{10,}''',
-  
-  # Common example Google API keys
-  '''AIzaSyTestPlaceholder[A-Za-z0-9_\-]{10,}''',
-  
-  # Example Supabase URLs
-  '''https://[a-z\-]*placeholder\.supabase\.co''',
-  '''https://example\.supabase\.co''',
-  '''https://your-project-ref\.supabase\.co''',
-  
-  # Example Sentry DSNs
-  '''https://test@[a-z\-]*\.ingest\.sentry\.io/[0-9]+'''
-]
-
-stopwords = [
-  "placeholder",
-  "test_",
-  "example",
-  "sample",
-  "fake",
-  "mock",
-  "dummy",
-  "REDACTED"
+  "scraper/.env.example"
 ]
