@@ -9,6 +9,10 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Temporary build artifacts (may contain secrets)
+temp-export/
+temp-test-build/
+
 # Native
 .kotlin/
 *.orig.*
