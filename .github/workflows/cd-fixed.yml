@@ -297,7 +297,7 @@ jobs:
           # Set default error handling
           set -e
           
-          # Build iOS with the determined environment profile
+          # Build iOS with the appropriate profile for **all** environments
           if [[ "${{ needs.determine-environment.outputs.environment }}" == "production" ]]; then
             echo "🍎 Building iOS app with profile: production"
             eas build \
@@ -305,8 +305,20 @@ jobs:
               --profile production \
               --non-interactive \
               --no-wait
+          elif [[ "${{ needs.determine-environment.outputs.environment }}" == "staging" ]]; then
+            echo "🍎 Building iOS app with profile: preview"
+            eas build \
+              --platform ios \
+              --profile preview \
+              --non-interactive \
+              --no-wait
           else
-            echo "ℹ️  Skipping iOS build for internal distribution environment (${{ needs.determine-environment.outputs.environment }})."
+            echo "🍎 Building iOS app with profile: development"
+            eas build \
+              --platform ios \
+              --profile development \
+              --non-interactive \
+              --no-wait
           fi
           
           # For Android, use the staging profile if we're in staging environment
