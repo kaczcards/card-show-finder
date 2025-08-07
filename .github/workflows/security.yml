@@ -1,25 +1,32 @@
-name: Security Scanning
+# --------------------------------------------------------------------
+#  ⚠️  TEMPORARILY DISABLED
+#  The original “Security Scanning” workflow is commented-out while the
+#  new `security-fixed.yml` workflow is being validated.  Re-enable by
+#  restoring the original `on:` triggers once the new workflow is
+#  confirmed stable.
+# --------------------------------------------------------------------
+# on:
+#   schedule:
+#     - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight UTC
+#   push:
+#     branches: [ main, develop ]
+#     paths:
+#       - 'package.json'
+#       - 'package-lock.json'
+#       - 'supabase/migrations/**'
+#       - 'db_migrations/**'
+#       - '**/*.sql'
+#   pull_request:
+#     branches: [ main, develop ]
+#   workflow_dispatch:
+#     inputs:
+#       full-scan:
+#         description: 'Run full security scan (including intensive checks)'
+#         required: false
+#         default: false
+#         type: boolean
 
-on:
-  schedule:
-    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight UTC
-  push:
-    branches: [ main, develop ]
-    paths:
-      - 'package.json'
-      - 'package-lock.json'
-      - 'supabase/migrations/**'
-      - 'db_migrations/**'
-      - '**/*.sql'
-  pull_request:
-    branches: [ main, develop ]
-  workflow_dispatch:
-    inputs:
-      full-scan:
-        description: 'Run full security scan (including intensive checks)'
-        required: false
-        default: false
-        type: boolean
+name: Security Scanning (disabled - see security-fixed.yml)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

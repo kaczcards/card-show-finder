@@ -1,0 +1,86 @@
+name: Security Scanning (Fixed)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    name: Run security scans
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks with direct execution
+        run: |
+          set -e
+          echo "🔐 Installing Gitleaks v8.24.3…"
+          curl -sSfL \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz \
+            | tar -xzC /tmp
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          chmod +x /usr/local/bin/gitleaks
+
+          echo "✅ Gitleaks version: $(gitleaks version)"
+
+          echo "📄 Verifying .gitleaks.toml presence and contents"
+          ls -la .gitleaks.toml
+          cat .gitleaks.toml
+
+          echo "🚀 Running Gitleaks with explicit config path"
+          gitleaks detect \
+            --config=.gitleaks.toml \
+            --redact \
+            -v \
+            --exit-code=2 \
+            --report-format=sarif \
+            --report-path=results.sarif \
+            --log-level=debug
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect hardcoded secrets
+        run: |
+          # Install detect-secrets
+          pip install detect-secrets
+
+          # Run scan
+          detect-secrets scan --all-files > detect-secrets-results.json
+
+          # Check if any secrets were found
+          if grep -q "\"results\": {}" detect-secrets-results.json; then
+            echo "No secrets found by detect-secrets"
+          else
+            echo "Secrets found by detect-secrets. See results for details."
+            cat detect-secrets-results.json
+            exit 1
+          fi
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'card-show-finder'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          args: >
+            --suppression suppression.xml
+            --failOnCVSS 7
+            --enableRetired
+
+      - name: Upload dependency check report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports
+
+      - name: Check for Dependabot alerts
+        uses: actions/dependency-review-action@v4
+        if: github.event_name == 'pull_request'
