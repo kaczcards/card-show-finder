@@ -1,0 +1,32 @@
+045d8110cc01faf3ec320c44e1ebf2d1
+function cov_odfgmuyyn() {
+  var path = "/Users/kevin/card-show-finder/src/screens/Collection/index.ts";
+  var hash = "2aa33158c066fd22c595b8ee43c805aa7cc59a71";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/screens/Collection/index.ts",
+    statementMap: {},
+    fnMap: {},
+    branchMap: {},
+    s: {},
+    f: {},
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "2aa33158c066fd22c595b8ee43c805aa7cc59a71"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_odfgmuyyn = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_odfgmuyyn();
+export { default } from "./CollectionScreen";
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJkZWZhdWx0Il0sInNvdXJjZXMiOlsiaW5kZXgudHMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IHsgZGVmYXVsdCB9IGZyb20gXCIuL0NvbGxlY3Rpb25TY3JlZW5cIjtcbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSxTQUFTQSxPQUFPLFFBQVEsb0JBQW9CIiwiaWdub3JlTGlzdCI6W119

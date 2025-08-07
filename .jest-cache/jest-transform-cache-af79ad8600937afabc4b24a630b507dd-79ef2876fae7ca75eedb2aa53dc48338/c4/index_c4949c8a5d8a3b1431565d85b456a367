@@ -1,0 +1,35 @@
+a561a7f150545e53c6a4690b4411a422
+function cov_u7yho2igu() {
+  var path = "/Users/kevin/card-show-finder/src/hooks/index.ts";
+  var hash = "aeed91680eb22d55c119b6d33a19fa5280be466f";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/hooks/index.ts",
+    statementMap: {},
+    fnMap: {},
+    branchMap: {},
+    s: {},
+    f: {},
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "aeed91680eb22d55c119b6d33a19fa5280be466f"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_u7yho2igu = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_u7yho2igu();
+export { useShowDetailQuery } from './useShowDetailQuery';
+export { useInfiniteShows } from './useInfiniteShows';
+export { useUserSubscriptions } from './useUserSubscriptions';
+export { useUnclaimedShows } from './useUnclaimedShows';
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJ1c2VTaG93RGV0YWlsUXVlcnkiLCJ1c2VJbmZpbml0ZVNob3dzIiwidXNlVXNlclN1YnNjcmlwdGlvbnMiLCJ1c2VVbmNsYWltZWRTaG93cyJdLCJzb3VyY2VzIjpbImluZGV4LnRzIl0sInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7IHVzZVNob3dEZXRhaWxRdWVyeSB9IGZyb20gJy4vdXNlU2hvd0RldGFpbFF1ZXJ5JztcbmV4cG9ydCB7IHVzZUluZmluaXRlU2hvd3MgfSBmcm9tICcuL3VzZUluZmluaXRlU2hvd3MnO1xuZXhwb3J0IHsgdXNlVXNlclN1YnNjcmlwdGlvbnMgfSBmcm9tICcuL3VzZVVzZXJTdWJzY3JpcHRpb25zJztcbmV4cG9ydCB7IHVzZVVuY2xhaW1lZFNob3dzIH0gZnJvbSAnLi91c2VVbmNsYWltZWRTaG93cyc7XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUEsU0FBU0Esa0JBQWtCLFFBQVEsc0JBQXNCO0FBQ3pELFNBQVNDLGdCQUFnQixRQUFRLG9CQUFvQjtBQUNyRCxTQUFTQyxvQkFBb0IsUUFBUSx3QkFBd0I7QUFDN0QsU0FBU0MsaUJBQWlCLFFBQVEscUJBQXFCIiwiaWdub3JlTGlzdCI6W119

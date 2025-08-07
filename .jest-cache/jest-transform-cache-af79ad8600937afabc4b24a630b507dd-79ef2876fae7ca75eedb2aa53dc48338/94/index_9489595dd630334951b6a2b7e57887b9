@@ -1,0 +1,34 @@
+fa474eb9266a490716dd6bb688b705b2
+function cov_21a6y5ypyi() {
+  var path = "/Users/kevin/card-show-finder/src/screens/Profile/index.ts";
+  var hash = "94e18f25640f61acf742e657bb78146c047e8889";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/screens/Profile/index.ts",
+    statementMap: {},
+    fnMap: {},
+    branchMap: {},
+    s: {},
+    f: {},
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "94e18f25640f61acf742e657bb78146c047e8889"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_21a6y5ypyi = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_21a6y5ypyi();
+import ProfileScreen from './ProfileScreen';
+import SubscriptionScreen from './SubscriptionScreen';
+export { ProfileScreen, SubscriptionScreen };
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJQcm9maWxlU2NyZWVuIiwiU3Vic2NyaXB0aW9uU2NyZWVuIl0sInNvdXJjZXMiOlsiaW5kZXgudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IFByb2ZpbGVTY3JlZW4gZnJvbSAnLi9Qcm9maWxlU2NyZWVuJztcbmltcG9ydCBTdWJzY3JpcHRpb25TY3JlZW4gZnJvbSAnLi9TdWJzY3JpcHRpb25TY3JlZW4nO1xuXG5leHBvcnQgeyBQcm9maWxlU2NyZWVuLCBTdWJzY3JpcHRpb25TY3JlZW4gfTtcbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSxPQUFPQSxhQUFhLE1BQU0saUJBQWlCO0FBQzNDLE9BQU9DLGtCQUFrQixNQUFNLHNCQUFzQjtBQUVyRCxTQUFTRCxhQUFhLEVBQUVDLGtCQUFrQiIsImlnbm9yZUxpc3QiOltdfQ==

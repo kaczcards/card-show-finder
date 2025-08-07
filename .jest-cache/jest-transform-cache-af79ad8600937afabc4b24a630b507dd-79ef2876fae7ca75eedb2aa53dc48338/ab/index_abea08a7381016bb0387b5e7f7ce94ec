@@ -1,0 +1,32 @@
+999db5068b1c4d514dd750346aa4c17b
+function cov_2ke44fndkk() {
+  var path = "/Users/kevin/card-show-finder/src/screens/Notifications/index.ts";
+  var hash = "674421ef4a876212ce9861e5bc577b455182cbab";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/screens/Notifications/index.ts",
+    statementMap: {},
+    fnMap: {},
+    branchMap: {},
+    s: {},
+    f: {},
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "674421ef4a876212ce9861e5bc577b455182cbab"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_2ke44fndkk = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_2ke44fndkk();
+export { default } from "./MyShowsScreen";
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJkZWZhdWx0Il0sInNvdXJjZXMiOlsiaW5kZXgudHMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IHsgZGVmYXVsdCB9IGZyb20gXCIuL015U2hvd3NTY3JlZW5cIjtcbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSxTQUFTQSxPQUFPLFFBQVEsaUJBQWlCIiwiaWdub3JlTGlzdCI6W119
