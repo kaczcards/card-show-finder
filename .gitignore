@@ -30,6 +30,20 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# ─────────────────────────────────────────────────────────────
+# Debug and test artifacts
+#   These files/directories are generated during ad-hoc troubleshooting
+#   and should never be committed to version control.
+# ─────────────────────────────────────────────────────────────
+# Generic debug text logs (e.g. “0_Run security scans.txt”)
+*.txt
+# Zipped debug exports (e.g. “FailedSecurity.zip”, “SecurityFail.zip”)
+*.zip
+# Misc debug folders
+Run security scans/
+# OWASP Dependency-Check HTML & JSON reports
+reports/
+
 # macOS
 .DS_Store
 *.pem
