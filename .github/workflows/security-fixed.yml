@@ -97,6 +97,17 @@ jobs:
           cat detect-secrets-scan.json
           exit 1
 
+      # -------------------------------------------------
+      # Prepare Node environment for OWASP Dependency Check
+      # -------------------------------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Node dependencies
+        run: npm ci --ignore-scripts
+
       - name: Run OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:

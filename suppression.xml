@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- 
+        This is a suppression file for OWASP Dependency Check.
+        
+        To add suppressions:
+        
+        <suppress>
+            <notes><![CDATA[
+            Explanation why this is being suppressed
+            ]]></notes>
+            <filePath>path/to/file</filePath>
+            <cpe>cpe:/a:some:library:1.0</cpe>
+        </suppress>
+        
+        Or to suppress by SHA-1 hash:
+        
+        <suppress>
+            <notes><![CDATA[
+            Explanation why this is being suppressed
+            ]]></notes>
+            <sha1>SHA1 HASH HERE</sha1>
+            <cve>CVE-XXXX-XXXX</cve>
+        </suppress>
+        
+        Other suppression options:
+        - <gav regex="true">org\.example:library:.*</gav> - Suppress by Maven coordinates
+        - <packageUrl regex="true">^pkg:maven/org\.example/library@.*$</packageUrl> - Suppress by package URL
+        - <vulnerabilityName>CVE-XXXX-XXXX</vulnerabilityName> - Suppress by vulnerability name
+        - <cvssBelow>7</cvssBelow> - Suppress all CVEs with score below threshold
+        - until="2025-12-31Z" - Add expiration date to a suppression rule
+        
+        For more examples, see: https://dependency-check.github.io/DependencyCheck/general/suppression.html
+    -->
+</suppressions>
