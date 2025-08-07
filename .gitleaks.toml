@@ -1,146 +1,73 @@
-# Gitleaks Configuration for Card Show Finder
-# This configuration helps prevent accidental commits of secrets
-# while allowing legitimate development work.
+# Gitleaks v8 Configuration for Card Show Finder
+title = "Card Show Finder Security Configuration"
 
-# Title for the configuration
-title = "Card Show Finder Gitleaks Configuration"
-
-# Define which files to scan
 [allowlist]
-description = "Global allowlist for safe files and patterns"
+description = "Allowlist for legitimate non-secret files"
 
-# Files that contain example/test credentials (not real secrets)
-files = [
-  # Test environment files with placeholder values
+# Allow test files with fake credentials
+paths = [
   ".env.test",
-  ".env.example",
-  "**/*.env.example",
+  ".env.example", 
   "**/example.env",
   "**/sample.env",
-  
-  # Documentation files
-  "**/*.md.example",
-  "**/EXAMPLE*.md",
-  "**/example*.md",
-  
-  # Test fixtures
+  "scraper/.env.example",
+  "docs/environment-setup.md",
+  "docs/api-keys.md",
+  "README-messaging-system.md",
+  "README-api-usage.md",
+  "fix_scraping_sources.sql",
   "**/test/fixtures/**",
   "**/tests/fixtures/**",
   "**/cypress/fixtures/**",
-  "**/jest/__fixtures__/**",
-  
-  # Build artifacts (though these should be gitignored)
-  "**/dist/**",
-  "**/build/**",
-  "**/temp-export/**",
-  "**/temp-test-build/**"
+  "**/jest/__fixtures__/**"
 ]
 
-# Patterns that represent test/example values
+# Allow documentation with placeholder examples
 regexes = [
+  # Test/placeholder patterns
+  '''test_eyJ[A-Za-z0-9+/=]+''',
+  '''placeholder''',
+  '''example\.com''',
+  '''your_[a-zA-Z_]+_here''',
+  '''REDACTED''',
+  
+  # Documentation examples
+  '''<project>''',
+  '''your-project-ref''',
+  
+  # Very low entropy strings that aren't real secrets
+  '''Bearer \*\*\*''',
+  '''\*\*\*;3;m[A-Za-z0-9]{6}''',
+  
   # Example/placeholder JWT patterns
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.placeholder",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.example",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.test",
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.placeholder''',
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.example''',
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.test''',
   
   # Example API keys with test prefixes
-  "test_[A-Za-z0-9_\\-]{10,}",
-  "example_[A-Za-z0-9_\\-]{10,}",
-  "placeholder_[A-Za-z0-9_\\-]{10,}",
+  '''test_[A-Za-z0-9_\-]{10,}''',
+  '''example_[A-Za-z0-9_\-]{10,}''',
+  '''placeholder_[A-Za-z0-9_\-]{10,}''',
   
   # Common example Google API keys
-  "AIzaSyTestPlaceholder[A-Za-z0-9_\\-]{10,}",
+  '''AIzaSyTestPlaceholder[A-Za-z0-9_\-]{10,}''',
   
   # Example Supabase URLs
-  "https://[a-z\\-]*placeholder\\.supabase\\.co",
-  "https://example\\.supabase\\.co",
-  "https://your-project-ref\\.supabase\\.co",
+  '''https://[a-z\-]*placeholder\.supabase\.co''',
+  '''https://example\.supabase\.co''',
+  '''https://your-project-ref\.supabase\.co''',
   
   # Example Sentry DSNs
-  "https://test@[a-z\\-]*\\.ingest\\.sentry\\.io/[0-9]+"
+  '''https://test@[a-z\-]*\.ingest\.sentry\.io/[0-9]+'''
 ]
 
-# Paths that should be completely ignored (documentation, examples)
-paths = [
-  # Documentation about environment setup
-  "docs/environment-setup.md",
-  "docs/api-keys.md",
-  
-  # Example curl commands in documentation
-  "README-messaging-system.md",
-  "README-api-usage.md",
-  
-  # Example SQL scripts
-  "fix_scraping_sources.sql"
+stopwords = [
+  "placeholder",
+  "test_",
+  "example",
+  "sample",
+  "fake",
+  "mock",
+  "dummy",
+  "REDACTED"
 ]
-
-# Commits that should be ignored (documentation commits)
-commits = [
-  # Add specific commit hashes here if needed
-  # "d6371e1d6dc5ab952ea9e006020f0ba9ea70d0e8"  # Uncomment if needed
-]
-
-# Custom rules for specific needs
-[[rules]]
-id = "generic-api-key-with-higher-threshold"
-description = "Generic API Key detection with higher entropy threshold to reduce false positives"
-regex = '''(?i)(?:key|api|token|secret|password)["']?\s*[:=]\s*["']?([a-z0-9]{16,})["']?'''
-entropy = 4.5  # Higher threshold to reduce false positives
-secretGroup = 1
-keywords = [
-  "key",
-  "api",
-  "token",
-  "secret",
-  "password"
-]
-
-[[rules]]
-id = "jwt-token-with-context"
-description = "JWT token detection with context requirements"
-regex = '''eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*'''
-entropy = 4.5
-keywords = [
-  "eyJ",
-  "jwt",
-  "token",
-  "authentication"
-]
-# Exclude obvious examples
-allowlist = {
-  regexes = [
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.example",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.placeholder"
-  ]
-}
-
-[[rules]]
-id = "supabase-anon-key"
-description = "Supabase anon key detection"
-regex = '''(?i)(?:supabase_anon_key|anon_key|supabase.*anon)["']?\s*[:=]\s*["']?([a-z0-9]{10,})["']?'''
-entropy = 4.3
-secretGroup = 1
-keywords = [
-  "supabase",
-  "anon",
-  "key"
-]
-
-[[rules]]
-id = "google-maps-api-key"
-description = "Google Maps API key detection"
-regex = '''(?i)(?:google_maps_api_key|maps_api_key)["']?\s*[:=]\s*["']?([a-zA-Z0-9-_]{30,})["']?'''
-entropy = 3.5  # Lower threshold as these keys have patterns
-secretGroup = 1
-keywords = [
-  "google",
-  "maps",
-  "api",
-  "key"
-]
-allowlist = {
-  regexes = [
-    "AIzaSyTestPlaceholder[A-Za-z0-9_\\-]{10,}",
-    "your_google_maps_api_key_here"
-  ]
-}
