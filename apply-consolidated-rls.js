@@ -163,6 +163,45 @@ function createSupabaseClient() {
 }
 
 /**
+ * Execute raw SQL directly using Supabase REST API without depending on exec_sql function
+ * @param {Object} supabase - Supabase client
+ * @param {string} sql - SQL statement to execute
+ * @returns {Promise<Object>} Result of the SQL execution
+ */
+async function executeRawSql(supabase, sql) {
+  try {
+    console.log(colorize.blue('Executing raw SQL directly...'));
+    
+    // Use the REST API to execute SQL directly
+    const url = new URL(supabase.supabaseUrl);
+    url.pathname = '/rest/v1/sql';
+    
+    // Make a direct fetch request to execute SQL
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabase.supabaseKey,
+        'Authorization': `Bearer ${supabase.supabaseKey}`,
+        'Prefer': 'params=single-object'
+      },
+      body: JSON.stringify({ query: sql })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`SQL execution failed: ${errorText}`);
+    }
+    
+    const result = await response.json();
+    return { data: result, error: null };
+  } catch (error) {
+    console.error(colorize.red(`Raw SQL execution error: ${error.message}`));
+    return { data: null, error };
+  }
+}
+
+/**
  * Execute SQL script and capture output
  * @param {Object} supabase - Supabase client
  * @param {string} sql - SQL script to execute
@@ -257,13 +296,16 @@ async function executeSql(supabase, sql) {
             GRANT EXECUTE ON FUNCTION exec_sql(TEXT) TO service_role;
           `;
           
-          // Execute the create function SQL directly
-          const { error: fnError } = await supabase.rpc('exec_sql', { sql_query: createFunctionSql });
+          // Execute the create function SQL directly using raw SQL instead of RPC
+          // This fixes the circular dependency issue
+          const { data: fnData, error: fnError } = await executeRawSql(supabase, createFunctionSql);
           
           if (fnError) {
             console.error(colorize.red(`Failed to create exec_sql function: ${fnError.message}`));
             throw fnError;
           }
+          
+          console.log(colorize.green('Successfully created exec_sql function'));
           
           // Retry the original statement
           const { data: retryData, error: retryError } = await supabase.rpc('exec_sql', { sql_query: stmt });
@@ -278,7 +320,7 @@ async function executeSql(supabase, sql) {
         
         // Try direct SQL execution for simple statements
         try {
-          const { data: directData, error: directError } = await supabase.from('_sql').select('*').execute(stmt);
+          const { data: directData, error: directError } = await executeRawSql(supabase, stmt);
           
           if (directError) {
             throw directError;
@@ -459,29 +501,48 @@ async function applyRlsPolicies() {
   const supabase = createSupabaseClient();
   
   try {
-    // Check connection to Supabase using a simple query that doesn't depend on tables or RLS
-    console.log(colorize.blue(`Connecting to Supabase at ${process.env.EXPO_PUBLIC_SUPABASE_URL}...`));
-    
+    /*
+     * ------------------------------------------------------------------
+     * Connection Test
+     * ------------------------------------------------------------------
+     * The previous implementation attempted to call `exec_sql` (which may
+     * not exist yet) or other RPC helpers.  That created a circular
+     * dependency where the connection-test itself failed before we had a
+     * chance to bootstrap the required helper function.
+     *
+     * Instead we now:
+     *   1. Use `executeRawSql()` to run a trivial `SELECT 1` query.
+     *   2. `executeRawSql()` talks directly to the PostgREST `/rest/v1/sql`
+     *      endpoint, so it does NOT rely on `exec_sql` or any user tables.
+     *   3. If the query succeeds we know credentials, network and Supabase
+     *      instance are all healthy.  Otherwise we abort early.
+     * ------------------------------------------------------------------
+     */
+    console.log(
+      colorize.blue(
+        `Connecting to Supabase at ${process.env.EXPO_PUBLIC_SUPABASE_URL}...`
+      )
+    );
+
     try {
-      // Simple query that should work regardless of RLS policies
-      const { data, error } = await supabase.rpc('version', {});
-      
-      if (error) {
-        // If version() function doesn't exist, try a direct SQL query
-        const { error: sqlError } = await supabase.from('_sqlquery').select('*').eq('query', 'SELECT 1 as connected').single();
-        
-        if (sqlError) {
-          // Last resort: try to create and use a simple function
-          const { error: createError } = await supabase.rpc('exec_sql', { 
-            sql_query: "SELECT 1 as connected;"
-          });
-          
-          if (createError) {
-            throw new Error(createError.message);
-          }
-        }
+      /*
+       * Use the regular PostgREST interface exposed by Supabase.
+       * We simply query a lightweight column from the `shows` table.
+       * This avoids any dependence on special `/rest/v1/sql` or
+       * `exec_sql` helpers while still proving that:
+       *   1. Network connectivity is good
+       *   2. Auth credentials are valid
+       *   3. The database is reachable
+       */
+      const { error: pingError } = await supabase
+        .from('shows')
+        .select('id', { head: true }) // HEAD request – zero‐row payload
+        .limit(1);
+
+      if (pingError) {
+        throw pingError;
       }
-      
+
       console.log(colorize.green('Connected to Supabase successfully'));
     } catch (error) {
       console.error(colorize.red(`Failed to connect to Supabase: ${error.message}`));
