@@ -62,9 +62,7 @@
         "APP_ENV": "staging"
       },
       "cache": {
-        "key": "staging-${{ github.sha }}",
-        /* default cache paths are applied automatically;
-           deprecated flag removed per Expo docs */
+        "key": "staging-${{ github.sha }}"
       },
       "ios": {
         "resourceClass": "m-medium",
@@ -101,16 +99,6 @@
         "buildType": "app-bundle"
       }
     },
-
-    /* --------------------------------------------------------------------
-       DEBUG PROFILE  (temporary – no keystore / unsigned build)
-       ----------------------------------------------------------
-       Purpose: generate an **unsigned debug APK** for internal QA while
-       we wait for final Google Play keystore / API approvals.
-       • Uses :app:assembleDebug so no signing is required
-       • withoutCredentials = true skips Expo credential checks entirely
-       • credentialsSource = local prevents any remote lookup
-       ------------------------------------------------------------------ */
     "debug": {
       "environment": "development",
       "distribution": "internal",
@@ -129,6 +117,25 @@
         "withoutCredentials": true,
         "resourceClass": "medium",
         "autoIncrement": false
+      }
+    },
+    "ios-test": {
+      "environment": "development",
+      "distribution": "internal",
+      "developmentClient": false,
+      "channel": "ios-test",
+      "env": {
+        "APP_ENV": "development"
+      },
+      "cache": {
+        "key": "ios-test-${{ github.sha }}"
+      },
+      "ios": {
+        "resourceClass": "m-medium",
+        "autoIncrement": "buildNumber",
+        "scheme": "cardshowfinderDev",
+        "simulator": false,
+        "enterpriseProvisioning": "universal"
       }
     }
   },
