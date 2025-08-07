@@ -86,16 +86,35 @@ jobs:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        # Use maintained major tag to avoid pinned-patch deprecation
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          # Explicitly point to repository-root configuration so that
-          # the action loads the custom allow-list instead of falling
-          # back to the default rules.
-          config-path: .gitleaks.toml
+        # Install and execute Gitleaks manually so we have
+        # full control over the binary version **and** the
+        # configuration file it should load.
+        run: |
+          set -e
+          echo "🔐 Installing Gitleaks v8.24.3…"
+          curl -sSfL \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz \
+            | tar -xzC /tmp
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          chmod +x /usr/local/bin/gitleaks
+
+          echo "✅ Gitleaks version: $(gitleaks version)"
+
+          echo "📄 Verifying .gitleaks.toml presence and contents"
+          ls -la .gitleaks.toml
+          cat .gitleaks.toml
+
+          echo "🚀 Running Gitleaks with explicit config path"
+          gitleaks detect \
+            --config=.gitleaks.toml \
+            --redact \
+            -v \
+            --exit-code=2 \
+            --report-format=sarif \
+            --report-path=results.sarif \
+            --log-level=debug
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
       - name: Detect hardcoded secrets
         run: |
