@@ -88,6 +88,11 @@ jobs:
       - name: Run Gitleaks
         # Use maintained major tag to avoid pinned-patch deprecation
         uses: gitleaks/gitleaks-action@v2
+        with:
+          # Explicitly point to repository-root configuration so that
+          # the action loads the custom allow-list instead of falling
+          # back to the default rules.
+          config-path: .gitleaks.toml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
