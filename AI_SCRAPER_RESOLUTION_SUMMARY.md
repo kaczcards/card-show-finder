@@ -51,11 +51,11 @@ const { createClient } = require('@supabase/supabase-js');
 
 ```
 # Scraper-specific variables (derived from above)
-SUPABASE_URL=https://zmfqzegykwyrrvrpwylf.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
 # Google Maps API Key (for scraper geocoding)
-GOOGLE_MAPS_API_KEY=AIzaSyD1--Z9pz-_rhR9ECi-RhyHa-Yl2Ib8vyA
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
 ### API Request Optimizations
