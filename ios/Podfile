@@ -60,27 +60,5 @@ target 'cardshowfinder' do
         end
       end
     end
-
-    # ------------------------------------------------------------------
-    # Swift Warning Suppression (CI-only)
-    # ------------------------------------------------------------------
-    # GitHub Actions’ macOS runners often ship newer Swift toolchains that
-    # emit hundreds of warnings for older React-Native / Expo pods.  When
-    # the warning count exceeds 100, `xcodebuild` exits with a non-zero
-    # status *if* warnings are treated as errors (the default for many
-    # pods).  This causes Detox E2E builds to fail even though the code is
-    # otherwise valid.  To keep local development strict while unblocking
-    # CI, we disable “treat warnings as errors” and suppress warnings only
-    # when the `CI` environment variable is present.
-    # ------------------------------------------------------------------
-    if ENV['CI']
-      UI.message('⚠️  CI detected – disabling Swift warnings-as-errors...')
-      installer.pods_project.targets.each do |target|
-        target.build_configurations.each do |config|
-          config.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
-          config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
-        end
-      end
-    end
   end
 end
