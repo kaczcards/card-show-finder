@@ -6,6 +6,8 @@ import {
   SubscriptionPlan,
   SUBSCRIPTION_PLANS,
   _calculateExpiryDate as calculateExpiryDate,
+  SubscriptionPlanType,
+  SubscriptionDuration,
 } from './subscriptionTypes';
 import { UserRole } from './userRoleService';
 
@@ -227,6 +229,23 @@ export const processSubscriptionUpdate = async (
       status: 'succeeded',
       transaction_id: transactionId,
     });
+
+    // --- Organizer referral earnings (dealer monthly only) -----------------
+    if (
+      plan.type === SubscriptionPlanType.DEALER &&
+      plan.duration === SubscriptionDuration.MONTHLY
+    ) {
+      try {
+        await supabase.rpc('award_referral_on_payment', {
+          p_user_id: userId,
+          p_payment_id: transactionId,
+          p_paid_at: new Date().toISOString(),
+        });
+      } catch (rpcErr: any) {
+        // Non-critical: log & continue
+        console.error('award_referral_on_payment RPC failed:', rpcErr);
+      }
+    }
 
   } catch (error: any) {
     console.error(
