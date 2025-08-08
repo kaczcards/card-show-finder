@@ -11,13 +11,13 @@ import {
   Platform,
   ScrollView,
   Alert,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { resendEmailVerification } from '../../services/supabaseAuthService';
+import LogoMark from '../../components/LogoMark';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {
@@ -35,7 +35,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [verificationRequired, setVerificationRequired] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [logoBox, setLogoBox] = useState({ width: 0, height: 0 });
+  // Vector logo renders directly – no layout tracking needed
 
   // Get auth context
   const { login, clearError, error, isLoading, isAuthenticated: _isAuthenticated } = useAuth();
@@ -111,34 +111,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.logoContainer}>
-            <View
-              style={styles.logoWrap}
-              onLayout={(e) => setLogoBox({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
-            >
-              {logoBox.width > 0 && logoBox.height > 0 && (
-                <View
-                  style={[
-                    styles.magnifierFill,
-                    (() => {
-                      const diameter = logoBox.width * 0.30; // ~30% of width
-                      const left = logoBox.width * 0.71 - diameter / 2; // center ~71%
-                      const top = logoBox.height * 0.46 - diameter / 2; // center ~46%
-                      return {
-                        width: diameter,
-                        height: diameter,
-                        borderRadius: diameter / 2,
-                        left,
-                        top,
-                      };
-                    })(),
-                  ]}
-                />
-              )}
-              <Image
-                source={require('../../../isolated_logo_no_background.png')}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
+            <View style={styles.logoWrap}>
+              <LogoMark width="100%" height="100%" />
             </View>
           </View>
 
@@ -298,28 +272,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     position: 'relative',
   },
-  logo: {
-    width: '100%',
-    height: 140,
-    maxWidth: '80%',
-    alignSelf: 'center',
-    aspectRatio: 2.5,
-  },
-  logoInner: {
-    position: 'relative',
-    width: '100%',
-    alignItems: 'center',
-  },
-  magnifierFill: {
-    position: 'absolute',
-    backgroundColor: BRAND_COLORS.primaryOrange,
-    zIndex: 0,
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
-    zIndex: 1,
-  },
+  /* Removed individual PNG overlay styles; LogoMark handles full rendering */
   formContainer: {
     width: '100%',
   },
