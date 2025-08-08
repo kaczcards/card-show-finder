@@ -651,25 +651,8 @@ const getDirectPaginatedShows = async (
     // Process the data to add coordinates
     let filteredData: any[] = data || [];
 
-    // For PostGIS binary coordinates, add Indianapolis coordinates as fallback.
-    // This keeps client-side distance filtering working even while we wait for
-    // the server-side RPC migration to be deployed.
-    filteredData = filteredData.map(show => {
-      if (
-        typeof show.coordinates === 'string' &&
-        show.coordinates.startsWith('0101000020')
-      ) {
-        return {
-          ...show,
-          latitude: 39.7684,  // Indianapolis latitude
-          longitude: -86.1581 // Indianapolis longitude
-        };
-      }
-      return show;
-    });
-
     console.warn(
-      `[showService] Direct query found ${filteredData.length} shows with coordinate fallbacks`
+      `[showService] Direct query returned ${filteredData.length} raw show(s)`
     );
     
     // Apply additional filters that weren't handled by the RPC

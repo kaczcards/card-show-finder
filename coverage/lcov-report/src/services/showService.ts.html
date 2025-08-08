@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/326</span>
+                <span class='fraction'>0/322</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/333</span>
+                <span class='fraction'>0/329</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/44</span>
+                <span class='fraction'>0/43</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/309</span>
+                <span class='fraction'>0/305</span>
             </div>
         
             
@@ -1184,24 +1184,7 @@
 <a name='L1119'></a><a href='#L1119'>1119</a>
 <a name='L1120'></a><a href='#L1120'>1120</a>
 <a name='L1121'></a><a href='#L1121'>1121</a>
-<a name='L1122'></a><a href='#L1122'>1122</a>
-<a name='L1123'></a><a href='#L1123'>1123</a>
-<a name='L1124'></a><a href='#L1124'>1124</a>
-<a name='L1125'></a><a href='#L1125'>1125</a>
-<a name='L1126'></a><a href='#L1126'>1126</a>
-<a name='L1127'></a><a href='#L1127'>1127</a>
-<a name='L1128'></a><a href='#L1128'>1128</a>
-<a name='L1129'></a><a href='#L1129'>1129</a>
-<a name='L1130'></a><a href='#L1130'>1130</a>
-<a name='L1131'></a><a href='#L1131'>1131</a>
-<a name='L1132'></a><a href='#L1132'>1132</a>
-<a name='L1133'></a><a href='#L1133'>1133</a>
-<a name='L1134'></a><a href='#L1134'>1134</a>
-<a name='L1135'></a><a href='#L1135'>1135</a>
-<a name='L1136'></a><a href='#L1136'>1136</a>
-<a name='L1137'></a><a href='#L1137'>1137</a>
-<a name='L1138'></a><a href='#L1138'>1138</a>
-<a name='L1139'></a><a href='#L1139'>1139</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1122'></a><a href='#L1122'>1122</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1853,23 +1836,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2992,25 +2958,8 @@ const getDirectPaginatedShows = <span class="cstat-no" title="statement not cove
     // Process the data to add coordinates
     let filteredData: any[] = <span class="cstat-no" title="statement not covered" >data || [];</span>
 &nbsp;
-    // For PostGIS binary coordinates, add Indianapolis coordinates as fallback.
-    // This keeps client-side distance filtering working even while we wait for
-    // the server-side RPC migration to be deployed.
-<span class="cstat-no" title="statement not covered" >    filteredData = filteredData.map(<span class="fstat-no" title="function not covered" >sh</span>ow =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >      if (</span>
-        typeof show.coordinates === 'string' &amp;&amp;
-        show.coordinates.startsWith('0101000020')
-      ) {
-<span class="cstat-no" title="statement not covered" >        return {</span>
-          ...show,
-          latitude: 39.7684,  // Indianapolis latitude
-          longitude: -86.1581 // Indianapolis longitude
-        };
-      }
-<span class="cstat-no" title="statement not covered" >      return show;</span>
-    });
-&nbsp;
 <span class="cstat-no" title="statement not covered" >    console.warn(</span>
-      `[showService] Direct query found ${filteredData.length} shows with coordinate fallbacks`
+      `[showService] Direct query returned ${filteredData.length} raw show(s)`
     );
     
     // Apply additional filters that weren't handled by the RPC
@@ -3484,7 +3433,7 @@ export const deleteShow = <span class="cstat-no" title="statement not covered" >
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-07T19:52:44.954Z
+                at 2025-08-08T22:00:45.394Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
