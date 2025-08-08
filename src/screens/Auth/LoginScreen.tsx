@@ -7,16 +7,18 @@ import {
   StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
+  ImageBackground,
+  Image,
   Platform,
   ScrollView,
   Alert,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { resendEmailVerification } from '../../services/supabaseAuthService';
+// SVG overlay removed – we now rely solely on the PNG logo
 
 // Define the auth navigation param list type
 type AuthStackParamList = {
@@ -94,6 +96,12 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Blue background image wrapper */}
+      <ImageBackground
+        source={require('../../../plain blue background.png')}
+        style={styles.backgroundImage}
+        imageStyle={styles.backgroundImageStyle}
+      >
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -103,12 +111,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.logoContainer}>
-            <Image
-              source={require('../../../assets/splash-icon.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Text style={styles.appName}>Card Show Finder</Text>
+            <View style={styles.logoWrap}>
+              <Image
+                source={require('../../../isolated_logo_no_background.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            </View>
           </View>
 
           <View style={styles.formContainer}>
@@ -213,6 +222,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      </ImageBackground>
     </SafeAreaView>
   );
 };
@@ -231,7 +241,13 @@ const BRAND_COLORS = {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.lightGray,
+    backgroundColor: 'transparent',
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  backgroundImageStyle: {
+    resizeMode: 'cover',
   },
   container: {
     flex: 1,
@@ -244,23 +260,30 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
-    /* ---------- Drop-shadow for the logo ---------- */
+    marginBottom: 20,
+    paddingTop: 10,
+    paddingHorizontal: 0,
+    /* ---------- Subtle drop-shadow for the logo ---------- */
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
     elevation: 4, // Android
   },
-  logo: {
-    width: 150,
-    height: 150,
-    maxWidth: '80%',
+  logoWrap: {
+    width: '80%',
+    height: 140,
+    alignSelf: 'center',
+    position: 'relative',
   },
-  appName: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: BRAND_COLORS.primaryOrange,
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  logoOverlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
   },
   formContainer: {
     width: '100%',
@@ -268,38 +291,40 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: BRAND_COLORS.darkText,
+    color: BRAND_COLORS.white,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: BRAND_COLORS.subtleText,
+    color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
     marginBottom: 30,
   },
   errorContainer: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: 'rgba(220,38,38,0.15)', // softened red background
+    borderWidth: 1,
+    borderColor: BRAND_COLORS.errorRed,
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
     alignItems: 'center',
   },
   errorText: {
-    color: BRAND_COLORS.errorRed,
+    color: '#FEE2E2',
     fontSize: 14,
     textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 12,
     marginBottom: 18,
     height: 55,
     paddingHorizontal: 15,
     borderWidth: 1,
-    borderColor: BRAND_COLORS.lightBorder,
+    borderColor: 'transparent',
   },
   inputIcon: {
     marginRight: 10,
@@ -318,12 +343,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: BRAND_COLORS.primaryBlue,
+    color: BRAND_COLORS.white,
     fontSize: 14,
     fontWeight: '600',
   },
   button: {
-    backgroundColor: BRAND_COLORS.primaryBlue,
+    backgroundColor: BRAND_COLORS.primaryOrange,
     borderRadius: 12,
     height: 55,
     alignItems: 'center',
@@ -335,7 +360,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   buttonDisabled: {
-    backgroundColor: '#99C9FF',
+    backgroundColor: '#FFB380',
   },
   buttonText: {
     color: BRAND_COLORS.white,
@@ -348,11 +373,11 @@ const styles = StyleSheet.create({
     marginTop: 25,
   },
   registerText: {
-    color: BRAND_COLORS.subtleText,
+    color: 'rgba(255,255,255,0.9)',
     fontSize: 14,
   },
   registerLink: {
-    color: BRAND_COLORS.primaryBlue,
+    color: BRAND_COLORS.white,
     fontSize: 14,
     fontWeight: 'bold',
   },

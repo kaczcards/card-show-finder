@@ -64,12 +64,13 @@ module.exports = {
    * runtime module resolution errors (e.g. RNMapsAirModule).
    * ------------------------------------------------------------------
    *
-   * Temporarily **disabled** due to Swift compilation failures in CI
-   * (ExpoModulesCore under Xcode 15 on GA runners).  Re-enable once
-   * the underlying issue is resolved and E2E tests are green again.
+   * Previously **disabled** due to Swift compilation failures in CI
+   * (ExpoModulesCore under Xcode 15 on GA runners).  Those issues have
+   * been resolved, so the new architecture is now **enabled** for
+   * App Store compliance and performance.
    * ------------------------------------------------------------------
    */
-  newArchEnabled: false,
+  newArchEnabled: true,
   scheme: "cardshowfinder",
   splash: {
     image: "./assets/splash.png",
@@ -85,8 +86,8 @@ module.exports = {
      * the correct Podfile.properties.json every time.
      * ------------------------------------------------------------------
      */
-    // Temporarily disable Hermes while investigating runtime crash
-    jsEngine: "jsc",
+    // Enable Hermes for smaller bundle size & App Store compliance
+    jsEngine: "hermes",
     // Required by App Store Connect: declare encryption usage.
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
@@ -117,8 +118,8 @@ module.exports = {
      * Keeping this in app config prevents configuration drift
      * when platform folders are regenerated.
      */
-    // Temporarily disable Hermes while investigating runtime crash
-    jsEngine: "jsc",
+    // Enable Hermes for better performance and consistency with iOS
+    jsEngine: "hermes",
 
     /* ------------------------------------------------------------------
      * Deep-link / Intent filters
