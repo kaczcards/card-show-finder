@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/21</span>
+                <span class='fraction'>3/21</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/21</span>
+                <span class='fraction'>3/21</span>
             </div>
         
             
@@ -128,27 +128,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -160,7 +146,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -181,7 +181,7 @@ import { supabase } from '../supabase';
  * This function is extracted to its own service to avoid circular dependencies
  * between AuthContext, userRoleService, and supabaseAuthService.
  */
-export const refreshUserSession = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;{ success: boolean; error?: any }&gt; =&gt; {</span>
+export const refreshUserSession = <span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;{ success: boolean; error?: any }&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const { error } = <span class="cstat-no" title="statement not covered" >await supabase.auth.refreshSession();</span>
 <span class="cstat-no" title="statement not covered" >    if (error) {</span>
@@ -199,7 +199,7 @@ export const refreshUserSession = <span class="cstat-no" title="statement not co
  * Checks if the current user session is valid
  * @returns Boolean indicating if the session is valid
  */
-export const isSessionValid = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;boolean&gt; =&gt; {</span>
+export const isSessionValid = <span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;boolean&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const { data } = <span class="cstat-no" title="statement not covered" >await supabase.auth.getSession();</span>
 <span class="cstat-no" title="statement not covered" >    return !!data.session;</span>
@@ -213,7 +213,7 @@ export const isSessionValid = <span class="cstat-no" title="statement not covere
  * Gets the current user ID from the session
  * @returns User ID string or null if not authenticated
  */
-export const getCurrentUserId = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;string | null&gt; =&gt; {</span>
+export const getCurrentUserId = <span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;string | null&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const { data } = <span class="cstat-no" title="statement not covered" >await supabase.auth.getSession();</span>
 <span class="cstat-no" title="statement not covered" >    return data.session?.user?.id || null;</span>
@@ -229,7 +229,7 @@ export const getCurrentUserId = <span class="cstat-no" title="statement not cove
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-07T02:49:28.417Z
+                at 2025-08-07T19:52:44.954Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
