@@ -461,13 +461,15 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       .eq('status', 'ACTIVE')
       .order('start_date', { ascending: true });
 
-    // Always apply date filters to show only future/current shows
-    query = query.gte('start_date', startDate as any);
-    query = query.lte('start_date', endDate as any);
-    
-    // Also ensure the end_date is not in the past
-    const today = new Date();
-    query = query.gte('end_date', today.toISOString() as any);
+    /* -----------------------------------------------------------
+     * Date-range logic: include any show that **overlaps** the
+     * selected range rather than only shows that START inside it.
+     *  start_date ≤ rangeEnd  AND  end_date ≥ rangeStart
+     * --------------------------------------------------------- */
+    const rangeStart = startDate; // already ISO string
+    const rangeEnd = endDate;     // already ISO string
+    query = query.lte('start_date', rangeEnd as any);
+    query = query.gte('end_date', rangeStart as any);
     
     if (typeof filters.maxEntryFee === 'number') {
       query = query.lte('entry_fee', filters.maxEntryFee);
@@ -478,9 +480,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
     /* ---------- Log basic-query filters for debugging ---------- */
     console.warn('[showService] Executing basic query with filters:', {
-      startDate,
-      endDate,
-      today: today.toISOString(),
+      startDate: rangeStart,
+      endDate: rangeEnd,
       maxEntryFee: filters.maxEntryFee,
       categories: filters.categories,
       status: 'ACTIVE',
@@ -606,12 +607,10 @@ const getDirectPaginatedShows = async (
       .eq('status', 'ACTIVE');
     
     // Apply date filters
-    countQuery = countQuery.gte('start_date', toIso(startDate) as any);
+    // Overlap logic: show starts on/before rangeEnd AND ends on/after rangeStart
     countQuery = countQuery.lte('start_date', toIso(endDate) as any);
+    countQuery = countQuery.gte('end_date', toIso(startDate) as any);
     
-    // Ensure end_date is not in the past
-    const today = new Date();
-    countQuery = countQuery.gte('end_date', today.toISOString() as any);
     
     // Apply other filters
     if (typeof maxEntryFee === 'number') {
@@ -638,9 +637,9 @@ const getDirectPaginatedShows = async (
       .from('shows')
       .select('*')
       .eq('status', 'ACTIVE')
-      .gte('start_date', toIso(startDate))
+      // Overlap logic: include shows whose date span intersects the range
       .lte('start_date', toIso(endDate))
-      .gte('end_date', new Date().toISOString())
+      .gte('end_date', toIso(startDate))
       .order('start_date');
 
     if (queryError) {

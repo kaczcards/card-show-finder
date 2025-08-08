@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/322</span>
+                <span class='fraction'>0/320</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/305</span>
+                <span class='fraction'>0/303</span>
             </div>
         
             
@@ -1183,8 +1183,7 @@
 <a name='L1118'></a><a href='#L1118'>1118</a>
 <a name='L1119'></a><a href='#L1119'>1119</a>
 <a name='L1120'></a><a href='#L1120'>1120</a>
-<a name='L1121'></a><a href='#L1121'>1121</a>
-<a name='L1122'></a><a href='#L1122'>1122</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1121'></a><a href='#L1121'>1121</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1648,12 +1647,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1671,7 +1672,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1787,17 +1787,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -2768,13 +2766,15 @@ export const getShows = <span class="cstat-no" title="statement not covered" ><s
       .eq('status', 'ACTIVE')
       .order('start_date', { ascending: true });
 &nbsp;
-    // Always apply date filters to show only future/current shows
-<span class="cstat-no" title="statement not covered" >    query = query.gte('start_date', startDate as any);</span>
-<span class="cstat-no" title="statement not covered" >    query = query.lte('start_date', endDate as any);</span>
-    
-    // Also ensure the end_date is not in the past
-    const today = <span class="cstat-no" title="statement not covered" >new Date();</span>
-<span class="cstat-no" title="statement not covered" >    query = query.gte('end_date', today.toISOString() as any);</span>
+    /* -----------------------------------------------------------
+     * Date-range logic: include any show that **overlaps** the
+     * selected range rather than only shows that START inside it.
+     *  start_date ≤ rangeEnd  AND  end_date ≥ rangeStart
+     * --------------------------------------------------------- */
+    const rangeStart = <span class="cstat-no" title="statement not covered" >startDate;</span> // already ISO string
+    const rangeEnd = <span class="cstat-no" title="statement not covered" >endDate;</span>     // already ISO string
+<span class="cstat-no" title="statement not covered" >    query = query.lte('start_date', rangeEnd as any);</span>
+<span class="cstat-no" title="statement not covered" >    query = query.gte('end_date', rangeStart as any);</span>
     
 <span class="cstat-no" title="statement not covered" >    if (typeof filters.maxEntryFee === 'number') {</span>
 <span class="cstat-no" title="statement not covered" >      query = query.lte('entry_fee', filters.maxEntryFee);</span>
@@ -2785,9 +2785,8 @@ export const getShows = <span class="cstat-no" title="statement not covered" ><s
 &nbsp;
     /* ---------- Log basic-query filters for debugging ---------- */
 <span class="cstat-no" title="statement not covered" >    console.warn('[showService] Executing basic query with filters:', {</span>
-      startDate,
-      endDate,
-      today: today.toISOString(),
+      startDate: rangeStart,
+      endDate: rangeEnd,
       maxEntryFee: filters.maxEntryFee,
       categories: filters.categories,
       status: 'ACTIVE',
@@ -2913,12 +2912,10 @@ const getDirectPaginatedShows = <span class="cstat-no" title="statement not cove
       .eq('status', 'ACTIVE');
     
     // Apply date filters
-<span class="cstat-no" title="statement not covered" >    countQuery = countQuery.gte('start_date', toIso(startDate) as any);</span>
+    // Overlap logic: show starts on/before rangeEnd AND ends on/after rangeStart
 <span class="cstat-no" title="statement not covered" >    countQuery = countQuery.lte('start_date', toIso(endDate) as any);</span>
+<span class="cstat-no" title="statement not covered" >    countQuery = countQuery.gte('end_date', toIso(startDate) as any);</span>
     
-    // Ensure end_date is not in the past
-    const today = <span class="cstat-no" title="statement not covered" >new Date();</span>
-<span class="cstat-no" title="statement not covered" >    countQuery = countQuery.gte('end_date', today.toISOString() as any);</span>
     
     // Apply other filters
 <span class="cstat-no" title="statement not covered" >    if (typeof maxEntryFee === 'number') {</span>
@@ -2945,9 +2942,9 @@ const getDirectPaginatedShows = <span class="cstat-no" title="statement not cove
       .from('shows')
       .select('*')
       .eq('status', 'ACTIVE')
-      .gte('start_date', toIso(startDate))
+      // Overlap logic: include shows whose date span intersects the range
       .lte('start_date', toIso(endDate))
-      .gte('end_date', new Date().toISOString())
+      .gte('end_date', toIso(startDate))
       .order('start_date');
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (queryError) {</span>
@@ -3433,7 +3430,7 @@ export const deleteShow = <span class="cstat-no" title="statement not covered" >
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-08T22:00:45.549Z
+                at 2025-08-08T22:11:38.574Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
