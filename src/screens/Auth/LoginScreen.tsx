@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   ImageBackground,
+  Image,
   Platform,
   ScrollView,
   Alert,
@@ -17,7 +18,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { resendEmailVerification } from '../../services/supabaseAuthService';
-import LogoMark from '../../components/LogoMark';
+import Svg, { Circle } from 'react-native-svg';
 
 // Define the auth navigation param list type
 type AuthStackParamList = {
@@ -35,7 +36,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [verificationRequired, setVerificationRequired] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  // Vector logo renders directly – no layout tracking needed
+  // Track logo layout so we can overlay SVG lens precisely
+  const [logoBox, setLogoBox] = useState({ width: 0, height: 0 });
 
   // Get auth context
   const { login, clearError, error, isLoading, isAuthenticated: _isAuthenticated } = useAuth();
@@ -111,8 +113,50 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.logoContainer}>
-            <View style={styles.logoWrap}>
-              <LogoMark width="100%" height="100%" />
+            <View
+              style={styles.logoWrap}
+              onLayout={(e) =>
+                setLogoBox({
+                  width: e.nativeEvent.layout.width,
+                  height: e.nativeEvent.layout.height,
+                })
+              }
+            >
+              <Image
+                source={require('../../../isolated_logo_no_background.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+              {logoBox.width > 0 && logoBox.height > 0 && (
+                <Svg
+                  width={logoBox.width}
+                  height={logoBox.height}
+                  viewBox={`0 0 ${logoBox.width} ${logoBox.height}`}
+                  style={styles.logoOverlay}
+                  pointerEvents="none"
+                >
+                  {(() => {
+                    const diameter = logoBox.width * 0.3;
+                    const cx = logoBox.width * 0.71;
+                    const cy = logoBox.height * 0.46;
+                    const r = diameter / 2;
+                    const strokeW = diameter * 0.16;
+                    return (
+                      <>
+                        <Circle cx={cx} cy={cy} r={r} fill="#FF6A00" />
+                        <Circle
+                          cx={cx}
+                          cy={cy}
+                          r={r}
+                          fill="none"
+                          stroke="#FFFFFF"
+                          strokeWidth={strokeW}
+                        />
+                      </>
+                    );
+                  })()}
+                </Svg>
+              )}
             </View>
           </View>
 
@@ -272,7 +316,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     position: 'relative',
   },
-  /* Removed individual PNG overlay styles; LogoMark handles full rendering */
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  logoOverlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+  },
   formContainer: {
     width: '100%',
   },
