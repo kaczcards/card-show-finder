@@ -8,6 +8,89 @@ import { supabase } from '../supabase';
 import { Show, ShowStatus } from '../types';
 import { calculateDistanceBetweenCoordinates } from './locationService';
 
+/* ------------------------------------------------------------------ */
+/* WKB (hex) → Lat/Lng helpers                                         */
+/* ------------------------------------------------------------------ */
+
+// Convert hex string to byte array
+const hexToBytes = (hex: string): Uint8Array => {
+  // Strip optional 0x prefix (common in PostGIS EWKB output)
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
+  const len = clean.length;
+
+  // Guard against odd-length strings which would break parsing
+  if (len % 2 !== 0) {
+    throw new Error(`[showService] Invalid WKB hex string length: ${len}`);
+  }
+
+  const bytes = new Uint8Array(len / 2);
+  for (let i = 0; i < len; i += 2) {
+    bytes[i / 2] = parseInt(clean.substr(i, 2), 16);
+  }
+  return bytes;
+};
+
+// Read 32-bit uint respecting endianness
+const readUint32 = (
+  view: DataView,
+  offset: number,
+  littleEndian: boolean
+): number => view.getUint32(offset, littleEndian);
+
+// Read 64-bit float (Float64) respecting endianness
+const readFloat64 = (
+  view: DataView,
+  offset: number,
+  littleEndian: boolean
+): number => view.getFloat64(offset, littleEndian);
+
+/**
+ * Parse a PostGIS WKB POINT (optionally preceded by SRID / EWKB flag).
+ * Supports little/big-endian, 2-D POINT only.
+ *
+ * Returns { latitude, longitude } or null if parsing fails.
+ */
+const parseWkbPoint = (
+  hex: string
+): { latitude: number; longitude: number } | null => {
+  try {
+    if (!hex || typeof hex !== 'string') return null;
+
+    const bytes = hexToBytes(hex);
+    if (bytes.length < 21) return null; // minimal POINT length
+
+    const view = new DataView(bytes.buffer);
+
+    // Byte 0: 1 = little-endian, 0 = big-endian
+    const littleEndian = view.getUint8(0) === 1;
+
+    // Bytes 1-4: geometry type (uint32). 0x20000000 flag means SRID present.
+    const rawType = readUint32(view, 1, littleEndian);
+    const hasSrid = (rawType & 0x20000000) !== 0;
+    const wkbType = rawType & 0xFFFF; // strip flags
+    const WKB_POINT = 1;
+    if (wkbType !== WKB_POINT) return null;
+
+    let offset = 5;
+    if (hasSrid) {
+      // Skip SRID (uint32)
+      offset += 4;
+    }
+
+    // Read coordinates (Float64 x, y)
+    const x = readFloat64(view, offset, littleEndian);
+    const y = readFloat64(view, offset + 8, littleEndian);
+
+    // PostGIS POINT stores X = longitude, Y = latitude
+    if (isFinite(x) && isFinite(y)) {
+      return { latitude: y, longitude: x };
+    }
+    return null;
+  } catch (_e) {
+    return null;
+  }
+};
+
 /**
  * Convert a raw Supabase row into an app `Show` object.
  */
@@ -46,6 +129,20 @@ const mapDbShowToAppShow = (row: any): Show => ({
           longitude: row.coordinates.coordinates[0],
         }
       : undefined,
+  // WKB hex string fallback (EWKB)
+  ...(typeof row.coordinates === 'string'
+    ? (() => {
+        const pt = parseWkbPoint(row.coordinates);
+        return pt
+          ? {
+              coordinates: {
+                latitude: pt.latitude,
+                longitude: pt.longitude,
+              },
+            }
+          : {};
+      })()
+    : {}),
   status: row.status as ShowStatus,
   organizerId: row.organizer_id,
   features: row.features ?? {},
@@ -715,6 +812,15 @@ const getDirectPaginatedShows = async (
             latitude: show.coordinates.coordinates[1],
             longitude: show.coordinates.coordinates[0]
           };
+        // Method 3: WKB hex string
+      } else if (typeof show.coordinates === 'string') {
+        const pt = parseWkbPoint(show.coordinates);
+        if (pt) {
+          showCoords = {
+            latitude: pt.latitude,
+            longitude: pt.longitude,
+          };
+        }
         }
         
         // Skip shows without valid coordinates
