@@ -32,8 +32,8 @@ export const IS_TEST_MODE = false;
  */
 export const normalizeRole = (role?: string | null): UserRole | null => {
   if (!role) return null;
-  const upper = role.toUpperCase() as UserRole;
-  return (Object.values(UserRole) as string[]).includes(upper) ? upper : null;
+  const lower = role.toLowerCase() as UserRole;
+  return (Object.values(UserRole) as string[]).includes(lower) ? lower : null;
 };
 
 /* ------------------------------------------------------------------
