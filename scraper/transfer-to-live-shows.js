@@ -238,8 +238,6 @@ async function main() {
       .from('scraped_shows_pending')
       .select('*')
       .eq('status', 'PENDING')
-    // Exclude records that have not yet been run through normalization
-    .not('normalized_json', 'is', null)
       .order('created_at', { ascending: false });
     
     // Apply filters
