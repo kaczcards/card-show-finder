@@ -148,11 +148,11 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         >
           <View style={styles.logoContainer}>
             <Image
+              /* Use the same full-color logo used on the Login screen */
               source={require('../../../assets/splash-icon.png')}
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.appName}>Card Show Finder</Text>
           </View>
 
           <View style={styles.formContainer}>
@@ -361,8 +361,10 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 50,
+    marginBottom: 20,
     marginTop: 20,
+    paddingTop: 10,
+    paddingHorizontal: 0,
     /* ---------- Drop-shadow for the logo ---------- */
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -371,14 +373,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 10,
-  },
-  appName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FF6A00',
+    width: '100%',
+    height: 120,
+    maxWidth: '100%',
+    aspectRatio: 1.5,
   },
   formContainer: {
     width: '100%',

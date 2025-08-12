@@ -8,6 +8,90 @@ import { supabase } from '../supabase';
 import { Show, ShowStatus } from '../types';
 import { calculateDistanceBetweenCoordinates } from './locationService';
 
+/* ------------------------------------------------------------------ */
+/* WKB (hex) → Lat/Lng helpers                                         */
+/* ------------------------------------------------------------------ */
+
+// Convert hex string to byte array
+const hexToBytes = (hex: string): Uint8Array => {
+  // Strip optional 0x prefix (common in PostGIS EWKB output)
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
+  const len = clean.length;
+
+  // Guard against odd-length strings which would break parsing
+  if (len % 2 !== 0) {
+    throw new Error(`[showService] Invalid WKB hex string length: ${len}`);
+  }
+
+  const bytes = new Uint8Array(len / 2);
+  for (let i = 0; i < len; i += 2) {
+    bytes[i / 2] = parseInt(clean.substr(i, 2), 16);
+  }
+  return bytes;
+};
+
+// Read 32-bit uint respecting endianness
+const readUint32 = (
+  view: DataView,
+  offset: number,
+  littleEndian: boolean
+): number => view.getUint32(offset, littleEndian);
+
+// Read 64-bit float (Float64) respecting endianness
+const readFloat64 = (
+  view: DataView,
+  offset: number,
+  littleEndian: boolean
+): number => view.getFloat64(offset, littleEndian);
+
+/**
+ * Parse a PostGIS WKB POINT (optionally preceded by SRID / EWKB flag).
+ * Supports little/big-endian, 2-D POINT only.
+ *
+ * Returns { latitude, longitude } or null if parsing fails.
+ */
+const parseWkbPoint = (
+  hex: string
+): { latitude: number; longitude: number } | null => {
+  try {
+    if (!hex || typeof hex !== 'string') return null;
+
+    const bytes = hexToBytes(hex);
+    if (bytes.length < 21) return null; // minimal POINT length
+
+    const view = new DataView(bytes.buffer);
+
+    // Byte 0: 1 = little-endian, 0 = big-endian
+    const littleEndian = view.getUint8(0) === 1;
+
+    // Bytes 1-4: geometry type (uint32). 0x20000000 flag means SRID present.
+    const rawType = readUint32(view, 1, littleEndian);
+    const hasSrid = (rawType & 0x20000000) !== 0;
+    const wkbType = rawType & 0xFFFF; // strip flags
+    const WKB_POINT = 1;
+    if (wkbType !== WKB_POINT) return null;
+
+    let offset = 5;
+    if (hasSrid) {
+      // Skip SRID (uint32)
+      offset += 4;
+    }
+
+    // Read coordinates (Float64 x, y)
+    const x = readFloat64(view, offset, littleEndian);
+    const y = readFloat64(view, offset + 8, littleEndian);
+
+    // PostGIS POINT stores X = longitude, Y = latitude
+    if (isFinite(x) && isFinite(y)) {
+      return { latitude: y, longitude: x };
+    }
+    return null;
+  } catch {
+    // Swallow any parsing error – return null to indicate failure
+    return null;
+  }
+};
+
 /**
  * Convert a raw Supabase row into an app `Show` object.
  */
@@ -46,6 +130,20 @@ const mapDbShowToAppShow = (row: any): Show => ({
           longitude: row.coordinates.coordinates[0],
         }
       : undefined,
+  // WKB hex string fallback (EWKB)
+  ...(typeof row.coordinates === 'string'
+    ? (() => {
+        const pt = parseWkbPoint(row.coordinates);
+        return pt
+          ? {
+              coordinates: {
+                latitude: pt.latitude,
+                longitude: pt.longitude,
+              },
+            }
+          : {};
+      })()
+    : {}),
   status: row.status as ShowStatus,
   organizerId: row.organizer_id,
   features: row.features ?? {},
@@ -461,13 +559,15 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       .eq('status', 'ACTIVE')
       .order('start_date', { ascending: true });
 
-    // Always apply date filters to show only future/current shows
-    query = query.gte('start_date', startDate as any);
-    query = query.lte('start_date', endDate as any);
-    
-    // Also ensure the end_date is not in the past
-    const today = new Date();
-    query = query.gte('end_date', today.toISOString() as any);
+    /* -----------------------------------------------------------
+     * Date-range logic: include any show that **overlaps** the
+     * selected range rather than only shows that START inside it.
+     *  start_date ≤ rangeEnd  AND  end_date ≥ rangeStart
+     * --------------------------------------------------------- */
+    const rangeStart = startDate; // already ISO string
+    const rangeEnd = endDate;     // already ISO string
+    query = query.lte('start_date', rangeEnd as any);
+    query = query.gte('end_date', rangeStart as any);
     
     if (typeof filters.maxEntryFee === 'number') {
       query = query.lte('entry_fee', filters.maxEntryFee);
@@ -478,9 +578,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
     /* ---------- Log basic-query filters for debugging ---------- */
     console.warn('[showService] Executing basic query with filters:', {
-      startDate,
-      endDate,
-      today: today.toISOString(),
+      startDate: rangeStart,
+      endDate: rangeEnd,
       maxEntryFee: filters.maxEntryFee,
       categories: filters.categories,
       status: 'ACTIVE',
@@ -606,12 +705,10 @@ const getDirectPaginatedShows = async (
       .eq('status', 'ACTIVE');
     
     // Apply date filters
-    countQuery = countQuery.gte('start_date', toIso(startDate) as any);
+    // Overlap logic: show starts on/before rangeEnd AND ends on/after rangeStart
     countQuery = countQuery.lte('start_date', toIso(endDate) as any);
+    countQuery = countQuery.gte('end_date', toIso(startDate) as any);
     
-    // Ensure end_date is not in the past
-    const today = new Date();
-    countQuery = countQuery.gte('end_date', today.toISOString() as any);
     
     // Apply other filters
     if (typeof maxEntryFee === 'number') {
@@ -638,9 +735,9 @@ const getDirectPaginatedShows = async (
       .from('shows')
       .select('*')
       .eq('status', 'ACTIVE')
-      .gte('start_date', toIso(startDate))
+      // Overlap logic: include shows whose date span intersects the range
       .lte('start_date', toIso(endDate))
-      .gte('end_date', new Date().toISOString())
+      .gte('end_date', toIso(startDate))
       .order('start_date');
 
     if (queryError) {
@@ -651,25 +748,8 @@ const getDirectPaginatedShows = async (
     // Process the data to add coordinates
     let filteredData: any[] = data || [];
 
-    // For PostGIS binary coordinates, add Indianapolis coordinates as fallback.
-    // This keeps client-side distance filtering working even while we wait for
-    // the server-side RPC migration to be deployed.
-    filteredData = filteredData.map(show => {
-      if (
-        typeof show.coordinates === 'string' &&
-        show.coordinates.startsWith('0101000020')
-      ) {
-        return {
-          ...show,
-          latitude: 39.7684,  // Indianapolis latitude
-          longitude: -86.1581 // Indianapolis longitude
-        };
-      }
-      return show;
-    });
-
     console.warn(
-      `[showService] Direct query found ${filteredData.length} shows with coordinate fallbacks`
+      `[showService] Direct query returned ${filteredData.length} raw show(s)`
     );
     
     // Apply additional filters that weren't handled by the RPC
@@ -733,6 +813,15 @@ const getDirectPaginatedShows = async (
             latitude: show.coordinates.coordinates[1],
             longitude: show.coordinates.coordinates[0]
           };
+        // Method 3: WKB hex string
+      } else if (typeof show.coordinates === 'string') {
+        const pt = parseWkbPoint(show.coordinates);
+        if (pt) {
+          showCoords = {
+            latitude: pt.latitude,
+            longitude: pt.longitude,
+          };
+        }
         }
         
         // Skip shows without valid coordinates

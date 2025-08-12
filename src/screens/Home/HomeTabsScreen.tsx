@@ -2,12 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeScreen from './HomeScreen';
 import MapScreen from '../Map/MapScreen';
 import { ShowFilters, Coordinates } from '../../types';
 import { getCurrentLocation } from '../../services/locationService';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  DEFAULT_FILTERS,
+  loadTemporaryFilters,
+  saveTemporaryFilters,
+} from '../../services/filterService';
 
 // Define the main stack param list type
 type MainStackParamList = {
@@ -29,52 +33,49 @@ const Tab = createMaterialTopTabNavigator();
 const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
   const { authState } = useAuth();
   const { user: _user } = authState;
-
-  // Default filters
-  const defaultFilters: ShowFilters = {
-    radius: 25,
-    startDate: new Date(),
-    endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-  };
+  const userId = _user?.id;
 
   // Shared state
-  const [filters, setFilters] = useState<ShowFilters>(defaultFilters);
+  const [filters, setFilters] = useState<ShowFilters>(DEFAULT_FILTERS);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   // `activeTab` is currently unused but kept for potential future
   // analytics or state-driven styling; prefix with underscore to
   // satisfy eslint-unused-vars rule.
   const [_activeTab, setActiveTab] = useState<'list' | 'map'>('list');
 
-  // Load persisted filters on mount
+  /**
+   * ------------------------------------------------------------------
+   * User-scoped filter persistence
+   * ------------------------------------------------------------------
+   */
+  // Load filters when user changes
   useEffect(() => {
-    const loadFilters = async () => {
+    if (!userId) {
+      setFilters(DEFAULT_FILTERS);
+      return;
+    }
+
+    (async () => {
       try {
-        const stored = await AsyncStorage.getItem('homeFilters');
+        const stored = await loadTemporaryFilters(userId);
         if (stored) {
-          const parsed: ShowFilters = JSON.parse(stored);
-          // Convert date strings back to Date objects
-          if (parsed.startDate) {
-            parsed.startDate = new Date(parsed.startDate);
-          }
-          if (parsed.endDate) {
-            parsed.endDate = new Date(parsed.endDate);
-          }
-          setFilters({ ...defaultFilters, ...parsed });
+          setFilters({ ...DEFAULT_FILTERS, ...stored });
+        } else {
+          setFilters(DEFAULT_FILTERS);
         }
       } catch (e) {
-        console.warn('Failed to load stored filters', e);
+        console.warn('[HomeTabsScreen] Failed to load user filters', e);
       }
-    };
+    })();
+  }, [userId]);
 
-    loadFilters();
-  }, []);
-
-  // Persist filters whenever they change
+  // Persist filters whenever they change (and we have a user)
   useEffect(() => {
-    AsyncStorage.setItem('homeFilters', JSON.stringify(filters)).catch(() =>
-      console.warn('Failed to persist filters')
+    if (!userId) return;
+    saveTemporaryFilters(userId, filters).catch((e) =>
+      console.warn('[HomeTabsScreen] Failed to save user filters', e)
     );
-  }, [filters]);
+  }, [userId, filters]);
 
   // Get user location on mount
   useEffect(() => {
@@ -128,14 +129,16 @@ const HomeTabsScreen: React.FC<Props> = ({ navigation }) => {
           {(props) => (
             <HomeScreen
               {...props}
+              customFilters={filters}
               onFilterChange={handleFilterChange}
               onShowPress={handleShowPress}
-              userLocation={userLocation}
             />
           )}
         </Tab.Screen>
         <Tab.Screen name="Map">
-          {(props) => <MapScreen {...props} />}
+          {(props) => (
+            <MapScreen {...props} initialUserLocation={userLocation} />
+          )}
         </Tab.Screen>
       </Tab.Navigator>
     </View>
