@@ -1,13 +1,7 @@
 import { supabase } from '../supabase';
 import { refreshUserSession } from './sessionService';
-
-// User role constants
-export enum UserRole {
-  ATTENDEE = 'attendee',
-  DEALER = 'dealer',
-  MVP_DEALER = 'mvp_dealer',
-  SHOW_ORGANIZER = 'show_organizer',
-}
+import { UserRole } from '../types';
+export { UserRole } from '../types'; // backward-compat re-export
 
 /**
  * Global test-mode flag.
