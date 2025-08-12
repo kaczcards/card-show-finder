@@ -10,3 +10,17 @@ export function formatLargeInList(values: Array<string | null | undefined>, chun
   console.warn(`[postgrest] Large array (${values.length}) used with formatLargeInList.`);
   return formatInList(values.slice(0, chunkSize));
 }
+
+/**
+ * Safely apply a PostgREST `overlaps` filter only when the array is non-empty.
+ * Returns the original query unchanged when the array is empty / null / undefined.
+ *
+ * Example:
+ *   query = safeOverlaps(query, 'categories', selectedCategories);
+ */
+export function safeOverlaps<T>(query: any, column: string, arr?: T[] | null) {
+  if (Array.isArray(arr) && arr.length > 0) {
+    return query.overlaps(column, arr as any);
+  }
+  return query;
+}
