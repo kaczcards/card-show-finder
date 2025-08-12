@@ -420,21 +420,237 @@ function parseEntryFee(feeStr) {
 }
 
 // Extract show hours
+// -------------------------------------------
+// Utility – recognise simple hour expressions
+// -------------------------------------------
+function isLikelyHours(text) {
+  if (!text) return false;
+  const timeRangePattern =
+    /\b(1[0-2]|[1-9])(:[0-5][0-9])?\s*(am|pm)?\s*(?:-|–|—|to)\s*(1[0-2]|[1-9])(:[0-5][0-9])?\s*(am|pm)?\b/i;
+  const dowTimePattern =
+    /\b(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+\d/i;
+  return timeRangePattern.test(text) || dowTimePattern.test(text);
+}
+
+// Enhanced hours parser: also handles "8-2", "9:30-2:30"
 function parseShowHours(description) {
   if (!description) return { startTime: null, endTime: null };
-  
-  // Common time formats
-  const timeRegex = /(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*(?:-|to|–|until)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i;
-  const match = description.match(timeRegex);
-  
-  if (match) {
-    return {
-      startTime: match[1].trim(),
-      endTime: match[2].trim()
-    };
+
+  // Reject multi-range strings (contains comma or semicolon)
+  if (/[,;]/.test(description)) {
+    return { startTime: null, endTime: null };
   }
-  
-  return { startTime: null, endTime: null };
+
+  // Normalise unicode dashes
+  const norm = description.replace(/[–—]/g, '-').toLowerCase().trim();
+
+  // Try explicit am/pm first
+  const ampmRegex =
+    /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*(?:-|to|until)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/;
+  const m1 = norm.match(ampmRegex);
+  if (m1) {
+    return { startTime: m1[1], endTime: m1[2] };
+  }
+
+  // Fallback "8-2"  or "9:30-2:30"
+  const simpleRegex =
+    /\b(\d{1,2}(?::\d{2})?)\s*-\s*(\d{1,2}(?::\d{2})?)\b/;
+  const m2 = norm.match(simpleRegex);
+  if (!m2) return { startTime: null, endTime: null };
+
+  const pad = (val) =>
+    val.includes(':') ? val : `${val}:00`;
+
+  const startRaw = pad(m2[1]);
+  const endRaw = pad(m2[2]);
+
+  // Assume start am, end pm if not specified
+  const toAmPm = (t, isEnd) => {
+    const [h, mins] = t.split(':').map(Number);
+    const meridian =
+      h >= 1 && h <= 6 ? (isEnd ? 'pm' : 'am')
+      : h >= 7 && h <= 11 ? (isEnd ? 'pm' : 'am')
+      : h === 12 ? (isEnd ? 'pm' : 'pm')
+      : 'am';
+    return `${h}:${mins.toString().padStart(2, '0')}${meridian}`;
+  };
+
+  return {
+    startTime: toAmPm(startRaw, false),
+    endTime: toAmPm(endRaw, true)
+  };
+}
+
+// ------------------------------------------------------------
+// Deterministic parser for dpmsportcards Indiana show listings
+// ------------------------------------------------------------
+function parseDpmsIndianaHtml(html, sourceUrl) {
+  // Entity replacements
+  let text = html
+    .replace(/&ndash;|&mdash;|&#8211;|&#8212;/g, '-')
+    .replace(/&ldquo;|&rdquo;|&#8220;|&#8221;/g, '"')
+    .replace(/&lsquo;|&rsquo;|&#8216;|&#8217;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>|<\/div>|<\/li>/gi, '\n')
+    .replace(/<[^>]*>/g, ' ');
+
+  text = text
+    .replace(/\r/g, '')
+    .replace(/\n{2,}/g, '\n')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join('\n');
+
+  const lines = text.split('\n');
+  const monthRe = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)/i;
+  const showLines = lines.filter(
+    (l) => monthRe.test(l) && /[-–—]/.test(l) && /,/.test(l)
+  );
+
+  const MONTH_MAP = {
+    jan: 0, january: 0,
+    feb: 1, february: 1,
+    mar: 2, march: 2,
+    apr: 3, april: 3,
+    may: 4,
+    jun: 5, june: 5,
+    jul: 6, july: 6,
+    aug: 7, august: 7,
+    sep: 8, sept: 8, september: 8,
+    oct: 9, october: 9,
+    nov: 10, november: 10,
+    dec: 11, december: 11
+  };
+
+  const ASSUME_YEAR = 2025;
+
+  const parseDateRange = (str) => {
+    str = str.replace(/(\d+)(st|nd|rd|th)/gi, '$1').trim();
+    const hasRange = /[-–—]| to /i.test(str);
+    if (!hasRange) {
+      const d = parseSingle(str);
+      return d ? { start: d, end: d } : null;
+    }
+    const [a, b] = str.split(/[-–—]| to /i).map((s) => s.trim());
+    const start = parseSingle(a);
+    if (!start) return null;
+    let end = parseSingle(b);
+    if (!end) {
+      const month = a.match(/^([a-z]+)/i)[1];
+      end = parseSingle(`${month} ${b}`);
+    }
+    return end ? { start, end } : null;
+  };
+
+  const parseSingle = (str) => {
+    const mm = str.match(/^([a-z]+)/i);
+    if (!mm) return null;
+    const month = MONTH_MAP[mm[1].toLowerCase()];
+    const day = Number(str.match(/(\d{1,2})/)[1]);
+    return new Date(ASSUME_YEAR, month, day);
+  };
+
+  const shows = [];
+  const seen = new Set();
+
+  for (const line of showLines) {
+    const dateMatch = line.match(
+      /^(\s*[A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*(?:-|–|—|to)\s*\d{1,2}(?:st|nd|rd|th)?)?)/
+    );
+    if (!dateMatch) continue;
+
+    const dateInfo = parseDateRange(dateMatch[1]);
+    if (!dateInfo) continue;
+
+    let remaining = line.slice(dateMatch[0].length).trim();
+
+    const locEnd = remaining.indexOf('(') > -1 ? remaining.indexOf('(') : remaining.length;
+    const locPart = remaining.slice(0, locEnd).replace(/^[–—-]\s*/, '').trim();
+    const segs = locPart.split(/\s[–—-]\s/).map((s) => s.trim());
+
+    let city = '', venue = '', address = '';
+    if (segs.length >= 2) {
+      const cv = segs[0];
+      address = segs.slice(1).join(' - ');
+      const comma = cv.indexOf(',');
+      if (comma > -1) {
+        city = cv.slice(0, comma).trim();
+        venue = cv.slice(comma + 1).trim().replace(/^["']|["']$/g, '');
+      } else {
+        city = cv.trim();
+      }
+    }
+
+    if (!city && locPart.includes(',')) {
+      city = locPart.split(',')[0].trim();
+    }
+
+    // Hours
+    const hoursTokens = [];
+    const hrRe = /\(([^)]+)\)/g;
+    let m;
+    while ((m = hrRe.exec(remaining))) {
+      if (isLikelyHours(m[1])) hoursTokens.push(m[1]);
+    }
+    const hours = hoursTokens
+      .map((t) => t.replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim())
+      .join(', ');
+
+    // Contact
+    let contactInfo = '';
+    const phoneRe = /\(?\s*(\d{3})\s*\)?[-\s]?(\d{3})[-\s]?(\d{4})/;
+    const pMatch = phoneRe.exec(remaining);
+    if (pMatch) {
+      const phoneFmt = `(${pMatch[1]}) ${pMatch[2]}-${pMatch[3]}`;
+      const nameCtx = remaining.slice(
+        Math.max(0, pMatch.index - 60),
+        pMatch.index
+      );
+      const nameRe =
+        /([A-Z][a-zA-Z.'-]{2,}(?:\s+[A-Z][a-zA-Z.'-]{2,}){0,2})\s*$/;
+      const nm = nameRe.exec(nameCtx);
+      const stop = new Set([
+        'Street','St','St.','Drive','Dr','Dr.','Road','Rd','Rd.',
+        'Avenue','Ave','Ave.','Boulevard','Blvd','Blvd.','Way','Lane','Ln','Ln.',
+        'Court','Ct','Ct.','East','West','North','South','E','W','N','S',
+        'Main','Division','Taylor','Carroll','Hunter','Wabash','Victory','Field',
+        'Bronco','Votaw','Sample','Jefferson','Robbins'
+      ]);
+      let name = '';
+      if (nm) {
+        const parts = nm[1].split(/\s+/).filter((w) => !stop.has(w));
+        if (parts.length >= 2) {
+          name = `${parts[parts.length - 2]} ${parts[parts.length - 1]}`;
+        } else if (parts.length === 1) {
+          name = parts[0];
+        }
+      }
+      contactInfo = name ? `${name} ${phoneFmt}` : phoneFmt;
+    }
+
+    const key = `${city}|${address}|${dateInfo.start.toISOString().slice(0,10)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    shows.push({
+      name: city || null,
+      startDate: dateInfo.start.toISOString().split('T')[0],
+      endDate: dateInfo.end.toISOString().split('T')[0],
+      venueName: venue || null,
+      address: address || null,
+      city: city || null,
+      state: 'IN',
+      zipCode: null,
+      showHours: hours || null,
+      contactInfo,
+      entryFee: 'free',
+      url: sourceUrl
+    });
+  }
+
+  return shows;
 }
 
 // ================================================================
@@ -822,6 +1038,130 @@ async function processUrl(url, supabase) {
       return { success: false, showCount: 0 };
     }
     
+    // Check if this is the DPMS Indiana URL - use deterministic parser
+    if (url.includes('dpmsportcards.com/indiana-card-shows')) {
+      log(`Detected DPMS Indiana URL. Using deterministic parser...`, null, true);
+      
+      // Parse with custom DPMS parser
+      const rawShows = parseDpmsIndianaHtml(html, url);
+      log(`Extracted ${rawShows.length} raw shows from DPMS. Normalizing...`, null, true);
+      
+      // Normalize and validate
+      const normalizedShows = [];
+      const invalidShows = [];
+      const warningShows = [];
+      
+      for (const rawShow of rawShows) {
+        const normalizedShow = normalizeShowData(rawShow, url);
+        const validation = validateShowData(normalizedShow);
+        
+        if (validation.isValid) {
+          normalizedShows.push(normalizedShow);
+          if (validation.hasWarnings) {
+            warningShows.push({
+              show: normalizedShow.name,
+              warnings: validation.warnings
+            });
+          }
+        } else {
+          invalidShows.push({
+            show: normalizedShow.name || 'Unnamed show',
+            errors: validation.errors
+          });
+        }
+      }
+      
+      log(`Normalized ${normalizedShows.length} valid DPMS shows (${invalidShows.length} invalid, ${warningShows.length} with warnings)`, null, true);
+      
+      // Geocode valid shows if enabled
+      if (argv.geocode && normalizedShows.length > 0) {
+        // Filter shows that have enough address info and apply rate limiting
+        const showsToGeocode = normalizedShows.filter(show =>
+          show.address || (show.city && show.state)
+        ).slice(0, MAX_GEOCODING_REQUESTS);
+        
+        if (normalizedShows.length > showsToGeocode.length) {
+          log(`Rate limiting: geocoding capped at ${showsToGeocode.length}/${normalizedShows.length} shows to control costs`);
+        }
+        
+        log(`Geocoding ${showsToGeocode.length} DPMS shows...`, null, true);
+        
+        for (let i = 0; i < showsToGeocode.length; i++) {
+          const show = showsToGeocode[i];
+          
+          log(`Geocoding ${i+1}/${showsToGeocode.length}: "${show.name}"`);
+          
+          const geoResult = await geocodeAddress(
+            show.address, 
+            show.city, 
+            show.state
+          );
+          
+          if (geoResult) {
+            show.coordinates = {
+              latitude: geoResult.latitude,
+              longitude: geoResult.longitude,
+              formattedAddress: geoResult.formattedAddress
+            };
+            
+            // If we got a better address from geocoding, use it
+            if (geoResult.formattedAddress) {
+              // Extract ZIP code if available
+              const zipMatch = geoResult.formattedAddress.match(/\b\d{5}(-\d{4})?\b/);
+              if (zipMatch) {
+                show.zipCode = zipMatch[0];
+              }
+            }
+          }
+          
+          // Delay to respect quota
+          if (i < showsToGeocode.length - 1) {
+            log(`Rate limiting: waiting ${GEOCODE_REQUEST_DELAY_MS}ms before next geocoding request`);
+            await delay(GEOCODE_REQUEST_DELAY_MS);
+          }
+        }
+      }
+      
+      // Skip database operations if dry run
+      if (argv.dryRun) {
+        log(`DRY RUN: Would insert ${normalizedShows.length} DPMS shows`, null, true);
+        return { success: true, showCount: normalizedShows.length };
+      }
+      
+      // Insert each show into the pending table
+      log(`Inserting ${normalizedShows.length} DPMS shows into database...`, null, true);
+      let insertedCount = 0;
+      
+      for (const show of normalizedShows) {
+        try {
+          const { error } = await supabase
+            .from('scraped_shows_pending')
+            .insert({
+              source_url: url,
+              raw_payload: show.original,
+              normalized_json: show,
+              geocoded_json: show.coordinates ? {
+                coordinates: show.coordinates,
+                geocoded_at: new Date().toISOString()
+              } : null,
+              status: 'PENDING'
+            });
+          
+          if (error) {
+            logError(`Error inserting DPMS show: ${error.message}`, show.name);
+          } else {
+            insertedCount++;
+          }
+        } catch (e) {
+          logError(`Exception inserting DPMS show: ${e.message}`, show.name);
+        }
+      }
+      
+      log(`Successfully inserted ${insertedCount} of ${normalizedShows.length} DPMS shows`, null, true);
+      return { success: true, showCount: insertedCount };
+    }
+    
+    // For non-DPMS URLs, continue with AI extraction
     log(`HTML fetched (${html.length} bytes). Chunking & extracting with AI...`, null, true);
 
     // Check for Google AI API key

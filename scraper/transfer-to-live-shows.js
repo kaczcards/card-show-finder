@@ -162,15 +162,35 @@ function mapToShowSchema(pendingShow) {
     }
   }
   
+  // ------------------------------------------------------------------
+  // Merge ZIP into address if missing
+  // ------------------------------------------------------------------
+  let mergedAddress = normalizedJson.address || '';
+  if (normalizedJson.zipCode) {
+    const zipPattern = /\b\d{5}(?:-\d{4})?\b/;
+    if (!zipPattern.test(mergedAddress)) {
+      mergedAddress = mergedAddress
+        ? `${mergedAddress} ${normalizedJson.zipCode}`
+        : normalizedJson.zipCode;
+    }
+  }
+
+  // Determine entry fee: null when free/unspecified
+  const entryFeeValue =
+    normalizedJson.entryFeeAmount === null ||
+    normalizedJson.entryFeeAmount === undefined
+      ? null
+      : normalizedJson.entryFeeAmount;
+
   // Map to shows table schema
   return {
     title: normalizedJson.name || 'Unnamed Card Show',
     description: normalizedJson.description || '',
     location: location,
-    address: normalizedJson.address || '',
+    address: mergedAddress,
     start_date: normalizedJson.startDate || null,
     end_date: normalizedJson.endDate || normalizedJson.startDate || null,
-    entry_fee: normalizedJson.entryFeeAmount || 0,
+    entry_fee: entryFeeValue,
     image_url: null, // No image in scraped data
     website_url: normalizedJson.url || pendingShow.source_url,
     coordinates: coordinates,
