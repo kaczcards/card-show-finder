@@ -4,6 +4,7 @@ import { supabase } from '../../../supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { handleSupabaseError } from '../../../services/errorService';
 import { UserRole } from '../../../types';  // shared UserRole definition
+import { normalizeRole } from '../../../services/userRoleService';  // normalize helper
 
 interface Dealer {
   id: string;
@@ -199,9 +200,8 @@ export const useShowDetail = (
         id: profile.id,
         name: `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() || profile.id.substring(0, 8),
         profileImageUrl: profile.profile_image_url,
-        // Normalise role to uppercase so downstream comparisons
-        // (`dealer.role === 'MVP_DEALER'`, etc.) work reliably.
-        role: ((profile.role ?? '') as string).toUpperCase() as UserRole,
+        // Use shared normaliser; default to DEALER when role missing/unknown
+        role: normalizeRole(profile.role) ?? UserRole.DEALER,
         accountType: profile.account_type,
       }));
       setParticipatingDealers(dealers);

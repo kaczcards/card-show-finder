@@ -5,14 +5,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { handleSupabaseError } from '../services/errorService';
 import { UserRole } from '../types';
 
-// Define types for better type safety (specific to dealers within this hook)
-type DealerRole = 'SHOW_ORGANIZER' | 'MVP_DEALER' | 'DEALER' | 'USER';
-
 interface Dealer {
   id: string;
   name: string;
   profileImageUrl?: string;
-  role: DealerRole;
+  role: UserRole;
   accountType?: string;
   boothLocation?: string;
   // --- Social Media & Marketplace links (added for Task 8) ------------------
@@ -85,8 +82,8 @@ export const useShowDetailQuery = (showId: string) => {
       // Find any dealers with elevated privileges (MVP Dealers or Show Organizers)
       const privilegedDealers = data.participatingDealers.filter(
         dealer =>
-          dealer.role === 'MVP_DEALER' ||
-          dealer.role === 'SHOW_ORGANIZER'
+          dealer.role === UserRole.MVP_DEALER ||
+          dealer.role === UserRole.SHOW_ORGANIZER
       );
       
       if (privilegedDealers.length === 0) return data; // No privileged dealers to enhance
@@ -118,7 +115,8 @@ export const useShowDetailQuery = (showId: string) => {
         // Enhance the dealers with social media links
         const enhancedDealers = data.participatingDealers.map(dealer => {
           if (
-            (dealer.role === 'MVP_DEALER' || dealer.role === 'SHOW_ORGANIZER') &&
+            (dealer.role === UserRole.MVP_DEALER ||
+              dealer.role === UserRole.SHOW_ORGANIZER) &&
             profileMap.has(dealer.id)
           ) {
             return {
