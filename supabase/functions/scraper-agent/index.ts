@@ -16,6 +16,264 @@ const AI_TIMEOUT_MS = 30000   // 30s per AI request (Gemini)
 const MAX_HTML_SIZE  = 100_000 // 100 KB per chunk sent to AI
 const MAX_CHUNKS     = 3       // fail-safe: never send more than 3 chunks
 
+// Helper functions for DPMS Indiana card shows
+function isLikelyHours(text: string): boolean {
+  if (!text) return false;
+  // Check for time range pattern (e.g., "8-2", "10:30am-4pm")
+  const timeRangePattern = /\b(1[0-2]|[1-9])(:[0-5][0-9])?\s*(am|pm)?\s*(?:[-–—]|to)\s*(1[0-2]|[1-9])(:[0-5][0-9])?\s*(am|pm)?\b/i;
+  // Check for day of week followed by time
+  const dayTimePattern = /\b(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+\d/i;
+  return timeRangePattern.test(text) || dayTimePattern.test(text);
+}
+
+function parseSimpleHours(text: string): { startTime: string|null; endTime: string|null } {
+  if (!text) return { startTime: null, endTime: null };
+
+  // Reject multi-range strings (contains comma or semicolon)
+  if (/[,;]/.test(text)) {
+    return { startTime: null, endTime: null };
+  }
+
+  // Normalize unicode dashes
+  const norm = text.replace(/[–—]/g, '-').toLowerCase().trim();
+
+  // Try explicit am/pm first
+  const ampmRegex = /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*(?:-|to|until)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/;
+  const m1 = norm.match(ampmRegex);
+  if (m1) {
+    return { startTime: m1[1], endTime: m1[2] };
+  }
+
+  // Fallback "8-2" or "9:30-2:30"
+  const simpleRegex = /\b(\d{1,2}(?::\d{2})?)\s*-\s*(\d{1,2}(?::\d{2})?)\b/;
+  const m2 = norm.match(simpleRegex);
+  if (!m2) return { startTime: null, endTime: null };
+
+  const pad = (val: string) => val.includes(':') ? val : `${val}:00`;
+
+  const startRaw = pad(m2[1]);
+  const endRaw = pad(m2[2]);
+
+  // Assume start am, end pm if not specified
+  const toAmPm = (t: string, isEnd: boolean) => {
+    const [h, mins] = t.split(':').map(Number);
+    const meridian =
+      h >= 1 && h <= 6 ? (isEnd ? 'pm' : 'am')
+      : h >= 7 && h <= 11 ? (isEnd ? 'pm' : 'am')
+      : h === 12 ? (isEnd ? 'pm' : 'pm')
+      : 'am';
+    return `${h}:${mins.toString().padStart(2, '0')}${meridian}`;
+  };
+
+  return {
+    startTime: toAmPm(startRaw, false),
+    endTime: toAmPm(endRaw, true)
+  };
+}
+
+function parseDpmsIndianaHtml(html: string, sourceUrl: string): Array<{
+  name: string|null;
+  startDate: string;
+  endDate: string;
+  venueName: string|null;
+  address: string|null;
+  city: string|null;
+  state: 'IN';
+  zipCode?: string|null;
+  showHours?: string|null;
+  contactInfo?: string;
+  entryFee?: string;
+  url: string;
+}> {
+  // Entity replacements
+  let text = html
+    .replace(/&ndash;|&mdash;|&#8211;|&#8212;/g, '-')
+    .replace(/&ldquo;|&rdquo;|&#8220;|&#8221;/g, '"')
+    .replace(/&lsquo;|&rsquo;|&#8216;|&#8217;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>|<\/div>|<\/li>/gi, '\n')
+    .replace(/<[^>]*>/g, ' ');
+
+  text = text
+    .replace(/\r/g, '')
+    .replace(/\n{2,}/g, '\n')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join('\n');
+
+  const lines = text.split('\n');
+  const monthRe = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)/i;
+  const showLines = lines.filter(
+    (l) => monthRe.test(l) && /[-–—]/.test(l) && /,/.test(l)
+  );
+
+  const MONTH_MAP: Record<string, number> = {
+    jan: 0, january: 0,
+    feb: 1, february: 1,
+    mar: 2, march: 2,
+    apr: 3, april: 3,
+    may: 4,
+    jun: 5, june: 5,
+    jul: 6, july: 6,
+    aug: 7, august: 7,
+    sep: 8, sept: 8, september: 8,
+    oct: 9, october: 9,
+    nov: 10, november: 10,
+    dec: 11, december: 11
+  };
+
+  const ASSUME_YEAR = 2025;
+
+  const parseDateRange = (str: string) => {
+    str = str.replace(/(\d+)(st|nd|rd|th)/gi, '$1').trim();
+    const hasRange = /[-–—]| to /i.test(str);
+    if (!hasRange) {
+      const d = parseSingle(str);
+      return d ? { start: d, end: d } : null;
+    }
+    const [a, b] = str.split(/[-–—]| to /i).map((s) => s.trim());
+    const start = parseSingle(a);
+    if (!start) return null;
+    let end = parseSingle(b);
+    if (!end) {
+      const month = a.match(/^([a-z]+)/i)?.[1];
+      if (month) {
+        end = parseSingle(`${month} ${b}`);
+      }
+    }
+    return end ? { start, end } : null;
+  };
+
+  const parseSingle = (str: string) => {
+    const mm = str.match(/^([a-z]+)/i);
+    if (!mm?.[1]) return null;
+    const month = MONTH_MAP[mm[1].toLowerCase()];
+    if (month === undefined) return null;
+    
+    const dayMatch = str.match(/(\d{1,2})/);
+    if (!dayMatch?.[1]) return null;
+    
+    const day = Number(dayMatch[1]);
+    return new Date(ASSUME_YEAR, month, day);
+  };
+
+  const shows: Array<{
+    name: string|null;
+    startDate: string;
+    endDate: string;
+    venueName: string|null;
+    address: string|null;
+    city: string|null;
+    state: 'IN';
+    zipCode?: string|null;
+    showHours?: string|null;
+    contactInfo?: string;
+    entryFee?: string;
+    url: string;
+  }> = [];
+  
+  const seen = new Set<string>();
+
+  for (const line of showLines) {
+    const dateMatch = line.match(
+      /^(\s*[A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*(?:-|–|—|to)\s*\d{1,2}(?:st|nd|rd|th)?)?)/
+    );
+    if (!dateMatch) continue;
+
+    const dateInfo = parseDateRange(dateMatch[1]);
+    if (!dateInfo) continue;
+
+    let remaining = line.slice(dateMatch[0].length).trim();
+
+    const locEnd = remaining.indexOf('(') > -1 ? remaining.indexOf('(') : remaining.length;
+    const locPart = remaining.slice(0, locEnd).replace(/^[–—-]\s*/, '').trim();
+    const segs = locPart.split(/\s[–—-]\s/).map((s) => s.trim());
+
+    let city = '', venue = '', address = '';
+    if (segs.length >= 2) {
+      const cv = segs[0];
+      address = segs.slice(1).join(' - ');
+      const comma = cv.indexOf(',');
+      if (comma > -1) {
+        city = cv.slice(0, comma).trim();
+        venue = cv.slice(comma + 1).trim().replace(/^["']|["']$/g, '');
+      } else {
+        city = cv.trim();
+      }
+    }
+
+    if (!city && locPart.includes(',')) {
+      city = locPart.split(',')[0].trim();
+    }
+
+    // Hours
+    const hoursTokens: string[] = [];
+    const hrRe = /\(([^)]+)\)/g;
+    let m: RegExpExecArray | null;
+    while ((m = hrRe.exec(remaining)) !== null) {
+      if (isLikelyHours(m[1])) hoursTokens.push(m[1]);
+    }
+    const hours = hoursTokens
+      .map((t) => t.replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim())
+      .join(', ');
+
+    // Contact
+    let contactInfo = '';
+    const phoneRe = /\(?\s*(\d{3})\s*\)?[-\s]?(\d{3})[-\s]?(\d{4})/;
+    const pMatch = phoneRe.exec(remaining);
+    if (pMatch) {
+      const phoneFmt = `(${pMatch[1]}) ${pMatch[2]}-${pMatch[3]}`;
+      const nameCtx = remaining.slice(
+        Math.max(0, pMatch.index - 60),
+        pMatch.index
+      );
+      const nameRe =
+        /([A-Z][a-zA-Z.'-]{2,}(?:\s+[A-Z][a-zA-Z.'-]{2,}){0,2})\s*$/;
+      const nm = nameRe.exec(nameCtx);
+      const stop = new Set([
+        'Street','St','St.','Drive','Dr','Dr.','Road','Rd','Rd.',
+        'Avenue','Ave','Ave.','Boulevard','Blvd','Blvd.','Way','Lane','Ln','Ln.',
+        'Court','Ct','Ct.','East','West','North','South','E','W','N','S',
+        'Main','Division','Taylor','Carroll','Hunter','Wabash','Victory','Field',
+        'Bronco','Votaw','Sample','Jefferson','Robbins'
+      ]);
+      let name = '';
+      if (nm) {
+        const parts = nm[1].split(/\s+/).filter((w) => !stop.has(w));
+        if (parts.length >= 2) {
+          name = `${parts[parts.length - 2]} ${parts[parts.length - 1]}`;
+        } else if (parts.length === 1) {
+          name = parts[0];
+        }
+      }
+      contactInfo = name ? `${name} ${phoneFmt}` : phoneFmt;
+    }
+
+    const key = `${city}|${address}|${dateInfo.start.toISOString().slice(0,10)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    shows.push({
+      name: city || null,
+      startDate: dateInfo.start.toISOString().split('T')[0],
+      endDate: dateInfo.end.toISOString().split('T')[0],
+      venueName: venue || null,
+      address: address || null,
+      city: city || null,
+      state: 'IN',
+      zipCode: null,
+      showHours: hours || null,
+      contactInfo,
+      entryFee: 'free',
+      url: sourceUrl
+    });
+  }
+
+  return shows;
+}
+
 // Create a Supabase client with the service role key for admin access
 const getSupabaseAdmin = () => createClient(
   Deno.env.get('SUPABASE_URL') || '',
@@ -78,7 +336,7 @@ async function updateScrapingSourceStats(
          NOTE: supabase.rpc(...) returns a promise -> { data, error }.
          We must await it BEFORE we construct the updates object,
          otherwise Postgres receives JSON like { priority_score: [object Promise] }
-         which triggers “invalid input syntax for type integer”.
+         which triggers "invalid input syntax for type integer".
       ------------------------------------------------------------------ */
       if (showCount > 0) {
         const { data: incScore, error: incErr } = await supabase.rpc(
@@ -211,6 +469,77 @@ async function processUrl(supabase: any, url: string): Promise<{ success: boolea
       console.error(`[${url}] - Empty or too small HTML response`);
       return { success: false, showCount: 0 };
     }
+
+    // Check if this is the DPMS Indiana URL - use deterministic parser
+    if (url.includes('dpmsportcards.com/indiana-card-shows')) {
+      console.log(`[${url}] - Detected DPMS Indiana URL. Using deterministic parser...`);
+      
+      // Parse with custom DPMS parser
+      const rawShows = parseDpmsIndianaHtml(html, url);
+      console.log(`[${url}] - Extracted ${rawShows.length} raw shows from DPMS. Processing...`);
+      
+      // Insert each show into the pending table
+      let insertedCount = 0;
+      let filteredCount = 0;
+      
+      for (const rawShow of rawShows) {
+        // Skip shows without minimal required data
+        if (!rawShow.name || !rawShow.startDate) {
+          continue;
+        }
+        
+        // Skip shows where the date is in the past or un-parseable
+        const dateValidation = isShowDateValid(
+          rawShow.startDate,
+          rawShow.endDate
+        );
+
+        if (!dateValidation.valid) {
+          logDateFilterResult(
+            dateValidation,
+            rawShow.startDate || 'no date',
+            url
+          );
+          filteredCount++;
+          continue;
+        }
+
+        // Create normalized show with parsed hours
+        const { startTime, endTime } = parseSimpleHours(rawShow.showHours || '');
+        
+        const normalizedShow = {
+          ...rawShow,
+          startTime,
+          endTime
+        };
+
+        try {
+          const { error } = await supabase
+            .from('scraped_shows_pending')
+            .insert({
+              source_url: url,
+              raw_payload: rawShow,
+              normalized_json: normalizedShow,
+              status: 'PENDING'
+            });
+          
+          if (error) {
+            console.error(`[${url}] - Error inserting DPMS show: ${error.message}`);
+          } else {
+            insertedCount++;
+          }
+        } catch (e) {
+          console.error(`[${url}] - Exception inserting DPMS show: ${e.message}`);
+        }
+      }
+      
+      console.log(
+        `[${url}] - Successfully inserted ${insertedCount} of ${rawShows.length} DPMS shows (filtered ${filteredCount} past/invalid)`
+      );
+      return { success: true, showCount: insertedCount };
+    }
+
+    // For non-DPMS URLs, continue with AI extraction
     console.log(`[${url}] - HTML fetched (${html.length} bytes). Chunking & extracting with AI...`);
 
     // ---------------- AI chunk logic ------------------
