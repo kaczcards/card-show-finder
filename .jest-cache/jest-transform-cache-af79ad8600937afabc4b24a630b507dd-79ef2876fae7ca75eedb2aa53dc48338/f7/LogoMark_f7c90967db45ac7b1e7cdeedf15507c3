@@ -1,0 +1,194 @@
+8df0e7a8f092d3f561f31925eb8ad8d8
+function cov_xjvy4a1rp() {
+  var path = "/Users/kevin/card-show-finder/src/components/LogoMark.tsx";
+  var hash = "6339405129e184f1cf6f911b622987842e09d592";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/kevin/card-show-finder/src/components/LogoMark.tsx",
+    statementMap: {
+      "0": {
+        start: {
+          line: 4,
+          column: 17
+        },
+        end: {
+          line: 57,
+          column: 1
+        }
+      },
+      "1": {
+        start: {
+          line: 5,
+          column: 53
+        },
+        end: {
+          line: 5,
+          column: 58
+        }
+      },
+      "2": {
+        start: {
+          line: 7,
+          column: 2
+        },
+        end: {
+          line: 56,
+          column: 4
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 4,
+            column: 17
+          },
+          end: {
+            line: 4,
+            column: 18
+          }
+        },
+        loc: {
+          start: {
+            line: 4,
+            column: 96
+          },
+          end: {
+            line: 57,
+            column: 1
+          }
+        },
+        line: 4
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 5,
+            column: 10
+          },
+          end: {
+            line: 5,
+            column: 24
+          }
+        },
+        type: "default-arg",
+        locations: [{
+          start: {
+            line: 5,
+            column: 18
+          },
+          end: {
+            line: 5,
+            column: 24
+          }
+        }],
+        line: 5
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 5,
+            column: 26
+          },
+          end: {
+            line: 5,
+            column: 41
+          }
+        },
+        type: "default-arg",
+        locations: [{
+          start: {
+            line: 5,
+            column: 35
+          },
+          end: {
+            line: 5,
+            column: 41
+          }
+        }],
+        line: 5
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {
+      "0": [0],
+      "1": [0]
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "6339405129e184f1cf6f911b622987842e09d592"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_xjvy4a1rp = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_xjvy4a1rp();
+import React from 'react';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+cov_xjvy4a1rp().s[0]++;
+var LogoMark = function LogoMark(props) {
+  cov_xjvy4a1rp().f[0]++;
+  var _ref = (cov_xjvy4a1rp().s[1]++, props),
+    _ref$width = _ref.width,
+    width = _ref$width === void 0 ? (cov_xjvy4a1rp().b[0][0]++, '100%') : _ref$width,
+    _ref$height = _ref.height,
+    height = _ref$height === void 0 ? (cov_xjvy4a1rp().b[1][0]++, '100%') : _ref$height,
+    style = _ref.style;
+  cov_xjvy4a1rp().s[2]++;
+  return _jsxs(Svg, {
+    width: width,
+    height: height,
+    viewBox: "0 0 500 200",
+    style: style,
+    children: [_jsx(Path, {
+      d: "M40,40 L180,40 Q200,40 200,60 L200,180 Q200,200 180,200 L40,200 Q20,200 20,180 L20,60 Q20,40 40,40 Z",
+      fill: "white",
+      transform: "rotate(-10, 110, 120)"
+    }), _jsx(Path, {
+      d: "M60,20 L200,20 Q220,20 220,40 L220,160 Q220,180 200,180 L60,180 Q40,180 40,160 L40,40 Q40,20 60,20 Z",
+      fill: "white"
+    }), _jsx(Circle, {
+      cx: "320",
+      cy: "100",
+      r: "60",
+      fill: "#FF6A00"
+    }), _jsx(Circle, {
+      cx: "320",
+      cy: "100",
+      r: "60",
+      fill: "none",
+      stroke: "white",
+      strokeWidth: "16"
+    }), _jsx(Rect, {
+      x: "365",
+      y: "145",
+      width: "20",
+      height: "80",
+      rx: "10",
+      fill: "white",
+      transform: "rotate(45, 375, 155)"
+    })]
+  });
+};
+export default LogoMark;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIlN2ZyIsIkNpcmNsZSIsIlBhdGgiLCJSZWN0IiwianN4IiwiX2pzeCIsImpzeHMiLCJfanN4cyIsImNvdl94anZ5NGExcnAiLCJzIiwiTG9nb01hcmsiLCJwcm9wcyIsImYiLCJfcmVmIiwiX3JlZiR3aWR0aCIsIndpZHRoIiwiYiIsIl9yZWYkaGVpZ2h0IiwiaGVpZ2h0Iiwic3R5bGUiLCJ2aWV3Qm94IiwiY2hpbGRyZW4iLCJkIiwiZmlsbCIsInRyYW5zZm9ybSIsImN4IiwiY3kiLCJyIiwic3Ryb2tlIiwic3Ryb2tlV2lkdGgiLCJ4IiwieSIsInJ4Il0sInNvdXJjZXMiOlsiTG9nb01hcmsudHN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBSZWFjdCBmcm9tICdyZWFjdCc7XG5pbXBvcnQgU3ZnLCB7IENpcmNsZSwgUGF0aCwgUmVjdCB9IGZyb20gJ3JlYWN0LW5hdGl2ZS1zdmcnO1xuXG5jb25zdCBMb2dvTWFyayA9IChwcm9wczogeyB3aWR0aD86IG51bWJlciB8IHN0cmluZzsgaGVpZ2h0PzogbnVtYmVyIHwgc3RyaW5nOyBzdHlsZT86IGFueSB9KSA9PiB7XG4gIGNvbnN0IHsgd2lkdGggPSAnMTAwJScsIGhlaWdodCA9ICcxMDAlJywgc3R5bGUgfSA9IHByb3BzO1xuXG4gIHJldHVybiAoXG4gICAgPFN2Z1xuICAgICAgd2lkdGg9e3dpZHRofVxuICAgICAgaGVpZ2h0PXtoZWlnaHR9XG4gICAgICB2aWV3Qm94PVwiMCAwIDUwMCAyMDBcIlxuICAgICAgc3R5bGU9e3N0eWxlfVxuICAgID5cbiAgICAgIHsvKiBGaXJzdCBjYXJkIChiYWNrKSAtIHNsaWdodGx5IHJvdGF0ZWQgKi99XG4gICAgICA8UGF0aFxuICAgICAgICBkPVwiTTQwLDQwIEwxODAsNDAgUTIwMCw0MCAyMDAsNjAgTDIwMCwxODAgUTIwMCwyMDAgMTgwLDIwMCBMNDAsMjAwIFEyMCwyMDAgMjAsMTgwIEwyMCw2MCBRMjAsNDAgNDAsNDAgWlwiXG4gICAgICAgIGZpbGw9XCJ3aGl0ZVwiXG4gICAgICAgIHRyYW5zZm9ybT1cInJvdGF0ZSgtMTAsIDExMCwgMTIwKVwiXG4gICAgICAvPlxuXG4gICAgICB7LyogU2Vjb25kIGNhcmQgKGZyb250KSAqL31cbiAgICAgIDxQYXRoXG4gICAgICAgIGQ9XCJNNjAsMjAgTDIwMCwyMCBRMjIwLDIwIDIyMCw0MCBMMjIwLDE2MCBRMjIwLDE4MCAyMDAsMTgwIEw2MCwxODAgUTQwLDE4MCA0MCwxNjAgTDQwLDQwIFE0MCwyMCA2MCwyMCBaXCJcbiAgICAgICAgZmlsbD1cIndoaXRlXCJcbiAgICAgIC8+XG5cbiAgICAgIHsvKiBNYWduaWZ5aW5nIGdsYXNzIGxlbnMgLSBvcmFuZ2UgZmlsbGVkIGNpcmNsZSAqL31cbiAgICAgIDxDaXJjbGVcbiAgICAgICAgY3g9XCIzMjBcIlxuICAgICAgICBjeT1cIjEwMFwiXG4gICAgICAgIHI9XCI2MFwiXG4gICAgICAgIGZpbGw9XCIjRkY2QTAwXCJcbiAgICAgIC8+XG5cbiAgICAgIHsvKiBNYWduaWZ5aW5nIGdsYXNzIHJpbmcgKi99XG4gICAgICA8Q2lyY2xlXG4gICAgICAgIGN4PVwiMzIwXCJcbiAgICAgICAgY3k9XCIxMDBcIlxuICAgICAgICByPVwiNjBcIlxuICAgICAgICBmaWxsPVwibm9uZVwiXG4gICAgICAgIHN0cm9rZT1cIndoaXRlXCJcbiAgICAgICAgc3Ryb2tlV2lkdGg9XCIxNlwiXG4gICAgICAvPlxuXG4gICAgICB7LyogTWFnbmlmeWluZyBnbGFzcyBoYW5kbGUgKi99XG4gICAgICA8UmVjdFxuICAgICAgICB4PVwiMzY1XCJcbiAgICAgICAgeT1cIjE0NVwiXG4gICAgICAgIHdpZHRoPVwiMjBcIlxuICAgICAgICBoZWlnaHQ9XCI4MFwiXG4gICAgICAgIHJ4PVwiMTBcIlxuICAgICAgICBmaWxsPVwid2hpdGVcIlxuICAgICAgICB0cmFuc2Zvcm09XCJyb3RhdGUoNDUsIDM3NSwgMTU1KVwiXG4gICAgICAvPlxuICAgIDwvU3ZnPlxuICApO1xufTtcblxu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
