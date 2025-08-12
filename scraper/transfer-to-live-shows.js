@@ -316,18 +316,22 @@ async function main() {
     }
 
     // Map valid pending shows to live show schema
-    const showsToTransfer = validPendingShows.map(mapToShowSchema);
+    const pairs = validPendingShows.map(p => ({
+      pending: p,
+      mapped: mapToShowSchema(p)
+    }));
     
     // Preview shows to transfer
     if (argv.dryRun) {
       console.log('\n' + '='.repeat(80));
-      console.log(`DRY RUN: ${showsToTransfer.length} shows would be transferred`);
+      console.log(`DRY RUN: ${pairs.length} shows would be transferred`);
       console.log('='.repeat(80));
       
       // Display a summary of each show
-      showsToTransfer.forEach((show, index) => {
+      pairs.forEach((pair, index) => {
+        const show = pair.mapped;
         console.log(`\n${index + 1}. ${show.title}`);
-        console.log(`   Date: ${new Date(show.start_date).toLocaleDateString()}`);
+        console.log(`   Date: ${show.start_date ? new Date(show.start_date).toLocaleDateString() : 'N/A'}`);
         console.log(`   Location: ${show.location}`);
         console.log(`   Address: ${show.address}`);
         if (show.coordinates) {
@@ -345,7 +349,7 @@ async function main() {
     
     // Confirm transfer unless --force is used
     if (!argv.force) {
-      const confirmed = await confirm(`Transfer ${pendingShows.length} shows to the live shows table?`);
+      const confirmed = await confirm(`Transfer ${pairs.length} shows to the live shows table?`);
       if (!confirmed) {
         log('Transfer cancelled', null, true);
         rl.close();
@@ -355,19 +359,29 @@ async function main() {
     
     // Track statistics
     const stats = {
-      total: pendingShows.length,
+      total: pairs.length,
       success: 0,
       failed: 0,
       errors: []
     };
     
     // Transfer shows one by one for better error handling
-    for (let i = 0; i < showsToTransfer.length; i++) {
-      const show = showsToTransfer[i];
-      const pendingShow = pendingShows[i];
+    for (let i = 0; i < pairs.length; i++) {
+      const { mapped: show, pending: pendingShow } = pairs[i];
+
+      // Guard against bad mapping (missing start_date)
+      if (!show.start_date) {
+        log(`Skipping show with missing start_date: ${show.title}`, null, true);
+        stats.failed++;
+        stats.errors.push({
+          show: show.title,
+          error: 'start_date missing after mapping'
+        });
+        continue;
+      }
       
       try {
-        log(`Processing show ${i+1}/${showsToTransfer.length}: ${show.title}`);
+        log(`Processing show ${i+1}/${pairs.length}: ${show.title}`);
         
         // Insert into shows table
         let insertQuery = supabase.from('shows').insert({
