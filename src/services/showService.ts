@@ -7,6 +7,7 @@
 import { supabase } from '../supabase';
 import { Show, ShowStatus } from '../types';
 import { calculateDistanceBetweenCoordinates } from './locationService';
+import { safeOverlaps } from '../utils/postgrest';
 
 /* ------------------------------------------------------------------ */
 /* WKB (hex) → Lat/Lng helpers                                         */
@@ -572,9 +573,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     if (typeof filters.maxEntryFee === 'number') {
       query = query.lte('entry_fee', filters.maxEntryFee);
     }
-    if (filters.categories && Array.isArray(filters.categories) && filters.categories.length > 0) {
-      query = query.overlaps('categories', filters.categories);
-    }
+    query = safeOverlaps(query, 'categories', filters.categories as any);
 
     /* ---------- Log basic-query filters for debugging ---------- */
     console.warn('[showService] Executing basic query with filters:', {
@@ -715,9 +714,7 @@ const getDirectPaginatedShows = async (
       countQuery = countQuery.lte('entry_fee', maxEntryFee);
     }
     
-    if (categories && Array.isArray(categories) && categories.length > 0) {
-      countQuery = countQuery.overlaps('categories', categories);
-    }
+    countQuery = safeOverlaps(countQuery, 'categories', categories as any);
     
     // Execute count query
     const { count, error: countError } = await countQuery;

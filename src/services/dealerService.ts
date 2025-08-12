@@ -7,6 +7,7 @@
 import { supabase } from '../supabase';
 import { Show, UserRole } from '../types';
 import { formatInList } from '../utils/postgrest';
+import { normalizeRole } from './userRoleService';
 
 /**
  * Types for dealer show participation
@@ -15,17 +16,6 @@ import { formatInList } from '../utils/postgrest';
  * Normalize a role string (DB may store lowercase) to the lowercase
  * `UserRole` enum used throughout the client.
  */
-const normalizeRole = (role: string | null | undefined): UserRole | null => {
-  if (!role) return null;
-  // FIX: Convert to lowercase to match enum string values
-  const normalizedRoleString = role.toLowerCase();
-  
-  // Check if the normalized string is one of the valid UserRole enum values
-  if (Object.values(UserRole).includes(normalizedRoleString as UserRole)) {
-    return normalizedRoleString as UserRole;
-  }
-  return null;
-};
 
 export interface DealerShowParticipation {
   id: string;
