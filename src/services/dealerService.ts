@@ -6,6 +6,7 @@
 
 import { supabase } from '../supabase';
 import { Show, UserRole } from '../types';
+import { formatInList } from '../utils/postgrest';
 
 /**
  * Types for dealer show participation
@@ -530,11 +531,9 @@ export const getAvailableShowsForDealer = async (
 
     // Exclude shows the dealer is already registered for
     if (registeredShowIds.length > 0) {
-      // PostgREST expects an `(id1,id2,...)` string for the `in` filter.
-      const idsList = `(${registeredShowIds
-        .map((id: string) => `"${id}"`)
-        .join(',')})`;
-      query = query.not('id', 'in', idsList);
+      // PostgREST expects a parenthesised list string for an `in` / `not.in` filter.
+      // Use the shared helper to ensure correct quoting / formatting.
+      query = query.not('id', 'in', formatInList(registeredShowIds));
     }
 
     // Order by start date
