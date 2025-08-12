@@ -97,7 +97,6 @@ async function main() {
     .ilike('source_url', '%dpmsportcards%')
     .eq('status', 'TRANSFERRED')
     .not('normalized_json', 'is', null)
-    .gte('normalized_json->startDate', '2025-08-01')
     .order('created_at', { ascending: false });
   
   if (pendingError) {
