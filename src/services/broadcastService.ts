@@ -15,6 +15,8 @@ import {
   BroadcastHistoryItem,
   BroadcastQuota
 } from './organizerService';
+import { UserRole } from '../types';
+import { normalizeRole } from './userRoleService';
 
 /**
  * Send a broadcast message to attendees/dealers of a show
@@ -61,7 +63,7 @@ export const sendBroadcastMessage = async (
       return { success: false, error: 'Failed to verify organizer permissions' };
     }
 
-    if (profileData.role !== 'SHOW_ORGANIZER') {
+    if (normalizeRole(profileData.role) !== UserRole.SHOW_ORGANIZER) {
       return { success: false, error: 'Only show organizers can send broadcast messages' };
     }
 

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
 import { useUserSubscriptions } from '../../hooks/useUserSubscriptions';
+import { useStripe } from '@stripe/stripe-react-native'; // Stripe hooks
 /* -------------------------------------------------------------
  * Subscription service – functions that act on the database
  * ----------------------------------------------------------- */
@@ -30,13 +31,16 @@ const SubscriptionScreen: React.FC = () => {
   const { user } = authState;
   const navigation = useNavigation();
   const { width: _width } = useWindowDimensions();
+  // Stripe helpers for PaymentSheet
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   
   const [loading, setLoading] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
   const [timeRemaining, setTimeRemaining] = useState<{ days: number, hours: number } | null>(null);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  // Default to monthly billing
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   
   // Colors
   const ORANGE = '#FF6A00';
@@ -118,7 +122,11 @@ const SubscriptionScreen: React.FC = () => {
     
     setProcessingPayment(true);
     try {
-      const result = await initiateSubscriptionPurchase(user.id, selectedPlan.id);
+      const result = await initiateSubscriptionPurchase(
+        user.id,
+        selectedPlan.id,
+        { initPaymentSheet, presentPaymentSheet },
+      );
       
       if (result.success) {
         await refreshUserRole(); // Call to refresh user's role and state after successful purchase
@@ -147,7 +155,11 @@ const SubscriptionScreen: React.FC = () => {
     
     setProcessingPayment(true);
     try {
-      const result = await renewSubscription(user.id, selectedPlan.id);
+      const result = await renewSubscription(
+        user.id,
+        selectedPlan.id,
+        { initPaymentSheet, presentPaymentSheet },
+      );
       
       if (result.success) {
         await refreshUserRole(); // Call to refresh user's role and state after successful renewal
