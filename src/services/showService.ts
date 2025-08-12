@@ -86,7 +86,8 @@ const parseWkbPoint = (
       return { latitude: y, longitude: x };
     }
     return null;
-  } catch (_e) {
+  } catch {
+    // Swallow any parsing error – return null to indicate failure
     return null;
   }
 };

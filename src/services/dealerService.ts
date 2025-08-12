@@ -530,7 +530,11 @@ export const getAvailableShowsForDealer = async (
 
     // Exclude shows the dealer is already registered for
     if (registeredShowIds.length > 0) {
-      query = query.not('id', 'in', registeredShowIds)
+      // PostgREST expects an `(id1,id2,...)` string for the `in` filter.
+      const idsList = `(${registeredShowIds
+        .map((id: string) => `"${id}"`)
+        .join(',')})`;
+      query = query.not('id', 'in', idsList);
     }
 
     // Order by start date
