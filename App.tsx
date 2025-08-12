@@ -231,17 +231,19 @@ export default function App() {
   }
 
   return (
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <ThemeProvider>
-            <AuthProvider>
-              <RootNavigator />
-              <StatusBar style="auto" />
-              {/* Global toast portal */}
-              <Toast config={toastConfig} />
-            </AuthProvider>
-          </ThemeProvider>
-        </SafeAreaProvider>
-      </QueryClientProvider>
+      <StripeProvider publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''}>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <RootNavigator />
+                <StatusBar style="auto" />
+                {/* Global toast portal */}
+                <Toast config={toastConfig} />
+              </AuthProvider>
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </QueryClientProvider>
+      </StripeProvider>
   );
 }
