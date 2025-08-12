@@ -290,8 +290,33 @@ async function main() {
     
     log(`Found ${pendingShows.length} pending shows to transfer`, null, true);
     
-    // Map pending shows to live show schema
-    const showsToTransfer = pendingShows.map(mapToShowSchema);
+    // ---------------------------------------------------------------
+    // Filter out records missing normalized_json or startDate
+    // ---------------------------------------------------------------
+    const validPendingShows = pendingShows.filter((p) => {
+      return (
+        p.normalized_json &&
+        p.normalized_json.startDate
+      );
+    });
+
+    const skippedCount = pendingShows.length - validPendingShows.length;
+    if (skippedCount > 0) {
+      log(
+        `Skipping ${skippedCount} pending shows missing normalized_json or startDate`,
+        null,
+        true
+      );
+    }
+
+    if (validPendingShows.length === 0) {
+      log('No valid pending shows remain after filtering', null, true);
+      rl.close();
+      process.exit(0);
+    }
+
+    // Map valid pending shows to live show schema
+    const showsToTransfer = validPendingShows.map(mapToShowSchema);
     
     // Preview shows to transfer
     if (argv.dryRun) {
