@@ -1,9 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Linking, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+  Linking,
+  Alert,
+} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import SocialIcon from '../../../components/ui/SocialIcon';
-
-type UserRole = 'SHOW_ORGANIZER' | 'MVP_DEALER' | 'DEALER' | 'USER';
+import { UserRole } from '../../../types';
 
 interface Dealer {
   id: string;
@@ -34,7 +41,11 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 // Social media icons component for MVP Dealers
 const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
   // Show social icons for MVP Dealers **and** Show Organizers acting as dealers
-  if (dealer.role !== 'MVP_DEALER' && dealer.role !== 'SHOW_ORGANIZER') return null;
+  if (
+    dealer.role !== UserRole.MVP_DEALER &&
+    dealer.role !== UserRole.SHOW_ORGANIZER
+  )
+    return null;
   
   /**
    * Safely open a URL.  If a user entered their link without a protocol
@@ -168,6 +179,8 @@ console.warn('[DealersList] Dealer pressed:', dealerId, dealerName);
             return (
               <View key={dealer.id} style={styles.dealerItem}>
                 {dealer.role === 'MVP_DEALER' || dealer.role === 'SHOW_ORGANIZER' ? (
+                {dealer.role === UserRole.MVP_DEALER ||
+                dealer.role === UserRole.SHOW_ORGANIZER ? (
                   // Make the entire row clickable for MVP dealers
                   <TouchableOpacity 
                     style={[
