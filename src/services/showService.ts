@@ -1064,6 +1064,11 @@ export const getUpcomingShows = async (params: {
       .map((row: any) => row.showid)
       .filter(Boolean);
 
+    // Early-exit guard: nothing to look up → return empty list
+    if (showIds.length === 0) {
+      return { data: [], error: null };
+    }
+
     /* -----------------------------------------------------------
      * 2. Fetch shows matching those IDs + date filters
      * --------------------------------------------------------- */
