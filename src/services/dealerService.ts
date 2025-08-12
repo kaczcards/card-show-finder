@@ -429,6 +429,11 @@ export const getDealersForShow = async (
     // Step 2: Extract user IDs from participants
     const userIds = participantsData.map(participant => participant.userid);
 
+    // Early-exit guard: no user IDs to look up → nothing to return
+    if (!userIds || userIds.length === 0) {
+      return { data: [], error: null };
+    }
+
     // Step 3: Fetch profiles for these user IDs
     // Only select columns that definitely exist in the schema
     const { data: profilesData, error: profilesError } = await supabase

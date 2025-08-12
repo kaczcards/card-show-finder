@@ -179,6 +179,13 @@ export const useShowDetail = (
       }
 
       const participantUserIds = [...new Set(participants.map((p) => p.userid))];
+
+      // Early-exit guard: nothing to look up → clear list & stop
+      if (participantUserIds.length === 0) {
+        setParticipatingDealers([]);
+        return;
+      }
+
       const { data: dealerProfiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, profile_image_url, role, account_type')
