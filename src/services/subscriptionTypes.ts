@@ -52,7 +52,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     type: SubscriptionPlanType.DEALER,
     name: 'MVP Dealer Monthly',
     description: 'Preview inventory, interact with collectors & more (_monthly)',
-    price: 29,
+    price: 29.99,
     duration: SubscriptionDuration.MONTHLY,
     trialDays: 7,
     features: [
@@ -88,7 +88,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     type: SubscriptionPlanType.ORGANIZER,
     name: 'Show Organizer Monthly',
     description: 'Organize shows & engage dealers/collectors (monthly)',
-    price: 49,
+    price: 44.99,
     duration: SubscriptionDuration.MONTHLY,
     trialDays: 7,
     features: [
