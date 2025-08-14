@@ -158,7 +158,6 @@ const SubscriptionScreen: React.FC = () => {
       const result = await renewSubscription(
         user.id,
         selectedPlan.id,
-        { initPaymentSheet, presentPaymentSheet },
       );
       
       if (result.success) {
