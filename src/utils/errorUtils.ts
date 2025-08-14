@@ -1,4 +1,4 @@
-import _React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 import {
   AppError,
@@ -7,7 +7,7 @@ import {
   getUserFriendlyMessage,
   handleSupabaseError,
   logError,
-  withErrorHandling as _withErrorHandling
+  // withErrorHandling is not used in this module
 } from '../services/errorService';
 
 /**

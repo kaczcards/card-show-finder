@@ -62,7 +62,9 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
     }
 
      
-console.warn('[DealersList] Opening URL:', formattedUrl);
+if (typeof __DEV__ !== 'undefined' && __DEV__) {
+  console.warn('[DealersList] Opening URL:', formattedUrl);
+}
 
     Linking.openURL(formattedUrl).catch(err => {
       console.error('Error opening URL:', err);
@@ -136,13 +138,18 @@ const DealersList: React.FC<DealersListProps> = ({
   const handleViewDealerDetails = useCallback((dealerId: string, dealerName: string) => {
     // Prevent multiple rapid clicks
     if (isNavigating) {
-       
-console.warn('[DealersList] Navigation already in progress, ignoring click');
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.warn(
+          '[DealersList] Navigation already in progress, ignoring click'
+        );
+      }
       return;
     }
 
      
-console.warn('[DealersList] Dealer pressed:', dealerId, dealerName);
+if (typeof __DEV__ !== 'undefined' && __DEV__) {
+  console.warn('[DealersList] Dealer pressed:', dealerId, dealerName);
+}
     
     // Set visual feedback and prevent double-clicks
     setIsNavigating(true);
