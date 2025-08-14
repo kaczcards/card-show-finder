@@ -246,12 +246,14 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
       /* ---------- Sanity-check lat / lng values ---------- */
       if (Math.abs(filters.latitude) > 90 || Math.abs(filters.longitude) > 180) {
+        if (__DEV__)
         console.warn(
           '[showService] Suspicious coordinates detected – latitude / longitude might be swapped:',
           { latitude: filters.latitude, longitude: filters.longitude }
         );
       }
 
+      if (__DEV__)
       console.warn('[showService] Calling nearby_shows with params:', {
         lat: filters.latitude,
         long: filters.longitude,
@@ -274,11 +276,13 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       );
 
       if (nearbyError) {
+        if (__DEV__)
         console.warn(
           '[showService] nearby_shows RPC failed – attempting fallback',
           nearbyError.message
         );
       } else {
+        if (__DEV__)
         console.warn(
           `[showService] nearby_shows returned ${((nearbyData && Array.isArray(nearbyData)) ? nearbyData.length : 0)} show(s)`
         );
@@ -286,6 +290,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         /* ----- DEBUG: Is target show present in raw nearby_shows data? ---- */
         if (Array.isArray(nearbyData)) {
           const found = nearbyData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          if (__DEV__)
           console.warn(
             `[showService][DEBUG_SHOW] Target show ${
               found ? 'FOUND' : 'NOT found'
@@ -295,7 +300,8 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           // If found, get the show details for further debugging
           if (found) {
             const targetShow = nearbyData.find((s: any) => s.id === DEBUG_SHOW_ID);
-            console.warn(
+          if (__DEV__)
+          console.warn(
               `[showService][DEBUG_SHOW] Target show details:`,
               {
                 id: targetShow.id,
@@ -314,6 +320,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         // Ensure we're not showing past shows
         if (Array.isArray(filteredData)) {
           const today = new Date();
+          if (__DEV__)
           console.warn(`[showService][DEBUG_SHOW] Today's date for filtering: ${today.toISOString()}`);
           
           // Check if target show exists before filtering
@@ -335,6 +342,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
             
             // Debug logging specifically for our target show
             if (show.id === DEBUG_SHOW_ID) {
+              if (__DEV__)
               console.warn(
                 `[showService][DEBUG_SHOW] Filtering decision: show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
               );
@@ -343,6 +351,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
             return isValid;
           });
           
+          if (__DEV__)
           console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
         }
         
@@ -374,6 +383,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         /* ----- DEBUG: Is target show present after client-side filters? ---- */
         if (Array.isArray(filteredData)) {
           const foundAfter = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          if (__DEV__)
           console.warn(
             `[showService][DEBUG_SHOW] Target show ${
               foundAfter ? 'REMAINS' : 'WAS FILTERED OUT'
@@ -387,6 +397,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       /* -------------------------------------------------------
        * 1b. Fallback to find_filtered_shows if nearby_shows fails
        * ----------------------------------------------------- */
+      if (__DEV__)
       console.warn('[showService] Falling back to find_filtered_shows with params:', {
         center_lat: filters.latitude,
         center_lng: filters.longitude,
@@ -414,11 +425,13 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       );
 
       if (rpcError) {
+        if (__DEV__)
         console.warn(
           '[showService] find_filtered_shows RPC failed – attempting second fallback',
           rpcError.message
         );
       } else {
+        if (__DEV__)
         console.warn(
           `[showService] find_filtered_shows returned ${((rpcData && Array.isArray(rpcData)) ? rpcData.length : 0)} show(s)`
         );
@@ -426,6 +439,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         /* ----- DEBUG: Target show in raw find_filtered_shows payload? ----- */
         if (Array.isArray(rpcData)) {
           const foundRaw = rpcData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          if (__DEV__)
           console.warn(
             `[showService][DEBUG_SHOW] Target show ${
               foundRaw ? 'FOUND' : 'NOT found'
@@ -452,6 +466,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         let filteredData = rpcData;
         if (Array.isArray(filteredData)) {
           const today = new Date();
+          if (__DEV__)
           console.warn(`[showService][DEBUG_SHOW] Today's date for filtering (find_filtered): ${today.toISOString()}`);
           
           // Check if target show exists before filtering
@@ -473,6 +488,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
             
             // Debug logging specifically for our target show
             if (show.id === DEBUG_SHOW_ID) {
+              if (__DEV__)
               console.warn(
                 `[showService][DEBUG_SHOW] Filtering decision (find_filtered): show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
               );
@@ -481,12 +497,14 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
             return isValid;
           });
           
+          if (__DEV__)
           console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
         }
         
         /* ----- DEBUG: Target show after filters (find_filtered_shows) ----- */
         if (Array.isArray(filteredData)) {
           const foundFiltered = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+          if (__DEV__)
           console.warn(
             `[showService][DEBUG_SHOW] Target show ${
               foundFiltered ? 'REMAINS' : 'WAS FILTERED OUT'
@@ -510,16 +528,19 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
       );
 
       if (fbError) {
+        if (__DEV__)
         console.warn(
           '[showService] find_shows_within_radius fallback failed – will use basic query',
           fbError.message
         );
         // fall through to non-spatial query below
       } else {
+        if (__DEV__)
         console.warn(
           '[showService] find_shows_within_radius params:',
           { center_lat: filters.latitude, center_lng: filters.longitude, radius_miles: radius }
         );
+        if (__DEV__)
         console.warn(
           `[showService] find_shows_within_radius returned ${((fbData && Array.isArray(fbData)) ? fbData.length : 0)} show(s)`
         );
@@ -536,6 +557,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
             return showEndDate >= today;
           });
           
+          if (__DEV__)
           console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
         }
         
@@ -576,6 +598,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
     query = safeOverlaps(query, 'categories', filters.categories as any);
 
     /* ---------- Log basic-query filters for debugging ---------- */
+    if (__DEV__)
     console.warn('[showService] Executing basic query with filters:', {
       startDate: rangeStart,
       endDate: rangeEnd,
@@ -588,6 +611,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
 
     if (error) throw error;
 
+    if (__DEV__)
     console.warn(
       `[showService] basic query returned ${((data && Array.isArray(data)) ? data.length : 0)} show(s)`
     );
@@ -604,6 +628,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         const targetEndDate = new Date(targetShowBeforeFilter.end_date);
         const isPastShow = targetEndDate < today;
         
+        if (__DEV__)
         console.warn(
           `[showService][DEBUG_SHOW] Target show end_date (basic query): ${targetEndDate.toISOString()} | Today: ${today.toISOString()} | Is past show? ${isPastShow ? 'YES' : 'NO'}`
         );
@@ -624,6 +649,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         return isValid;
       });
       
+      if (__DEV__)
       console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
     }
     
@@ -650,7 +676,10 @@ export const getPaginatedShows = async (
 ): Promise<PaginatedShowsResult> => {
   try {
     // 🔄  PRODUCTION APPROACH: use the reliable direct-query helper
-    console.warn('[showService] getPaginatedShows → using direct query (RPC bypass)');
+    if (__DEV__)
+      console.warn(
+        '[showService] getPaginatedShows → using direct query (RPC bypass)',
+      );
     return await getDirectPaginatedShows(params);
   } catch (err: any) {
     console.error('[showService] Error in getPaginatedShows:', err);
@@ -691,13 +720,20 @@ const getDirectPaginatedShows = async (
     const toIso = (d: Date | string | null): string =>
       d instanceof Date ? d.toISOString() : d || '';
     
-    console.warn('[showService] getDirectPaginatedShows executing with params:', {
+    if (__DEV__)
+      console.warn(
+        '[showService] getDirectPaginatedShows executing with params:',
+        {
       latitude, longitude, radius, 
       startDate: toIso(startDate),
       endDate: toIso(endDate)
-    });
+        },
+      );
     
-    // First get the total count with a separate query
+    if (__DEV__)
+      console.warn(
+        '[showService] Using direct query for coordinate extraction',
+      );
     let countQuery = supabase
       .from('shows')
       .select('id', { count: 'exact' })
@@ -745,9 +781,10 @@ const getDirectPaginatedShows = async (
     // Process the data to add coordinates
     let filteredData: any[] = data || [];
 
-    console.warn(
-      `[showService] Direct query returned ${filteredData.length} raw show(s)`
-    );
+    if (__DEV__)
+      console.warn(
+        `[showService] Direct query returned ${filteredData.length} raw show(s)`,
+      );
     
     // Apply additional filters that weren't handled by the RPC
     
@@ -786,7 +823,8 @@ const getDirectPaginatedShows = async (
       Math.abs(latitude) < 0.1 && Math.abs(longitude) < 0.1;
 
     if (radius && !isDefaultCoordinates) {
-      console.warn(
+      if (__DEV__)
+        console.warn(
         `[showService] Applying distance filtering with coordinates (${latitude}, ${longitude})`
       );
 
@@ -831,7 +869,8 @@ const getDirectPaginatedShows = async (
         return distance <= radius;
       });
     } else if (isDefaultCoordinates) {
-      console.warn(
+      if (__DEV__)
+        console.warn(
         `[showService] Skipping distance filtering – default coordinates detected (${latitude}, ${longitude})`
       );
     }
@@ -842,7 +881,10 @@ const getDirectPaginatedShows = async (
     const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
     const paginatedData = filteredData.slice(startIndex, endIndex);
     
-    console.warn(`[showService] getDirectPaginatedShows found ${paginatedData.length} shows (from ${totalFilteredCount} filtered, ${count} total)`);
+    if (__DEV__)
+      console.warn(
+        `[showService] getDirectPaginatedShows found ${paginatedData.length} shows (from ${totalFilteredCount} filtered, ${count} total)`,
+      );
     
     // Map to app format
     const mappedShows = paginatedData.map(mapDbShowToAppShow);
@@ -890,7 +932,10 @@ const _getAllActiveShowsFallback = async (
       page = 1,
     } = params;
 
-    console.warn('[showService] Using emergency getAllActiveShowsFallback without coordinate filtering');
+    if (__DEV__)
+      console.warn(
+        '[showService] Using emergency getAllActiveShowsFallback without coordinate filtering',
+      );
     
     const toIso = (d: Date | string | null): string =>
       d instanceof Date ? d.toISOString() : d || '';
@@ -933,7 +978,10 @@ const _getAllActiveShowsFallback = async (
       throw dataError;
     }
     
-    console.warn(`[showService] Emergency getAllActiveShowsFallback found ${data.length} shows (from ${count} total)`);
+    if (__DEV__)
+      console.warn(
+        `[showService] Emergency getAllActiveShowsFallback found ${data.length} shows (from ${count} total)`,
+      );
     
     // Map to app format
     const mappedShows = data.map(mapDbShowToAppShow);
@@ -1102,7 +1150,10 @@ export const getUpcomingShows = async (params: {
         return showEndDate >= today;
       });
       
-      console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+      if (__DEV__)
+        console.warn(
+          `[showService] Filtered out past shows. ${filteredData.length} shows remaining.`,
+        );
     }
 
     const mapped = Array.isArray(filteredData)
