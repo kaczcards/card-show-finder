@@ -55,8 +55,14 @@ export const sendMessage = async (
 ): Promise<Message | null> => {
   try {
     // This is a placeholder implementation
-     
-console.warn('Sending message:', { senderId, recipientId, content, type, metadata });
+    if (__DEV__)
+      console.warn('Sending message:', {
+        senderId,
+        recipientId,
+        content,
+        type,
+        metadata,
+      });
     
     // In a real implementation, we would store the message in Supabase
     // const { data, error } = await supabase
@@ -110,8 +116,7 @@ export const getUserMessages = async (
 ): Promise<Message[]> => {
   try {
     // This is a placeholder implementation
-     
-console.warn('Getting messages for user:', userId);
+    if (__DEV__) console.warn('Getting messages for user:', userId);
     
     // In a real implementation, we would fetch messages from Supabase
     // const { data, error } = await supabase
@@ -139,8 +144,7 @@ console.warn('Getting messages for user:', userId);
 export const markMessageAsRead = async (messageId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
-     
-console.warn('Marking message as read:', messageId);
+    if (__DEV__) console.warn('Marking message as read:', messageId);
     
     // In a real implementation, we would update the message in Supabase
     // const { error } = await supabase
@@ -166,8 +170,7 @@ console.warn('Marking message as read:', messageId);
 export const deleteMessage = async (messageId: string, _userId: string): Promise<boolean> => {
   try {
     // This is a placeholder implementation
-     
-console.warn('Deleting message:', messageId);
+    if (__DEV__) console.warn('Deleting message:', messageId);
     
     // In a real implementation, we would delete the message from Supabase
     // const { error } = await supabase
@@ -201,8 +204,13 @@ export const sendBroadcastMessage = async (
 ): Promise<Message[] | null> => {
   try {
     // This is a placeholder implementation
-     
-console.warn('Sending broadcast message:', { senderId, recipientIds, content, metadata });
+    if (__DEV__)
+      console.warn('Sending broadcast message:', {
+        senderId,
+        recipientIds,
+        content,
+        metadata,
+      });
     
     // In a real implementation, we would send individual messages to each recipient
     const messages: Message[] = [];

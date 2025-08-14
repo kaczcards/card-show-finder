@@ -187,13 +187,13 @@ export const registerForShow = async (
     // ------------------------------------------------------------
     // Debugging – log the raw role we got back from Supabase
     // ------------------------------------------------------------
-     
-    console.warn(
-      '[registerForShow] DB role value:',
-      userData?.role,
-      '| normalised:',
-      normalizeRole(userData?.role)
-    );
+    if (__DEV__)
+      console.warn(
+        '[registerForShow] DB role value:',
+        userData?.role,
+        '| normalised:',
+        normalizeRole(userData?.role)
+      );
 
     const userRole = normalizeRole(userData?.role);
 
@@ -552,8 +552,10 @@ export const getAvailableShowsForDealer = async (
     ) {
       // This would ideally use the server-side PostGIS functions,
       // but for simplicity we'll do basic filtering here
-       
-console.warn('Filtering by distance is not implemented in this version');
+      if (__DEV__)
+        console.warn(
+          'Filtering by distance is not implemented in this version',
+        );
     }
 
     return { 
