@@ -178,7 +178,6 @@ console.warn('[DealersList] Dealer pressed:', dealerId, dealerName);
             
             return (
               <View key={dealer.id} style={styles.dealerItem}>
-                {dealer.role === 'MVP_DEALER' || dealer.role === 'SHOW_ORGANIZER' ? (
                 {dealer.role === UserRole.MVP_DEALER ||
                 dealer.role === UserRole.SHOW_ORGANIZER ? (
                   // Make the entire row clickable for MVP dealers
