@@ -136,10 +136,12 @@ export default function App() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       const TEST_URL = 'https://jsonplaceholder.typicode.com/todos/1';
-      console.warn('[Diagnostics] Pinging public endpoint:', TEST_URL);
+      if (__DEV__)
+        console.warn('[Diagnostics] Pinging public endpoint:', TEST_URL);
       try {
         const resp = await fetch(TEST_URL, { signal: controller.signal });
-        console.warn(
+        if (__DEV__)
+          console.warn(
           `[Diagnostics] Fetch completed – status: ${resp.status} ${resp.ok ? '(OK)' : '(ERR)'}`
         );
         if (!resp.ok) {
@@ -148,7 +150,7 @@ export default function App() {
           return;
         }
         const data = await resp.json();
-        console.warn('[Diagnostics] Response JSON:', data);
+        if (__DEV__) console.warn('[Diagnostics] Response JSON:', data);
         setNetStatus('success');
       } catch (err: any) {
         const msg =
@@ -174,7 +176,7 @@ export default function App() {
         // Run connectivity test (does not block app start)
         await testConnectivity();
       } catch (e) {
-        console.warn('Error initializing app:', e);
+        if (__DEV__) console.warn('Error initializing app:', e);
       } finally {
         setIsReady(true);
       }
