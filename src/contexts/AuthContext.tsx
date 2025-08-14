@@ -106,8 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Set the count from the profile data
       const count = data?.favorite_shows_count || 0;
-       
-console.warn('[AuthContext] Fetched favorite_shows_count:', count);
+      if (__DEV__)
+        console.warn('[AuthContext] Fetched favorite_shows_count:', count);
       setFavoriteCount(count);
     } catch (error) {
       console.error('[AuthContext] Unexpected error in fetchFavoriteCount:', error);
@@ -268,8 +268,8 @@ console.warn('[AuthContext] Fetched favorite_shows_count:', count);
   // Login method
   const login = async (credentials: AuthCredentials): Promise<User> => {
     // 1. Immediately set the app to a "loading" state and clear old errors.
-     
-console.warn('[AuthContext] Login attempt started for email:', credentials.email);
+    if (__DEV__)
+      console.warn('[AuthContext] Login attempt started for email:', credentials.email);
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
     // 2. Call the Supabase service to attempt the login.
@@ -289,18 +289,20 @@ console.warn('[AuthContext] Login attempt started for email:', credentials.email
       };
       
       setAuthState(newState);
-      console.warn('[AuthContext] Auth state updated after login failure:', 
+      if (__DEV__)
+        console.warn('[AuthContext] Auth state updated after login failure:', 
         { isAuthenticated: newState.isAuthenticated, hasError: !!newState.error });
       
       return Promise.reject(new Error(result.error.message));
     } else if (result.user) {
       // SUCCESS: If the service returns a user, get their profile and update state.
-       
-console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
+      if (__DEV__)
+        console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
 
       // ---- Optional bypass for dev -------------------------------------------------
       if (BYPASS_PROFILE_FETCH) {
-        console.warn(
+        if (__DEV__)
+          console.warn(
           '[AuthContext] BYPASS_PROFILE_FETCH active – skipping profile lookup, using auth payload only.'
         );
         const nowIso = new Date().toISOString();
@@ -336,7 +338,8 @@ console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
         };
         
         setAuthState(newState);
-        console.warn('[AuthContext] Auth state updated with mock user:', 
+        if (__DEV__)
+          console.warn('[AuthContext] Auth state updated with mock user:', 
           { isAuthenticated: newState.isAuthenticated, userId: mockUser.id, role: mockUser.role });
         
         // Set favorite count to 0 for mock user
@@ -346,12 +349,13 @@ console.warn('[AuthContext] Auth login succeeded – id:', result.user.id);
       }
 
       // ---- Normal profile fetch ----------------------------------------------------
-       
-console.warn('[AuthContext] Fetching user profile from database...');
+      if (__DEV__)
+        console.warn('[AuthContext] Fetching user profile from database...');
       let userData = await supabaseAuthService.getCurrentUser(result.user.id);
       
       if (userData) {
-        console.warn('[AuthContext] Profile fetch successful:', 
+        if (__DEV__)
+          console.warn('[AuthContext] Profile fetch successful:', 
           { userId: userData.id, role: userData.role });
         
         // Create new state with the user data
@@ -363,7 +367,8 @@ console.warn('[AuthContext] Fetching user profile from database...');
         };
         
         setAuthState(newState);
-        console.warn('[AuthContext] Auth state updated after successful login:', 
+        if (__DEV__)
+          console.warn('[AuthContext] Auth state updated after successful login:', 
           { isAuthenticated: newState.isAuthenticated, userId: userData.id });
         
         // Fetch favorite count for the logged in user
@@ -371,13 +376,15 @@ console.warn('[AuthContext] Fetching user profile from database...');
         
         return userData;
       } else {
-        console.warn(
+        if (__DEV__)
+          console.warn(
           '[AuthContext] getCurrentUser returned null – attempting forceRefreshAndFetchProfile'
         );
         userData = await forceRefreshAndFetchProfile(result.user.id);
 
         if (userData) {
-          console.warn('[AuthContext] Fallback profile fetch succeeded:', 
+          if (__DEV__)
+            console.warn('[AuthContext] Fallback profile fetch succeeded:', 
             { userId: userData.id, role: userData.role });
           
           // Create new state with the user data from fallback
@@ -389,7 +396,8 @@ console.warn('[AuthContext] Fetching user profile from database...');
           };
           
           setAuthState(newState);
-          console.warn('[AuthContext] Auth state updated after fallback profile fetch:', 
+          if (__DEV__)
+            console.warn('[AuthContext] Auth state updated after fallback profile fetch:', 
             { isAuthenticated: newState.isAuthenticated, userId: userData.id });
           
           fetchFavoriteCount(userData.id);
@@ -409,7 +417,8 @@ console.warn('[AuthContext] Fetching user profile from database...');
         };
         
         setAuthState(newState);
-        console.warn('[AuthContext] Auth state updated after all profile fetch attempts failed:', 
+        if (__DEV__)
+          console.warn('[AuthContext] Auth state updated after all profile fetch attempts failed:', 
           { isAuthenticated: newState.isAuthenticated, hasError: !!newState.error });
         
         return Promise.reject(new Error(msg));
@@ -427,7 +436,8 @@ console.warn('[AuthContext] Fetching user profile from database...');
       };
       
       setAuthState(newState);
-      console.warn('[AuthContext] Auth state updated after unexpected error:', 
+      if (__DEV__)
+        console.warn('[AuthContext] Auth state updated after unexpected error:', 
         { isAuthenticated: newState.isAuthenticated, hasError: !!newState.error });
       
       return Promise.reject(new Error(msg));
@@ -463,7 +473,8 @@ console.warn('[AuthContext] Fetching user profile from database...');
       };
       
       setAuthState(newState);
-      console.warn('[AuthContext] Auth state updated after registration:', 
+      if (__DEV__)
+        console.warn('[AuthContext] Auth state updated after registration:', 
         { isAuthenticated: newState.isAuthenticated, userId: userData.id });
       
       // New user has no favorites yet
@@ -506,7 +517,8 @@ console.warn('[AuthContext] Fetching user profile from database...');
       };
       
       setAuthState(newState);
-      console.warn('[AuthContext] Auth state updated after logout:', 
+      if (__DEV__)
+        console.warn('[AuthContext] Auth state updated after logout:', 
         { isAuthenticated: newState.isAuthenticated });
       
       // Reset favorite count on logout
@@ -587,8 +599,8 @@ console.warn('[AuthContext] Fetching user profile from database...');
         throw new Error('User not authenticated');
       }
       
-       
-console.warn('[AuthContext] Adding show to favorites:', showId);
+      if (__DEV__)
+        console.warn('[AuthContext] Adding show to favorites:', showId);
       
       // Call the service to add the show to favorites
       // The database trigger will automatically update the favorite_shows_count
@@ -597,8 +609,8 @@ console.warn('[AuthContext] Adding show to favorites:', showId);
       // Refresh the favorite count from the database
       fetchFavoriteCount(authState.user.id);
       
-       
-console.warn('[AuthContext] Show added to favorites successfully');
+      if (__DEV__)
+        console.warn('[AuthContext] Show added to favorites successfully');
     } catch (error: any) {
       console.error('[AuthContext] Error adding show to favorites:', error);
       setAuthState(prev => ({
@@ -616,8 +628,8 @@ console.warn('[AuthContext] Show added to favorites successfully');
         throw new Error('User not authenticated');
       }
       
-       
-console.warn('[AuthContext] Removing show from favorites:', showId);
+      if (__DEV__)
+        console.warn('[AuthContext] Removing show from favorites:', showId);
       
       // Call the service to remove the show from favorites
       // The database trigger will automatically update the favorite_shows_count
@@ -626,8 +638,8 @@ console.warn('[AuthContext] Removing show from favorites:', showId);
       // Refresh the favorite count from the database
       fetchFavoriteCount(authState.user.id);
       
-       
-console.warn('[AuthContext] Show removed from favorites successfully');
+      if (__DEV__)
+        console.warn('[AuthContext] Show removed from favorites successfully');
     } catch (error: any) {
       console.error('[AuthContext] Error removing show from favorites:', error);
       setAuthState(prev => ({
@@ -665,17 +677,19 @@ console.warn('[AuthContext] Show removed from favorites successfully');
         if (supabaseKeys.length) {
           await AsyncStorage.multiRemove(supabaseKeys);
            
-           
-console.warn('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
+          if (__DEV__)
+            console.warn('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
         }
       } catch (clearErr) {
-        console.warn('[AuthContext] Failed to clear cached tokens', clearErr);
+        if (__DEV__)
+          console.warn('[AuthContext] Failed to clear cached tokens', clearErr);
       }
 
       // 2) Force the session to refresh
       const { success, error: refreshErr } = await refreshUserSession();
       if (!success) {
-        console.warn('[AuthContext] Session refresh failed – falling back to direct DB fetch', refreshErr);
+        if (__DEV__)
+          console.warn('[AuthContext] Session refresh failed – falling back to direct DB fetch', refreshErr);
       }
 
       // 3) Fetch the latest profile data directly
@@ -711,8 +725,8 @@ console.warn('[AuthContext] Cleared cached Supabase tokens', supabaseKeys);
         profileImageUrl: profile.profile_image_url ?? undefined,
         favoriteShowsCount: profile.favorite_shows_count || 0,
       };
-       
-console.warn('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
+      if (__DEV__)
+        console.warn('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
 
       return mapped;
     } catch (err) {
