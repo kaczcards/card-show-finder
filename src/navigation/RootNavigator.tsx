@@ -10,9 +10,6 @@ import AdminNavigator from './AdminNavigator';
 // Import auth context
 import { useAuth } from '../contexts/AuthContext';
 
-// Import theme context
-import { useTheme } from '../contexts/ThemeContext';
-
 // Import UI components
 import { Loading } from '../components/ui';
 
@@ -24,9 +21,6 @@ const RootNavigator: React.FC = () => {
   const { authState } = useAuth();
   const { isAuthenticated, isLoading } = authState;
   
-  // Get theme from context
-  const { theme: _theme } = useTheme();
-
   // Root stack that will hold the main app and the admin tools
   const RootStack = createNativeStackNavigator();
 

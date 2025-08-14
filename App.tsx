@@ -7,6 +7,8 @@ import { NavigationContainer as _NavigationContainer } from '@react-navigation/n
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Global toast notifications
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+// Stripe payment provider
+import { StripeProvider } from '@stripe/stripe-react-native';
 // ---------------- TEMPORARILY DISABLED ----------------
 // Sentry for error/performance monitoring
 // (Commented out while debugging Hermes prototype crash)
