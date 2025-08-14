@@ -121,7 +121,8 @@ const getZipFromCache = async (zipCode: string): Promise<ZipCodeData | null> => 
     const raw = await AsyncStorage.getItem(`${ZIP_CACHE_KEY_PREFIX}${zipCode}`);
     return raw ? (JSON.parse(raw) as ZipCodeData) : null;
   } catch (err) {
-    console.warn('[locationService] Failed to read ZIP cache', err);
+    if (__DEV__)
+      console.warn('[locationService] Failed to read ZIP cache', err);
     return null;
   }
 };
@@ -136,7 +137,8 @@ const setZipCache = async (data: ZipCodeData): Promise<void> => {
       JSON.stringify(data)
     );
   } catch (err) {
-    console.warn('[locationService] Failed to write ZIP cache', err);
+    if (__DEV__)
+      console.warn('[locationService] Failed to write ZIP cache', err);
   }
 };
 
@@ -150,16 +152,18 @@ export const clearZipCodeCache = async (zipCode?: string): Promise<void> => {
     if (zipCode) {
       // Clear specific ZIP code
       await AsyncStorage.removeItem(`${ZIP_CACHE_KEY_PREFIX}${zipCode}`);
-      console.warn(`[locationService] Cleared cache for ZIP code ${zipCode}`);
+      if (__DEV__)
+        console.warn(`[locationService] Cleared cache for ZIP code ${zipCode}`);
     } else {
       // Get all keys and clear only ZIP code caches
       const keys = await AsyncStorage.getAllKeys();
       const zipKeys = keys.filter(key => key.startsWith(ZIP_CACHE_KEY_PREFIX));
       if (zipKeys.length > 0) {
         await AsyncStorage.multiRemove(zipKeys);
-        console.warn(
-          `[locationService] Cleared all ZIP code caches (${zipKeys.length} entries)`
-        );
+        if (__DEV__)
+          console.warn(
+            `[locationService] Cleared all ZIP code caches (${zipKeys.length} entries)`,
+          );
       }
     }
   } catch (error: any) {
@@ -234,9 +238,10 @@ export const getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeDat
      * only allows inserts from server-side (service-role) contexts.  
      * Trying to insert here would raise error 42501.
      */
-    console.warn(
-      `[locationService] ZIP code ${zipCode} geocoded on-device – not cached in DB due to RLS.`
-    );
+    if (__DEV__)
+      console.warn(
+        `[locationService] ZIP code ${zipCode} geocoded on-device – not cached in DB due to RLS.`,
+      );
 
     // Cache newly geocoded result for future requests
     await setZipCache(newZipCodeData);
