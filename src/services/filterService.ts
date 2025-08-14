@@ -59,8 +59,9 @@ export const saveTemporaryFilters = async (
       getTempFiltersKey(userId), 
       JSON.stringify(filtersToStore)
     );
-     
-console.warn('Temporary filters saved to AsyncStorage');
+    // Only emit this diagnostic in development builds
+    if (__DEV__)
+      console.warn('Temporary filters saved to AsyncStorage');
   } catch (error) {
     console.error('Error saving temporary filters:', error);
     throw new Error('Failed to save temporary filters');

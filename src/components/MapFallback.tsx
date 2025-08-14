@@ -206,8 +206,11 @@ export const MapView = forwardRef<any, MapViewProps & {
   // Expose methods that might be called on the ref
   useImperativeHandle(ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
-       
-console.warn('MapView.animateToRegion called in fallback mode', { region, duration });
+      if (__DEV__)
+        console.warn(
+          'MapView.animateToRegion called in fallback mode',
+          { region, duration },
+        );
       // No-op in fallback mode
     },
     getMapRef: () => null,
@@ -331,14 +334,20 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
   // Expose methods that might be called on the ref
   useImperativeHandle(ref, () => ({
     animateToRegion: (region: Region, duration = 500) => {
-       
-console.warn('FixedClusteredMapView.animateToRegion called in fallback mode', { region, duration });
+      if (__DEV__)
+        console.warn(
+          'FixedClusteredMapView.animateToRegion called in fallback mode',
+          { region, duration },
+        );
       // No-op in fallback mode
     },
     getMapRef: () => ({
       animateToRegion: (region: Region, duration = 500) => {
-         
-console.warn('getMapRef();.animateToRegion called in fallback mode', { region, duration });
+        if (__DEV__)
+          console.warn(
+            'getMapRef();.animateToRegion called in fallback mode',
+            { region, duration },
+          );
         // No-op in fallback mode
       }
     }),
@@ -427,10 +436,11 @@ console.warn('getMapRef();.animateToRegion called in fallback mode', { region, d
                   renderMarker(item);
                 }
               } catch (e) {
-                console.warn(
-                  '[MapFallback] Error invoking renderMarker from fallback list:',
-                  e
-                );
+                if (__DEV__)
+                  console.warn(
+                    '[MapFallback] Error invoking renderMarker from fallback list:',
+                    e
+                  );
               }
             };
 
