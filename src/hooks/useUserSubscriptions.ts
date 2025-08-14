@@ -28,7 +28,11 @@ export const useUserSubscriptions = () => {
         setError(null);
 
          
-console.warn('[_useUserSubscriptions] Fetching subscriptions for user:', user.id);
+        if (__DEV__)
+          console.warn(
+            '[_useUserSubscriptions] Fetching subscriptions for user:',
+            user.id,
+          );
 
         /* --------------------------------------------------------------
          * Subscription info lives in the `profiles` table, not a separate
@@ -60,8 +64,11 @@ console.warn('[_useUserSubscriptions] Fetching subscriptions for user:', user.id
           : [];
 
         setSubscriptions(mapped);
-         
-console.warn('[_useUserSubscriptions] Fetched subscriptions:', mapped.length);
+        if (__DEV__)
+          console.warn(
+            '[_useUserSubscriptions] Fetched subscriptions:',
+            mapped.length,
+          );
       } catch (err) {
         console.error('[_useUserSubscriptions] Unexpected error:', err);
         setError(err instanceof Error ? err : new Error('An unknown error occurred'));
