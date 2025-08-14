@@ -18,7 +18,7 @@ import { Coordinates } from '../types';
 export const sanitizeCoordinates = (coordinates?: Coordinates | null): Coordinates | null => {
   // If no coordinates provided, return null
   if (!coordinates) {
-    console.warn('No coordinates provided to sanitize');
+    if (__DEV__) console.warn('No coordinates provided to sanitize');
     return null;
   }
 
@@ -31,14 +31,14 @@ export const sanitizeCoordinates = (coordinates?: Coordinates | null): Coordinat
     isNaN(latitude) ||
     isNaN(longitude)
   ) {
-    console.warn('Invalid coordinates: latitude or longitude is not a number', { latitude, longitude });
+    if (__DEV__) console.warn('Invalid coordinates: latitude or longitude is not a number', { latitude, longitude });
     return null;
   }
 
   // Check for swapped coordinates
   // This is often the case when lat > 90 or long > 180
   if (Math.abs(latitude) > 90 && Math.abs(longitude) <= 90) {
-    console.warn('Coordinates appear to be swapped - fixing automatically', { 
+    if (__DEV__) console.warn('Coordinates appear to be swapped - fixing automatically', { 
       originalLat: latitude, 
       originalLong: longitude 
     });
@@ -52,13 +52,13 @@ export const sanitizeCoordinates = (coordinates?: Coordinates | null): Coordinat
 
   // Validate latitude range (-90 to 90)
   if (latitude < -90 || latitude > 90) {
-    console.warn('Invalid latitude value outside -90 to 90 range:', latitude);
+    if (__DEV__) console.warn('Invalid latitude value outside -90 to 90 range:', latitude);
     return null;
   }
 
   // Validate longitude range (-180 to 180)
   if (longitude < -180 || longitude > 180) {
-    console.warn('Invalid longitude value outside -180 to 180 range:', longitude);
+    if (__DEV__) console.warn('Invalid longitude value outside -180 to 180 range:', longitude);
     return null;
   }
 
