@@ -12,12 +12,14 @@ const _supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.
 // NOTE: These values are **public** (anon key & project URL) so it's safe
 // to log them for debugging.  Remove or wrap behind an env‐guard before
 // shipping production builds if desired.
-console.warn(
-  '\n================= [SUPABASE CONFIG] =================\n' +
-  `• SUPABASE URL : ${_supabaseUrl || '<EMPTY>'}\n` +
-  `• ANON KEY     : ${_supabaseAnonKey?.slice(0, 8) || '<EMPTY>'}…\n` +
-  '====================================================\n'
-);
+if (typeof __DEV__ !== 'undefined' && __DEV__) {
+  console.warn(
+    '\n================= [SUPABASE CONFIG] =================\n' +
+      `• SUPABASE URL : ${_supabaseUrl || '<EMPTY>'}\n` +
+      `• ANON KEY     : ${_supabaseAnonKey?.slice(0, 8) || '<EMPTY>'}…\n` +
+      '====================================================\n'
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /* 1. Guard-rails / configuration validation                                  */
