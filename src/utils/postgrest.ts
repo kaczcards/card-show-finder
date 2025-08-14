@@ -7,7 +7,8 @@ export function formatInList(values: Array<string | null | undefined>): string {
 
 export function formatLargeInList(values: Array<string | null | undefined>, chunkSize = 100): string {
   if (values.length <= chunkSize) return formatInList(values);
-  console.warn(`[postgrest] Large array (${values.length}) used with formatLargeInList.`);
+  if (__DEV__)
+    console.warn(`[postgrest] Large array (${values.length}) used with formatLargeInList.`);
   return formatInList(values.slice(0, chunkSize));
 }
 
