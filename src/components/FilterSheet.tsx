@@ -270,8 +270,8 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
 
   // Temporarily handle showing the date picker - just update the text fields manually
   const _handleShowDatePicker = (type: 'start' | 'end') => {
-     
-console.warn(`Would show date picker for ${type} date`);
+    if (__DEV__)
+      console.warn(`Would show date picker for ${type} date`);
     // Simply provide a text field instruction instead of showing the date picker
     alert(`Please enter the ${type === 'start' ? 'Start' : 'End'} date manually in YYYY-MM-DD format`);
   };
