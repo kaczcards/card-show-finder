@@ -17,6 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { ShowFilters, ShowFeature, CardCategory } from '../types';
 // Temporarily commenting out DatePicker import to fix the crash
 // import DatePicker from 'react-native-date-picker';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 
 interface FilterSheetProps {
   visible: boolean;
@@ -47,10 +50,19 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   const [endDateText, setEndDateText] = useState('');
   const [maxEntryFeeText, setMaxEntryFeeText] = useState('');
 
-  // Date picker state
-  const [_datePickerVisible, _setDatePickerVisible] = useState(false);
-  const [_datePickerType, _setDatePickerType] = useState<'start' | 'end'>('start');
-  const [_selectedDate, _setSelectedDate] = useState<Date | null>(null);
+  // DateTimePicker state
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
+  /**
+   * Format a JS Date as YYYY-MM-DD in local time (no TZ shift).
+   */
+  const formatLocal = (d: Date) => {
+    const year = d.getFullYear();
+    const month = `${d.getMonth() + 1}`.padStart(2, '0');
+    const day = `${d.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   // Reset local filters when the component becomes visible
   useEffect(() => {
@@ -58,15 +70,13 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
     
     // Format dates for display
     if (filters.startDate) {
-      const startDate = new Date(filters.startDate);
-      setStartDateText(startDate.toISOString().split('T')[0]);
+      setStartDateText(formatLocal(new Date(filters.startDate)));
     } else {
       setStartDateText('');
     }
     
     if (filters.endDate) {
-      const endDate = new Date(filters.endDate);
-      setEndDateText(endDate.toISOString().split('T')[0]);
+      setEndDateText(formatLocal(new Date(filters.endDate)));
     } else {
       setEndDateText('');
     }
@@ -142,51 +152,6 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
     }));
   };
 
-  // Handle date changes
-  const handleStartDateChange = (text: string) => {
-    setStartDateText(text);
-    try {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-        const date = new Date(text);
-        if (!isNaN(date.getTime())) {
-          setLocalFilters((prev) => ({
-            ...prev,
-            startDate: date,
-          }));
-        }
-      } else if (text === '') {
-        setLocalFilters((prev) => ({
-          ...prev,
-          startDate: null,
-        }));
-      }
-    } catch (error) {
-      console.error('Invalid start date format:', error);
-    }
-  };
-
-  const handleEndDateChange = (text: string) => {
-    setEndDateText(text);
-    try {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-        const date = new Date(text);
-        if (!isNaN(date.getTime())) {
-          setLocalFilters((prev) => ({
-            ...prev,
-            endDate: date,
-          }));
-        }
-      } else if (text === '') {
-        setLocalFilters((prev) => ({
-          ...prev,
-          endDate: null,
-        }));
-      }
-    } catch (error) {
-      console.error('Invalid end date format:', error);
-    }
-  };
-
   // Handle max entry fee change
   const handleMaxEntryFeeChange = (text: string) => {
     setMaxEntryFeeText(text);
@@ -253,8 +218,8 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
     
     // Update date text inputs
     // Ensure we convert to Date before calling toISOString in case defaults are strings
-    setStartDateText(new Date(defaultFilters.startDate!).toISOString().split('T')[0]);
-    setEndDateText(new Date(defaultFilters.endDate!).toISOString().split('T')[0]);
+    setStartDateText(formatLocal(new Date(defaultFilters.startDate!)));
+    setEndDateText(formatLocal(new Date(defaultFilters.endDate!)));
     setMaxEntryFeeText('');
   };
 
@@ -268,13 +233,33 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
     return localFilters.categories?.includes(category) || false;
   };
 
-  // Temporarily handle showing the date picker - just update the text fields manually
-  const _handleShowDatePicker = (type: 'start' | 'end') => {
-    if (__DEV__)
-      console.warn(`Would show date picker for ${type} date`);
-    // Simply provide a text field instruction instead of showing the date picker
-    alert(`Please enter the ${type === 'start' ? 'Start' : 'End'} date manually in YYYY-MM-DD format`);
-  };
+  // DateTimePicker change handler (shared)
+  const onPickerChange =
+    (type: 'start' | 'end') =>
+    (_e: DateTimePickerEvent, selected?: Date) => {
+      const currentDate = selected;
+      // iOS fires both 'set' and 'dismissed'; Android only 'set' | 'dismissed'
+      if (_Platform.OS === 'android') {
+        // hide picker regardless of event type
+        type === 'start' ? setShowStartPicker(false) : setShowEndPicker(false);
+      }
+      if (!currentDate) return;
+
+      const formatted = formatLocal(currentDate);
+
+      if (type === 'start') {
+        setStartDateText(formatted);
+        setLocalFilters((prev) => ({ ...prev, startDate: currentDate }));
+      } else {
+        setEndDateText(formatted);
+        setLocalFilters((prev) => ({ ...prev, endDate: currentDate }));
+      }
+
+      if (_Platform.OS === 'ios') {
+        // close picker immediately for simplicity
+        type === 'start' ? setShowStartPicker(false) : setShowEndPicker(false);
+      }
+    };
 
   return (
     <Modal
@@ -351,26 +336,42 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
               <View style={styles.dateInputContainer}>
                 <Text style={styles.dateLabel}>Start Date:</Text>
                 <View style={styles.dateInputRow}>
-                  <TextInput
+                  <TouchableOpacity
                     style={styles.dateInput}
-                    value={startDateText}
-                    onChangeText={handleStartDateChange}
-                    placeholder="YYYY-MM-DD"
-                    keyboardType="default"
-                  />
+                    onPress={() => setShowStartPicker(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 16, color: startDateText ? '#000' : '#aaa' }}>
+                      {startDateText || 'YYYY-MM-DD'}
+                    </Text>
+                    <Ionicons
+                      name="calendar"
+                      size={18}
+                      color="#666"
+                      style={{ position: 'absolute', right: 10, top: 13 }}
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
               
               <View style={styles.dateInputContainer}>
                 <Text style={styles.dateLabel}>End Date:</Text>
                 <View style={styles.dateInputRow}>
-                  <TextInput
+                  <TouchableOpacity
                     style={styles.dateInput}
-                    value={endDateText}
-                    onChangeText={handleEndDateChange}
-                    placeholder="YYYY-MM-DD"
-                    keyboardType="default"
-                  />
+                    onPress={() => setShowEndPicker(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 16, color: endDateText ? '#000' : '#aaa' }}>
+                      {endDateText || 'YYYY-MM-DD'}
+                    </Text>
+                    <Ionicons
+                      name="calendar"
+                      size={18}
+                      color="#666"
+                      style={{ position: 'absolute', right: 10, top: 13 }}
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -444,9 +445,40 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
             </TouchableOpacity>
           </View>
 
+          {/* Inline Date Pickers (rendered inside sheet to avoid overlap) */}
+          {showStartPicker && (
+            <View style={styles.pickerContainer}>
+              <DateTimePicker
+                value={
+                  localFilters.startDate
+                    ? new Date(localFilters.startDate)
+                    : new Date()
+                }
+                mode="date"
+                display={_Platform.OS === 'ios' ? 'inline' : 'default'}
+                onChange={onPickerChange('start')}
+              />
+            </View>
+          )}
+          {showEndPicker && (
+            <View style={styles.pickerContainer}>
+              <DateTimePicker
+                value={
+                  localFilters.endDate
+                    ? new Date(localFilters.endDate)
+                    : new Date()
+                }
+                mode="date"
+                display={_Platform.OS === 'ios' ? 'inline' : 'default'}
+                onChange={onPickerChange('end')}
+              />
+            </View>
+          )}
+
           {/* DatePicker has been removed and replaced with TextInput */}
         </Animated.View>
       </View>
+
     </Modal>
   );
 };
@@ -603,6 +635,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '500',
+  },
+  pickerContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    backgroundColor: 'white',
   },
 });
 
