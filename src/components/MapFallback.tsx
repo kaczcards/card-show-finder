@@ -345,22 +345,74 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
 
   if (isNativeMapsAvailable()) {
     try {
-      // Try to dynamically require the clustered map view
-      const RNMapsCluster = require('react-native-maps-super-cluster').default;
-      
-      if (RNMapsCluster) {
-        return (
-          <RNMapsCluster
-            ref={ref}
-            data={data}
-            renderMarker={renderMarker}
-            renderCluster={renderCluster}
-            {...restProps}
-          />
-        );
-      }
+      // Use regular react-native-maps MapView with manual marker rendering
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const RNMaps = require('react-native-maps');
+      const RealMapView = RNMaps.default || RNMaps.MapView;
+
+      // Helper to extract coordinates from an item when caller
+      // did not provide a renderMarker implementation
+      const getCoordinates = (item: any): Coordinates | null => {
+        // Direct coordinate object
+        if (item?.coordinates?.latitude && item?.coordinates?.longitude) {
+          return {
+            latitude: item.coordinates.latitude,
+            longitude: item.coordinates.longitude,
+          };
+        }
+
+        // If accessor / nodeExtractor supplied, try those paths
+        if (props.accessor && item?.[props.accessor]) {
+          return item[props.accessor];
+        }
+        if (props.nodeExtractor) {
+          try {
+            const node = props.nodeExtractor(item);
+            if (node?.location) {
+              return {
+                latitude: node.location.latitude,
+                longitude: node.location.longitude,
+              };
+            }
+          } catch {
+            /* silent */
+          }
+        }
+        return null;
+      };
+
+      const markers =
+        Array.isArray(data) && data.length > 0
+          ? data
+              .map((item, idx) => {
+                if (typeof renderMarker === 'function') {
+                  // Let caller create the marker
+                  return renderMarker(item);
+                }
+
+                const coords = getCoordinates(item);
+                if (!coords) return null;
+
+                return (
+                  <Marker
+                    key={item?.id ?? idx}
+                    coordinate={coords}
+                    tracksViewChanges={false}
+                    title={item?.title}
+                    description={item?.description}
+                  />
+                );
+              })
+              .filter(Boolean)
+          : null;
+
+      return (
+        <RealMapView ref={ref} {...restProps}>
+          {markers}
+        </RealMapView>
+      );
     } catch (error) {
-      console.error('Failed to load react-native-maps-super-cluster:', error);
+      console.error('Failed to load react-native-maps in FixedClusteredMapView:', error);
       // Fall through to fallback
     }
   }
