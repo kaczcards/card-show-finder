@@ -51,19 +51,58 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
   // Ensure show object exists
   const safeShow = show || {};
   
+  /**
+   * Parse an incoming date string while preserving the intended **calendar day**
+   * for plain `YYYY-MM-DD` inputs (avoid UTC-offset shifting that shows the
+   * previous day).  Falls back to the built-in `Date` parser for full ISO
+   * strings that include a time component.
+   */
+  const parseDatePreserveLocal = (date?: string | null): Date | null => {
+    if (!date) return null;
+
+    // Matches plain date strings like 2024-08-15
+    const plainDateMatch = /^\\d{4}-\\d{2}-\\d{2}$/.exec(date);
+    if (plainDateMatch) {
+      const [y, m, d] = date.split('-').map(Number);
+      return new Date(y, m - 1, d); // month is 0-based
+    }
+
+    /**
+     * Treat **midnight-UTC** ISO timestamps as date-only strings.
+     * Example matches:
+     *   2024-08-15T00:00:00Z
+     *   2024-08-15T00:00:00.000Z
+     *   2024-08-15T00:00:00+00:00
+     *   2024-08-15T00:00Z
+     */
+    const midnightUtcRegex =
+      /^([0-9]{4})-([0-9]{2})-([0-9]{2})T0{2}:0{2}(?::0{2}(?:\\.[0-9]{1,3})?)?(Z|[+\\-]0{2}:?0{2})$/;
+    const midnightMatch = midnightUtcRegex.exec(date);
+    if (midnightMatch) {
+      const [, yStr, mStr, dStr] = midnightMatch;
+      const y = Number(yStr);
+      const m = Number(mStr);
+      const d = Number(dStr);
+      return new Date(y, m - 1, d); // Interpret as local date
+    }
+
+    // Otherwise rely on normal parsing (may include timezone/offset)
+    const parsed = new Date(date);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  };
+
   // Format a date for display with comprehensive error handling
   const formatDate = (date?: string | null): string => {
     if (!date) return '';
-    
+
     try {
-      const dateObj = new Date(date);
-      
-      // Check if date is valid
-      if (isNaN(dateObj.getTime())) {
-        console.warn(`Invalid date format: ${date}`);
-        return date; // Return original string if parsing fails
+      const dateObj = parseDatePreserveLocal(date);
+
+      if (!dateObj) {
+        if (__DEV__) console.warn(`[ShowTimeInfo] Invalid date format: ${date}`);
+        return date;
       }
-      
+
       return dateObj.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -81,13 +120,10 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
     if (!date1 || !date2) return false;
     
     try {
-      const d1 = new Date(date1);
-      const d2 = new Date(date2);
-      
-      // Check if dates are valid
-      if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
-        return false;
-      }
+      const d1 = parseDatePreserveLocal(date1);
+      const d2 = parseDatePreserveLocal(date2);
+
+      if (!d1 || !d2) return false;
       
       return (
         d1.getFullYear() === d2.getFullYear() &&
