@@ -275,7 +275,11 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         <MVPDealerUpgradeMessage />
         
         {/* Show Time Info */}
-        {parsedShow && <ShowTimeInfo show={parsedShow} />}
+        {/* Always provide the raw DB object so ShowTimeInfo can access
+            snake_case fields like start_time / end_time without relying
+            on the mapped subset.  The existence of `show` is already
+            guarded earlier in the render path. */}
+        <ShowTimeInfo show={show} />
         
         {/* Show Management Buttons */}
         <ShowManagementButtons
