@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/175</span>
+                <span class='fraction'>0/172</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/192</span>
+                <span class='fraction'>0/196</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/15</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/153</span>
+                <span class='fraction'>0/151</span>
             </div>
         
             
@@ -666,16 +666,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -848,7 +839,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1081,6 +1072,11 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1182,6 +1178,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1199,7 +1197,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1208,6 +1205,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1245,6 +1245,8 @@
 &nbsp;
 import { supabase } from '../supabase';
 import { Show, UserRole } from '../types';
+import { formatInList } from '../utils/postgrest';
+import { normalizeRole } from './userRoleService';
 &nbsp;
 /**
  * Types for dealer show participation
@@ -1253,17 +1255,6 @@ import { Show, UserRole } from '../types';
  * Normalize a role string (DB may store lowercase) to the lowercase
  * `UserRole` enum used throughout the client.
  */
-const normalizeRole = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(r</span>ole: string | null | undefined): UserRole | null =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (!role) <span class="cstat-no" title="statement not covered" >return null;</span></span>
-  // FIX: Convert to lowercase to match enum string values
-  const normalizedRoleString = <span class="cstat-no" title="statement not covered" >role.toLowerCase();</span>
-  
-  // Check if the normalized string is one of the valid UserRole enum values
-<span class="cstat-no" title="statement not covered" >  if (Object.values(UserRole).includes(normalizedRoleString as UserRole)) {</span>
-<span class="cstat-no" title="statement not covered" >    return normalizedRoleString as UserRole;</span>
-  }
-<span class="cstat-no" title="statement not covered" >  return null;</span>
-};
 &nbsp;
 export interface DealerShowParticipation {
   id: string;
@@ -1435,13 +1426,13 @@ export const registerForShow = <span class="cstat-no" title="statement not cover
     // ------------------------------------------------------------
     // Debugging – log the raw role we got back from Supabase
     // ------------------------------------------------------------
-     
-<span class="cstat-no" title="statement not covered" >    console.warn(</span>
-      '[registerForShow] DB role value:',
-      userData?.role,
-      '| normalised:',
-      normalizeRole(userData?.role)
-    );
+<span class="cstat-no" title="statement not covered" >    if (__DEV__)</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(</span>
+        '[registerForShow] DB role value:',
+        userData?.role,
+        '| normalised:',
+        normalizeRole(userData?.role)
+      );
 &nbsp;
     const userRole = <span class="cstat-no" title="statement not covered" >normalizeRole(userData?.role);</span>
 &nbsp;
@@ -1667,6 +1658,11 @@ export const getDealersForShow = <span class="cstat-no" title="statement not cov
     // Step 2: Extract user IDs from participants
     const userIds = <span class="cstat-no" title="statement not covered" >participantsData.map(<span class="fstat-no" title="function not covered" >pa</span>rticipant =&gt; <span class="cstat-no" title="statement not covered" >participant.userid)</span>;</span>
 &nbsp;
+    // Early-exit guard: no user IDs to look up → nothing to return
+<span class="cstat-no" title="statement not covered" >    if (!userIds || userIds.length === 0) {</span>
+<span class="cstat-no" title="statement not covered" >      return { data: [], error: null };</span>
+    }
+&nbsp;
     // Step 3: Fetch profiles for these user IDs
     // Only select columns that definitely exist in the schema
     const { data: profilesData, error: profilesError } = <span class="cstat-no" title="statement not covered" >await supabase</span>
@@ -1769,7 +1765,9 @@ export const getAvailableShowsForDealer = <span class="cstat-no" title="statemen
 &nbsp;
     // Exclude shows the dealer is already registered for
 <span class="cstat-no" title="statement not covered" >    if (registeredShowIds.length &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >      query = query.not('id', 'in', registeredShowIds)</span>
+      // PostgREST expects a parenthesised list string for an `in` / `not.in` filter.
+      // Use the shared helper to ensure correct quoting / formatting.
+<span class="cstat-no" title="statement not covered" >      query = query.not('id', 'in', formatInList(registeredShowIds));</span>
     }
 &nbsp;
     // Order by start date
@@ -1793,8 +1791,10 @@ export const getAvailableShowsForDealer = <span class="cstat-no" title="statemen
     ) {
       // This would ideally use the server-side PostGIS functions,
       // but for simplicity we'll do basic filtering here
-       
-<span class="cstat-no" title="statement not covered" >console.warn('Filtering by distance is not implemented in this version');</span>
+<span class="cstat-no" title="statement not covered" >      if (__DEV__)</span>
+<span class="cstat-no" title="statement not covered" >        console.warn(</span>
+          'Filtering by distance is not implemented in this version',
+        );
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return { </span>
@@ -1831,7 +1831,7 @@ export const getAvailableShowsForDealer = <span class="cstat-no" title="statemen
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-11T12:44:28.476Z
+                at 2025-08-15T16:34:12.189Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

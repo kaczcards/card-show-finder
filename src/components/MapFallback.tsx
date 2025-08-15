@@ -86,23 +86,12 @@ export const isNativeMapsAvailable = (): boolean => {
   }
   
   try {
-    // Attempt to access TurboModuleRegistry without importing it directly
-    const TurboModuleRegistry = require('react-native').TurboModuleRegistry;
-    
-    // Check if the native module exists
-    const hasModule = 
-      TurboModuleRegistry &&
-      typeof TurboModuleRegistry.getEnforcing === 'function' &&
-      (() => {
-        try {
-          TurboModuleRegistry.getEnforcing('RNMapsAirModule');
-          return true;
-        } catch {
-          return false;
-        }
-      })();
-      
-    return !!hasModule;
+    // Dynamically require react-native-maps; if it resolves and exposes a MapView,
+    // we consider the native module available.  This is more permissive and works
+    // in custom-dev clients where TurboModuleRegistry names may differ.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const RNMaps = require('react-native-maps');
+    return !!(RNMaps && (RNMaps.default || RNMaps.MapView));
   } catch {
     // If any error occurs, assume the module is not available
     return false;
