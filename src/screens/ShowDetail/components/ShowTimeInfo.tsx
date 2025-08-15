@@ -67,6 +67,25 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
       return new Date(y, m - 1, d); // month is 0-based
     }
 
+    /**
+     * Treat **midnight-UTC** ISO timestamps as date-only strings.
+     * Example matches:
+     *   2024-08-15T00:00:00Z
+     *   2024-08-15T00:00:00.000Z
+     *   2024-08-15T00:00:00+00:00
+     *   2024-08-15T00:00Z
+     */
+    const midnightUtcRegex =
+      /^([0-9]{4})-([0-9]{2})-([0-9]{2})T0{2}:0{2}(?::0{2}(?:\\.[0-9]{1,3})?)?(Z|[+\\-]0{2}:?0{2})$/;
+    const midnightMatch = midnightUtcRegex.exec(date);
+    if (midnightMatch) {
+      const [, yStr, mStr, dStr] = midnightMatch;
+      const y = Number(yStr);
+      const m = Number(mStr);
+      const d = Number(dStr);
+      return new Date(y, m - 1, d); // Interpret as local date
+    }
+
     // Otherwise rely on normal parsing (may include timezone/offset)
     const parsed = new Date(date);
     return isNaN(parsed.getTime()) ? null : parsed;
