@@ -683,6 +683,20 @@ const AddShowScreen: React.FC = () => {
                   setStartDateText(
                     formatDateTime(selected, startHour, startMinute, startPeriod),
                   );
+
+                  /* -----------------------------------------------------------------
+                   * If the new start date is after the current endDate (by calendar
+                   * day) we keep UX simple by bumping endDate to the same day.
+                   * ----------------------------------------------------------------*/
+                  if (
+                    !areSameDay(selected, endDate) &&
+                    selected.getTime() > endDate.getTime()
+                  ) {
+                    setEndDate(selected);
+                    setEndDateText(
+                      formatDateTime(selected, endHour, endMinute, endPeriod),
+                    );
+                  }
                 }
               }}
             />
@@ -693,12 +707,19 @@ const AddShowScreen: React.FC = () => {
               value={endDate}
               mode="date"
               display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              minimumDate={startDate}
               onChange={(_, selected) => {
                 setShowEndPicker(false);
                 if (selected) {
                   logDateSelection('end', selected);
-                  // Create a new date object to ensure we don't have reference issues
-                  const newEndDate = new Date(selected);
+                  // Ensure the picked end date is not before the start date
+                  let newEndDate = new Date(selected);
+                  if (
+                    newEndDate.getTime() < startDate.getTime() &&
+                    !areSameDay(newEndDate, startDate)
+                  ) {
+                    newEndDate = new Date(startDate);
+                  }
                   setEndDate(newEndDate);
                   setEndDateText(formatDateTime(newEndDate, endHour, endMinute, endPeriod));
                 }
