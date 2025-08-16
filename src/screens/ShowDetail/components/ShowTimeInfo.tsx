@@ -17,6 +17,10 @@ interface ShowTimeInfoProps {
   };
 }
 
+// Shared regex: detects midnight-UTC ISO timestamps (treated as date-only)
+const MIDNIGHT_UTC_REGEX =
+  /^([0-9]{4})-([0-9]{2})-([0-9]{2})T0{2}:0{2}(?::0{2}(?:\.[0-9]{1,3})?)?(Z|[+\-]0{2}:?0{2})$/;
+
 // InfoRow component for consistent "icon + text" rows
 type InfoRowProps = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -75,9 +79,7 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
      *   2024-08-15T00:00:00+00:00
      *   2024-08-15T00:00Z
      */
-    const midnightUtcRegex =
-      /^([0-9]{4})-([0-9]{2})-([0-9]{2})T0{2}:0{2}(?::0{2}(?:\\.[0-9]{1,3})?)?(Z|[+\\-]0{2}:?0{2})$/;
-    const midnightMatch = midnightUtcRegex.exec(date);
+    const midnightMatch = MIDNIGHT_UTC_REGEX.exec(date);
     if (midnightMatch) {
       const [, yStr, mStr, dStr] = midnightMatch;
       const y = Number(yStr);
@@ -205,6 +207,39 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
     if (endTime) {
       return formatTime(endTime);
     }
+
+    /* -------------------------------------------------------------
+     * Fallback 2 – derive time component from ISO start/end dates
+     * -------------------------------------------------------------
+     * Some shows store the hour/minute directly in start_date /
+     * end_date (full ISO timestamps) without separate start_time /
+     * end_time columns.  If that’s the case – and the timestamp is
+     * NOT a midnight-UTC sentinel (handled earlier by midnightUtcRegex)
+     * – we can surface that time here.
+     * ----------------------------------------------------------- */
+    const startDateRaw = safeShow.start_date || safeShow.startDate;
+    const endDateRaw   = safeShow.end_date   || safeShow.endDate;
+
+    // Helper: ISO string has a usable time component (not midnight)
+    const hasUsableTime = (iso?: string | null): boolean => {
+      if (!iso || !iso.includes('T')) return false;
+      // Re-use the same midnightUtcRegex from parseDatePreserveLocal
+      // (scope-hoisted by JS so we can reference it here)
+      return !MIDNIGHT_UTC_REGEX.test(iso);
+    };
+
+    const derivedStart = hasUsableTime(startDateRaw) ? startDateRaw! : undefined;
+    const derivedEnd   = hasUsableTime(endDateRaw)   ? endDateRaw!   : undefined;
+
+    if (derivedStart && derivedEnd) {
+      const fs = formatTime(derivedStart);
+      const fe = formatTime(derivedEnd);
+      if (fs && fe && fs !== fe) return `${fs} - ${fe}`;
+      return fs || fe;
+    }
+
+    if (derivedStart) return formatTime(derivedStart);
+    if (derivedEnd)   return formatTime(derivedEnd);
     
     // Try to extract time from description as last resort
     const description = safeShow.description;

@@ -94,12 +94,27 @@ const parseWkbPoint = (
 };
 
 /**
+ * Normalize an address string for consistent comparison.
+ * Lowercases, trims, collapses whitespace, and removes punctuation except commas.
+ * Returns empty string for falsy inputs.
+ */
+const normalizeAddress = (str?: string): string => {
+  if (!str) return '';
+  
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')  // collapse multiple spaces to single space
+    .replace(/[^\w\s,]/g, ''); // remove punctuation except commas
+};
+
+/**
  * Convert a raw Supabase row into an app `Show` object.
  */
 /* ------------------------------------------------------------------ */
 /* Debug helper – track a single show end-to-end                        */
 /* ------------------------------------------------------------------ */
-const DEBUG_SHOW_ID = 'cd175b33-3144-4ccb-9d85-94490446bf26';
+const DEBUG_SHOW_ID = '46437e96-79e3-443e-9ad6-f43ebf660cc3';
 
 const mapDbShowToAppShow = (row: any): Show => ({
   id: row.id,
@@ -778,6 +793,31 @@ const getDirectPaginatedShows = async (
       throw queryError;
     }
 
+    /* ------------------------------------------------------------------
+     * DEBUG – inspect target show immediately after raw direct query
+     * ----------------------------------------------------------------*/
+    if (Array.isArray(data)) {
+      const dbgRow: any | undefined = data.find((r: any) => r.id === DEBUG_SHOW_ID);
+      if (dbgRow) {
+        console.warn('[showService][DEBUG_SHOW] Found target show in raw direct query:', {
+          id: dbgRow.id,
+          title: dbgRow.title,
+          start_date: dbgRow.start_date,
+          end_date: dbgRow.end_date,
+          latitude: dbgRow.latitude,
+          longitude: dbgRow.longitude,
+          hasCoordArray:
+            !!dbgRow.coordinates &&
+            !!dbgRow.coordinates.coordinates &&
+            Array.isArray(dbgRow.coordinates.coordinates),
+          coordArray: dbgRow.coordinates?.coordinates,
+          coordType: typeof dbgRow.coordinates,
+        });
+      } else {
+        console.warn('[showService][DEBUG_SHOW] Target show NOT in raw direct query result');
+      }
+    }
+
     // Process the data to add coordinates
     let filteredData: any[] = data || [];
 
@@ -809,6 +849,56 @@ const getDirectPaginatedShows = async (
       filteredData = filteredData.filter(show => 
         show.features && 
         features.every(feature => show.features[feature] === true)
+      );
+    }
+    
+    // Build a map of coordinates by address from shows that have coordinates
+    const coordsByAddress = new Map<string, { latitude: number; longitude: number }>();
+    
+    filteredData.forEach(show => {
+      // Only include entries that have valid coordinates
+      let hasValidCoords = false;
+      let coords: { latitude: number; longitude: number } | null = null;
+      
+      // Check for explicit latitude/longitude
+      if (typeof show.latitude === 'number' && typeof show.longitude === 'number') {
+        coords = { latitude: show.latitude, longitude: show.longitude };
+        hasValidCoords = true;
+      }
+      // Check for PostGIS point
+      else if (
+        show.coordinates &&
+        show.coordinates.coordinates &&
+        Array.isArray(show.coordinates.coordinates) &&
+        show.coordinates.coordinates.length >= 2
+      ) {
+        coords = {
+          latitude: show.coordinates.coordinates[1],
+          longitude: show.coordinates.coordinates[0]
+        };
+        hasValidCoords = true;
+      }
+      // Check for WKB hex string
+      else if (typeof show.coordinates === 'string') {
+        const pt = parseWkbPoint(show.coordinates);
+        if (pt) {
+          coords = pt;
+          hasValidCoords = true;
+        }
+      }
+      
+      // If we found valid coordinates and have an address, add to the map
+      if (hasValidCoords && coords && show.address) {
+        const normalizedAddr = normalizeAddress(show.address);
+        if (normalizedAddr) {
+          coordsByAddress.set(normalizedAddr, coords);
+        }
+      }
+    });
+    
+    if (__DEV__ && coordsByAddress.size > 0) {
+      console.warn(
+        `[showService] Built coordinates map from ${coordsByAddress.size} addresses with known coordinates`
       );
     }
     
@@ -849,14 +939,45 @@ const getDirectPaginatedShows = async (
             longitude: show.coordinates.coordinates[0]
           };
         // Method 3: WKB hex string
-      } else if (typeof show.coordinates === 'string') {
-        const pt = parseWkbPoint(show.coordinates);
-        if (pt) {
-          showCoords = {
-            latitude: pt.latitude,
-            longitude: pt.longitude,
-          };
+        } else if (typeof show.coordinates === 'string') {
+          const pt = parseWkbPoint(show.coordinates);
+          if (pt) {
+            showCoords = {
+              latitude: pt.latitude,
+              longitude: pt.longitude,
+            };
+          }
         }
+        
+        // If no coordinates yet, try to find them by address
+        if (!showCoords && show.address) {
+          const normalizedAddr = normalizeAddress(show.address);
+          const fallbackCoords = coordsByAddress.get(normalizedAddr);
+          
+          if (fallbackCoords) {
+            showCoords = fallbackCoords;
+            
+            // Also assign these coordinates to the show object for mapping
+            // Use a try/catch to handle readonly properties
+            try {
+              show.latitude = fallbackCoords.latitude;
+              show.longitude = fallbackCoords.longitude;
+            } catch (e) {
+              // If properties are readonly, we can still use showCoords for distance calc
+              if (__DEV__) {
+                console.warn('[showService] Could not assign fallback coordinates to show object (readonly properties)');
+              }
+            }
+            
+            // Debug log for target show
+            if (show.id === DEBUG_SHOW_ID) {
+              console.warn('[showService][DEBUG_SHOW] Applied fallback coordinates from address match:', {
+                address: show.address,
+                normalizedAddress: normalizedAddr,
+                borrowedCoords: fallbackCoords
+              });
+            }
+          }
         }
         
         // Skip shows without valid coordinates
@@ -866,8 +987,30 @@ const getDirectPaginatedShows = async (
           { latitude, longitude },
           showCoords
         );
+
+        /* ----------- DEBUG distance calc for target show ------------- */
+        if (show.id === DEBUG_SHOW_ID) {
+          console.warn('[showService][DEBUG_SHOW] Distance filter evaluation:', {
+            coordsUser: { latitude, longitude },
+            coordsShow: showCoords,
+            distance,
+            radius,
+            passes: distance <= radius,
+          });
+        }
+
         return distance <= radius;
       });
+
+      /* After distance filtering – did target remain? */
+      if (Array.isArray(filteredData)) {
+        const remains = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+        console.warn(
+          `[showService][DEBUG_SHOW] Target show ${
+            remains ? 'REMAINS' : 'REMOVED'
+          } after distance filtering`,
+        );
+      }
     } else if (isDefaultCoordinates) {
       if (__DEV__)
         console.warn(
@@ -885,6 +1028,13 @@ const getDirectPaginatedShows = async (
       console.warn(
         `[showService] getDirectPaginatedShows found ${paginatedData.length} shows (from ${totalFilteredCount} filtered, ${count} total)`,
       );
+
+    /* Final page check for DEBUG_SHOW */
+    if (paginatedData.some((s: any) => s.id === DEBUG_SHOW_ID)) {
+      console.warn('[showService][DEBUG_SHOW] Target show IS in final paginated page');
+    } else {
+      console.warn('[showService][DEBUG_SHOW] Target show NOT in final paginated page');
+    }
     
     // Map to app format
     const mappedShows = paginatedData.map(mapDbShowToAppShow);
