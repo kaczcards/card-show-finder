@@ -94,6 +94,21 @@ const parseWkbPoint = (
 };
 
 /**
+ * Normalize an address string for consistent comparison.
+ * Lowercases, trims, collapses whitespace, and removes punctuation except commas.
+ * Returns empty string for falsy inputs.
+ */
+const normalizeAddress = (str?: string): string => {
+  if (!str) return '';
+  
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')  // collapse multiple spaces to single space
+    .replace(/[^\w\s,]/g, ''); // remove punctuation except commas
+};
+
+/**
  * Convert a raw Supabase row into an app `Show` object.
  */
 /* ------------------------------------------------------------------ */
@@ -837,6 +852,56 @@ const getDirectPaginatedShows = async (
       );
     }
     
+    // Build a map of coordinates by address from shows that have coordinates
+    const coordsByAddress = new Map<string, { latitude: number; longitude: number }>();
+    
+    filteredData.forEach(show => {
+      // Only include entries that have valid coordinates
+      let hasValidCoords = false;
+      let coords: { latitude: number; longitude: number } | null = null;
+      
+      // Check for explicit latitude/longitude
+      if (typeof show.latitude === 'number' && typeof show.longitude === 'number') {
+        coords = { latitude: show.latitude, longitude: show.longitude };
+        hasValidCoords = true;
+      }
+      // Check for PostGIS point
+      else if (
+        show.coordinates &&
+        show.coordinates.coordinates &&
+        Array.isArray(show.coordinates.coordinates) &&
+        show.coordinates.coordinates.length >= 2
+      ) {
+        coords = {
+          latitude: show.coordinates.coordinates[1],
+          longitude: show.coordinates.coordinates[0]
+        };
+        hasValidCoords = true;
+      }
+      // Check for WKB hex string
+      else if (typeof show.coordinates === 'string') {
+        const pt = parseWkbPoint(show.coordinates);
+        if (pt) {
+          coords = pt;
+          hasValidCoords = true;
+        }
+      }
+      
+      // If we found valid coordinates and have an address, add to the map
+      if (hasValidCoords && coords && show.address) {
+        const normalizedAddr = normalizeAddress(show.address);
+        if (normalizedAddr) {
+          coordsByAddress.set(normalizedAddr, coords);
+        }
+      }
+    });
+    
+    if (__DEV__ && coordsByAddress.size > 0) {
+      console.warn(
+        `[showService] Built coordinates map from ${coordsByAddress.size} addresses with known coordinates`
+      );
+    }
+    
     // Filter results for shows within the radius
     // (since we can't do this in the query without the RPC)
     /* ------------------------------------------------------------------
@@ -874,14 +939,45 @@ const getDirectPaginatedShows = async (
             longitude: show.coordinates.coordinates[0]
           };
         // Method 3: WKB hex string
-      } else if (typeof show.coordinates === 'string') {
-        const pt = parseWkbPoint(show.coordinates);
-        if (pt) {
-          showCoords = {
-            latitude: pt.latitude,
-            longitude: pt.longitude,
-          };
+        } else if (typeof show.coordinates === 'string') {
+          const pt = parseWkbPoint(show.coordinates);
+          if (pt) {
+            showCoords = {
+              latitude: pt.latitude,
+              longitude: pt.longitude,
+            };
+          }
         }
+        
+        // If no coordinates yet, try to find them by address
+        if (!showCoords && show.address) {
+          const normalizedAddr = normalizeAddress(show.address);
+          const fallbackCoords = coordsByAddress.get(normalizedAddr);
+          
+          if (fallbackCoords) {
+            showCoords = fallbackCoords;
+            
+            // Also assign these coordinates to the show object for mapping
+            // Use a try/catch to handle readonly properties
+            try {
+              show.latitude = fallbackCoords.latitude;
+              show.longitude = fallbackCoords.longitude;
+            } catch (e) {
+              // If properties are readonly, we can still use showCoords for distance calc
+              if (__DEV__) {
+                console.warn('[showService] Could not assign fallback coordinates to show object (readonly properties)');
+              }
+            }
+            
+            // Debug log for target show
+            if (show.id === DEBUG_SHOW_ID) {
+              console.warn('[showService][DEBUG_SHOW] Applied fallback coordinates from address match:', {
+                address: show.address,
+                normalizedAddress: normalizedAddr,
+                borrowedCoords: fallbackCoords
+              });
+            }
+          }
         }
         
         // Skip shows without valid coordinates
