@@ -99,7 +99,7 @@ const parseWkbPoint = (
 /* ------------------------------------------------------------------ */
 /* Debug helper – track a single show end-to-end                        */
 /* ------------------------------------------------------------------ */
-const DEBUG_SHOW_ID = 'cd175b33-3144-4ccb-9d85-94490446bf26';
+const DEBUG_SHOW_ID = '46437e96-79e3-443e-9ad6-f43ebf660cc3';
 
 const mapDbShowToAppShow = (row: any): Show => ({
   id: row.id,
@@ -778,6 +778,31 @@ const getDirectPaginatedShows = async (
       throw queryError;
     }
 
+    /* ------------------------------------------------------------------
+     * DEBUG – inspect target show immediately after raw direct query
+     * ----------------------------------------------------------------*/
+    if (Array.isArray(data)) {
+      const dbgRow: any | undefined = data.find((r: any) => r.id === DEBUG_SHOW_ID);
+      if (dbgRow) {
+        console.warn('[showService][DEBUG_SHOW] Found target show in raw direct query:', {
+          id: dbgRow.id,
+          title: dbgRow.title,
+          start_date: dbgRow.start_date,
+          end_date: dbgRow.end_date,
+          latitude: dbgRow.latitude,
+          longitude: dbgRow.longitude,
+          hasCoordArray:
+            !!dbgRow.coordinates &&
+            !!dbgRow.coordinates.coordinates &&
+            Array.isArray(dbgRow.coordinates.coordinates),
+          coordArray: dbgRow.coordinates?.coordinates,
+          coordType: typeof dbgRow.coordinates,
+        });
+      } else {
+        console.warn('[showService][DEBUG_SHOW] Target show NOT in raw direct query result');
+      }
+    }
+
     // Process the data to add coordinates
     let filteredData: any[] = data || [];
 
@@ -866,8 +891,30 @@ const getDirectPaginatedShows = async (
           { latitude, longitude },
           showCoords
         );
+
+        /* ----------- DEBUG distance calc for target show ------------- */
+        if (show.id === DEBUG_SHOW_ID) {
+          console.warn('[showService][DEBUG_SHOW] Distance filter evaluation:', {
+            coordsUser: { latitude, longitude },
+            coordsShow: showCoords,
+            distance,
+            radius,
+            passes: distance <= radius,
+          });
+        }
+
         return distance <= radius;
       });
+
+      /* After distance filtering – did target remain? */
+      if (Array.isArray(filteredData)) {
+        const remains = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+        console.warn(
+          `[showService][DEBUG_SHOW] Target show ${
+            remains ? 'REMAINS' : 'REMOVED'
+          } after distance filtering`,
+        );
+      }
     } else if (isDefaultCoordinates) {
       if (__DEV__)
         console.warn(
@@ -885,6 +932,13 @@ const getDirectPaginatedShows = async (
       console.warn(
         `[showService] getDirectPaginatedShows found ${paginatedData.length} shows (from ${totalFilteredCount} filtered, ${count} total)`,
       );
+
+    /* Final page check for DEBUG_SHOW */
+    if (paginatedData.some((s: any) => s.id === DEBUG_SHOW_ID)) {
+      console.warn('[showService][DEBUG_SHOW] Target show IS in final paginated page');
+    } else {
+      console.warn('[showService][DEBUG_SHOW] Target show NOT in final paginated page');
+    }
     
     // Map to app format
     const mappedShows = paginatedData.map(mapDbShowToAppShow);
