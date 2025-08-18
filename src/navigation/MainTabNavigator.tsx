@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { CommonActions } from '@react-navigation/native';
 
 // Import screen components
 import { HomeScreen } from '../screens/Home';
@@ -122,6 +123,17 @@ const MainTabNavigator: React.FC = () => {
         options={{
           headerShown: false, // ProfileNavigator manages its own headers
         }}
+        listeners={({ navigation }) => ({
+          /* Reset nested stack so the Profile tab always opens on ProfileMain */
+          tabPress: () => {
+            navigation.dispatch(
+              CommonActions.navigate({
+                name: 'My Profile',
+                params: { screen: 'ProfileMain' },
+              }),
+            );
+          },
+        })}
       />
     </MainTab.Navigator>
   );
