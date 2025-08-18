@@ -73,7 +73,70 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
         }
 
         // `data` can be `null` when no rows were found
-        setBoothInfo(data ?? null);
+        let boothRow = data ?? null;
+
+        /* ------------------------------------------------------------------
+         * Secondary query – try alternate snake_case column names
+         * ------------------------------------------------------------------ */
+        if (!boothRow) {
+          const { data: altData } = await supabase
+            .from('show_participants')
+            .select('*')
+            .eq('user_id', dealerId)
+            .eq('show_id', showId)
+            .maybeSingle();
+          boothRow = altData ?? null;
+        }
+
+        /* ------------------------------------------------------------------
+         * Tertiary query – broad OR-based fallback, grab most recent match
+         * ------------------------------------------------------------------ */
+        if (!boothRow) {
+          const { data: fallbackRows } = await supabase
+            .from('show_participants')
+            .select('*')
+            .or(
+              `userid.eq.${dealerId},user_id.eq.${dealerId}`
+            )
+            .or(
+              `showid.eq.${showId},show_id.eq.${showId}`
+            )
+            // Order by whichever timestamp column exists
+            .order('createdat', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          boothRow = fallbackRows ?? null;
+        }
+
+        // If still nothing – leave as null (empty state)
+        if (!boothRow) {
+          setBoothInfo(null);
+          return;
+        }
+
+        /* ------------------------------------------------------------------
+         * Normalise column names so downstream UI can rely on a stable shape
+         * ------------------------------------------------------------------ */
+        const normalise = (row: any) => ({
+          booth_location:
+            row.booth_location ??
+            row.boothLocation ??
+            row.booth_number ??
+            row.boothNumber ??
+            '',
+          card_types: row.card_types ?? row.cardTypes ?? [],
+          specialty: row.specialty ?? '',
+          price_range: row.price_range ?? row.priceRange ?? '',
+          notable_items: row.notable_items ?? row.notableItems ?? '',
+          payment_methods:
+            row.payment_methods ?? row.paymentMethods ?? [],
+          open_to_trades:
+            row.open_to_trades ?? row.openToTrades ?? false,
+          buying_cards: row.buying_cards ?? row.buyingCards ?? false,
+        });
+
+        setBoothInfo(normalise(boothRow));
       } catch (err: any) {
         console.error('Unexpected error in fetchBoothInfo:', err);
         setError(err.message || 'An unexpected error occurred.');
