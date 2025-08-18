@@ -102,12 +102,38 @@ const OrganizerDashboardScreen: React.FC = () => {
       for (const series of mySeries) {
         const showsInSeries = await showSeriesService.getShowsInSeries(series.id);
         allShows = [...allShows, ...showsInSeries];
-        
-        // Count upcoming shows (start date is in the future)
-        upcomingCount += showsInSeries.filter(show => 
-          new Date(show.startDate) > now
-        ).length;
       }
+
+      /* -----------------------------------------------------------
+       * 1b. Fetch **stand-alone** shows (not part of a series)
+       *     that belong to this organiser and merge them in.
+       * --------------------------------------------------------- */
+      const { data: standaloneRows, error: standaloneErr } = await supabase
+        .from('shows')
+        .select('*')
+        .eq('organizer_id', user.id)
+        .is('series_id', null);
+
+      if (standaloneErr) {
+        console.error('Error fetching standalone shows:', standaloneErr);
+      }
+
+      // Normalize standalone rows so we can reuse the same date logic
+      const standaloneShows = (standaloneRows ?? []).map(row => ({
+        id: row.id,
+        startDate: row.start_date,
+        endDate: row.end_date,
+      }));
+
+      // Merge into master list
+      allShows = [...allShows, ...standaloneShows];
+
+      /* -----------------------------------------------------------
+       * 2. Re-compute upcomingCount using **end date** so a multi-day
+       *    show that has already started but not yet finished is
+       *    considered “upcoming / current”.
+       * --------------------------------------------------------- */
+      upcomingCount = allShows.filter(show => new Date(show.endDate) >= now).length;
       
       // Get reviews for all series
       let totalReviews = 0;
