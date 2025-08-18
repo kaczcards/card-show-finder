@@ -195,9 +195,18 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
 
   // Navigate directly to the dealer participation screen with this show pre-selected
   const navigateToManageParticipation = () =>
-    navigation.navigate('ShowParticipationScreen', {
-      preselectShowId: showId,
-    });
+    nav.dispatch(
+      CommonActions.navigate({
+        name: 'MainTabs', // bottom-tab navigator
+        params: {
+          screen: 'My Profile', // profile tab
+          params: {
+            screen: 'ShowParticipationScreen', // nested stack screen
+            params: { preselectShowId: showId },
+          },
+        },
+      }),
+    );
 
   // Navigate dealer to the Subscription upgrade screen inside Profile tab
   const navigateToSubscription = () => {
