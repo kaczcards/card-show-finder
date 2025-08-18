@@ -138,7 +138,33 @@ export const useShowDetailQuery = (showId: string) => {
     };
 
     // Apply the enhancement
-    const enhancedData = await enhanceWithSocialMediaLinks(data as ShowDetailResponse);
+    const enhancedData = await enhanceWithSocialMediaLinks(
+      data as ShowDetailResponse,
+    );
+
+    /* ------------------------------------------------------------------
+     * Normalize dealer roles so that the show organizer is always flagged
+     * as `SHOW_ORGANIZER`.  This guarantees clickability and privileged
+     * booth-info visibility for attendees in downstream components.
+     * ------------------------------------------------------------------ */
+    const organizerId = (enhancedData as ShowDetailResponse)?.show
+      ?.organizer_id;
+
+    if (organizerId) {
+      const normalizedDealers = enhancedData.participatingDealers.map(
+        (dealer) =>
+          dealer.id === organizerId
+            ? { ...dealer, role: UserRole.SHOW_ORGANIZER }
+            : dealer,
+      );
+
+      return {
+        ...enhancedData,
+        participatingDealers: normalizedDealers,
+      };
+    }
+
+    // Fallback: no organizerId or no matching dealer – return as-is
     return enhancedData;
   };
   
