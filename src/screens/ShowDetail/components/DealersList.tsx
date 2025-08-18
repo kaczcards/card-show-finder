@@ -202,7 +202,12 @@ if (typeof __DEV__ !== 'undefined' && __DEV__) {
                         styles.dealerName,
                         isPressed && styles.dealerNamePressed
                       ]}>
-                        {dealer.name} (MVP)
+                        {dealer.name}
+                        {dealer.role === UserRole.MVP_DEALER
+                          ? ' (MVP)'
+                          : dealer.role === UserRole.SHOW_ORGANIZER
+                          ? ' (Organizer)'
+                          : ''}
                       </Text>
                       {dealer.boothLocation && (
                         <Text style={styles.boothLocation}>Booth: {dealer.boothLocation}</Text>
