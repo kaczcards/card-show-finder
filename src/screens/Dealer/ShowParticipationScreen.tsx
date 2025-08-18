@@ -26,6 +26,7 @@ import {
   cancelShowParticipation,
   DealerParticipationInput
 } from '../../services/dealerService';
+import { getShowById } from '../../services/showService';
 import { Show, UserRole } from '../../types';
 
 // Card type options for dealers to select
@@ -77,6 +78,9 @@ const ShowParticipationScreen: React.FC = () => {
   const route = useRoute<any>();
   // If ShowDetail navigates here with a show pre-selected, it will pass this param
   const preselectShowId = route?.params?.preselectShowId as string | undefined;
+  // When true we intentionally want to show the registration modal even if
+  // the user is already a dealer for that show (used by organizer shortcut)
+  const forceRegister = route?.params?.forceRegister as boolean | undefined;
   
   // State for tab selection
   const [activeTab, setActiveTab] = useState<'myShows' | 'availableShows'>('myShows');
@@ -169,24 +173,63 @@ const ShowParticipationScreen: React.FC = () => {
   useEffect(() => {
     if (!preselectShowId || hasHandledPreselect || isLoading) return;
 
-    // 1) Try dealerShows (already registered) – open Edit
-    const foundDealerShow = dealerShows.find((s) => s.id === preselectShowId);
-    if (foundDealerShow) {
-      if (activeTab !== 'myShows') setActiveTab('myShows');
-      handleOpenEdit(foundDealerShow);
-      setHasHandledPreselect(true);
-      return;
-    }
+    const tryRegistrationFlow = async () => {
+      /* -----------------------------------------------------------
+       * 1. If forceRegister → prefer the registration modal
+       * --------------------------------------------------------- */
+      if (forceRegister) {
+        // 1a. Look in availableShows first
+        const avail = availableShows.find((s) => s.id === preselectShowId);
+        if (avail) {
+          if (activeTab !== 'availableShows') setActiveTab('availableShows');
+          handleOpenRegistration(avail);
+          setHasHandledPreselect(true);
+          return;
+        }
 
-    // 2) Try availableShows – open Registration
-    const foundAvailableShow = availableShows.find((s) => s.id === preselectShowId);
-    if (foundAvailableShow) {
-      if (activeTab !== 'availableShows') setActiveTab('availableShows');
-      handleOpenRegistration(foundAvailableShow);
-      setHasHandledPreselect(true);
-    }
+        // 1b. If dealer already registered, fall back to edit
+        const dealer = dealerShows.find((s) => s.id === preselectShowId);
+        if (dealer) {
+          if (activeTab !== 'myShows') setActiveTab('myShows');
+          handleOpenEdit(dealer);
+          setHasHandledPreselect(true);
+          return;
+        }
+
+        // 1c. As a last resort fetch the show directly and open registration
+        const { data: fetchedShow } = await getShowById(preselectShowId);
+        if (fetchedShow) {
+          if (activeTab !== 'availableShows') setActiveTab('availableShows');
+          handleOpenRegistration(fetchedShow as Show);
+        }
+
+        setHasHandledPreselect(true);
+        return;
+      }
+
+      /* -----------------------------------------------------------
+       * 2. Normal behaviour (no forceRegister) – prefer Edit
+       * --------------------------------------------------------- */
+      const foundDealerShow = dealerShows.find((s) => s.id === preselectShowId);
+      if (foundDealerShow) {
+        if (activeTab !== 'myShows') setActiveTab('myShows');
+        handleOpenEdit(foundDealerShow);
+        setHasHandledPreselect(true);
+        return;
+      }
+
+      const foundAvailableShow = availableShows.find((s) => s.id === preselectShowId);
+      if (foundAvailableShow) {
+        if (activeTab !== 'availableShows') setActiveTab('availableShows');
+        handleOpenRegistration(foundAvailableShow);
+        setHasHandledPreselect(true);
+      }
+    };
+
+    tryRegistrationFlow();
   }, [
     preselectShowId,
+    forceRegister,
     hasHandledPreselect,
     isLoading,
     dealerShows,
