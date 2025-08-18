@@ -197,12 +197,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const navigateToManageParticipation = () =>
     nav.dispatch(
       CommonActions.navigate({
-        name: 'MainTabs', // bottom-tab navigator
+        name: 'MainTabs',
         params: {
-          screen: 'My Profile', // profile tab
+          screen: 'My Profile',
           params: {
-            screen: 'ShowParticipationScreen', // nested stack screen
-            params: { preselectShowId: showId },
+            screen: 'ShowParticipationScreen',
+            params: { preselectShowId: showId, forceRegister: true },
           },
         },
       }),
