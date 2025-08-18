@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ShowSeries, Show } from '../types';
 import { showSeriesService } from '../services/showSeriesService';
+import { supabase } from '../supabase';
 
 // Interface for combined unclaimed items (shows or series)
 export interface UnclaimedItem {
@@ -25,74 +26,124 @@ export const useUnclaimedShows = (organizerId: string) => {
   // Function to fetch unclaimed shows and series
   const fetchUnclaimedShows = async () => {
     try {
-       
-console.warn('[_useUnclaimedShows] Starting to fetch unclaimed shows and series');
+      console.warn('[_useUnclaimedShows] Fetching unclaimed series & shows…');
       setIsLoading(true);
       setError(null);
-      
-      let unclaimedSeries: ShowSeries[] = [];
-      let unclaimedStandaloneShows: Show[] = [];
 
-      /* -----------------------------------------
-       * 1️⃣  Fetch series – isolate failures here
-       * ----------------------------------------*/
-      try {
-         
-console.warn('[_useUnclaimedShows] Attempting to fetch series…');
-        unclaimedSeries = await showSeriesService.getAllShowSeries({
-          // Explicitly pass `undefined` so the RPC receives a SQL NULL,
-          // avoiding the `string | undefined` type error.
-          organizerId: undefined
-        });
-         
-console.warn('[_useUnclaimedShows] Successfully fetched series:', unclaimedSeries);
-      } catch (seriesErr) {
-        console.error('CRASHED INSIDE: getAllShowSeries', seriesErr);
-        throw seriesErr; // bubble up to outer catch
+      /* ------------------------------------ *
+       * 1. Unclaimed SERIES (organizer_id IS NULL)
+       * ------------------------------------ */
+      const { data: rawSeries, error: seriesErr } = await supabase
+        .from('show_series')
+        .select('*')
+        .is('organizer_id', null);
+
+      if (seriesErr) throw seriesErr;
+
+      // Map raw series to ShowSeries objects with camelCase properties
+      const mappedSeries = (rawSeries ?? []).map(series => ({
+        id: series.id,
+        name: series.name,
+        organizerId: series.organizer_id,
+        description: series.description,
+        averageRating: series.average_rating,
+        reviewCount: series.review_count,
+        createdAt: series.created_at,
+        updatedAt: series.updated_at
+      }));
+
+      const seriesIds = mappedSeries.map(s => s.id);
+
+      /* ------------------------------------ *
+       * 2. Upcoming shows that belong to ANY of
+       *    those unclaimed series
+       * ------------------------------------ */
+      let upcomingSeriesShows: Show[] = [];
+      if (seriesIds.length > 0) {
+        const { data: rawSeriesShows, error: showsErr } = await supabase
+          .from('shows')
+          .select('*')
+          .in('series_id', seriesIds)
+          .gte('end_date', new Date().toISOString());
+
+        if (showsErr) throw showsErr;
+        
+        // Map raw shows to Show objects using the service helper
+        upcomingSeriesShows = (rawSeriesShows ?? []).map(show => 
+          showSeriesService.mapShowRow(show)
+        );
       }
 
-      /* -------------------------------------------------
-       * 2️⃣  Fetch standalone shows – isolate failures here
-       * ------------------------------------------------*/
-      try {
-         
-console.warn('[_useUnclaimedShows] Attempting to fetch standalone shows…');
-        unclaimedStandaloneShows = await showSeriesService.getUnclaimedShows();
-         
-console.warn('[_useUnclaimedShows] Successfully fetched standalone shows:', unclaimedStandaloneShows);
-      } catch (showsErr) {
-        console.error('CRASHED INSIDE: getUnclaimedShows', showsErr);
-        throw showsErr; // bubble up to outer catch
-      }
+      // Build per-series aggregates (nextShowDate & upcomingCount)
+      const seriesMeta = new Map<
+        string,
+        { nextShowDate: string | Date; upcomingCount: number }
+      >();
 
-      // Combine and map the two lists
-      const combinedItems = [
-        // Explicit type assertions ensure the literal unions are preserved,
-        // preventing the `'string' is not assignable to '\"series\" | \"show\"'` error.
-        ...unclaimedSeries.map(series => ({ type: 'series' as const, data: series })),
-        ...unclaimedStandaloneShows.map(show => ({ type: 'show' as const, data: show }))
-      ];
-      
-      // Sort by date (most recent first)
-      const getItemDate = (item: UnclaimedItem): number => {
-        if (item.type === 'show') {
-          const show = item.data as Show;
-          return show?.startDate ? new Date(show.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+      for (const show of upcomingSeriesShows) {
+        const meta = seriesMeta.get(show.seriesId!) || {
+          nextShowDate: show.startDate,
+          upcomingCount: 0,
+        };
+        meta.upcomingCount += 1;
+        if (new Date(show.startDate) < new Date(meta.nextShowDate)) {
+          meta.nextShowDate = show.startDate;
         }
-        const series = item.data as ShowSeries;
-        return series?.nextShowDate ? new Date(series.nextShowDate).getTime() : Number.MAX_SAFE_INTEGER;
-      };
+        seriesMeta.set(show.seriesId!, meta);
+      }
 
-      combinedItems.sort((a, b) => getItemDate(a) - getItemDate(b));
-      
-       
-console.warn(`[_useUnclaimedShows] Fetch complete. Total unclaimed items: ${combinedItems.length}`);
+      // Merge meta into mapped series & filter out series with 0 upcoming
+      const unclaimedSeries: ShowSeries[] = mappedSeries
+        .filter(s => seriesMeta.has(s.id))
+        .map(s => ({
+          ...s,
+          nextShowDate: seriesMeta.get(s.id)!.nextShowDate,
+          upcomingCount: seriesMeta.get(s.id)!.upcomingCount,
+        }));
+
+      /* ------------------------------------ *
+       * 3. Stand-alone unclaimed upcoming shows
+       * ------------------------------------ */
+      const { data: rawStandalone, error: standaloneErr } = await supabase
+        .from('shows')
+        .select('*')
+        .is('organizer_id', null)
+        .is('series_id', null)
+        .gte('end_date', new Date().toISOString())
+        .order('start_date', { ascending: true });
+
+      if (standaloneErr) throw standaloneErr;
+
+      // Map raw standalone shows to Show objects using the service helper
+      const unclaimedStandaloneShows: Show[] = (rawStandalone ?? []).map(show => 
+        showSeriesService.mapShowRow(show)
+      );
+
+      /* ------------------------------------ *
+       * 4. Combine & sort by upcoming date ASC
+       * ------------------------------------ */
+      const combinedItems: UnclaimedItem[] = [
+        ...unclaimedSeries.map(s => ({ type: 'series' as const, data: s })),
+        ...unclaimedStandaloneShows.map(show => ({ type: 'show' as const, data: show })),
+      ];
+
+      // Sort by date using properly typed objects with camelCase properties
+      const dateValue = (item: UnclaimedItem) =>
+        item.type === 'series'
+          ? new Date((item.data as ShowSeries).nextShowDate!).getTime()
+          : new Date((item.data as Show).startDate).getTime();
+
+      combinedItems.sort((a, b) => dateValue(a) - dateValue(b));
+
       setUnclaimedItems(combinedItems);
-      
+      console.warn(`[_useUnclaimedShows] Done. Items: ${combinedItems.length}`);
     } catch (err) {
-      console.error('[_useUnclaimedShows] Error fetching unclaimed shows:', err);
-      setError(err instanceof Error ? err : new Error('Failed to load unclaimed shows. Please try again.'));
-      // Set empty array on error to avoid undefined
+      console.error('[_useUnclaimedShows] Error:', err);
+      setError(
+        err instanceof Error
+          ? err
+          : new Error('Failed to load unclaimed shows. Please try again.'),
+      );
       setUnclaimedItems([]);
     } finally {
       setIsLoading(false);
@@ -112,4 +163,3 @@ console.warn(`[_useUnclaimedShows] Fetch complete. Total unclaimed items: ${comb
     refreshUnclaimedShows: fetchUnclaimedShows 
   };
 };
-

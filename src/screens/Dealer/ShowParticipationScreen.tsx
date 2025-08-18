@@ -1,4 +1,4 @@
-import React, { useState, useEffect as _useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   getDealerShows, 
@@ -74,9 +74,15 @@ const ShowParticipationScreen: React.FC = () => {
   const { authState } = useAuth();
   const { user } = authState;
   const navigation = useNavigation();
+  const route = useRoute<any>();
+  // If ShowDetail navigates here with a show pre-selected, it will pass this param
+  const preselectShowId = route?.params?.preselectShowId as string | undefined;
   
   // State for tab selection
   const [activeTab, setActiveTab] = useState<'myShows' | 'availableShows'>('myShows');
+
+  // Guard to ensure we only auto-open once
+  const [hasHandledPreselect, setHasHandledPreselect] = useState(false);
   
   // State for dealer shows
   const [dealerShows, setDealerShows] = useState<Array<Show & { participation: any }>>([]);
@@ -155,6 +161,38 @@ const ShowParticipationScreen: React.FC = () => {
       setIsRefreshing(false);
     }
   }, [user]);
+
+  /* ------------------------------------------------------------------
+   * Auto-open registration / edit modal when navigated with
+   * `preselectShowId`
+   * ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (!preselectShowId || hasHandledPreselect || isLoading) return;
+
+    // 1) Try dealerShows (already registered) – open Edit
+    const foundDealerShow = dealerShows.find((s) => s.id === preselectShowId);
+    if (foundDealerShow) {
+      if (activeTab !== 'myShows') setActiveTab('myShows');
+      handleOpenEdit(foundDealerShow);
+      setHasHandledPreselect(true);
+      return;
+    }
+
+    // 2) Try availableShows – open Registration
+    const foundAvailableShow = availableShows.find((s) => s.id === preselectShowId);
+    if (foundAvailableShow) {
+      if (activeTab !== 'availableShows') setActiveTab('availableShows');
+      handleOpenRegistration(foundAvailableShow);
+      setHasHandledPreselect(true);
+    }
+  }, [
+    preselectShowId,
+    hasHandledPreselect,
+    isLoading,
+    dealerShows,
+    availableShows,
+    activeTab,
+  ]);
   
   /* ------------------------------------------------------------------
    * Sorting Helpers

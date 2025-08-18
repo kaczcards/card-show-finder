@@ -8,6 +8,7 @@ interface ShowManagementButtonsProps {
   isClaimingShow: boolean;
   onClaimShow: () => void;
   onEditShow: () => void;
+  onManageMyParticipation: () => void;
 }
 
 const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
@@ -16,6 +17,7 @@ const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
   isClaimingShow,
   onClaimShow,
   onEditShow,
+  onManageMyParticipation,
 }) => {
   return (
     <View style={styles.container}>
@@ -42,6 +44,21 @@ const ShowManagementButtons: React.FC<ShowManagementButtonsProps> = ({
           <Text style={styles.buttonText}>Edit Show Details</Text>
         </TouchableOpacity>
       )}
+
+      {isCurrentUserOrganizer && (
+        <TouchableOpacity
+          style={styles.manageParticipationButton}
+          onPress={onManageMyParticipation}
+        >
+          <Ionicons
+            name="storefront"
+            size={20}
+            color="#FFFFFF"
+            style={styles.buttonIcon}
+          />
+          <Text style={styles.buttonText}>Manage My Participation</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -66,6 +83,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0057B8',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  manageParticipationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#6A1B9A', // Distinct purple color
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,

@@ -962,7 +962,7 @@ const getDirectPaginatedShows = async (
             try {
               show.latitude = fallbackCoords.latitude;
               show.longitude = fallbackCoords.longitude;
-            } catch (e) {
+            } catch {
               // If properties are readonly, we can still use showCoords for distance calc
               if (__DEV__) {
                 console.warn('[showService] Could not assign fallback coordinates to show object (readonly properties)');
@@ -1418,8 +1418,74 @@ export const claimShow = async (
 /**
  * Update an existing show (stub)
  */
-export const updateShow = () => {
-  throw new Error('updateShow not implemented');
+export const updateShow = async (params: {
+  id: string;
+  updates: {
+    title?: string;
+    description?: string | null;
+    location?: string;
+    address?: string;
+    startDate?: string;
+    endDate?: string;
+    entryFee?: number;
+    imageUrl?: string | null;
+    latitude?: number;
+    longitude?: number;
+    features?: Record<string, boolean> | null;
+    categories?: string[] | null;
+    status?: ShowStatus;
+  };
+}): Promise<{ data: Show | null; error: string | null }> => {
+  try {
+    const { id, updates } = params;
+    if (!id) {
+      return { data: null, error: 'Invalid show id' };
+    }
+
+    /* --------------------------------------------------------
+     * Build payload with snake_case keys for DB columns
+     * Only include properties that are defined.
+     * ------------------------------------------------------ */
+    const payload: Record<string, any> = {};
+
+    if (updates.title !== undefined) payload.title = updates.title;
+    if (updates.description !== undefined)
+      payload.description = updates.description;
+    if (updates.location !== undefined) payload.location = updates.location;
+    if (updates.address !== undefined) payload.address = updates.address;
+    if (updates.startDate !== undefined) payload.start_date = updates.startDate;
+    if (updates.endDate !== undefined) payload.end_date = updates.endDate;
+    if (updates.entryFee !== undefined) payload.entry_fee = updates.entryFee;
+    if (updates.imageUrl !== undefined) payload.image_url = updates.imageUrl;
+    if (updates.latitude !== undefined) payload.latitude = updates.latitude;
+    if (updates.longitude !== undefined) payload.longitude = updates.longitude;
+    if (updates.features !== undefined) payload.features = updates.features;
+    if (updates.categories !== undefined) payload.categories = updates.categories;
+    if (updates.status !== undefined) payload.status = updates.status;
+
+    // Always update the timestamp
+    payload.updated_at = new Date().toISOString();
+
+    /* --------------------------------------------------------
+     * Execute update
+     * ------------------------------------------------------ */
+    const { data, error } = await supabase
+      .from('shows')
+      .update(payload)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('[showService] Error updating show:', error);
+      return { data: null, error: error.message };
+    }
+
+    return { data: data ? mapDbShowToAppShow(data) : null, error: null };
+  } catch (err: any) {
+    console.error('[showService] Exception in updateShow:', err);
+    return { data: null, error: err.message ?? 'Failed to update show' };
+  }
 };
 
 /**
