@@ -8,7 +8,8 @@ import {
   FlatList,
   Image,
   Alert,
-  RefreshControl
+  RefreshControl,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ShowSeries, Show } from '../types';
@@ -51,6 +52,42 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   
   // State for tracking which items are being claimed
   const [claimingInProgress, setClaimingInProgress] = useState<Record<string, boolean>>({});
+
+  /* --------------------------------------------------------------
+   * 🔍 Search
+   * ------------------------------------------------------------*/
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  /**
+   * Memo-ised filter of items based on search query.  Matching is
+   * case-insensitive and checks the most relevant text fields.
+   */
+  const filteredItems = React.useMemo(() => {
+    if (!searchQuery.trim()) {
+      return unclaimedItems;
+    }
+
+    const q = searchQuery.trim().toLowerCase();
+
+    const matchSeries = (series: ShowSeries) =>
+      (series.name && series.name.toLowerCase().includes(q)) ||
+      (series.description && series.description.toLowerCase().includes(q));
+
+    const matchShow = (show: Show) =>
+      (show.title && show.title.toLowerCase().includes(q)) ||
+      (show.location && show.location.toLowerCase().includes(q)) ||
+      (show.address && show.address.toLowerCase().includes(q));
+
+    return unclaimedItems.filter(item => {
+      if (item.type === 'series') {
+        return matchSeries(item.data as ShowSeries);
+      }
+      if (item.type === 'show') {
+        return matchShow(item.data as Show);
+      }
+      return false;
+    });
+  }, [searchQuery, unclaimedItems]);
 
   /**
    * Expose an imperative refetch method so parent components can force a data
@@ -331,7 +368,7 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
   // Main content - list of unclaimed items
   return (
     <FlatList
-      data={unclaimedItems}
+      data={filteredItems}
       renderItem={renderItem}
       keyExtractor={(item, index) =>
         item.type === 'series'
@@ -346,9 +383,41 @@ const UnclaimedShowsList = forwardRef<UnclaimedShowsListRef, UnclaimedShowsListP
         />
       }
       ListHeaderComponent={
-        <Text style={styles.listHeader}>
-          Found {unclaimedItems.length} unclaimed {unclaimedItems.length === 1 ? 'item' : 'items'}
-        </Text>
+        <View style={styles.headerContainer}>
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={16} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search unclaimed items…"
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+            />
+            {!!searchQuery && (
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                style={styles.clearButton}
+                hitSlop={10}
+              >
+                <Ionicons name="close-circle" size={18} color="#666" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Count Text */}
+          <Text style={styles.listHeader}>
+            {searchQuery.trim()
+              ? `Found ${filteredItems.length} of ${unclaimedItems.length} unclaimed ${unclaimedItems.length === 1 ? 'item' : 'items'}`
+              : `Found ${unclaimedItems.length} unclaimed ${unclaimedItems.length === 1 ? 'item' : 'items'}`}
+          </Text>
+        </View>
+      }
+      ListEmptyComponent={
+        searchQuery.trim() ? (
+          <Text style={styles.emptySearchText}>No matches</Text>
+        ) : null
       }
     />
   );
@@ -559,6 +628,36 @@ const styles = StyleSheet.create({
   },
   iconSpacing: {
     marginRight: 4,
+  },
+  /* --------------------  NEW -------------------- */
+  headerContainer: {
+    marginBottom: 16,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  searchIcon: {
+    marginRight: 6,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+  },
+  clearButton: {
+    marginLeft: 4,
+  },
+  emptySearchText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
