@@ -1467,14 +1467,37 @@ export const updateShow = async (params: {
     payload.updated_at = new Date().toISOString();
 
     /* --------------------------------------------------------
-     * Execute update
+     * Execute update  – retry without lat/lng if those cols are
+     * missing (older DB schemas)
      * ------------------------------------------------------ */
-    const { data, error } = await supabase
-      .from('shows')
-      .update(payload)
-      .eq('id', id)
-      .select('*')
-      .single();
+    const payloadWithCoords = { ...payload };
+    const payloadWithoutCoords = { ...payload };
+    delete payloadWithoutCoords.latitude;
+    delete payloadWithoutCoords.longitude;
+
+    const attemptUpdate = async (pl: Record<string, any>) =>
+      supabase
+        .from('shows')
+        .update(pl)
+        .eq('id', id)
+        .select('*')
+        .single();
+
+    let { data, error } = await attemptUpdate(payloadWithCoords);
+
+    // If error references missing column(s) → retry sans coords
+    if (
+      error &&
+      /latitude|longitude|schema cache|column|does not exist/i.test(
+        error.message,
+      )
+    ) {
+      if (__DEV__)
+        console.warn(
+          '[showService] Latitude/Longitude columns not found – retrying update without coordinate fields',
+        );
+      ({ data, error } = await attemptUpdate(payloadWithoutCoords));
+    }
 
     if (error) {
       console.error('[showService] Error updating show:', error);
