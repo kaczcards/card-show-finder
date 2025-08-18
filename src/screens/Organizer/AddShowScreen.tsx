@@ -389,7 +389,7 @@ const AddShowScreen: React.FC = () => {
             : null,
         p_categories: categories.length > 0 ? categories : null,
         p_series_id: seriesId || null,
-        p_imageurl: null,
+        p_image_url: null,
       };
 
       console.warn(
