@@ -77,7 +77,7 @@ export const useUnclaimedShows = (organizerId: string) => {
       // Build per-series aggregates (nextShowDate & upcomingCount)
       const seriesMeta = new Map<
         string,
-        { nextShowDate: string; upcomingCount: number }
+        { nextShowDate: string | Date; upcomingCount: number }
       >();
 
       for (const show of upcomingSeriesShows) {

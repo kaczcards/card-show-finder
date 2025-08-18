@@ -89,7 +89,6 @@ export const isNativeMapsAvailable = (): boolean => {
     // Dynamically require react-native-maps; if it resolves and exposes a MapView,
     // we consider the native module available.  This is more permissive and works
     // in custom-dev clients where TurboModuleRegistry names may differ.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const RNMaps = require('react-native-maps');
     return !!(RNMaps && (RNMaps.default || RNMaps.MapView));
   } catch {
@@ -313,7 +312,6 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
     fallbackTextStyle,
     data,
     renderMarker,
-    renderCluster,
     ...restProps
   } = props;
 
@@ -346,7 +344,6 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
   if (isNativeMapsAvailable()) {
     try {
       // Use regular react-native-maps MapView with manual marker rendering
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const RNMaps = require('react-native-maps');
       const RealMapView = RNMaps.default || RNMaps.MapView;
 
