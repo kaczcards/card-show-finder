@@ -193,6 +193,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
   const handleClaimShow = () => Alert.alert("Claim Show", "This feature is coming soon!");
   const navigateToEditShow = () => navigation.navigate('EditShow', { showId });
 
+  // Navigate directly to the dealer participation screen with this show pre-selected
+  const navigateToManageParticipation = () =>
+    navigation.navigate('ShowParticipationScreen', {
+      preselectShowId: showId,
+    });
+
   // Navigate dealer to the Subscription upgrade screen inside Profile tab
   const navigateToSubscription = () => {
     nav.dispatch(
@@ -288,6 +294,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
           isClaimingShow={isClaimingShow}
           onClaimShow={handleClaimShow}
           onEditShow={navigateToEditShow}
+          onManageMyParticipation={navigateToManageParticipation}
         />
         
         {/* Organizer Info */}
