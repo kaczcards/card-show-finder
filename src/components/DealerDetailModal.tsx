@@ -45,16 +45,35 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
           .select('*')
           .eq('userid', dealerId)
           .eq('showid', showId)
-          .single();
+          // `.maybeSingle()` returns `null` when no rows match instead of throwing
+          .maybeSingle();
 
         if (fetchError) {
+          /* --------------------------------------------------------------
+           * Supabase returns PGRST116 when `.single()` expected a row but
+           * received zero.  With `.maybeSingle()` this should be rare, but
+           * we guard anyway in case the signature changes or we encounter
+           * a similar “no rows” condition.
+           * -------------------------------------------------------------- */
+          const isNoRowsError =
+            fetchError.code === 'PGRST116' ||
+            fetchError.message?.includes('JSON object requested');
+
+          if (isNoRowsError) {
+            // Graceful empty-state – no booth info for this dealer/show
+            setBoothInfo(null);
+            return;
+          }
+
+          // Any other error: surface it
           console.error('Error fetching booth info:', fetchError);
           setError('Failed to load booth information.');
           setBoothInfo(null);
           return;
         }
 
-        setBoothInfo(data);
+        // `data` can be `null` when no rows were found
+        setBoothInfo(data ?? null);
       } catch (err: any) {
         console.error('Unexpected error in fetchBoothInfo:', err);
         setError(err.message || 'An unexpected error occurred.');
