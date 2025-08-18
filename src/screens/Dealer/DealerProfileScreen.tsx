@@ -134,8 +134,10 @@ const DealerProfileScreen: React.FC<{
   
   const dealerProfile = dealer.dealer_profiles?.[0] || {};
   
-  // Determine if the viewed dealer is an MVP Dealer
-  const isViewedDealerMvp = dealer.role === UserRole.MVP_DEALER;
+  // Treat Show Organizers the same as MVP Dealers for privileged visibility
+  const isViewedDealerPrivileged =
+    dealer.role === UserRole.MVP_DEALER ||
+    dealer.role === UserRole.SHOW_ORGANIZER;
 
   // Determine if the current user is viewing their own profile
   const isViewingOwnProfile = currentUser?.id === dealerId;
@@ -157,9 +159,13 @@ const DealerProfileScreen: React.FC<{
           <Text style={styles.name}>{dealer.full_name || 'Unknown Dealer'}</Text>
           {/* Display the dealer's actual role (MVP Dealer, Dealer) */}
           <Text style={styles.roleBadge}>
-            {dealer.role === UserRole.MVP_DEALER ? 'MVP Dealer' : 
-             dealer.role === UserRole.DEALER ? 'Dealer' : 
-             dealer.role // Fallback if role is unexpected
+            {dealer.role === UserRole.MVP_DEALER
+              ? 'MVP Dealer'
+              : dealer.role === UserRole.SHOW_ORGANIZER
+              ? 'Show Organizer'
+              : dealer.role === UserRole.DEALER
+              ? 'Dealer'
+              : dealer.role /* Fallback */
             }
           </Text>
         </View>
@@ -206,7 +212,7 @@ const DealerProfileScreen: React.FC<{
           <Text style={styles.sectionTitle}>Booth Information</Text>
           {loadingBoothInfo ? (
             <ActivityIndicator size="small" color="#0057B8" />
-          ) : (isViewedDealerMvp || isViewingOwnProfile) ? ( // Booth info visible for MVP OR if viewing own profile
+          ) : (isViewedDealerPrivileged || isViewingOwnProfile) ? ( // Booth info visible for privileged roles OR if viewing own profile
             boothInfo ? (
               <>
                 <View style={styles.infoRow}>
