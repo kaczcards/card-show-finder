@@ -2,4 +2,4 @@
 
 This directory contains end-to-end tests using Detox and Jest.
 
-See the main README-E2E-TESTING.md file in the project root for complete documentation.
+See the main documentation/README-E2E-TESTING.md file for complete documentation.
