@@ -138,27 +138,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw profileError;
           }
           
-          // Convert from Supabase format to our app's User format
-          const userData: User = {
-            id: session.user.id,
-            email: session.user.email || '',
-            firstName: profileData.first_name,
-            lastName: profileData.last_name || undefined,
-            homeZipCode: profileData.home_zip_code,
-            role: profileData.role as UserRole,
-            createdAt: profileData.created_at,
-            updatedAt: profileData.updated_at,
-            isEmailVerified: session.user.email_confirmed_at !== null,
-            accountType: profileData.account_type,
-            subscriptionStatus: profileData.subscription_status,
-            paymentStatus: profileData.payment_status ?? 'none',
-            subscriptionExpiry: profileData.subscription_expiry,
-            favoriteShows: profileData.favorite_shows || [],
-            attendedShows: profileData.attended_shows || [],
-            phoneNumber: profileData.phone_number,
-            profileImageUrl: profileData.profile_image_url,
-            favoriteShowsCount: profileData.favorite_shows_count || 0,
-          };
+          // Map combined auth + profile data using shared helper so ALL fields
+          // (including social URLs) are consistently included.
+          const userData: User = supabaseAuthService.mapProfileToUser(
+            session.user,
+            profileData,
+          );
           
           setAuthState({
             user: userData,
@@ -205,27 +190,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               throw profileError;
             }
             
-            // Convert from Supabase format to our app's User format
-            const userData: User = {
-              id: session.user.id,
-              email: session.user.email || '',
-              firstName: profileData.first_name,
-              lastName: profileData.last_name || undefined,
-              homeZipCode: profileData.home_zip_code,
-              role: profileData.role as UserRole,
-              createdAt: profileData.created_at,
-              updatedAt: profileData.updated_at,
-              isEmailVerified: session.user.email_confirmed_at !== null,
-              accountType: profileData.account_type,
-              subscriptionStatus: profileData.subscription_status,
-            paymentStatus: profileData.payment_status ?? 'none',
-              subscriptionExpiry: profileData.subscription_expiry,
-              favoriteShows: profileData.favorite_shows || [],
-              attendedShows: profileData.attended_shows || [],
-              phoneNumber: profileData.phone_number,
-              profileImageUrl: profileData.profile_image_url,
-              favoriteShowsCount: profileData.favorite_shows_count || 0,
-            };
+            // Use shared mapper for consistency
+            const userData: User = supabaseAuthService.mapProfileToUser(
+              session.user,
+              profileData,
+            );
             
             setAuthState({
               user: userData,
@@ -705,26 +674,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Map DB → App `User`
-      const mapped: User = {
-        id: profile.id,
-        email: profile.email ?? '',
-        firstName: profile.first_name,
-        lastName: profile.last_name ?? undefined,
-        homeZipCode: profile.home_zip_code,
-        role: (profile.role as UserRole) ?? UserRole.ATTENDEE,
-        createdAt: profile.created_at,
-        updatedAt: profile.updated_at,
-        isEmailVerified: !!profile.is_email_verified,
-        accountType: profile.account_type ?? 'collector',
-        subscriptionStatus: profile.subscription_status ?? 'none',
-        paymentStatus: profile.payment_status ?? 'none',
-        subscriptionExpiry: profile.subscription_expiry,
-        favoriteShows: profile.favorite_shows || [],
-        attendedShows: profile.attended_shows || [],
-        phoneNumber: profile.phone_number ?? undefined,
-        profileImageUrl: profile.profile_image_url ?? undefined,
-        favoriteShowsCount: profile.favorite_shows_count || 0,
-      };
+      // Use the shared mapper so social URLs and any new fields are included.
+      const authStub = { id: userId, email: profile.email || '' } as any;
+      const mapped: User = supabaseAuthService.mapProfileToUser(authStub, profile);
       if (__DEV__)
         console.warn('[AuthContext] Fetched fresh profile', mapped.role, mapped.accountType);
 
