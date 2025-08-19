@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import SocialIcon from '../../ui/SocialIcon';
 
 // Define types
 interface OrganizerProfile {
@@ -109,6 +110,18 @@ const CalloutContent: React.FC<CalloutContentProps> = ({
             <TouchableOpacity onPress={() => openLink(organizer.twitterUrl)}>
               <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
             </TouchableOpacity>
+          )}
+          {organizer.whatnotUrl && (
+            <SocialIcon
+              platform="whatnot"
+              onPress={() => openLink(organizer.whatnotUrl)}
+            />
+          )}
+          {organizer.ebayStoreUrl && (
+            <SocialIcon
+              platform="ebay"
+              onPress={() => openLink(organizer.ebayStoreUrl)}
+            />
           )}
         </View>
       ) : null}
