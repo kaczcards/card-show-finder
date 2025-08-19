@@ -125,7 +125,9 @@ const MainTabNavigator: React.FC = () => {
         }}
         listeners={({ navigation }) => ({
           /* Reset nested stack so the Profile tab always opens on ProfileMain */
-          tabPress: () => {
+          tabPress: (e) => {
+            // Prevent the default behaviour so we can force-reset the nested stack
+            e.preventDefault();
             navigation.dispatch(
               CommonActions.navigate({
                 name: 'My Profile',
