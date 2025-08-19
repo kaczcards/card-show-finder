@@ -92,7 +92,7 @@ if [ ! -f "${E2E_DIR}/README.md" ]; then
 
 This directory contains end-to-end tests using Detox and Jest.
 
-See the main README-E2E-TESTING.md file in the project root for complete documentation." > "${E2E_DIR}/README.md"
+See the main documentation/README-E2E-TESTING.md file for complete documentation." > "${E2E_DIR}/README.md"
 fi
 
 # Final success message
@@ -102,5 +102,5 @@ echo -e "${GREEN}=========================================================${NC}"
 echo -e "\nNext steps:"
 echo -e "1. Run ${YELLOW}npm run test:e2e:build${NC} to build the app for testing"
 echo -e "2. Run ${YELLOW}npm run test:e2e:auth${NC} to run the first batch of tests"
-echo -e "3. See ${YELLOW}README-E2E-TESTING.md${NC} for complete documentation"
+echo -e "3. See ${YELLOW}documentation/README-E2E-TESTING.md${NC} for complete documentation"
 echo -e "\n${BLUE}Happy testing!${NC} 🚀\n"
