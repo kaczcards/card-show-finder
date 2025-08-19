@@ -8,7 +8,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import SocialIcon from '../../../components/ui/SocialIcon';
 import { UserRole } from '../../../types';
 
@@ -216,6 +216,13 @@ if (typeof __DEV__ !== 'undefined' && __DEV__) {
                     
                     {/* Display social media icons only for MVP Dealers */}
                     <SocialMediaIcons dealer={dealer} />
+                    {/* Right chevron to indicate the row is clickable */}
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color="#8E8E93"
+                      style={{ marginLeft: 4 }}
+                    />
                   </TouchableOpacity>
                 ) : (
                   // Non-MVP dealers aren't clickable
