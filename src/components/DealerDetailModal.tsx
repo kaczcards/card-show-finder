@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../supabase';
@@ -299,6 +300,11 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
 
           <Text style={styles.modalTitle}>{`${dealerName}'s Booth Info`}</Text>
 
+          <ScrollView
+            style={styles.scrollContainer}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
           {loading ? (
             <ActivityIndicator size="large" color="#0057B8" style={styles.loadingIndicator} />
           ) : error ? (
@@ -443,6 +449,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
           ) : (
             <Text style={styles.noInfoText}>No booth information available for this show.</Text>
           )}
+          </ScrollView>
 
         </View>
       </View>
@@ -462,7 +469,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 35,
-    alignItems: 'center',
+    alignItems: 'stretch',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -496,13 +503,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 20,
   },
+  scrollContainer: {
+    width: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   infoContainer: {
     width: '100%',
     marginBottom: 20,
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 10,
   },
   infoIcon: {
@@ -518,6 +531,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     flex: 1,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   noInfoText: {
     fontSize: 16,
