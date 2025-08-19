@@ -6,9 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Linking,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../supabase';
+import SocialIcon from './ui/SocialIcon';
 
 interface DealerDetailModalProps {
   isVisible: boolean;
@@ -28,6 +31,33 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
   const [boothInfo, setBoothInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [social, setSocial] = useState<{
+    facebookUrl?: string;
+    instagramUrl?: string;
+    twitterUrl?: string;
+    whatnotUrl?: string;
+    ebayStoreUrl?: string;
+  } | null>(null);
+
+  // Safely open a URL with proper protocol
+  const handleOpenLink = (url?: string) => {
+    if (!url) return;
+
+    // Ensure protocol prefix exists
+    let formattedUrl = url.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    Linking.openURL(formattedUrl).catch(err => {
+      console.error('Error opening URL:', err);
+      Alert.alert(
+        'Cannot Open Link',
+        'The link could not be opened. Please check that it is a valid URL.',
+        [{ text: 'OK' }],
+      );
+    });
+  };
 
   useEffect(() => {
     if (!isVisible || !dealerId || !showId) {
@@ -78,6 +108,41 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
               });
 
               setBoothInfo(normalise(match));
+              
+              // Set social links from match if present
+              if (match.facebookUrl || match.instagramUrl || match.twitterUrl || 
+                  match.whatnotUrl || match.ebayStoreUrl) {
+                setSocial({
+                  facebookUrl: match.facebookUrl,
+                  instagramUrl: match.instagramUrl,
+                  twitterUrl: match.twitterUrl,
+                  whatnotUrl: match.whatnotUrl,
+                  ebayStoreUrl: match.ebayStoreUrl,
+                });
+              } else {
+                // Fetch social links from profiles if not in match
+                try {
+                  const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url')
+                    .eq('id', dealerId)
+                    .single();
+                    
+                  if (profileData) {
+                    setSocial({
+                      facebookUrl: profileData.facebook_url,
+                      instagramUrl: profileData.instagram_url,
+                      twitterUrl: profileData.twitter_url,
+                      whatnotUrl: profileData.whatnot_url,
+                      ebayStoreUrl: profileData.ebay_store_url,
+                    });
+                  }
+                } catch (socialErr) {
+                  // Non-fatal; continue without social links
+                  if (__DEV__) console.warn('Failed to fetch social links:', socialErr);
+                }
+              }
+              
               return; // Success – skip direct table queries
             }
           }
@@ -100,7 +165,7 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
            * Supabase returns PGRST116 when `.single()` expected a row but
            * received zero.  With `.maybeSingle()` this should be rare, but
            * we guard anyway in case the signature changes or we encounter
-           * a similar “no rows” condition.
+           * a similar "no rows" condition.
            * -------------------------------------------------------------- */
           const isNoRowsError =
             fetchError.code === 'PGRST116' ||
@@ -184,6 +249,29 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
         });
 
         setBoothInfo(normalise(boothRow));
+        
+        // Fetch social links from profiles table
+        try {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('facebook_url, instagram_url, twitter_url, whatnot_url, ebay_store_url')
+            .eq('id', dealerId)
+            .single();
+            
+          if (profileData) {
+            setSocial({
+              facebookUrl: profileData.facebook_url,
+              instagramUrl: profileData.instagram_url,
+              twitterUrl: profileData.twitter_url,
+              whatnotUrl: profileData.whatnot_url,
+              ebayStoreUrl: profileData.ebay_store_url,
+            });
+          }
+        } catch (socialErr) {
+          // Non-fatal; continue without social links
+          if (__DEV__) console.warn('Failed to fetch social links:', socialErr);
+        }
+        
       } catch (err: any) {
         console.error('Unexpected error in fetchBoothInfo:', err);
         setError(err.message || 'An unexpected error occurred.');
@@ -270,6 +358,61 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
                       ? boothInfo.payment_methods.join(', ') 
                       : boothInfo.payment_methods || 'None specified'}
                   </Text>
+                </View>
+              )}
+              
+              {/* Web Links Section */}
+              {social && (
+                social.facebookUrl || social.instagramUrl || social.twitterUrl || 
+                social.whatnotUrl || social.ebayStoreUrl
+              ) && (
+                <View style={styles.webLinksSection}>
+                  <Text style={styles.webLinksTitle}>Web Links</Text>
+                  <View style={styles.socialIconsRow}>
+                    {social.facebookUrl && (
+                      <TouchableOpacity 
+                        style={styles.socialIcon} 
+                        onPress={() => handleOpenLink(social.facebookUrl)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+                      </TouchableOpacity>
+                    )}
+                    
+                    {social.instagramUrl && (
+                      <TouchableOpacity 
+                        style={styles.socialIcon} 
+                        onPress={() => handleOpenLink(social.instagramUrl)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="logo-instagram" size={24} color="#E1306C" />
+                      </TouchableOpacity>
+                    )}
+                    
+                    {social.twitterUrl && (
+                      <TouchableOpacity 
+                        style={styles.socialIcon} 
+                        onPress={() => handleOpenLink(social.twitterUrl)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="logo-twitter" size={24} color="#1DA1F2" />
+                      </TouchableOpacity>
+                    )}
+                    
+                    {social.whatnotUrl && (
+                      <SocialIcon
+                        platform="whatnot"
+                        onPress={() => handleOpenLink(social.whatnotUrl)}
+                      />
+                    )}
+                    
+                    {social.ebayStoreUrl && (
+                      <SocialIcon
+                        platform="ebay"
+                        onPress={() => handleOpenLink(social.ebayStoreUrl)}
+                      />
+                    )}
+                  </View>
                 </View>
               )}
               
@@ -388,6 +531,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
     marginTop: 4,
+  },
+  webLinksSection: {
+    width: '100%',
+    marginTop: 10,
+    marginBottom: 15,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  webLinksTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#555',
+    marginBottom: 10,
+  },
+  socialIconsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+  },
+  socialIcon: {
+    marginRight: 15,
+    marginBottom: 10,
+    padding: 5,
   },
 });
 
