@@ -39,6 +39,53 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
         setLoading(true);
         setError(null);
 
+        /* ------------------------------------------------------------------
+         * 0. Prefer the public RPC used by ShowDetail so that attendees who
+         *    do not have RLS permission on show_participants can still view
+         *    organiser / MVP dealer booth info.
+         * ------------------------------------------------------------------ */
+        try {
+          const { data: showDetails } = await supabase.rpc(
+            'get_show_details_by_id',
+            { show_id: showId },
+          );
+
+          if (
+            showDetails &&
+            Array.isArray(showDetails.participatingDealers)
+          ) {
+            const match = showDetails.participatingDealers.find(
+              (d: any) => d.id === dealerId,
+            );
+
+            if (match) {
+              const normalise = (row: any) => ({
+                booth_location:
+                  row.booth_location ??
+                  row.boothLocation ??
+                  row.booth_number ??
+                  row.boothNumber ??
+                  '',
+                card_types: row.card_types ?? row.cardTypes ?? [],
+                specialty: row.specialty ?? '',
+                price_range: row.price_range ?? row.priceRange ?? '',
+                notable_items: row.notable_items ?? row.notableItems ?? '',
+                payment_methods:
+                  row.payment_methods ?? row.paymentMethods ?? [],
+                open_to_trades:
+                  row.open_to_trades ?? row.openToTrades ?? false,
+                buying_cards: row.buying_cards ?? row.buyingCards ?? false,
+              });
+
+              setBoothInfo(normalise(match));
+              return; // Success – skip direct table queries
+            }
+          }
+        } catch (rpcErr) {
+          // Non-fatal; continue to fallback queries
+          if (__DEV__) console.warn('DealerDetailModal RPC fallback error', rpcErr);
+        }
+
         // Primary query for this dealer / show pair
         const { data, error: fetchError } = await supabase
           .from('show_participants')
