@@ -1,5 +1,15 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import SocialIcon from '../../../components/ui/SocialIcon';
 
 interface OrganizerInfoProps {
   organizer?: {
@@ -10,6 +20,12 @@ interface OrganizerInfoProps {
     first_name?: string;
     last_name?: string;
     username?: string;
+    /* ---------------- Social + Marketplace links ----------------- */
+    facebook_url?: string;
+    instagram_url?: string;
+    twitter_url?: string;
+    whatnot_url?: string;
+    ebay_store_url?: string;
   };
 }
 
@@ -34,6 +50,31 @@ const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ organizer }) => {
   // Get first letter for avatar placeholder
   const firstLetter = displayName[0] || 'O';
 
+  /* ------------------------------------------------------------------
+   * Social / marketplace links
+   * ----------------------------------------------------------------- */
+  const social = {
+    facebook: organizer.facebook_url,
+    instagram: organizer.instagram_url,
+    twitter: organizer.twitter_url,
+    whatnot: organizer.whatnot_url,
+    ebay: organizer.ebay_store_url,
+  };
+
+  const handleOpenLink = (url?: string) => {
+    if (!url) return;
+    let formatted = url.trim();
+    if (!/^https?:\\/\\//i.test(formatted)) {
+      formatted = `https://${formatted}`;
+    }
+    Linking.openURL(formatted).catch(() =>
+      Alert.alert(
+        'Unable to open link',
+        'Please make sure the URL is valid.',
+      ),
+    );
+  };
+
   return (
     <View style={styles.organizerContainer}>
       <SectionHeader>Organized by:</SectionHeader>
@@ -47,6 +88,56 @@ const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ organizer }) => {
         )}
         <Text style={styles.organizerName}>{displayName}</Text>
       </View>
+
+      {/* ------------------- Social Icons Row -------------------- */}
+      {(social.facebook ||
+        social.instagram ||
+        social.twitter ||
+        social.whatnot ||
+        social.ebay) && (
+        <View style={styles.socialRow}>
+          {social.facebook && (
+            <TouchableOpacity
+              style={styles.socialIcon}
+              onPress={() => handleOpenLink(social.facebook)}
+            >
+              <Ionicons name="logo-facebook" size={22} color="#4267B2" />
+            </TouchableOpacity>
+          )}
+          {social.instagram && (
+            <TouchableOpacity
+              style={styles.socialIcon}
+              onPress={() => handleOpenLink(social.instagram)}
+            >
+              <Ionicons name="logo-instagram" size={22} color="#E1306C" />
+            </TouchableOpacity>
+          )}
+          {social.twitter && (
+            <TouchableOpacity
+              style={styles.socialIcon}
+              onPress={() => handleOpenLink(social.twitter)}
+            >
+              <Ionicons name="logo-twitter" size={22} color="#1DA1F2" />
+            </TouchableOpacity>
+          )}
+          {social.whatnot && (
+            <SocialIcon
+              platform="whatnot"
+              onPress={() => handleOpenLink(social.whatnot)}
+              style={styles.socialIcon}
+              size={22}
+            />
+          )}
+          {social.ebay && (
+            <SocialIcon
+              platform="ebay"
+              onPress={() => handleOpenLink(social.ebay)}
+              style={styles.socialIcon}
+              size={22}
+            />
+          )}
+        </View>
+      )}
     </View>
   );
 };
@@ -90,6 +181,16 @@ const styles = StyleSheet.create({
   organizerName: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  /* -------------------- Social styles --------------------------- */
+  socialRow: {
+    flexDirection: 'row',
+    marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  socialIcon: {
+    marginRight: 12,
+    marginBottom: 6,
   },
 });
 
