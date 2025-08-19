@@ -221,7 +221,7 @@ Follow `PR_INSTRUCTIONS.md`. Each PR must include:
 * [developer/FILE_SUMMARIES.md](FILE_SUMMARIES.md) – What each file does  
 * [developer/DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) – Tables, columns & RLS  
 * [developer/EDGE_FUNCTIONS.md](EDGE_FUNCTIONS.md) – API guide  
-* [README-PRODUCTION.md](../README-PRODUCTION.md) – Production topology & CI/CD
+* [README-PRODUCTION.md](../../documentation/README-PRODUCTION.md) – Production topology & CI/CD
 
 ---
 
