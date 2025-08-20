@@ -1,5 +1,5 @@
 // Temporary debug file to test the useUnclaimedShows hook
-import { showSeriesService } from './services/showSeriesService';
+import { showSeriesService } from '../../src/services/showSeriesService';
 
 /**
  * Quick debug helper for validating the data returned by the showSeriesService.

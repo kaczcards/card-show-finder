@@ -49,7 +49,7 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
   enableInExpoDevelopment: true,
-  debug: true,
+  debug: __DEV__,
   tracesSampleRate: __DEV__ ? 1.0 : 0.2,
   /**
    * Scrub sensitive data & limit payload size
