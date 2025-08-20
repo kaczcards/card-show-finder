@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Linking,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../supabase';
 import SocialIcon from './ui/SocialIcon';
+import {
+  openExternalLink,
+  DEFAULT_WHITELIST_HOSTS,
+} from '../utils/safeLinking';
 
 interface DealerDetailModalProps {
   isVisible: boolean;
@@ -42,21 +44,8 @@ const DealerDetailModal: React.FC<DealerDetailModalProps> = ({
   // Safely open a URL with proper protocol
   const handleOpenLink = (url?: string) => {
     if (!url) return;
-
-    // Ensure protocol prefix exists
-    let formattedUrl = url.trim();
-    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = `https://${formattedUrl}`;
-    }
-
-    Linking.openURL(formattedUrl).catch(err => {
-      console.error('Error opening URL:', err);
-      Alert.alert(
-        'Cannot Open Link',
-        'The link could not be opened. Please check that it is a valid URL.',
-        [{ text: 'OK' }],
-      );
-    });
+    // Centralised safe-link helper with social-domain whitelist
+    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
   };
 
   useEffect(() => {
