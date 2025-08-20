@@ -64,7 +64,8 @@ const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ organizer }) => {
   const handleOpenLink = (url?: string) => {
     if (!url) return;
     let formatted = url.trim();
-    if (!/^https?:\\/\\//i.test(formatted)) {
+    // Ensure the URL has a proper protocol before attempting to open it
+    if (!/^https?:\/\//i.test(formatted)) {
       formatted = `https://${formatted}`;
     }
     Linking.openURL(formatted).catch(() =>
