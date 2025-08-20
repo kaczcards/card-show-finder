@@ -5,11 +5,13 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Linking,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SocialIcon from '../../../components/ui/SocialIcon';
+import {
+  openExternalLink,
+  DEFAULT_WHITELIST_HOSTS,
+} from '../../../utils/safeLinking';
 
 interface OrganizerInfoProps {
   organizer?: {
@@ -63,17 +65,8 @@ const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ organizer }) => {
 
   const handleOpenLink = (url?: string) => {
     if (!url) return;
-    let formatted = url.trim();
-    // Ensure the URL has a proper protocol before attempting to open it
-    if (!/^https?:\/\//i.test(formatted)) {
-      formatted = `https://${formatted}`;
-    }
-    Linking.openURL(formatted).catch(() =>
-      Alert.alert(
-        'Unable to open link',
-        'Please make sure the URL is valid.',
-      ),
-    );
+    // Use centralised safe-link helper with default social whitelist
+    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
   };
 
   return (

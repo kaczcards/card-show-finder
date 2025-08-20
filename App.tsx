@@ -12,6 +12,7 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 // ---------------- TEMPORARILY DISABLED ----------------
 // Sentry for error/performance monitoring
 import * as Sentry from 'sentry-expo';
+import Constants from 'expo-constants';
 // App Tracking Transparency (iOS)
 import {
   requestTrackingPermissionsAsync,
@@ -26,6 +27,8 @@ import './src/utils/polyfills';
 // ------------------------------------------------------------------
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';
+// Global error boundary
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 /**
  * ---------------------------------------------------------
@@ -47,8 +50,45 @@ Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
   enableInExpoDevelopment: true,
   debug: true,
-  tracesSampleRate: 1.0, // capture 100% transactions (adjust in prod)
+  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+  /**
+   * Scrub sensitive data & limit payload size
+   */
+  beforeSend: (event) => {
+    // Remove user information
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore – Sentry event typing
+    delete event.user;
+
+    // Remove request headers if present
+    if (event.request?.headers) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      delete event.request.headers;
+    }
+
+    // Truncate long string extras to 1 000 chars
+    if (event.extra) {
+      Object.keys(event.extra).forEach((key) => {
+        const val = event.extra?.[key];
+        if (typeof val === 'string' && val.length > 1000) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          event.extra[key] = `${val.slice(0, 1000)}…(truncated)`;
+        }
+      });
+    }
+    return event;
+  },
 });
+
+// Lightweight tags for easier filtering
+try {
+  Sentry.setTag('app_version', Constants.expoConfig?.version ?? 'unknown');
+  Sentry.setTag('platform', Platform.OS);
+} catch (_err) {
+  // noop – avoid crashing if Sentry not fully initialised
+}
 
 // Import theme for initial loading screen
 import { theme } from './src/constants/theme';
@@ -258,7 +298,9 @@ export default function App() {
           <SafeAreaProvider>
             <ThemeProvider>
               <AuthProvider>
-                <RootNavigator />
+                <ErrorBoundary>
+                  <RootNavigator />
+                </ErrorBoundary>
                 <StatusBar style="auto" />
                 {/* Global toast portal */}
                 <Toast config={toastConfig} />
