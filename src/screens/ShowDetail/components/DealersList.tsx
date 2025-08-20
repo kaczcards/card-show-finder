@@ -6,13 +6,9 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import SocialIcon from '../../../components/ui/SocialIcon';
+import { Ionicons } from '@expo/vector-icons';
+import SocialLinksRow from '../../../components/ui/SocialLinksRow';
 import { UserRole } from '../../../types';
-import {
-  openExternalLink,
-  DEFAULT_WHITELIST_HOSTS,
-} from '../../../utils/safeLinking';
 
 interface Dealer {
   id: string;
@@ -48,64 +44,18 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
     dealer.role !== UserRole.SHOW_ORGANIZER
   )
     return null;
-  
-  /**
-   * Safely open a URL.  If a user entered their link without a protocol
-   * (e.g. "www.example.com") we prepend `https://` so React-Native treats it
-   * as a web URL instead of a local file path.
-   */
-  const handleOpenLink = (url?: string) => {
-    if (!url) return;
-    // Centralised safe-link helper with social-domain whitelist
-    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
-  };
-  
   return (
-    <View style={styles.socialMediaContainer}>
-      {dealer.facebookUrl && (
-        <TouchableOpacity 
-          style={styles.socialIcon} 
-          onPress={() => handleOpenLink(dealer.facebookUrl)}
-          activeOpacity={0.7}
-        >
-          <FontAwesome name="facebook-square" size={22} color="#4267B2" />
-        </TouchableOpacity>
-      )}
-      
-      {dealer.instagramUrl && (
-        <TouchableOpacity 
-          style={styles.socialIcon} 
-          onPress={() => handleOpenLink(dealer.instagramUrl)}
-          activeOpacity={0.7}
-        >
-          <FontAwesome name="instagram" size={22} color="#E1306C" />
-        </TouchableOpacity>
-      )}
-      
-      {dealer.twitterUrl && (
-        <TouchableOpacity 
-          style={styles.socialIcon} 
-          onPress={() => handleOpenLink(dealer.twitterUrl)}
-          activeOpacity={0.7}
-        >
-          <FontAwesome name="twitter-square" size={22} color="#1DA1F2" />
-        </TouchableOpacity>
-      )}
-      
-      {dealer.whatnotUrl && (
-        <SocialIcon
-          platform="whatnot"
-          onPress={() => handleOpenLink(dealer.whatnotUrl)}
-        />
-      )}
-      
-      {dealer.ebayStoreUrl && (
-        <SocialIcon
-          platform="ebay"
-          onPress={() => handleOpenLink(dealer.ebayStoreUrl)}
-        />
-      )}
-    </View>
+    <SocialLinksRow
+      variant="icons"
+      containerStyle={styles.socialMediaContainer}
+      urls={{
+        facebookUrl: dealer.facebookUrl,
+        instagramUrl: dealer.instagramUrl,
+        twitterUrl: dealer.twitterUrl,
+        whatnotUrl: dealer.whatnotUrl,
+        ebayStoreUrl: dealer.ebayStoreUrl,
+      }}
+    />
   );
 };
 
