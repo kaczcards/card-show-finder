@@ -34,11 +34,6 @@ import {
   DEFAULT_WHITELIST_HOSTS,
 } from '../../utils/safeLinking';
 
-/* ------------------------------------------------------------------
- * Debugging aid – track a single show end-to-end
- * ------------------------------------------------------------------ */
-const DEBUG_SHOW_ID = 'cd175b33-3144-4ccb-9d85-94490446bf26';
-
 /**
  * MapShowCluster Component
  * 
@@ -94,9 +89,11 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
     Array.isArray(shows) ? shows.length : 0;
 
   // Log every render with show count & timestamp
-  console.warn(
-    `[MapShowCluster] Render @ ${renderTimestamp} – received ${currentShowCount} show(s)`
-  );
+  if (__DEV__) {
+    console.warn(
+      `[MapShowCluster] Render @ ${renderTimestamp} – received ${currentShowCount} show(s)`
+    );
+  }
 
   // Track previous show count to detect prop changes
   const prevShowsCountRef = useRef<number>(currentShowCount);
@@ -106,9 +103,11 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
 
   useEffect(() => {
     if (prevShowsCountRef.current !== currentShowCount) {
-      console.warn(
-        `[MapShowCluster] shows prop changed: ${prevShowsCountRef.current} → ${currentShowCount} @ ${new Date().toISOString()}`
-      );
+      if (__DEV__) {
+        console.warn(
+          `[MapShowCluster] shows prop changed: ${prevShowsCountRef.current} → ${currentShowCount} @ ${new Date().toISOString()}`
+        );
+      }
       prevShowsCountRef.current = currentShowCount;
     }
 
@@ -116,9 +115,11 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
       !firstNonEmptyLoggedRef.current &&
       currentShowCount > 0
     ) {
-      console.warn(
-        '[MapShowCluster] First non-empty shows array received – initial timing issue should be resolved'
-      );
+      if (__DEV__) {
+        console.warn(
+          '[MapShowCluster] First non-empty shows array received – initial timing issue should be resolved'
+        );
+      }
       firstNonEmptyLoggedRef.current = true;
     }
   }, [currentShowCount]);
@@ -134,21 +135,6 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
   useImperativeHandle(ref, () => ({
     getMapRef: () => mapRef.current?.getMapRef?.() ?? null,
   }));
-  
-  // Check if target show is in the shows array
-  useEffect(() => {
-    const targetShow = shows.find(show => show.id === DEBUG_SHOW_ID);
-    if (targetShow) {
-      console.warn('[MapShowCluster] [DEBUG_SHOW] Target show is included in props:', {
-        id: targetShow.id,
-        title: targetShow.title,
-        coordinates: targetShow.coordinates,
-        status: targetShow.status,
-      });
-    } else {
-      console.warn('[MapShowCluster] [DEBUG_SHOW] Target show NOT found in props');
-    }
-  }, [shows]);
   
   // Function to open maps with native app
   const _openMaps = (address: string) => {
@@ -185,21 +171,29 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
 
   // Debounced navigation function with enhanced debugging
   const navigateToShow = debounce((showId: string) => {
-    console.warn('[DEBUG] View Details button pressed for show ID:', showId);
-    console.warn('[DEBUG] Current navigation state:', { isNavigating, pressedShowId });
+    if (__DEV__) {
+      console.warn('[DEBUG] View Details button pressed for show ID:', showId);
+      console.warn('[DEBUG] Current navigation state:', { isNavigating, pressedShowId });
+    }
     
     // If already navigating, ignore subsequent clicks
     if (isNavigating) {
-      console.warn('[DEBUG] Navigation already in progress, ignoring click');
+      if (__DEV__) {
+        console.warn('[DEBUG] Navigation already in progress, ignoring click');
+      }
       return;
     }
     
-    console.warn('[DEBUG] Setting navigation state to active');
+    if (__DEV__) {
+      console.warn('[DEBUG] Setting navigation state to active');
+    }
     setIsNavigating(true);
     setPressedShowId(showId);
     
     try {
-      console.warn('[DEBUG] Looking for show with ID:', showId);
+      if (__DEV__) {
+        console.warn('[DEBUG] Looking for show with ID:', showId);
+      }
       const selectedShow = shows.find(show => show.id === showId);
       
       if (!selectedShow) {
@@ -208,19 +202,27 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
         return;
       }
       
-      console.warn('[DEBUG] Found show:', selectedShow.title);
+      if (__DEV__) {
+        console.warn('[DEBUG] Found show:', selectedShow.title);
+      }
       
       if (onCalloutPress) {
-        console.warn('[DEBUG] Using provided onCalloutPress handler');
+        if (__DEV__) {
+          console.warn('[DEBUG] Using provided onCalloutPress handler');
+        }
         onCalloutPress(selectedShow.id);
       } else if (navigation) {
         // Fallback to direct navigation if onCalloutPress is not provided
-        console.warn('[DEBUG] onCalloutPress not provided, using direct navigation');
-        console.warn('[DEBUG] Navigation object available:', !!navigation);
-        console.warn('[DEBUG] Navigation state:', Object.keys(navigation));
+        if (__DEV__) {
+          console.warn('[DEBUG] onCalloutPress not provided, using direct navigation');
+          console.warn('[DEBUG] Navigation object available:', !!navigation);
+          console.warn('[DEBUG] Navigation state:', Object.keys(navigation));
+        }
         
         try {
-          console.warn('[DEBUG] Attempting to navigate to ShowDetail screen');
+          if (__DEV__) {
+            console.warn('[DEBUG] Attempting to navigate to ShowDetail screen');
+          }
           navigation.navigate('ShowDetail', { showId });
         } catch (navError) {
           console.error('[DEBUG] Navigation error:', navError);
@@ -235,9 +237,13 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
       Alert.alert('Error', 'Could not navigate to show details.');
     } finally {
       // Reset state after navigation (with slight delay for visual feedback)
-      console.warn('[DEBUG] Setting timeout to reset navigation state');
+      if (__DEV__) {
+        console.warn('[DEBUG] Setting timeout to reset navigation state');
+      }
       setTimeout(() => {
-        console.warn('[DEBUG] Resetting navigation state');
+        if (__DEV__) {
+          console.warn('[DEBUG] Resetting navigation state');
+        }
         setIsNavigating(false);
         setPressedShowId(null);
       }, 300);
@@ -246,22 +252,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
 
   // Render an individual marker
   const renderMarker = (show: Show) => {
-    // Debug target show
-    if (show.id === DEBUG_SHOW_ID) {
-      console.warn('[MapShowCluster] [DEBUG_SHOW] Attempting to render target show marker');
-    }
-    
     const safeCoords = sanitizeCoordinates(show.coordinates);
-    
-    // Debug target show coordinate sanitization
-    if (show.id === DEBUG_SHOW_ID) {
-      if (safeCoords) {
-        console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates passed sanitization:', safeCoords);
-      } else {
-        console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates FAILED sanitization, marker will not render');
-        console.warn('[MapShowCluster] [DEBUG_SHOW] Original coordinates:', show.coordinates);
-      }
-    }
     
     if (!safeCoords) {
       return null;
@@ -272,11 +263,6 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
     
     // Check if this show's button is currently pressed
     const isPressed = pressedShowId === show.id;
-
-    // Debug target show successful render
-    if (show.id === DEBUG_SHOW_ID) {
-      console.warn('[MapShowCluster] [DEBUG_SHOW] Successfully rendering marker for target show');
-    }
 
     return (
       <Marker
@@ -293,7 +279,9 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
         {/* Entire callout is now clickable — navigates to ShowDetail */}
         <Callout
           onPress={() => {
-            console.warn('[DEBUG] Callout pressed for show:', show.title);
+            if (__DEV__) {
+              console.warn('[DEBUG] Callout pressed for show:', show.title);
+            }
             navigateToShow(show.id);
           }}
           tooltip
@@ -402,22 +390,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
 
   // Convert Show objects to points for the clusterer
   const showToPoint = (show: Show) => {
-    // Debug target show
-    if (show.id === DEBUG_SHOW_ID) {
-      console.warn('[MapShowCluster] [DEBUG_SHOW] Processing target show in showToPoint');
-    }
-    
     const safeCoords = sanitizeCoordinates(show.coordinates);
-    
-    // Debug target show coordinate sanitization in showToPoint
-    if (show.id === DEBUG_SHOW_ID) {
-      if (safeCoords) {
-        console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates passed sanitization in showToPoint:', safeCoords);
-      } else {
-        console.warn('[MapShowCluster] [DEBUG_SHOW] Coordinates FAILED sanitization in showToPoint, will be excluded from clustering');
-        console.warn('[MapShowCluster] [DEBUG_SHOW] Original coordinates in showToPoint:', show.coordinates);
-      }
-    }
     
     if (!safeCoords) {
       return null;
@@ -440,19 +413,6 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
    * ------------------------------------------------------------------ */
   const totalShows = Array.isArray(shows) ? shows.length : 0;
 
-  // Check for target show in incoming data
-  const targetShow = shows.find(show => show.id === DEBUG_SHOW_ID);
-  if (targetShow) {
-    console.warn('[MapShowCluster] [DEBUG_SHOW] Target show found in shows array:', {
-      id: targetShow.id,
-      title: targetShow.title,
-      coordinates: targetShow.coordinates,
-      hasCoordinates: !!(targetShow.coordinates && 
-                        typeof targetShow.coordinates.latitude === 'number' && 
-                        typeof targetShow.coordinates.longitude === 'number')
-    });
-  }
-
   const validShows = shows.filter(
     (show) =>
       show &&
@@ -460,16 +420,6 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
       typeof show.coordinates.latitude === 'number' &&
       typeof show.coordinates.longitude === 'number'
   );
-
-  // Check if target show is in valid shows
-  const targetInValidShows = validShows.some(show => show.id === DEBUG_SHOW_ID);
-  if (targetShow) {
-    if (targetInValidShows) {
-      console.warn('[MapShowCluster] [DEBUG_SHOW] Target show PASSED coordinate validation');
-    } else {
-      console.warn('[MapShowCluster] [DEBUG_SHOW] Target show FAILED coordinate validation and will be filtered out');
-    }
-  }
 
   const invalidShows = shows.filter(
     (show) =>

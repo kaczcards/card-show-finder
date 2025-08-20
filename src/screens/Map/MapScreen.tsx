@@ -97,8 +97,9 @@ const MapScreen: React.FC<MapScreenProps> = ({
       if (!hasPermission) {
         const granted = await locationService.requestLocationPermissions();
         if (!granted) {
-           
-console.warn('Location permission denied');
+          if (__DEV__) {
+            console.warn('Location permission denied');
+          }
           // Show toast notification if falling back to ZIP code
           if (user?.homeZipCode) {
             showLocationFailedToast(user.homeZipCode);
@@ -115,12 +116,14 @@ console.warn('Location permission denied');
       const location = await locationService.getCurrentLocation();
 
       if (location) {
-         
-console.warn('Got user location:', location);
+        if (__DEV__) {
+          console.warn('Got user location:', location);
+        }
         return location;
       } else if (user && user.homeZipCode) {
-         
-console.warn('Falling back to user ZIP code:', user.homeZipCode);
+        if (__DEV__) {
+          console.warn('Falling back to user ZIP code:', user.homeZipCode);
+        }
         showLocationFailedToast(user.homeZipCode);
         
         const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
@@ -190,7 +193,11 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
         }
 
         if (!determinedLocation) {
-            console.warn('No coordinates available, falling back to US center.');
+          if (__DEV__) {
+            console.warn(
+              'No coordinates available, falling back to US center.',
+            );
+          }
             determinedLocation = { latitude: 39.8283, longitude: -98.5795 };
             regionToSet = { ...determinedLocation, latitudeDelta: 40, longitudeDelta: 40 };
             
@@ -258,8 +265,9 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
           longitude: userLocation.longitude,
       };
 
-       
-console.warn('[MapScreen] Filters being used:', currentFilters);
+      if (__DEV__) {
+        console.warn('[MapScreen] Filters being used:', currentFilters);
+      }
 
       /* ------------------------------------------------------------------
        * Use production-ready solution that bypasses broken nearby_shows RPC
@@ -274,13 +282,19 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
 
       const showsData = result.data || [];
       setShows(showsData);
-      console.warn(
-        `[MapScreen] Successfully fetched ${showsData.length} shows (using production solution)`
-      );
+      if (__DEV__) {
+        console.warn(
+          `[MapScreen] Successfully fetched ${showsData.length} shows (using production solution)`,
+        );
+      }
 
       if (showsData.length === 0 && retryRef.current < 1) {
         retryRef.current += 1;
-        console.warn('[MapScreen] No shows returned – retrying in 2 seconds (attempt 1).');
+        if (__DEV__) {
+          console.warn(
+            '[MapScreen] No shows returned – retrying in 2 seconds (attempt 1).',
+          );
+        }
         setTimeout(() => fetchShows(), 2000);
       } else {
         retryRef.current = 0; // Reset on successful fetch
@@ -456,12 +470,14 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
    */
   const isEntryFree = (fee: any): boolean => {
     // Diagnostic log – remove or reduce verbosity once confirmed working
-    console.warn(
-      `[MapScreen] [DEBUG] entryFee raw value:`,
-      fee,
-      '| type:',
-      typeof fee
-    );
+    if (__DEV__) {
+      console.warn(
+        `[MapScreen] [DEBUG] entryFee raw value:`,
+        fee,
+        '| type:',
+        typeof fee,
+      );
+    }
 
     if (fee === null || fee === undefined) return true;
     if (typeof fee === 'number') return fee <= 0;
