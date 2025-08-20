@@ -92,6 +92,8 @@ module.exports = {
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
         "Allow Card Show Finder to access your location so we can display nearby card shows.",
+      NSUserTrackingUsageDescription:
+        "This identifier will be used to deliver a better, more relevant experience (e.g., analytics and limited advertising).",
       ITSAppUsesNonExemptEncryption: false,
     },
     /* ------------------------------------------------------------------
@@ -179,7 +181,7 @@ module.exports = {
         locationAlwaysAndWhenInUsePermission: "Allow Card Show Finder to access your location so we can display nearby card shows."
       }
     ],
-    // "sentry-expo"                        // ← Temporarily disabled while debugging runtime crash
+    "sentry-expo"                        // Enabled for crash reporting
   ],
   // Note: Expo's "hooks" field was removed because it is not a valid
   // app configuration field and caused schema validation errors

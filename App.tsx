@@ -11,8 +11,13 @@ import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import { StripeProvider } from '@stripe/stripe-react-native';
 // ---------------- TEMPORARILY DISABLED ----------------
 // Sentry for error/performance monitoring
-// (Commented out while debugging Hermes prototype crash)
-// import * as Sentry from 'sentry-expo';
+import * as Sentry from 'sentry-expo';
+// App Tracking Transparency (iOS)
+import {
+  requestTrackingPermissionsAsync,
+  getTrackingPermissionsAsync,
+} from 'expo-tracking-transparency';
+import { Platform } from 'react-native';
 // Centralised environment polyfills (structuredClone, etc.)
 import './src/utils/polyfills';
 
@@ -38,19 +43,12 @@ import { ThemeProvider } from './src/contexts/ThemeContext';
 
 // ---------------- TEMPORARILY DISABLED ----------------
 // Sentry initialisation block (disabled while isolating runtime crash)
-/*
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
   enableInExpoDevelopment: true,
   debug: true,
   tracesSampleRate: 1.0, // capture 100% transactions (adjust in prod)
-  integrations: [
-    new Sentry.Native.ReactNativeTracing({
-      routingInstrumentation,
-    }),
-  ],
 });
-*/
 
 // Import theme for initial loading screen
 import { theme } from './src/constants/theme';
@@ -165,9 +163,29 @@ export default function App() {
       }
     };
 
+    /**
+     * App Tracking Transparency (iOS 14+)
+     * Prompt the user for tracking permission if it hasn't been asked yet.
+     * Runs as a fire-and-forget task so it never blocks app start-up.
+     */
+    const requestATT = async () => {
+      if (Platform.OS !== 'ios') return;
+      try {
+        const { status } = await getTrackingPermissionsAsync();
+        if (status === 'undetermined') {
+          await requestTrackingPermissionsAsync();
+        }
+      } catch (err) {
+        if (__DEV__) console.warn('[ATT] Failed to request tracking permission:', err);
+      }
+    };
+
     // Perform any initialization tasks here
     const prepare = async () => {
       try {
+        // Fire-and-forget ATT prompt (iOS only)
+        requestATT();
+
         // Load any resources, fonts, or cached data
         // This is where you would load fonts with expo-font if needed
         
