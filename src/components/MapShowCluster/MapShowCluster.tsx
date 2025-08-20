@@ -29,6 +29,10 @@ import { sanitizeCoordinates } from '../../utils/coordinateUtils';
 import { debounce } from '../../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
 import { supabase as _supabase } from '../../supabase';
+import {
+  openExternalLink,
+  DEFAULT_WHITELIST_HOSTS,
+} from '../../utils/safeLinking';
 
 /* ------------------------------------------------------------------
  * Debugging aid – track a single show end-to-end
@@ -165,7 +169,7 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
         } else {
           // Fallback to Google Maps in browser
           const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-          return Linking.openURL(webUrl);
+          return openExternalLink(webUrl);
         }
       })
       .catch(() => {
@@ -175,22 +179,8 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
 
   // Function to open any URL
   const openUrl = (url: string) => {
-    if (!url) return;
-
-    // Add https:// if missing
-    const httpsUrl = url.startsWith('http') ? url : `https://${url}`;
-
-    Linking.canOpenURL(httpsUrl)
-      .then(supported => {
-        if (supported) {
-          return Linking.openURL(httpsUrl);
-        } else {
-          console.warn(`Cannot open URL: ${httpsUrl}`);
-        }
-      })
-      .catch(err => {
-        console.error('Error opening URL:', err);
-      });
+    // Centralised safe-link handler with whitelist protection
+    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
   };
 
   // Debounced navigation function with enhanced debugging

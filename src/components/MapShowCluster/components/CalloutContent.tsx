@@ -4,12 +4,14 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Linking,
-  Alert,
-  Platform as _Platform,
+  // Removed unused imports 'Linking' and 'Platform as _Platform'
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import {
+  openExternalLink,
+  DEFAULT_WHITELIST_HOSTS,
+} from '../../../utils/safeLinking';
 
 // Define types
 interface OrganizerProfile {
@@ -76,9 +78,8 @@ const CalloutContent: React.FC<CalloutContentProps> = ({
 
   const openLink = (url?: string) => {
     if (!url) return;
-    Linking.openURL(url).catch(() =>
-      Alert.alert('Unable to open link', url),
-    );
+    // Centralised safe-link helper with default social whitelist
+    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
   };
 
   return (

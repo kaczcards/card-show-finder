@@ -5,12 +5,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  Linking,
-  Alert,
 } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import SocialIcon from '../../../components/ui/SocialIcon';
 import { UserRole } from '../../../types';
+import {
+  openExternalLink,
+  DEFAULT_WHITELIST_HOSTS,
+} from '../../../utils/safeLinking';
 
 interface Dealer {
   id: string;
@@ -54,26 +56,8 @@ const SocialMediaIcons: React.FC<{ dealer: Dealer }> = ({ dealer }) => {
    */
   const handleOpenLink = (url?: string) => {
     if (!url) return;
-
-    // Ensure protocol prefix exists
-    let formattedUrl = url.trim();
-    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = `https://${formattedUrl}`;
-    }
-
-     
-if (typeof __DEV__ !== 'undefined' && __DEV__) {
-  console.warn('[DealersList] Opening URL:', formattedUrl);
-}
-
-    Linking.openURL(formattedUrl).catch(err => {
-      console.error('Error opening URL:', err);
-      Alert.alert(
-        'Cannot Open Link',
-        'The link could not be opened. Please check that it is a valid URL.',
-        [{ text: 'OK' }],
-      );
-    });
+    // Centralised safe-link helper with social-domain whitelist
+    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
   };
   
   return (
