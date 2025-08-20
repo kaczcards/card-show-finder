@@ -1,5 +1,5 @@
 import React, { useState, useEffect as _useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Image, Switch as _Switch, Platform as _Platform, FlatList as _FlatList, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Image, Switch as _Switch, Platform as _Platform, FlatList as _FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import SocialIcon from '../../components/ui/SocialIcon';
@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../supabase';
+import { openExternalLink, DEFAULT_WHITELIST_HOSTS } from '../../utils/safeLinking';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole, resetPassword } = useAuth();
@@ -410,24 +411,7 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
   // Helper function to open a URL with robust protocol handling
   const openUrl = (url: string | undefined) => {
     if (!url) return;
-
-    // Auto-prefix protocol if the user omitted it
-    let formattedUrl = url.trim();
-    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = `https://${formattedUrl}`;
-    }
-
-     
-console.warn('[ProfileScreen] Opening URL:', formattedUrl);
-
-    Linking.openURL(formattedUrl).catch(err => {
-      console.error('Error opening URL:', err);
-      Alert.alert(
-        'Cannot Open Link',
-        'The link could not be opened. Please check that it is a valid URL.',
-        [{ text: 'OK' }],
-      );
-    });
+    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
   };
 
   // Navigate to Admin Map screen

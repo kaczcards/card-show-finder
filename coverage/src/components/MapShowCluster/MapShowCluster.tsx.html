@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/157</span>
+                <span class='fraction'>0/150</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/110</span>
+                <span class='fraction'>0/104</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/32</span>
+                <span class='fraction'>0/30</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/150</span>
+                <span class='fraction'>0/144</span>
             </div>
         
             
@@ -753,17 +753,11 @@
 <a name='L688'></a><a href='#L688'>688</a>
 <a name='L689'></a><a href='#L689'>689</a>
 <a name='L690'></a><a href='#L690'>690</a>
-<a name='L691'></a><a href='#L691'>691</a>
-<a name='L692'></a><a href='#L692'>692</a>
-<a name='L693'></a><a href='#L693'>693</a>
-<a name='L694'></a><a href='#L694'>694</a>
-<a name='L695'></a><a href='#L695'>695</a>
-<a name='L696'></a><a href='#L696'>696</a>
-<a name='L697'></a><a href='#L697'>697</a>
-<a name='L698'></a><a href='#L698'>698</a>
-<a name='L699'></a><a href='#L699'>699</a>
-<a name='L700'></a><a href='#L700'>700</a>
-<a name='L701'></a><a href='#L701'>701</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L691'></a><a href='#L691'>691</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -940,22 +934,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1494,6 +1474,10 @@ import { sanitizeCoordinates } from '../../utils/coordinateUtils';
 import { debounce } from '../../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
 import { supabase as _supabase } from '../../supabase';
+import {
+  openExternalLink,
+  DEFAULT_WHITELIST_HOSTS,
+} from '../../utils/safeLinking';
 &nbsp;
 /* ------------------------------------------------------------------
  * Debugging aid – track a single show end-to-end
@@ -1630,7 +1614,7 @@ const MapShowCluster = <span class="cstat-no" title="statement not covered" >for
         } else {
           // Fallback to Google Maps in browser
           const webUrl = <span class="cstat-no" title="statement not covered" >`https://www.google.com/maps/search/?api=1&amp;query=${encodedAddress}`;</span>
-<span class="cstat-no" title="statement not covered" >          return Linking.openURL(webUrl);</span>
+<span class="cstat-no" title="statement not covered" >          return openExternalLink(webUrl);</span>
         }
       })
       .catch(<span class="fstat-no" title="function not covered" >()</span> =&gt; {
@@ -1640,22 +1624,8 @@ const MapShowCluster = <span class="cstat-no" title="statement not covered" >for
 &nbsp;
   // Function to open any URL
   const openUrl = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(u</span>rl: string) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (!url) <span class="cstat-no" title="statement not covered" >return;</span></span>
-&nbsp;
-    // Add https:// if missing
-    const httpsUrl = <span class="cstat-no" title="statement not covered" >url.startsWith('http') ? url : `https://${url}`;</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    Linking.canOpenURL(httpsUrl)</span>
-      .then(<span class="fstat-no" title="function not covered" >su</span>pported =&gt; {
-<span class="cstat-no" title="statement not covered" >        if (supported) {</span>
-<span class="cstat-no" title="statement not covered" >          return Linking.openURL(httpsUrl);</span>
-        } else {
-<span class="cstat-no" title="statement not covered" >          console.warn(`Cannot open URL: ${httpsUrl}`);</span>
-        }
-      })
-      .catch(<span class="fstat-no" title="function not covered" >er</span>r =&gt; {
-<span class="cstat-no" title="statement not covered" >        console.error('Error opening URL:', err);</span>
-      });
+    // Centralised safe-link handler with whitelist protection
+<span class="cstat-no" title="statement not covered" >    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });</span>
   };
 &nbsp;
   // Debounced navigation function with enhanced debugging
@@ -2170,7 +2140,7 @@ export default MapShowCluster;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-19T18:28:35.285Z
+                at 2025-08-20T15:35:49.086Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
