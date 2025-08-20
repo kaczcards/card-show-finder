@@ -12,6 +12,11 @@ const {
   EXPO_PUBLIC_SENTRY_DSN,
 } = process.env;
 
+// Determine build type (production vs. development)
+const isProd =
+  process.env.APP_ENV === 'production' ||
+  process.env.NODE_ENV === 'production';
+
 // --------------------------------------------------
 // Basic validation / helpful warnings
 // --------------------------------------------------
@@ -50,7 +55,7 @@ if (!EXPO_PUBLIC_GOOGLE_MAPS_API_KEY) {
 module.exports = {
   name: "card-show-finder",
   slug: "card-show-finder",
-  version: "1.0.0",
+  version: "1.0.1",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light",
@@ -95,6 +100,36 @@ module.exports = {
       NSUserTrackingUsageDescription:
         "This identifier will be used to deliver a better, more relevant experience (e.g., analytics and limited advertising).",
       ITSAppUsesNonExemptEncryption: false,
+      /* --------------------------------------------------------------
+       * App Transport Security – strict by default.  For dev builds we
+       * allow localhost so the Metro bundler & mock APIs work without
+       * weakening production security.
+       * ------------------------------------------------------------ */
+      NSAppTransportSecurity: {
+        NSAllowsArbitraryLoads: false,
+        NSAllowsArbitraryLoadsForMedia: false,
+        NSAllowsArbitraryLoadsInWebContent: false,
+        ...(isProd
+          ? {}
+          : {
+              NSExceptionDomains: {
+                localhost: {
+                  NSTemporaryExceptionAllowsInsecureHTTPLoads: true,
+                  NSIncludesSubdomains: true,
+                },
+                '127.0.0.1': {
+                  NSTemporaryExceptionAllowsInsecureHTTPLoads: true,
+                  NSIncludesSubdomains: true,
+                },
+              },
+            }),
+      },
+      ...(isProd
+        ? {}
+        : {
+            NSLocalNetworkUsageDescription:
+              'Allow local network access for development only.',
+          }),
     },
     /* ------------------------------------------------------------------
      * Universal Links (iOS) – ensure password-reset email links open
@@ -105,10 +140,13 @@ module.exports = {
       "applinks:cardshowfinder.app"
     ],
     /* Unique identifier used for App Store publishing */
-    bundleIdentifier: "com.kaczcards.cardshowfinder"
+    bundleIdentifier: "com.kaczcards.cardshowfinder",
+    /* Build number bump for App Store submission */
+    buildNumber: "2"
   },
   android: {
     package: "com.kaczcards.cardshowfinder",
+    versionCode: 2,
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
@@ -172,7 +210,7 @@ module.exports = {
   updates: {
     url: "https://u.expo.dev/13f5779d-487a-4bfd-b7df-9e925db60a1a",
   },
-  runtimeVersion: "1.0.0",
+  runtimeVersion: "1.0.1",
 
   plugins: [
     [
