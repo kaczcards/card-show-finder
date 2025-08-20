@@ -27,5 +27,7 @@ module.exports = {
   transformer: {
     ...defaultConfig.transformer,
     // No custom Hermes setting here – platform-specific configs control engine choice
+    // Enable inline requires for faster application start-up
+    inlineRequires: true,
   }
 };
