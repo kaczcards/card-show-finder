@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/23</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
                 <span class='fraction'>0/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/8</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
@@ -220,23 +220,7 @@
 <a name='L155'></a><a href='#L155'>155</a>
 <a name='L156'></a><a href='#L156'>156</a>
 <a name='L157'></a><a href='#L157'>157</a>
-<a name='L158'></a><a href='#L158'>158</a>
-<a name='L159'></a><a href='#L159'>159</a>
-<a name='L160'></a><a href='#L160'>160</a>
-<a name='L161'></a><a href='#L161'>161</a>
-<a name='L162'></a><a href='#L162'>162</a>
-<a name='L163'></a><a href='#L163'>163</a>
-<a name='L164'></a><a href='#L164'>164</a>
-<a name='L165'></a><a href='#L165'>165</a>
-<a name='L166'></a><a href='#L166'>166</a>
-<a name='L167'></a><a href='#L167'>167</a>
-<a name='L168'></a><a href='#L168'>168</a>
-<a name='L169'></a><a href='#L169'>169</a>
-<a name='L170'></a><a href='#L170'>170</a>
-<a name='L171'></a><a href='#L171'>171</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L158'></a><a href='#L158'>158</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -312,12 +296,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -332,17 +310,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -413,10 +387,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import {
-  openExternalLink,
-  DEFAULT_WHITELIST_HOSTS,
-} from '../../../utils/safeLinking';
+import SocialLinksRow from '../../ui/SocialLinksRow';
 &nbsp;
 // Define types
 interface OrganizerProfile {
@@ -481,12 +452,6 @@ const CalloutContent: React.FC&lt;CalloutContentProps&gt; = <span class="cstat-n
     }
   };
 &nbsp;
-  const openLink = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(u</span>rl?: string) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (!url) <span class="cstat-no" title="statement not covered" >return;</span></span>
-    // Centralised safe-link helper with default social whitelist
-<span class="cstat-no" title="statement not covered" >    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });</span>
-  };
-&nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;View style={styles.container}&gt;
       &lt;Text style={styles.title}&gt;{title}&lt;/Text&gt;
@@ -500,22 +465,18 @@ const CalloutContent: React.FC&lt;CalloutContentProps&gt; = <span class="cstat-n
 &nbsp;
       {/* Social links */}
       {organizer ? (
-        &lt;View style={styles.socialRow}&gt;
-          {organizer.facebookUrl &amp;&amp; (
-            &lt;TouchableOpacity onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >openLink(organizer.facebookUrl)}</span>&gt;
-              &lt;Ionicons name="logo-facebook" size={20} color="#4267B2" /&gt;
-            &lt;/TouchableOpacity&gt;
-          )}
-          {organizer.instagramUrl &amp;&amp; (
-            &lt;TouchableOpacity onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >openLink(organizer.instagramUrl)}</span>&gt;
-              &lt;Ionicons name="logo-instagram" size={20} color="#C13584" /&gt;
-            &lt;/TouchableOpacity&gt;
-          )}
-          {organizer.twitterUrl &amp;&amp; (
-            &lt;TouchableOpacity onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >openLink(organizer.twitterUrl)}</span>&gt;
-              &lt;Ionicons name="logo-twitter" size={20} color="#1DA1F2" /&gt;
-            &lt;/TouchableOpacity&gt;
-          )}
+        &lt;View style={{ marginBottom: 6 }}&gt;
+          &lt;SocialLinksRow
+            variant="icons"
+            iconSize={20}
+            urls={{
+              facebookUrl: organizer.facebookUrl,
+              instagramUrl: organizer.instagramUrl,
+              twitterUrl: organizer.twitterUrl,
+              whatnotUrl: organizer.whatnotUrl,
+              ebayStoreUrl: organizer.ebayStoreUrl,
+            }}
+          /&gt;
         &lt;/View&gt;
       ) : null}
 &nbsp;
@@ -580,7 +541,7 @@ export default CalloutContent;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-20T15:35:49.086Z
+                at 2025-08-20T22:28:52.499Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
