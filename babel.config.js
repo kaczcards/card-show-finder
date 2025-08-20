@@ -4,6 +4,11 @@ module.exports = function(api) {
   return {
     presets: [
       ['babel-preset-expo', { jsxRuntime: 'automatic' }]
-    ]
+    ],
+    env: {
+      production: {
+        plugins: ['transform-remove-console']
+      }
+    }
   };
 };
