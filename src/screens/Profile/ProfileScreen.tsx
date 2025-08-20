@@ -114,8 +114,11 @@ const ProfileScreen: React.FC = () => {
 
       // Success path – column exists
       const count = data?.favorite_shows_count ?? 0;
-       
-console.warn('[ProfileScreen] Fetched favorite_shows_count:', count);
+      if (__DEV__)
+        console.warn(
+          '[ProfileScreen] Fetched favorite_shows_count:',
+          count,
+        );
       setLocalFavoriteCount(count);
     } catch (err) {
       console.error('[ProfileScreen] Unexpected error in fetchFavoriteCount:', err);
@@ -128,8 +131,10 @@ console.warn('[ProfileScreen] Fetched favorite_shows_count:', count);
    * ------------------------------------------------------------------ */
   useFocusEffect(
     useCallback(() => {
-       
-console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
+      if (__DEV__)
+        console.warn(
+          '[ProfileScreen] Screen focused – refreshing counts/badges',
+        );
       fetchFavoriteCount();
       // no cleanup needed
     }, [fetchFavoriteCount, user])
@@ -263,7 +268,8 @@ console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
     
     try {
       setIsSubmitting(true);
-      console.warn('[ProfileScreen] Saving profile changes:', {
+      if (__DEV__)
+        console.warn('[ProfileScreen] Saving profile changes:', {
         firstName,
         lastName: lastName || undefined,
         homeZipCode,
@@ -288,8 +294,8 @@ console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
       });
       
       setIsEditMode(false);
-       
-console.warn('[ProfileScreen] Profile updated successfully');
+      if (__DEV__)
+        console.warn('[ProfileScreen] Profile updated successfully');
       Alert.alert('Success', 'Profile updated successfully');
     } catch (err: any) {
       console.error('[ProfileScreen] Error updating profile:', err);
@@ -360,12 +366,13 @@ console.warn('[ProfileScreen] Profile updated successfully');
       user.accountType === 'organizer';
 
     /* Debug logging to diagnose access-control issues */
-    console.warn('[ProfileScreen] isDealer check', {
-      userId: user.id,
-      role: user.role,
-      accountType: user.accountType,
-      isDealer: dealerLike,
-    });
+    if (__DEV__)
+      console.warn('[ProfileScreen] isDealer check', {
+        userId: user.id,
+        role: user.role,
+        accountType: user.accountType,
+        isDealer: dealerLike,
+      });
 
     return dealerLike;
   };
@@ -382,15 +389,13 @@ console.warn('[ProfileScreen] Profile updated successfully');
   // Get role display name
   const getRoleDisplayName = (role: UserRole) => {
     // Debug logging to track what role is being passed
-    console.warn('[ProfileScreen] getRoleDisplayName called with role:', role, 
-      'for user ID:', user?.id);
-    
-    // Special case for the specific user ID that needs to show as Dealer
-    if (user?.id === '7d792f27-9112-4837-926f-42e4eb1f0577') {
-       
-console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
-      return 'Dealer';
-    }
+    if (__DEV__)
+      console.warn(
+        '[ProfileScreen] getRoleDisplayName called with role:',
+        role,
+        'for user ID:',
+        user?.id,
+      );
     
     switch (role) {
       case UserRole.ATTENDEE:
@@ -403,7 +408,7 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
         return 'Show Organizer';
       default:
         // Add a console log here to debug what 'role' is if it hits 'Unknown'
-        console.warn('Unknown UserRole encountered:', role);
+        if (__DEV__) console.warn('Unknown UserRole encountered:', role);
         return 'Unknown';
     }
   };
@@ -432,12 +437,13 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
   /* ------------------------------------------------------------------ */
   /* Debug – log role + dealer status each render                        */
   /* ------------------------------------------------------------------ */
-  console.warn('[ProfileScreen] render', {
-    userId: user.id,
-    role: user.role,
-    accountType: user.accountType,
-    dealerStatus: isDealer(),
-  });
+  if (__DEV__)
+    console.warn('[ProfileScreen] render', {
+      userId: user.id,
+      role: user.role,
+      accountType: user.accountType,
+      dealerStatus: isDealer(),
+    });
   
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>

@@ -464,6 +464,7 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
           // If found, get the show details for further debugging
           if (foundRaw) {
             const targetShow = rpcData.find((s: any) => s.id === DEBUG_SHOW_ID);
+            if (__DEV__)
             console.warn(
               `[showService][DEBUG_SHOW] Target show details from find_filtered_shows:`,
               {
@@ -776,7 +777,8 @@ const getDirectPaginatedShows = async (
     }
     
     // Now use the new RPC function that properly extracts coordinates
-    console.warn('[showService] Using direct query for coordinate extraction');
+    if (__DEV__)
+      console.warn('[showService] Using direct query for coordinate extraction');
 
     // Primary: direct query (no RPC dependency)
     const { data, error: queryError } = await supabase
@@ -799,6 +801,7 @@ const getDirectPaginatedShows = async (
     if (Array.isArray(data)) {
       const dbgRow: any | undefined = data.find((r: any) => r.id === DEBUG_SHOW_ID);
       if (dbgRow) {
+        if (__DEV__)
         console.warn('[showService][DEBUG_SHOW] Found target show in raw direct query:', {
           id: dbgRow.id,
           title: dbgRow.title,
@@ -814,6 +817,7 @@ const getDirectPaginatedShows = async (
           coordType: typeof dbgRow.coordinates,
         });
       } else {
+        if (__DEV__)
         console.warn('[showService][DEBUG_SHOW] Target show NOT in raw direct query result');
       }
     }
@@ -971,6 +975,7 @@ const getDirectPaginatedShows = async (
             
             // Debug log for target show
             if (show.id === DEBUG_SHOW_ID) {
+              if (__DEV__)
               console.warn('[showService][DEBUG_SHOW] Applied fallback coordinates from address match:', {
                 address: show.address,
                 normalizedAddress: normalizedAddr,
@@ -990,6 +995,7 @@ const getDirectPaginatedShows = async (
 
         /* ----------- DEBUG distance calc for target show ------------- */
         if (show.id === DEBUG_SHOW_ID) {
+          if (__DEV__)
           console.warn('[showService][DEBUG_SHOW] Distance filter evaluation:', {
             coordsUser: { latitude, longitude },
             coordsShow: showCoords,
@@ -1005,6 +1011,7 @@ const getDirectPaginatedShows = async (
       /* After distance filtering – did target remain? */
       if (Array.isArray(filteredData)) {
         const remains = filteredData.some((s: any) => s.id === DEBUG_SHOW_ID);
+        if (__DEV__)
         console.warn(
           `[showService][DEBUG_SHOW] Target show ${
             remains ? 'REMAINS' : 'REMOVED'
@@ -1025,6 +1032,7 @@ const getDirectPaginatedShows = async (
     const paginatedData = filteredData.slice(startIndex, endIndex);
     
     if (__DEV__)
+      if (__DEV__)
       console.warn(
         `[showService] getDirectPaginatedShows found ${paginatedData.length} shows (from ${totalFilteredCount} filtered, ${count} total)`,
       );
@@ -1033,6 +1041,7 @@ const getDirectPaginatedShows = async (
     if (paginatedData.some((s: any) => s.id === DEBUG_SHOW_ID)) {
       console.warn('[showService][DEBUG_SHOW] Target show IS in final paginated page');
     } else {
+      if (__DEV__)
       console.warn('[showService][DEBUG_SHOW] Target show NOT in final paginated page');
     }
     
