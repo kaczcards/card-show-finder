@@ -10,8 +10,6 @@ import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 // Stripe payment provider
 import { StripeProvider } from '@stripe/stripe-react-native';
 // ---------------- TEMPORARILY DISABLED ----------------
-// Sentry for error/performance monitoring
-import * as Sentry from 'sentry-expo';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 // Centralised environment polyfills (structuredClone, etc.)
@@ -27,63 +25,13 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 
 /**
  * ---------------------------------------------------------
- *  Sentry Initialisation
+ *  Sentry Initialisation (moved to runtime)
  * ---------------------------------------------------------
  *  • Error & crash reporting
  *  • Performance monitoring (tracing)
  *  • Breadcrumbs for console.log / network calls, etc.
  * ---------------------------------------------------------
  */
-
-// ---------------- TEMPORARILY DISABLED ----------------
-// React Navigation instrumentation – enables route change tracing
-// const routingInstrumentation = new Sentry.Native.ReactNavigationV5Instrumentation();
-
-// ---------------- TEMPORARILY DISABLED ----------------
-// Sentry initialisation block (disabled while isolating runtime crash)
-Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
-  enableInExpoDevelopment: true,
-  debug: true,
-  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
-  /**
-   * Scrub sensitive data & limit payload size
-   */
-  beforeSend: (event) => {
-    // Remove user information
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore – Sentry event typing
-    delete event.user;
-
-    // Remove request headers if present
-    if (event.request?.headers) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      delete event.request.headers;
-    }
-
-    // Truncate long string extras to 1 000 chars
-    if (event.extra) {
-      Object.keys(event.extra).forEach((key) => {
-        const val = event.extra?.[key];
-        if (typeof val === 'string' && val.length > 1000) {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          event.extra[key] = `${val.slice(0, 1000)}…(truncated)`;
-        }
-      });
-    }
-    return event;
-  },
-});
-
-// Lightweight tags for easier filtering
-try {
-  Sentry.setTag('app_version', Constants.expoConfig?.version ?? 'unknown');
-  Sentry.setTag('platform', Platform.OS);
-} catch (_err) {
-  // noop – avoid crashing if Sentry not fully initialised
-}
 
 // Import theme for initial loading screen
 import { theme } from './src/constants/theme';
@@ -237,9 +185,52 @@ export default function App() {
       }
     };
 
+    /**
+     * Initialise Sentry *safely* even inside Expo Go.
+     * Falls back gracefully if the native Sentry module isn’t available.
+     */
+    const initSentry = async () => {
+      const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN ?? '';
+      if (!dsn) return; // No DSN → skip
+      try {
+        const Sentry = await import('sentry-expo');
+        Sentry.init({
+          dsn,
+          enableInExpoDevelopment: true,
+          debug: __DEV__,
+          tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+          beforeSend: (event: any) => {
+            // scrub user & headers
+            delete event?.user;
+            if (event?.request?.headers) delete event.request.headers;
+            if (event.extra) {
+              Object.keys(event.extra).forEach((k) => {
+                const v = event.extra[k];
+                if (typeof v === 'string' && v.length > 1000) {
+                  event.extra[k] = `${v.slice(0, 1000)}…(truncated)`;
+                }
+              });
+            }
+            return event;
+          },
+        });
+
+        // Lightweight tags
+        try {
+          Sentry.setTag?.('app_version', Constants.expoConfig?.version ?? 'unknown');
+          Sentry.setTag?.('platform', Platform.OS);
+        } catch {}
+      } catch (err: any) {
+        if (__DEV__)
+          console.warn('[Sentry] Initialisation skipped – module unavailable:', err?.message || err);
+      }
+    };
+
     // Perform any initialization tasks here
     const prepare = async () => {
       try {
+        // Initialise Sentry first so it captures any early errors
+        await initSentry();
         // Fire-and-forget ATT prompt (iOS only)
         requestATT();
 
