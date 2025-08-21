@@ -13,11 +13,6 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 // Sentry for error/performance monitoring
 import * as Sentry from 'sentry-expo';
 import Constants from 'expo-constants';
-// App Tracking Transparency (iOS)
-import {
-  requestTrackingPermissionsAsync,
-  getTrackingPermissionsAsync,
-} from 'expo-tracking-transparency';
 import { Platform } from 'react-native';
 // Centralised environment polyfills (structuredClone, etc.)
 import './src/utils/polyfills';
@@ -211,12 +206,34 @@ export default function App() {
     const requestATT = async () => {
       if (Platform.OS !== 'ios') return;
       try {
-        const { status } = await getTrackingPermissionsAsync();
-        if (status === 'undetermined') {
-          await requestTrackingPermissionsAsync();
+        // Dynamic import prevents crashes in Expo Go / builds lacking the native module
+        const mod = await import('expo-tracking-transparency');
+        const getPerms =
+          (mod as any).getTrackingPermissionsAsync as
+            | undefined
+            | (() => Promise<{ status: string }>);
+        const reqPerms =
+          (mod as any).requestTrackingPermissionsAsync as
+            | undefined
+            | (() => Promise<{ status: string }>);
+
+        if (typeof getPerms !== 'function' || typeof reqPerms !== 'function') {
+          if (__DEV__)
+            console.warn('[ATT] Module present but functions missing – skipping');
+          return;
         }
-      } catch (err) {
-        if (__DEV__) console.warn('[ATT] Failed to request tracking permission:', err);
+
+        const { status } = await getPerms();
+        if (status === 'undetermined') {
+          await reqPerms();
+        }
+      } catch (err: any) {
+        // When running in Expo Go or other runtimes without the native module
+        if (__DEV__)
+          console.warn(
+            '[ATT] Tracking transparency unavailable in this runtime:',
+            err?.message || err
+          );
       }
     };
 
