@@ -85,5 +85,8 @@
     <string>Light</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <!-- App Tracking Transparency permission prompt (iOS 14+) -->
+    <key>NSUserTrackingUsageDescription</key>
+    <string>We use your device identifier to improve analytics and personalize the experience. We do not sell your data.</string>
   </dict>
 </plist>
