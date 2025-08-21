@@ -2,12 +2,16 @@ import React, { useState, useEffect as _useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Image, Switch as _Switch, Platform as _Platform, FlatList as _FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import SocialIcon from '../../components/ui/SocialIcon';
+// UI sub-components & hooks extracted during refactor
+import ProfileHeader from './components/ProfileHeader';
+import SocialLinksSection from './components/SocialLinksSection';
+import useFavoriteCount from './hooks/useFavoriteCount';
+
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../supabase';
-import { openExternalLink, DEFAULT_WHITELIST_HOSTS } from '../../utils/safeLinking';
+import { validateProfileForm } from '../../utils/validation/profileValidation';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole, resetPassword } = useAuth();
@@ -44,95 +48,17 @@ const ProfileScreen: React.FC = () => {
   // ---------------------------------------------------------------------------
   // Favorite shows – local count & helper
   // ---------------------------------------------------------------------------
-  // State for favorite shows count
-  const [localFavoriteCount, setLocalFavoriteCount] = useState(0);
-
-  /**
-   * Fetch the authoritative favourite-show count from the DB.
-   * Tries to read the `favorite_shows_count` column, but gracefully falls
-   * back to counting rows in `user_favorite_shows` when the column does
-   * not exist (e.g. migration hasn't run yet).
-   */
-  const fetchFavoriteCount = useCallback(async () => {
-    if (!user?.id) {
-      setLocalFavoriteCount(0);
-      return;
-    }
-
-    try {
-      /* -----------------------------------------------------------
-       * Try 1 – read the counter column directly
-       * --------------------------------------------------------- */
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('favorite_shows_count')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.warn(
-          '[ProfileScreen] Error fetching favorite_shows_count:',
-          error.message
-        );
-
-        /* 42703 = column does not exist -> migration not applied yet  */
-        if (error.code === '42703') {
-          console.warn(
-            '[ProfileScreen] Falling back to counting records in user_favorite_shows'
-          );
-
-          /* -----------------------------------------------------------
-           * Fallback – count rows in join table
-           * --------------------------------------------------------- */
-          const {
-            count,
-            error: countError,
-          } = await supabase
-            .from('user_favorite_shows')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
-
-          if (countError) {
-            console.error(
-              '[ProfileScreen] Error counting favorites:',
-              countError
-            );
-            return;
-          }
-
-          setLocalFavoriteCount(count || 0);
-          return;
-        }
-
-        // Other errors – log and exit early
-        console.error(
-          '[ProfileScreen] Unexpected error fetching favorite_shows_count:',
-          error
-        );
-        return;
-      }
-
-      // Success path – column exists
-      const count = data?.favorite_shows_count ?? 0;
-       
-console.warn('[ProfileScreen] Fetched favorite_shows_count:', count);
-      setLocalFavoriteCount(count);
-    } catch (err) {
-      console.error('[ProfileScreen] Unexpected error in fetchFavoriteCount:', err);
-      // keep previous count on unexpected error
-    }
-  }, [user?.id]);
+  // Reusable hook for favourite count
+  const { count: favoriteCount, refresh: refreshFavoriteCount } = useFavoriteCount();
 
   /* ------------------------------------------------------------------
    * Refresh data each time the screen gains focus
    * ------------------------------------------------------------------ */
   useFocusEffect(
     useCallback(() => {
-       
-console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
-      fetchFavoriteCount();
+      refreshFavoriteCount();
       // no cleanup needed
-    }, [fetchFavoriteCount, user])
+    }, [refreshFavoriteCount, user])
   );
   
   // Handle logout
@@ -165,92 +91,39 @@ console.warn('[ProfileScreen] Screen focused – refreshing counts/badges');
   
   // Validate form
   const validateForm = () => {
-    // ---- Basic required fields ---------------------------------------------
-    if (!firstName.trim()) {
-      Alert.alert('Error', 'First name is required');
-      return false;
-    }
-
-    // ZIP code validation (US format - 5 digits)
-    const zipRegex = /^\d{5}$/;
-    if (!zipRegex.test(homeZipCode.trim())) {
-      Alert.alert('Error', 'Please enter a valid 5-digit ZIP code');
-      return false;
-    }
-
-    // Phone validation (optional – allow punctuation then strip)
-    if (phoneNumber) {
-      const cleaned = phoneNumber.replace(/\D/g, '');
-      if (cleaned && cleaned.length !== 10) {
-        Alert.alert('Error', 'Please enter a valid 10-digit phone number');
-        return false;
-      }
-    }
-
-    /* ----------------------------------------------------------------------
-     * Social links — lenient validation + normalisation
-     * -------------------------------------------------------------------- */
-    const simpleDomainRegex =
-      /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-
-    const validateAndNormalizeUrl = (
-      url: string,
-      platformLabel: string,
-    ): string | undefined | false => {
-      if (!url.trim()) return undefined; // treat empty as undefined
-
-      // Already has protocol -> accept
-      if (url.startsWith('http://') || url.startsWith('https://')) {
-        return url.trim();
-      }
-
-      // Remove leading www. for validation
-      const domainPart = url.trim().replace(/^www\./i, '');
-      if (!simpleDomainRegex.test(domainPart)) {
-        Alert.alert('Error', `Please enter a valid ${platformLabel} URL`);
-        return false;
-      }
-
-      // Auto-prefix https:// for storage
-      return `https://${url.trim()}`;
-    };
-
-    const normalizedFacebook = validateAndNormalizeUrl(
+    const { normalized, errors } = validateProfileForm({
+      zip: homeZipCode,
+      phone: phoneNumber,
       facebookUrl,
-      'Facebook',
-    );
-    if (normalizedFacebook === false) return false;
-
-    const normalizedInstagram = validateAndNormalizeUrl(
       instagramUrl,
-      'Instagram',
-    );
-    if (normalizedInstagram === false) return false;
-
-    const normalizedTwitter = validateAndNormalizeUrl(
       twitterUrl,
-      'Twitter/X',
-    );
-    if (normalizedTwitter === false) return false;
-
-    const normalizedWhatnot = validateAndNormalizeUrl(
       whatnotUrl,
-      'Whatnot',
-    );
-    if (normalizedWhatnot === false) return false;
-
-    const normalizedEbay = validateAndNormalizeUrl(
       ebayStoreUrl,
-      'eBay store',
-    );
-    if (normalizedEbay === false) return false;
+    });
 
-    // Persist normalized values into state so `saveChanges` uses them
-    if (normalizedFacebook !== undefined) setFacebookUrl(normalizedFacebook);
-    if (normalizedInstagram !== undefined) setInstagramUrl(normalizedInstagram);
-    if (normalizedTwitter !== undefined) setTwitterUrl(normalizedTwitter);
-    if (normalizedWhatnot !== undefined) setWhatnotUrl(normalizedWhatnot);
-    if (normalizedEbay !== undefined) setEbayStoreUrl(normalizedEbay);
+    if (errors.zip) {
+      Alert.alert('Error', errors.zip);
+      return false;
+    }
+    if (errors.phone) {
+      Alert.alert('Error', errors.phone);
+      return false;
+    }
+
+    if (typeof normalized.facebookUrl !== 'undefined')
+      setFacebookUrl(normalized.facebookUrl || '');
+    if (typeof normalized.instagramUrl !== 'undefined')
+      setInstagramUrl(normalized.instagramUrl || '');
+    if (typeof normalized.twitterUrl !== 'undefined')
+      setTwitterUrl(normalized.twitterUrl || '');
+    if (typeof normalized.whatnotUrl !== 'undefined')
+      setWhatnotUrl(normalized.whatnotUrl || '');
+    if (typeof normalized.ebayStoreUrl !== 'undefined')
+      setEbayStoreUrl(normalized.ebayStoreUrl || '');
+    if (typeof normalized.zip !== 'undefined')
+      setHomeZipCode(normalized.zip || '');
+    if (typeof normalized.phone !== 'undefined')
+      setPhoneNumber(normalized.phone || '');
 
     return true;
   };
@@ -409,11 +282,6 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
   };
 
   // Helper function to open a URL with robust protocol handling
-  const openUrl = (url: string | undefined) => {
-    if (!url) return;
-    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
-  };
-
   // Navigate to Admin Map screen
   const navigateToAdminMap = () => {
     // Navigate directly to the Admin stack; deep linking param removed
@@ -443,47 +311,19 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.profileImageContainer}>
-            {user.profileImageUrl ? (
-              <Image source={{ uri: user.profileImageUrl }} style={styles.profileImage} />
-            ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <Text style={styles.profileImagePlaceholderText}>
-                  {user.firstName.charAt(0)}{user.lastName ? user.lastName.charAt(0) : ''}
-                </Text>
-              </View>
-            )}
-          </View>
-          
-          <Text style={styles.userName}>
-            {user.firstName} {user.lastName}
-          </Text>
-          
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{getRoleDisplayName(user.role)}</Text>
-          </View>
-          
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={toggleEditMode}
-            disabled={isSubmitting}
-          >
-            <Ionicons
-              name={isEditMode ? "close-outline" : "create-outline"}
-              size={20}
-              color="white"
-            />
-            <Text style={styles.editButtonText}>
-              {isEditMode ? "Cancel" : "Edit Profile"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <ProfileHeader
+          avatarUrl={user.profileImageUrl}
+          firstName={user.firstName}
+          lastName={user.lastName}
+          roleLabel={getRoleDisplayName(user.role)}
+          isEditMode={isEditMode}
+          isSubmitting={isSubmitting}
+          onToggleEdit={toggleEditMode}
+        />
         
         {/* Profile Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
-          
           {isEditMode ? (
             <View style={styles.editForm}>
               <View style={styles.inputContainer}>
@@ -496,7 +336,6 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
                   editable={!isSubmitting}
                 />
               </View>
-              
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Last Name</Text>
                 <TextInput
@@ -507,7 +346,6 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
                   editable={!isSubmitting}
                 />
               </View>
-              
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Home ZIP Code *</Text>
                 <TextInput
@@ -520,7 +358,6 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
                   editable={!isSubmitting}
                 />
               </View>
-              
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Phone Number</Text>
                 <TextInput
@@ -532,7 +369,6 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
                   editable={!isSubmitting}
                 />
               </View>
-              
               <TouchableOpacity
                 style={[styles.saveButton, isSubmitting && styles.buttonDisabled]}
                 onPress={saveChanges}
@@ -556,7 +392,6 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
                   </Text>
                 </View>
               </View>
-              
               <View style={styles.infoItem}>
                 <Ionicons name="mail-outline" size={20} color="#666" />
                 <View style={styles.infoTextContainer}>
@@ -564,7 +399,6 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
                   <Text style={styles.infoValue}>{user.email}</Text>
                 </View>
               </View>
-              
               <View style={styles.infoItem}>
                 <Ionicons name="location-outline" size={20} color="#666" />
                 <View style={styles.infoTextContainer}>
@@ -572,176 +406,49 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
                   <Text style={styles.infoValue}>{user.homeZipCode}</Text>
                 </View>
               </View>
-              
-              {user.phoneNumber && (
+              {user.phoneNumber ? (
                 <View style={styles.infoItem}>
                   <Ionicons name="call-outline" size={20} color="#666" />
                   <View style={styles.infoTextContainer}>
                     <Text style={styles.infoLabel}>Phone</Text>
-                    <Text style={styles.infoValue}>{formatPhoneNumber(user.phoneNumber)}</Text>
+                    <Text style={styles.infoValue}>
+                      {formatPhoneNumber(user.phoneNumber)}
+                    </Text>
                   </View>
                 </View>
-              )}
+              ) : null}
             </View>
           )}
         </View>
 
-        {/* Social Media Links Section - Only shown for MVP Dealers and Show Organizers */}
+        {/* Social & Marketplace Links */}
         {canEditSocialMedia() && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Social Media & Marketplace Links</Text>
-            
-            {isEditMode ? (
-              <View style={styles.editForm}>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Facebook Profile URL</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={facebookUrl}
-                    onChangeText={setFacebookUrl}
-                    placeholder="https://facebook.com/username"
-                    keyboardType="url"
-                    autoCapitalize="none"
-                    editable={!isSubmitting}
-                  />
-                </View>
-                
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Instagram Profile URL</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={instagramUrl}
-                    onChangeText={setInstagramUrl}
-                    placeholder="https://instagram.com/username"
-                    keyboardType="url"
-                    autoCapitalize="none"
-                    editable={!isSubmitting}
-                  />
-                </View>
-                
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Twitter/X Profile URL</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={twitterUrl}
-                    onChangeText={setTwitterUrl}
-                    placeholder="https://twitter.com/username"
-                    keyboardType="url"
-                    autoCapitalize="none"
-                    editable={!isSubmitting}
-                  />
-                </View>
-                
-                {isDealer() && (
-                  <>
-                    <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>Whatnot Store URL</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={whatnotUrl}
-                        onChangeText={setWhatnotUrl}
-                        placeholder="https://whatnot.com/user/username"
-                        keyboardType="url"
-                        autoCapitalize="none"
-                        editable={!isSubmitting}
-                      />
-                    </View>
-                    
-                    <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>eBay Store URL</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={ebayStoreUrl}
-                        onChangeText={setEbayStoreUrl}
-                        placeholder="https://ebay.com/usr/storename"
-                        keyboardType="url"
-                        autoCapitalize="none"
-                        editable={!isSubmitting}
-                      />
-                    </View>
-                  </>
-                )}
-              </View>
-            ) : (
-              <View style={styles.infoList}>
-                {!user.facebookUrl && !user.instagramUrl && !user.twitterUrl && 
-                 !user.whatnotUrl && !user.ebayStoreUrl ? (
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateText}>No social media links added yet</Text>
-                    <TouchableOpacity onPress={toggleEditMode}>
-                      <Text style={styles.emptyStateActionText}>Add links</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <>
-                    {user.facebookUrl && (
-                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.facebookUrl)}>
-                        <Ionicons name="logo-facebook" size={20} color="#1877F2" />
-                        <View style={styles.infoTextContainer}>
-                          <Text style={styles.infoLabel}>Facebook</Text>
-                          <Text style={styles.infoValueLink}>{user.facebookUrl}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                    
-                    {user.instagramUrl && (
-                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.instagramUrl)}>
-                        <Ionicons name="logo-instagram" size={20} color="#C13584" />
-                        <View style={styles.infoTextContainer}>
-                          <Text style={styles.infoLabel}>Instagram</Text>
-                          <Text style={styles.infoValueLink}>{user.instagramUrl}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                    
-                    {user.twitterUrl && (
-                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.twitterUrl)}>
-                        <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
-                        <View style={styles.infoTextContainer}>
-                          <Text style={styles.infoLabel}>Twitter/X</Text>
-                          <Text style={styles.infoValueLink}>{user.twitterUrl}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                    
-                    {user.whatnotUrl && (
-                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.whatnotUrl)}>
-                        <SocialIcon 
-                          platform="whatnot" 
-                          size={20} 
-                          onPress={() => openUrl(user.whatnotUrl)} 
-                          style={{backgroundColor: 'transparent'}}
-                        />
-                        <View style={styles.infoTextContainer}>
-                          <Text style={styles.infoLabel}>Whatnot Store</Text>
-                          <Text style={styles.infoValueLink}>{user.whatnotUrl}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                    
-                    {user.ebayStoreUrl && (
-                      <TouchableOpacity style={styles.infoItem} onPress={() => openUrl(user.ebayStoreUrl)}>
-                        <SocialIcon 
-                          platform="ebay" 
-                          size={20} 
-                          onPress={() => openUrl(user.ebayStoreUrl)} 
-                          style={{backgroundColor: 'transparent'}}
-                        />
-                        <View style={styles.infoTextContainer}>
-                          <Text style={styles.infoLabel}>eBay Store</Text>
-                          <Text style={styles.infoValueLink}>{user.ebayStoreUrl}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                  </>
-                )}
-              </View>
-            )}
-          </View>
+          <SocialLinksSection
+            isEditMode={isEditMode}
+            canEdit={true}
+            isDealer={isDealer()}
+            values={{
+              facebookUrl,
+              instagramUrl,
+              twitterUrl,
+              whatnotUrl,
+              ebayStoreUrl,
+            }}
+            onChange={{
+              setFacebookUrl,
+              setInstagramUrl,
+              setTwitterUrl,
+              setWhatnotUrl,
+              setEbayStoreUrl,
+            }}
+            onPressAddLinks={toggleEditMode}
+            isSubmitting={isSubmitting}
+          />
         )}
 
         {/* Account Information */}
         <View style={styles.section}>
+
           <Text style={styles.sectionTitle}>Account Information</Text>
           
           <View style={styles.infoList}>
@@ -800,7 +507,7 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               {/* Use authoritative DB-backed favourite count */}
-              <Text style={styles.statValue}>{localFavoriteCount}</Text>
+              <Text style={styles.statValue}>{favoriteCount}</Text>
               <Text style={styles.statLabel}>Favorite Shows</Text>
             </View>
             
