@@ -119,11 +119,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        /**
+         * Helper that purges all cached Supabase auth/session entries.
+         * Supabase v2 prefixes keys with either `sb-` **or** `supabase`.
+         */
+        const clearSupabaseCache = async () => {
+          try {
+            const keys = await AsyncStorage.getAllKeys();
+            const toRemove = keys.filter(
+              (k) => k.startsWith('sb-') || k.includes('supabase')
+            );
+            if (toRemove.length) {
+              await AsyncStorage.multiRemove(toRemove);
+              if (__DEV__)
+                console.warn(
+                  '[AuthContext] Cleared stale Supabase tokens from AsyncStorage',
+                  toRemove
+                );
+            }
+          } catch (err) {
+            console.error('[AuthContext] Failed clearing Supabase cache', err);
+          }
+        };
+
+        /**
+         * Centralised recovery when we encounter an invalid / missing
+         * refresh-token error from Supabase.  Ensures the app never crashes
+         * on start and user is returned to a clean unauthenticated state.
+         */
+        const handleInvalidToken = async (msg: string) => {
+          console.warn('[AuthContext] Invalid refresh token detected – forcing sign-out');
+          try {
+            await supabase.auth.signOut();
+          } catch (_e) {
+            /* ignore – we are clearing cache anyway */
+          }
+          await clearSupabaseCache();
+          setAuthState({
+            user: null,
+            isLoading: false,
+            error: null,
+            isAuthenticated: false,
+          });
+        };
+
         // Check if we have a stored session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        let session = null;
+        let sessionError: any = null;
+        try {
+          const res = await supabase.auth.getSession();
+          session = res.data.session;
+          sessionError = res.error;
+        } catch (err: any) {
+          sessionError = err;
+        }
+
+        // Handle refresh-token related failures
+        if (
+          sessionError &&
+          typeof sessionError.message === 'string' &&
+          (sessionError.message.includes('Invalid Refresh Token') ||
+            sessionError.message.includes('Refresh Token Not Found'))
+        ) {
+          await handleInvalidToken(sessionError.message);
+          return;
+        }
         
-        if (error) {
-          throw error;
+        if (sessionError) {
+          throw sessionError;
         }
         
         if (session) {
