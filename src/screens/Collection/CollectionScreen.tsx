@@ -27,8 +27,6 @@ import { supabase } from '../../supabase';
 import WantListEditor from '../../components/WantListEditor';
 import AttendeeWantLists from '../../components/AttendeeWantLists';
 
-const INVENTORY_PREFIX = "[INVENTORY]";
-
 const CollectionScreen: React.FC = () => {
   // ===== Navigation =====
   const navigation = useNavigation();
@@ -81,11 +79,11 @@ const CollectionScreen: React.FC = () => {
     setInventoryError(null);
     
     try {
-      // Query all want_lists for this user
       const { data, error } = await supabase
-        .from('want_lists')
-        .select('id, content')
-        .eq('userid', userId);
+        .from('profiles')
+        .select('dealer_specialties')
+        .eq('id', userId)
+        .single();
 
       if (error) {
         console.error('Error loading dealer inventory:', error);
@@ -94,20 +92,9 @@ const CollectionScreen: React.FC = () => {
         setInventoryContent('');
         return;
       }
-
-      // Find the one with the inventory prefix
-      const inventoryItem = data?.find(_item => 
-        _item.content && _item.content.startsWith(INVENTORY_PREFIX)
-      );
       
-      if (inventoryItem) {
-        // Remove the prefix for display
-        setInventoryContent(inventoryItem.content.substring(INVENTORY_PREFIX.length));
-        setInventoryId(inventoryItem.id);
-      } else {
-        setInventoryContent('');
-        setInventoryId(null);
-      }
+      setInventoryContent((data?.dealer_specialties || []).join(', '));
+      setInventoryId(null);
     } catch (err) {
       console.error('Error loading dealer inventory:', err);
       setInventoryError('An unexpected error occurred. Please try again.');
@@ -124,37 +111,34 @@ const CollectionScreen: React.FC = () => {
     try {
       setSavingInventory(true);
       
-      // Add the inventory prefix to the content
-      const contentWithPrefix = `${INVENTORY_PREFIX}${inventoryContent.trim()}`;
+      // Parse content into specialties array
+      const specialtiesArray = inventoryContent
+        .split(/[\n,]+/)
+        .map(item => item.trim())
+        .filter(Boolean);
       
-      let result;
-      if (inventoryId) {
-        // Update existing inventory
-        result = await supabase.from('want_lists').update({
-          content: contentWithPrefix,
-          updatedat: new Date().toISOString(),
+      // Dedupe while preserving casing/order of first occurrence
+      const seen = new Set<string>();
+      const uniqueSpecialties = specialtiesArray.filter(item => {
+        const key = item.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          dealer_specialties: uniqueSpecialties,
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', inventoryId)
-        .eq('userid', userId);
-      } else {
-        // Create new inventory entry
-        result = await supabase.from('want_lists').insert({
-          userid: userId,
-          content: contentWithPrefix,
-          createdat: new Date().toISOString(),
-          updatedat: new Date().toISOString(),
-        })
-        .select('id')
+        .eq('id', userId)
+        .select('dealer_specialties')
         .single();
-        
-        if (result.data) {
-          setInventoryId(result.data.id);
-        }
-      }
       
-      if (result.error) {
-        console.error('Error saving inventory:', result.error);
-        throw result.error;
+      if (error) {
+        console.error('Error saving inventory:', error);
+        throw error;
       }
       
       Alert.alert('Success', 'Your inventory has been saved.');
