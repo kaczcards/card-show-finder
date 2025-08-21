@@ -8,10 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import {
-  openExternalLink,
-  DEFAULT_WHITELIST_HOSTS,
-} from '../../../utils/safeLinking';
+import SocialLinksRow from '../../ui/SocialLinksRow';
 
 // Define types
 interface OrganizerProfile {
@@ -76,12 +73,6 @@ const CalloutContent: React.FC<CalloutContentProps> = ({
     }
   };
 
-  const openLink = (url?: string) => {
-    if (!url) return;
-    // Centralised safe-link helper with default social whitelist
-    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
@@ -95,22 +86,18 @@ const CalloutContent: React.FC<CalloutContentProps> = ({
 
       {/* Social links */}
       {organizer ? (
-        <View style={styles.socialRow}>
-          {organizer.facebookUrl && (
-            <TouchableOpacity onPress={() => openLink(organizer.facebookUrl)}>
-              <Ionicons name="logo-facebook" size={20} color="#4267B2" />
-            </TouchableOpacity>
-          )}
-          {organizer.instagramUrl && (
-            <TouchableOpacity onPress={() => openLink(organizer.instagramUrl)}>
-              <Ionicons name="logo-instagram" size={20} color="#C13584" />
-            </TouchableOpacity>
-          )}
-          {organizer.twitterUrl && (
-            <TouchableOpacity onPress={() => openLink(organizer.twitterUrl)}>
-              <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
-            </TouchableOpacity>
-          )}
+        <View style={{ marginBottom: 6 }}>
+          <SocialLinksRow
+            variant="icons"
+            iconSize={20}
+            urls={{
+              facebookUrl: organizer.facebookUrl,
+              instagramUrl: organizer.instagramUrl,
+              twitterUrl: organizer.twitterUrl,
+              whatnotUrl: organizer.whatnotUrl,
+              ebayStoreUrl: organizer.ebayStoreUrl,
+            }}
+          />
         </View>
       ) : null}
 

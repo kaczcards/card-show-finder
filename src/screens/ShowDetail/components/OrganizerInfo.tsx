@@ -1,17 +1,6 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import SocialIcon from '../../../components/ui/SocialIcon';
-import {
-  openExternalLink,
-  DEFAULT_WHITELIST_HOSTS,
-} from '../../../utils/safeLinking';
+import { View, Text, Image, StyleSheet } from 'react-native';
+import SocialLinksRow from '../../../components/ui/SocialLinksRow';
 
 interface OrganizerInfoProps {
   organizer?: {
@@ -63,12 +52,6 @@ const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ organizer }) => {
     ebay: organizer.ebay_store_url,
   };
 
-  const handleOpenLink = (url?: string) => {
-    if (!url) return;
-    // Use centralised safe-link helper with default social whitelist
-    openExternalLink(url, { whitelistHosts: DEFAULT_WHITELIST_HOSTS });
-  };
-
   return (
     <View style={styles.organizerContainer}>
       <SectionHeader>Organized by:</SectionHeader>
@@ -89,47 +72,17 @@ const OrganizerInfo: React.FC<OrganizerInfoProps> = ({ organizer }) => {
         social.twitter ||
         social.whatnot ||
         social.ebay) && (
-        <View style={styles.socialRow}>
-          {social.facebook && (
-            <TouchableOpacity
-              style={styles.socialIcon}
-              onPress={() => handleOpenLink(social.facebook)}
-            >
-              <Ionicons name="logo-facebook" size={22} color="#4267B2" />
-            </TouchableOpacity>
-          )}
-          {social.instagram && (
-            <TouchableOpacity
-              style={styles.socialIcon}
-              onPress={() => handleOpenLink(social.instagram)}
-            >
-              <Ionicons name="logo-instagram" size={22} color="#E1306C" />
-            </TouchableOpacity>
-          )}
-          {social.twitter && (
-            <TouchableOpacity
-              style={styles.socialIcon}
-              onPress={() => handleOpenLink(social.twitter)}
-            >
-              <Ionicons name="logo-twitter" size={22} color="#1DA1F2" />
-            </TouchableOpacity>
-          )}
-          {social.whatnot && (
-            <SocialIcon
-              platform="whatnot"
-              onPress={() => handleOpenLink(social.whatnot)}
-              style={styles.socialIcon}
-              size={22}
-            />
-          )}
-          {social.ebay && (
-            <SocialIcon
-              platform="ebay"
-              onPress={() => handleOpenLink(social.ebay)}
-              style={styles.socialIcon}
-              size={22}
-            />
-          )}
+        <View style={{ marginTop: 8 }}>
+          <SocialLinksRow
+            variant="icons"
+            urls={{
+              facebook_url: organizer.facebook_url,
+              instagram_url: organizer.instagram_url,
+              twitter_url: organizer.twitter_url,
+              whatnot_url: organizer.whatnot_url,
+              ebay_store_url: organizer.ebay_store_url,
+            }}
+          />
         </View>
       )}
     </View>
@@ -175,16 +128,6 @@ const styles = StyleSheet.create({
   organizerName: {
     fontSize: 16,
     fontWeight: '500',
-  },
-  /* -------------------- Social styles --------------------------- */
-  socialRow: {
-    flexDirection: 'row',
-    marginTop: 8,
-    flexWrap: 'wrap',
-  },
-  socialIcon: {
-    marginRight: 12,
-    marginBottom: 6,
   },
 });
 
