@@ -154,6 +154,14 @@ export default function App() {
     const requestATT = async () => {
       if (Platform.OS !== 'ios') return;
       try {
+        // Skip if the native module isn't compiled in (Expo Go / bare JS runtimes)
+        const { NativeModules } = require('react-native');
+        if (!NativeModules?.ExpoTrackingTransparency) {
+          if (__DEV__)
+            console.warn('[ATT] Native module not available – skipping');
+          return;
+        }
+
         // Dynamic import prevents crashes in Expo Go / builds lacking the native module
         const mod = await import('expo-tracking-transparency');
         const getPerms =
@@ -192,6 +200,14 @@ export default function App() {
     const initSentry = async () => {
       const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN ?? '';
       if (!dsn) return; // No DSN → skip
+
+      // Expo Go does not bundle the Sentry native module – skip to avoid redbox
+      const appOwnership = Constants.appOwnership as any;
+      if (appOwnership === 'expo') {
+        if (__DEV__) console.warn('[Sentry] Skipping init in Expo Go');
+        return;
+      }
+
       try {
         const Sentry = await import('sentry-expo');
         Sentry.init({
