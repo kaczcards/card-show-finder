@@ -7,6 +7,67 @@ import { storageService } from './storageService'; // Signed-URL helper
  * Handles operations related to user card collections and want lists
  */
 
+/* ------------------------------------------------------------------
+ * Internal helpers
+ * ------------------------------------------------------------------ */
+
+/**
+ * Fetches the user's profile with role / account_type and dealer_specialties.
+ */
+const getProfileWithRole = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('role, account_type, dealer_specialties, created_at, updated_at')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching profile for role check:', error);
+    return null;
+  }
+  if (!data) return null;
+
+  return {
+    role: (data.role || '').toString().toLowerCase(),
+    account_type: (data.account_type || '').toString().toLowerCase(),
+    dealer_specialties: data.dealer_specialties as string[] | null,
+    created_at: data.created_at as string | null,
+    updated_at: data.updated_at as string | null,
+  };
+};
+
+/**
+ * Determines if the profile belongs to any dealer-like user.
+ */
+const isDealerLike = (profile: any | null): boolean => {
+  if (!profile) return false;
+  return (
+    profile.account_type === 'dealer' ||
+    profile.role === 'dealer' ||
+    profile.role === 'mvp_dealer'
+  );
+};
+
+/**
+ * Normalises free-form content into an array of specialties.
+ * Splits on commas or new lines, trims whitespace, removes empties & dedupes.
+ */
+const parseSpecialties = (content: string): string[] => {
+  if (!content) return [];
+  const parts = content
+    .split(/[\n,]+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  // Dedupe while preserving casing/order of first occurrence
+  const seen = new Set<string>();
+  return parts.filter((p) => {
+    const key = p.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 /**
  * Helper – maps a raw Supabase `user_cards` record to our `UserCard`
  * interface.  If `imageurl` is missing (undefined/null) we return `null`
@@ -294,6 +355,19 @@ export const getUserWantList = async (
   userId: string
 ): Promise<{ data: WantList | null; error: any }> => {
   try {
+    const profile = await getProfileWithRole(userId);
+    if (isDealerLike(profile)) {
+      const content = (profile?.dealer_specialties || []).join(', ');
+      const synthetic: WantList = {
+        id: userId, // synthetic – use userId for determinism
+        userId,
+        content,
+        createdAt: profile?.created_at || new Date().toISOString(),
+        updatedAt: profile?.updated_at || new Date().toISOString(),
+      };
+      return { data: synthetic, error: null };
+    }
+
     const { data, error } = await supabase
       .from('want_lists')
       .select('*')
@@ -331,6 +405,32 @@ export const createWantList = async (
   content: string
 ): Promise<{ data: WantList | null; error: any }> => {
   try {
+    const profile = await getProfileWithRole(userId);
+    if (isDealerLike(profile)) {
+      console.warn(`Routing dealer inventory save to profiles.dealer_specialties for user ${userId}`);
+      const specialtiesArray = parseSpecialties(content);
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          dealer_specialties: specialtiesArray,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+        .select('dealer_specialties, created_at, updated_at')
+        .single();
+
+      if (error) throw error;
+
+      const synthetic: WantList = {
+        id: userId,
+        userId,
+        content: (data?.dealer_specialties || []).join(', '),
+        createdAt: data?.created_at || new Date().toISOString(),
+        updatedAt: data?.updated_at || new Date().toISOString(),
+      };
+      return { data: synthetic, error: null };
+    }
+
     // Check if user already has a want list
     const { data: existingList } = await getUserWantList(userId);
     
@@ -382,6 +482,32 @@ export const updateWantList = async (
   content: string
 ): Promise<{ data: WantList | null; error: any }> => {
   try {
+    const profile = await getProfileWithRole(userId);
+    if (isDealerLike(profile)) {
+      console.warn(`Routing dealer inventory update to profiles.dealer_specialties for user ${userId}`);
+      const specialtiesArray = parseSpecialties(content);
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          dealer_specialties: specialtiesArray,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+        .select('dealer_specialties, created_at, updated_at')
+        .single();
+
+      if (error) throw error;
+
+      const synthetic: WantList = {
+        id: userId,
+        userId,
+        content: (data?.dealer_specialties || []).join(', '),
+        createdAt: data?.created_at || new Date().toISOString(),
+        updatedAt: data?.updated_at || new Date().toISOString(),
+      };
+      return { data: synthetic, error: null };
+    }
+
     const { data, error } = await supabase
       .from('want_lists')
       .update({
