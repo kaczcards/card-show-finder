@@ -476,9 +476,33 @@ const ShowParticipationScreen: React.FC = () => {
   };
   
   // Format date range for display
+  /**
+   * Convert any DB date (Date object, full ISO string, or plain `YYYY-MM-DD`)
+   * into a **local** `Date` that represents that calendar day at midnight
+   * in the device’s timezone.  This avoids the common off-by-one issue where
+   * a date stored as midnight UTC is rendered as the previous day in US time
+   * zones.
+   */
+  const toLocalDateFromInput = (input: Date | string): Date => {
+    if (input instanceof Date) return input;
+    if (!input) return new Date(NaN);
+
+    // Fast-path for date-only strings
+    const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2})/.exec(input);
+    if (m) {
+      const y = Number(m[1]);
+      const mo = Number(m[2]); // 1-based
+      const d = Number(m[3]);
+      return new Date(y, mo - 1, d); // Local midnight
+    }
+
+    // Fallback – let JS parse (includes time component)
+    return new Date(input);
+  };
+
   const formatDateRange = (startDate: Date | string, endDate: Date | string) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = toLocalDateFromInput(startDate);
+    const end = toLocalDateFromInput(endDate);
     
     const startMonth = start.toLocaleString('default', { month: 'short' });
     const endMonth = end.toLocaleString('default', { month: 'short' });
