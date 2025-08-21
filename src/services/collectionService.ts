@@ -442,12 +442,17 @@ export const createWantList = async (
     // Create new want list with lowercase column names
     const { data, error } = await supabase
       .from('want_lists')
-      .insert([{
-        userid: userId,
-        content,
-        createdat: new Date().toISOString(),
-        updatedat: new Date().toISOString()
-      }])
+      // Use upsert with onConflict so repeated saves for the same user
+      // update the existing row instead of violating the unique constraint.
+      .upsert(
+        [{
+          userid: userId,
+          content,
+          createdat: new Date().toISOString(),
+          updatedat: new Date().toISOString()
+        }],
+        { onConflict: 'userid' }
+      )
       .select()
       .single();
     
