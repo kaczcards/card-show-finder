@@ -1,5 +1,5 @@
 import React, { useState, useEffect as _useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Image, Switch as _Switch, Platform as _Platform, FlatList as _FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Switch as _Switch, Platform as _Platform, FlatList as _FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 // UI sub-components & hooks extracted during refactor
@@ -10,7 +10,6 @@ import useFavoriteCount from './hooks/useFavoriteCount';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { supabase } from '../../supabase';
 import { validateProfileForm } from '../../utils/validation/profileValidation';
 
 const ProfileScreen: React.FC = () => {

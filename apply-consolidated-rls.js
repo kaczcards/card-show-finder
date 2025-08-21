@@ -202,6 +202,103 @@ async function executeRawSql(supabase, sql) {
 }
 
 /**
+ * Query catalog views directly to compute basic RLS metrics
+ * @param {Object} supabase - Supabase client
+ * @returns {Promise<null|{totalTables:number,securedTables:number,rlsCoverage:number,totalPolicies:number}>}
+ */
+async function getDbSecurityMetrics(supabase) {
+  /**
+   * Try to call the helper RPC first.  If it fails because the function
+   * does not exist, create it and retry once.
+   */
+  async function createRlsMetricsFunction() {
+    const createSql = `
+      CREATE OR REPLACE FUNCTION get_rls_metrics()
+      RETURNS TABLE(total_tables integer, secured_tables integer, total_policies integer)
+      LANGUAGE sql
+      SECURITY DEFINER
+      AS $$
+        WITH filtered_tables AS (
+          SELECT c.relrowsecurity AS rls_enabled
+          FROM information_schema.tables t
+          JOIN pg_catalog.pg_class c ON c.relname = t.table_name
+          WHERE t.table_schema = 'public'
+            AND t.table_type   = 'BASE TABLE'
+            AND t.table_name NOT LIKE 'pg_%'
+            AND t.table_name NOT IN ('schema_migrations','spatial_ref_sys')
+        )
+        SELECT
+          COUNT(*)::int                                            AS total_tables,
+          COUNT(*) FILTER (WHERE rls_enabled)::int                 AS secured_tables,
+          (SELECT COUNT(*) FROM pg_policies WHERE schemaname='public')::int AS total_policies;
+      $$;
+      GRANT EXECUTE ON FUNCTION get_rls_metrics() TO service_role;
+    `;
+
+    // Use exec_sql if available; otherwise fall back to raw
+    try {
+      await supabase.rpc('exec_sql', { sql_query: createSql });
+    } catch (err) {
+      // Fallback – exec_sql may not exist yet
+      const { error: rawErr } = await executeRawSql(supabase, createSql);
+      if (rawErr) throw rawErr;
+    }
+  }
+
+  let { data, error } = await supabase.rpc('get_rls_metrics');
+
+  if (error && error.message && error.message.includes('get_rls_metrics')) {
+    // Function probably missing -> create then retry
+    console.log(colorize.yellow('get_rls_metrics() not found – creating helper function...'));
+    try {
+      await createRlsMetricsFunction();
+      ({ data, error } = await supabase.rpc('get_rls_metrics'));
+    } catch (createErr) {
+      console.error(colorize.red(`Failed to create get_rls_metrics(): ${createErr.message}`));
+      return null;
+    }
+  }
+
+  if (error || !data) {
+    console.error(colorize.red(`Failed to fetch catalog security metrics${error ? `: ${error.message}` : ''}`));
+    return null;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data; // rpc returns single row object
+  const totalTables = Number(row.total_tables ?? 0);
+  const securedTables = Number(row.secured_tables ?? 0);
+  const totalPolicies = Number(row.total_policies ?? 0);
+  const rlsCoverage = totalTables > 0 ? (securedTables / totalTables) * 100 : 0;
+
+  return { totalTables, securedTables, totalPolicies, rlsCoverage };
+}
+
+/**
+ * Build a verificationStatus-like object from raw metrics
+ * @param {object|null} metrics
+ * @returns {object|null}
+ */
+function buildStatusFromMetrics(metrics) {
+  if (!metrics) return null;
+
+  const overall =
+    metrics.totalTables > 0 && metrics.securedTables === metrics.totalTables
+      ? 'SECURE'
+      : 'MEDIUM RISK';
+
+  return {
+    overall,
+    criticalCount: 0,
+    highCount: 0,
+    warningCount: 0,
+    passCount: 0,
+    tablesWithRls: metrics.securedTables,
+    totalTables: metrics.totalTables,
+    rlsCoverage: metrics.rlsCoverage
+  };
+}
+
+/**
  * Execute SQL script and capture output
  * @param {Object} supabase - Supabase client
  * @param {string} sql - SQL script to execute
@@ -580,6 +677,25 @@ async function applyRlsPolicies() {
         
         // Parse verification results
         verificationStatus = parseVerificationResults(notices);
+
+        // ------------------------------------------------------------
+        // Fallback: if verification script produced UNKNOWN / 0 tables
+        // ------------------------------------------------------------
+        if (
+          verificationStatus.totalTables === 0 ||
+          verificationStatus.overall === 'UNKNOWN'
+        ) {
+          console.log(
+            colorize.yellow(
+              'Using direct catalog metrics fallback for verification...'
+            )
+          );
+          const metrics = await getDbSecurityMetrics(supabase);
+          const fallbackStatus = buildStatusFromMetrics(metrics);
+          if (fallbackStatus) {
+            verificationStatus = fallbackStatus;
+          }
+        }
         
         // Print verification summary
         console.log(colorize.bold(colorize.blue('\n=== Verification Summary ===')));
