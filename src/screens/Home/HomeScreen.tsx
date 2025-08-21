@@ -12,7 +12,7 @@ import FilterSheet from '../../components/FilterSheet';
 import FilterChips from '../../components/FilterChips';
 import FilterPresetModal from '../../components/FilterPresetModal';
 import { ShowFilters, Coordinates } from '../../types';
-import { useInfiniteShows } from '../../hooks';
+import { useUnifiedInfiniteShows } from '../../hooks';
 import { supabase } from '../../supabase';
 
 // Constants
@@ -226,7 +226,7 @@ console.warn('App has come to the foreground - refreshing data');
     isFetchingNextPage,
     isRefreshing,
     error
-  } = useInfiniteShows({
+  } = useUnifiedInfiniteShows({
     // Use Carmel, IN as a sensible fallback so users see real shows
     coordinates: coordinates || { latitude: 39.9784, longitude: -86.118 },
     ...filters,
@@ -400,6 +400,12 @@ console.warn('App has come to the foreground - refreshing data');
         case 'feature':
           updated.features = (updated.features || []).filter((f) => f !== value);
           break;
+        case 'keyword':
+          delete updated.keyword;
+          break;
+        case 'dealerCardType':
+          updated.dealerCardTypes = (updated.dealerCardTypes || []).filter((t) => t !== value);
+          break;
         default:
           break;
       }
@@ -441,6 +447,8 @@ console.warn('App has come to the foreground - refreshing data');
     if (filters.maxEntryFee !== undefined) count++;
     if (filters.categories && filters.categories.length) count += filters.categories.length;
     if (filters.features && filters.features.length) count += filters.features.length;
+    if (filters.keyword) count++;
+    if (filters.dealerCardTypes && filters.dealerCardTypes.length) count += filters.dealerCardTypes.length;
     return count;
   };
 

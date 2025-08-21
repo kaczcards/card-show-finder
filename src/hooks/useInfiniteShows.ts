@@ -94,6 +94,8 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
     maxEntryFee,
     features,
     categories,
+    keyword,
+    dealerCardTypes,
     pageSize = 20,
     enabled = true,
   } = params;
@@ -152,7 +154,9 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
       endDate, 
       maxEntryFee, 
       features, 
-      categories, 
+      categories,
+      keyword,
+      dealerCardTypes,
       pageSize 
     }],
     // Start pagination at page 1
@@ -169,6 +173,8 @@ export const useInfiniteShows = (params: InfiniteShowsParams): InfiniteShowsResu
         maxEntryFee,
         features,
         categories,
+        keyword,
+        dealerCardTypes,
         pageSize,
         page,
       };

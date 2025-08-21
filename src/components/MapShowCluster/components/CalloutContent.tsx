@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   // Removed unused imports 'Linking' and 'Platform as _Platform'
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SocialLinksRow from '../../ui/SocialLinksRow';
 

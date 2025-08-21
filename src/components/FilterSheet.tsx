@@ -49,6 +49,8 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   const [startDateText, setStartDateText] = useState('');
   const [endDateText, setEndDateText] = useState('');
   const [maxEntryFeeText, setMaxEntryFeeText] = useState('');
+  // Keyword search text (free-flowing)
+  const [keywordText, setKeywordText] = useState('');
 
   // DateTimePicker state
   const [showStartPicker, setShowStartPicker] = useState(false);
@@ -85,6 +87,13 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
       setMaxEntryFeeText(filters.maxEntryFee.toString());
     } else {
       setMaxEntryFeeText('');
+    }
+
+    // Initialise keyword text input
+    if (filters.keyword) {
+      setKeywordText(filters.keyword);
+    } else {
+      setKeywordText('');
     }
   }, [filters, visible]);
 
@@ -198,6 +207,37 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
     });
   };
 
+  // Dealer Card Types helpers ------------------------------------
+  const DEALER_CARD_TYPES = [
+    'Vintage',
+    'Modern',
+    'Sealed Wax',
+    'Singles',
+    'Slabs',
+    'Raw',
+    'Pokemon',
+    'Magic',
+    'Yu-Gi-Oh',
+    'Baseball',
+    'Basketball',
+    'Football',
+    'Soccer',
+    'Memorabilia',
+  ] as const;
+
+  const isDealerCardTypeSelected = (type: string) =>
+    localFilters.dealerCardTypes?.includes(type) || false;
+
+  const handleDealerCardTypeToggle = (type: string) => {
+    setLocalFilters(prev => {
+      const selected = prev.dealerCardTypes || [];
+      if (selected.includes(type)) {
+        return { ...prev, dealerCardTypes: selected.filter(t => t !== type) };
+      }
+      return { ...prev, dealerCardTypes: [...selected, type] };
+    });
+  };
+
   // Apply filters and close the sheet
   const handleApplyFilters = () => {
     onApplyFilters(localFilters);
@@ -212,6 +252,8 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
       maxEntryFee: undefined,
       features: [],
       categories: [],
+      keyword: undefined,
+      dealerCardTypes: [],
     };
     
     setLocalFilters(defaultFilters);
@@ -221,6 +263,7 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
     setStartDateText(formatLocal(new Date(defaultFilters.startDate!)));
     setEndDateText(formatLocal(new Date(defaultFilters.endDate!)));
     setMaxEntryFeeText('');
+    setKeywordText('');
   };
 
   // Check if a feature is selected
@@ -330,6 +373,26 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
 
             {/* Date Range Section */}
             <View style={styles.section}>
+              {/* --- Search Section (after Distance) -------------------- */}
+              <Text style={styles.sectionTitle}>Search</Text>
+              <Text style={styles.sectionSubtitle}>
+                Search shows and dealer booths:
+              </Text>
+              <TextInput
+                style={styles.textInput}
+                value={keywordText}
+                onChangeText={(text) => {
+                  setKeywordText(text);
+                  setLocalFilters(prev => ({ ...prev, keyword: text.trim() || undefined }));
+                }}
+                placeholder="e.g., Pokemon, Sealed Wax"
+                autoCorrect={false}
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Date Range Section */}
+            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Date Range</Text>
               <Text style={styles.sectionSubtitle}>Show card shows between:</Text>
               
@@ -421,6 +484,29 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
                     onValueChange={() => handleCategoryToggle(category)}
                     trackColor={{ false: '#d1d1d1', true: '#b3d9ff' }}
                     thumbColor={isCategorySelected(category) ? '#007AFF' : '#f4f3f4'}
+                    ios_backgroundColor="#d1d1d1"
+                  />
+                </View>
+              ))}
+            </View>
+
+            {/* Dealer Card Types Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Dealer Card Types</Text>
+              <Text style={styles.sectionSubtitle}>
+                Filter by what dealers are selling:
+              </Text>
+
+              {DEALER_CARD_TYPES.map((type) => (
+                <View key={type} style={styles.toggleOption}>
+                  <Text style={styles.toggleOptionText}>{type}</Text>
+                  <Switch
+                    value={isDealerCardTypeSelected(type)}
+                    onValueChange={() => handleDealerCardTypeToggle(type)}
+                    trackColor={{ false: '#d1d1d1', true: '#b3d9ff' }}
+                    thumbColor={
+                      isDealerCardTypeSelected(type) ? '#007AFF' : '#f4f3f4'
+                    }
                     ios_backgroundColor="#d1d1d1"
                   />
                 </View>
