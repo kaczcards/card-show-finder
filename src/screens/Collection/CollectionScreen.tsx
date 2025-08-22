@@ -386,9 +386,8 @@ const CollectionScreen: React.FC = () => {
     if (!userId) return;
     setLoadingWantList(true);
     setWantListError(null);
-    
+
     try {
-      // Fetch the user's single (regular) want-list row, if any
       const { data, error } = await supabase
         .from('want_lists')
         .select('*')
@@ -402,7 +401,6 @@ const CollectionScreen: React.FC = () => {
       }
 
       if (data) {
-        // Transform to the shape expected by <WantListEditor>
         setWantList({
           id: data.id,
           userId: data.userid,
@@ -413,41 +411,40 @@ const CollectionScreen: React.FC = () => {
       } else {
         setWantList(null);
       }
-    } catch (err) {
-      console.error('Unexpected error loading want list:', err);
-      setWantListError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoadingWantList(false);
     }
   };
 
+  // ---------------- Upcoming Shows ----------------
   const loadUpcomingShows = async () => {
     if (!userId) return;
     setLoadingShows(true);
     setShowsError(null);
-    
+
     try {
-      // Get shows the user is planning to attend
       const { data, error } = await getUpcomingShows({
         userId,
-        // Filter for upcoming shows only
         startDate: new Date().toISOString(),
-        // Optional: limit to next 30 days or similar
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
 
       if (error) {
         console.error('Error fetching upcoming shows:', error);
-        setShowsError(typeof error === 'string' ? error : 'Failed to load upcoming shows');
+        setShowsError(
+          typeof error === 'string' ? error : 'Failed to load upcoming shows'
+        );
         setUpcomingShows([]);
       } else if (data) {
-        setUpcomingShows(data as any[]); // Cast to any[]
+        setUpcomingShows(data as any[]);
       } else {
         setUpcomingShows([]);
       }
-    } catch (error) {
-      console.error('Error in loadUpcomingShows:', error);
-      setShowsError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } catch (err) {
+      console.error('Error in loadUpcomingShows:', err);
+      setShowsError(
+        err instanceof Error ? err.message : 'An unexpected error occurred'
+      );
       setUpcomingShows([]);
     } finally {
       setLoadingShows(false);
@@ -470,31 +467,6 @@ const CollectionScreen: React.FC = () => {
   );
 
   // ---------------- Render helpers ----------------
-  // Render error message for want list
-  const renderWantListError = () => (
-    <View style={styles.errorContainer}>
-      <Text style={styles.errorText}>{wantListError}</Text>
-      <TouchableOpacity 
-        style={styles.retryButton}
-        onPress={loadWantList}
-      >
-        <Text style={styles.retryButtonText}>Retry</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  // Render error message for shows
-  const renderShowsError = () => (
-    <View style={styles.errorContainer}>
-      <Text style={styles.errorText}>{showsError}</Text>
-      <TouchableOpacity 
-        style={styles.retryButton}
-        onPress={loadUpcomingShows}
-      >
-        <Text style={styles.retryButtonText}>Retry</Text>
-      </TouchableOpacity>
-    </View>
-  );
   
   // Render header for FlatList (all content before AttendeeWantLists)
   // -------------------- render --------------------
@@ -566,9 +538,6 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     padding: 16,
-  },
-  flatListContent: {
-    flexGrow: 1,
   },
   /* ----- Shared / editor styles (mirrors WantListEditor) ----- */
   editorContainer: {
