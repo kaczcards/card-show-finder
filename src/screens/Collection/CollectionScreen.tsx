@@ -107,6 +107,129 @@ const DealerInventoryEditor = React.memo(
   }
 );
 
+/**
+ * CollectionHeader
+ * ----------------
+ * Top-level memoized header component that renders the dealer inventory editor,
+ * want-list editor, teaser, and any error/setup states. Extracted out of the
+ * CollectionScreen render tree so its identity is stable across renders and
+ * will not cause the TextInput to remount.
+ */
+interface CollectionHeaderProps {
+  userRole: UserRole | undefined;
+  isPrivileged: boolean;
+  wantList: any | null;
+  userId: string;
+  upcomingShows: any[];
+  loadingWantList: boolean;
+  loadingShows: boolean;
+  wantListError: string | null;
+  showsError: string | null;
+  inventoryValue: string;
+  onInventoryChange: (text: string) => void;
+  loadingInventory: boolean;
+  savingInventory: boolean;
+  inventoryError: string | null;
+  onRetryInventory: () => void;
+  onSaveInventory: () => void;
+  onNavigateToSubscription: () => void;
+  hasDatabaseIssues: () => boolean;
+}
+
+const CollectionHeader: React.FC<CollectionHeaderProps> = React.memo(
+  ({
+    userRole,
+    isPrivileged,
+    wantList,
+    userId,
+    upcomingShows,
+    loadingWantList,
+    loadingShows,
+    wantListError,
+    showsError,
+    inventoryValue,
+    onInventoryChange,
+    loadingInventory,
+    savingInventory,
+    inventoryError,
+    onRetryInventory,
+    onSaveInventory,
+    onNavigateToSubscription,
+    hasDatabaseIssues,
+  }) => {
+    return (
+      <View style={styles.headerContent}>
+        {/* Dealer / Organizer Inventory Editor */}
+        {(userRole === UserRole.DEALER ||
+          userRole === UserRole.MVP_DEALER ||
+          userRole === UserRole.SHOW_ORGANIZER) && (
+          <DealerInventoryEditor
+            value={inventoryValue}
+            onChange={onInventoryChange}
+            loading={loadingInventory}
+            saving={savingInventory}
+            error={inventoryError}
+            onRetry={onRetryInventory}
+            onSave={onSaveInventory}
+          />
+        )}
+
+        {/* Upgrade Tease for regular dealers */}
+        {userRole === UserRole.DEALER && (
+          <View style={styles.teaseContainer}>
+            <Text style={styles.teaseText}>
+              Upgrade to an MVP Dealer account to have what you're selling
+              available to all attendees.{' '}
+              <Text
+                style={styles.teaseLink}
+                onPress={onNavigateToSubscription}
+              >
+                Tap to upgrade now
+              </Text>
+            </Text>
+          </View>
+        )}
+
+        {/* Want List Error */}
+        {wantListError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{wantListError}</Text>
+          </View>
+        )}
+
+        {/* Shows Error */}
+        {showsError && !isPrivileged && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{showsError}</Text>
+          </View>
+        )}
+
+        {/* Want List Editor */}
+        <WantListEditor
+          wantList={wantList}
+          userId={userId}
+          upcomingShows={isPrivileged ? [] : upcomingShows}
+          onSave={() => {}}
+          isLoading={loadingWantList || loadingShows}
+        />
+
+        {/* Setup message if DB issues for privileged */}
+        {isPrivileged && hasDatabaseIssues() && (
+          <View style={styles.setupContainer}>
+            <Text style={styles.setupTitle}>Attendee Want Lists</Text>
+            <Text style={styles.setupText}>
+              This feature is currently being set up. Please check back later.
+            </Text>
+            <Text style={styles.setupSubtext}>
+              Our team is working to resolve database issues.
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  }
+);
+
 const CollectionScreen: React.FC = () => {
   // ===== Navigation =====
   const navigation = useNavigation();
@@ -153,6 +276,12 @@ const CollectionScreen: React.FC = () => {
     // Check if any of the database-related functions encountered errors
     return !!(wantListError || showsError || inventoryError);
   };
+
+  // Stable callback for inventory change
+  const handleInventoryChange = useCallback((text: string) => {
+    setInventoryInput(text);
+    inventoryDirtyRef.current = true;
+  }, []);
 
   // ---------------- Dealer Inventory helpers ----------------
   const loadDealerInventory = async () => {
@@ -368,73 +497,7 @@ const CollectionScreen: React.FC = () => {
   );
   
   // Render header for FlatList (all content before AttendeeWantLists)
-  // ---------------- Header JSX (formerly renderHeader) ----------------
-  const HeaderContent = () => (
-    <View style={styles.headerContent}>
-      {/* Dealer / Organizer specific UI */}
-      {(user?.role === UserRole.DEALER ||
-        user?.role === UserRole.MVP_DEALER ||
-        user?.role === UserRole.SHOW_ORGANIZER) &&
-        (
-          <DealerInventoryEditor
-            value={inventoryInput}
-            onChange={(text) => {
-              setInventoryInput(text);
-              inventoryDirtyRef.current = true;
-            }}
-            loading={loadingInventory}
-            saving={savingInventory}
-            error={inventoryError}
-            onRetry={loadDealerInventory}
-            onSave={saveDealerInventory}
-          />
-        )}
-
-      {/* Upgrade Tease for regular dealers */}
-      {user?.role === UserRole.DEALER && (
-        <View style={styles.teaseContainer}>
-          <Text style={styles.teaseText}>
-            Upgrade to an MVP Dealer account to have what you're selling
-            available to all attendees.{' '}
-            <Text
-              style={styles.teaseLink}
-              onPress={handleNavigateToSubscription}
-            >
-              Tap to upgrade now
-            </Text>
-          </Text>
-        </View>
-      )}
-
-      {/* Want List Error */}
-      {wantListError && renderWantListError()}
-
-      {/* Shows Error */}
-      {showsError && !isPrivileged && renderShowsError()}
-
-      {/* Want List Editor */}
-      <WantListEditor
-        wantList={wantList}
-        userId={userId}
-        upcomingShows={isPrivileged ? [] : upcomingShows}
-        onSave={(list) => setWantList(list)}
-        isLoading={loadingWantList || loadingShows}
-      />
-
-      {/* Setup message if DB issues for privileged */}
-      {isPrivileged && hasDatabaseIssues() && (
-        <View style={styles.setupContainer}>
-          <Text style={styles.setupTitle}>Attendee Want Lists</Text>
-          <Text style={styles.setupText}>
-            This feature is currently being set up. Please check back later.
-          </Text>
-          <Text style={styles.setupSubtext}>
-            Our team is working to resolve database issues.
-          </Text>
-        </View>
-      )}
-    </View>
-  );
+  // -------------------- render --------------------
 
   return (
     <SafeAreaView style={styles.container}>
@@ -446,7 +509,26 @@ const CollectionScreen: React.FC = () => {
       {/* Content */}
       <View style={styles.content}>
         <View style={{ flex: 1 }}>
-          <HeaderContent />
+          <CollectionHeader
+            userRole={user?.role}
+            isPrivileged={isPrivileged}
+            wantList={wantList}
+            userId={userId}
+            upcomingShows={upcomingShows}
+            loadingWantList={loadingWantList}
+            loadingShows={loadingShows}
+            wantListError={wantListError}
+            showsError={showsError}
+            inventoryValue={inventoryInput}
+            onInventoryChange={handleInventoryChange}
+            loadingInventory={loadingInventory}
+            savingInventory={savingInventory}
+            inventoryError={inventoryError}
+            onRetryInventory={loadDealerInventory}
+            onSaveInventory={saveDealerInventory}
+            onNavigateToSubscription={handleNavigateToSubscription}
+            hasDatabaseIssues={hasDatabaseIssues}
+          />
 
           {isPrivileged && !hasDatabaseIssues() && (
             <View style={{ flex: 1 }}>
