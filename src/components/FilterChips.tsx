@@ -42,7 +42,8 @@ const FilterChips: React.FC<FilterChipsProps> = ({
 
   // Generate chips based on active filters
   const generateFilterChips = () => {
-    const chips = [];
+    // Explicitly type chip objects so optional `value` is recognised
+    const chips: { key: string; label: string; value?: string }[] = [];
 
     // Radius chip
     if (filters.radius && filters.radius !== defaultFilters.radius) {
