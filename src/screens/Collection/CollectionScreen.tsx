@@ -8,7 +8,6 @@ import {
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
-  FlatList,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
@@ -58,9 +57,6 @@ const CollectionScreen: React.FC = () => {
   const isPrivileged =
     user?.role === UserRole.MVP_DEALER ||
     user?.role === UserRole.SHOW_ORGANIZER;
-
-  // ===== FlatList data (only needed for privileged users) =====
-  const flatListData = isPrivileged ? [{ id: 'attendee-want-lists' }] : [];
 
   // ===== Navigation Handlers =====
   const handleNavigateToSubscription = () => {
@@ -269,6 +265,8 @@ const CollectionScreen: React.FC = () => {
             value={inventoryContent}
             onChangeText={setInventoryContent}
             editable={!savingInventory}
+            blurOnSubmit={false}
+            autoCorrect={false}
             textAlignVertical="top"
             placeholderTextColor="#999"
           />
@@ -380,23 +378,19 @@ const CollectionScreen: React.FC = () => {
 
       {/* Content */}
       <View style={styles.content}>
-        <FlatList
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.flatListContent}
-          data={flatListData}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) =>
-            isPrivileged && !hasDatabaseIssues() ? (
+        <View style={{ flex: 1 }}>
+          <HeaderContent />
+
+          {isPrivileged && !hasDatabaseIssues() && (
+            <View style={{ flex: 1 }}>
               <AttendeeWantLists
                 userId={userId}
                 userRole={user?.role}
                 shows={upcomingShows}
               />
-            ) : null
-          }
-          ListHeaderComponent={<HeaderContent />}
-          removeClippedSubviews={false}
-        />
+            </View>
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );
