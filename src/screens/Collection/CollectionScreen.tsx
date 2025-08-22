@@ -8,7 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
@@ -54,11 +54,10 @@ const CollectionScreen: React.FC = () => {
   const [loadingShows, setLoadingShows] = useState<boolean>(true);
   const [showsError, setShowsError] = useState<string | null>(null);
   
-  // ===== FlatList Data =====
-  // Single item array for the FlatList - we only need one AttendeeWantLists component
-  const flatListData = user?.role === UserRole.MVP_DEALER || user?.role === UserRole.SHOW_ORGANIZER 
-    ? [{ id: 'attendee-want-lists' }] 
-    : [];
+  // ===== Role helpers =====
+  const isPrivileged =
+    user?.role === UserRole.MVP_DEALER ||
+    user?.role === UserRole.SHOW_ORGANIZER;
 
   // ===== Navigation Handlers =====
   const handleNavigateToSubscription = () => {
@@ -314,101 +313,59 @@ const CollectionScreen: React.FC = () => {
   );
   
   // Render header for FlatList (all content before AttendeeWantLists)
-  const renderHeader = useCallback(() => {
-    const isPrivileged =
-      user?.role === UserRole.MVP_DEALER ||
-      user?.role === UserRole.SHOW_ORGANIZER;
-      
-    return (
-      <View style={styles.headerContent}>
-        {/* Dealer / Organizer specific UI */}
-        {(user?.role === UserRole.DEALER ||
-          user?.role === UserRole.MVP_DEALER ||
-          user?.role === UserRole.SHOW_ORGANIZER) &&
-          renderDealerInventorySection()}
+  // ---------------- Header JSX (formerly renderHeader) ----------------
+  const HeaderContent = () => (
+    <View style={styles.headerContent}>
+      {/* Dealer / Organizer specific UI */}
+      {(user?.role === UserRole.DEALER ||
+        user?.role === UserRole.MVP_DEALER ||
+        user?.role === UserRole.SHOW_ORGANIZER) &&
+        renderDealerInventorySection()}
 
-        {/* Upgrade Tease for regular dealers */}
-        {user?.role === UserRole.DEALER && (
-          <View style={styles.teaseContainer}>
-            <Text style={styles.teaseText}>
-              Upgrade to an MVP Dealer account to have what you're selling
-              available to all attendees.{' '}
-              <Text 
-                style={styles.teaseLink}
-                onPress={handleNavigateToSubscription}
-              >
-                Tap to upgrade now
-              </Text>
+      {/* Upgrade Tease for regular dealers */}
+      {user?.role === UserRole.DEALER && (
+        <View style={styles.teaseContainer}>
+          <Text style={styles.teaseText}>
+            Upgrade to an MVP Dealer account to have what you're selling
+            available to all attendees.{' '}
+            <Text
+              style={styles.teaseLink}
+              onPress={handleNavigateToSubscription}
+            >
+              Tap to upgrade now
             </Text>
-          </View>
-        )}
+          </Text>
+        </View>
+      )}
 
-        {/* Want List Error */}
-        {wantListError && renderWantListError()}
+      {/* Want List Error */}
+      {wantListError && renderWantListError()}
 
-        {/* Shows Error */}
-        {showsError && !isPrivileged && renderShowsError()}
+      {/* Shows Error */}
+      {showsError && !isPrivileged && renderShowsError()}
 
-        {/* Want List Editor (sharing disabled for privileged roles) */}
-        <WantListEditor
-          wantList={wantList}
-          userId={userId}
-          upcomingShows={isPrivileged ? [] : upcomingShows}
-          onSave={(list) => setWantList(list)}
-          isLoading={loadingWantList || loadingShows}
-        />
-        
-        {/* Show feature setup message if database issues exist for privileged users */}
-        {isPrivileged && hasDatabaseIssues() && (
-          <View style={styles.setupContainer}>
-            <Text style={styles.setupTitle}>Attendee Want Lists</Text>
-            <Text style={styles.setupText}>
-              This feature is currently being set up. Please check back later.
-            </Text>
-            <Text style={styles.setupSubtext}>
-              Our team is working to resolve database issues.
-            </Text>
-          </View>
-        )}
-      </View>
-    );
-  }, [
-    user?.role, 
-    wantList, 
-    userId, 
-    upcomingShows, 
-    loadingWantList, 
-    loadingShows, 
-    wantListError, 
-    showsError,
-    inventoryContent,
-    inventoryError,
-    loadingInventory,
-    savingInventory
-  ]);
-  
-  // Render item for FlatList (AttendeeWantLists)
-  const renderItem = useCallback(
-    ({ item: _item }: { item: { id: string } }) => {
-    const isPrivileged =
-      user?.role === UserRole.MVP_DEALER ||
-      user?.role === UserRole.SHOW_ORGANIZER;
-      
-    // Only render AttendeeWantLists if user is privileged and there are no database issues
-    if (isPrivileged && !hasDatabaseIssues()) {
-      return (
-        <AttendeeWantLists
-          userId={userId}
-          userRole={user?.role}
-          shows={upcomingShows}
-        />
-      );
-    }
-    
-    // Return empty view if not privileged or there are database issues
-    return null;
-  },
-    [user?.role, userId, upcomingShows, hasDatabaseIssues]
+      {/* Want List Editor */}
+      <WantListEditor
+        wantList={wantList}
+        userId={userId}
+        upcomingShows={isPrivileged ? [] : upcomingShows}
+        onSave={(list) => setWantList(list)}
+        isLoading={loadingWantList || loadingShows}
+      />
+
+      {/* Setup message if DB issues for privileged */}
+      {isPrivileged && hasDatabaseIssues() && (
+        <View style={styles.setupContainer}>
+          <Text style={styles.setupTitle}>Attendee Want Lists</Text>
+          <Text style={styles.setupText}>
+            This feature is currently being set up. Please check back later.
+          </Text>
+          <Text style={styles.setupSubtext}>
+            Our team is working to resolve database issues.
+          </Text>
+        </View>
+      )}
+    </View>
   );
 
   return (
@@ -420,14 +377,21 @@ const CollectionScreen: React.FC = () => {
 
       {/* Content */}
       <View style={styles.content}>
-        <FlatList
-          data={flatListData}
-          renderItem={renderItem}
-          keyExtractor={(_item) => _item.id}
-          ListHeaderComponent={renderHeader}
-          contentContainerStyle={styles.flatListContent}
+        <ScrollView
           keyboardShouldPersistTaps="handled"
-        />
+          contentContainerStyle={styles.flatListContent}
+        >
+          <HeaderContent />
+
+          {/* Attendee want lists for privileged users with healthy DB */}
+          {isPrivileged && !hasDatabaseIssues() && (
+            <AttendeeWantLists
+              userId={userId}
+              userRole={user?.role}
+              shows={upcomingShows}
+            />
+          )}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
