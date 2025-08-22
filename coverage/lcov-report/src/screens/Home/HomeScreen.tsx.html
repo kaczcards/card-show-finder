@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/206</span>
+                <span class='fraction'>0/215</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/156</span>
+                <span class='fraction'>0/166</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/47</span>
+                <span class='fraction'>0/48</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/191</span>
+                <span class='fraction'>0/197</span>
             </div>
         
             
@@ -1004,7 +1004,15 @@
 <a name='L939'></a><a href='#L939'>939</a>
 <a name='L940'></a><a href='#L940'>940</a>
 <a name='L941'></a><a href='#L941'>941</a>
-<a name='L942'></a><a href='#L942'>942</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L942'></a><a href='#L942'>942</a>
+<a name='L943'></a><a href='#L943'>943</a>
+<a name='L944'></a><a href='#L944'>944</a>
+<a name='L945'></a><a href='#L945'>945</a>
+<a name='L946'></a><a href='#L946'>946</a>
+<a name='L947'></a><a href='#L947'>947</a>
+<a name='L948'></a><a href='#L948'>948</a>
+<a name='L949'></a><a href='#L949'>949</a>
+<a name='L950'></a><a href='#L950'>950</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1408,9 +1416,15 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1443,6 +1457,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1959,7 +1975,7 @@ import FilterSheet from '../../components/FilterSheet';
 import FilterChips from '../../components/FilterChips';
 import FilterPresetModal from '../../components/FilterPresetModal';
 import { ShowFilters, Coordinates } from '../../types';
-import { useInfiniteShows } from '../../hooks';
+import { useUnifiedInfiniteShows } from '../../hooks';
 import { supabase } from '../../supabase';
 &nbsp;
 // Constants
@@ -2173,7 +2189,7 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
     isFetchingNextPage,
     isRefreshing,
     error
-  } = <span class="cstat-no" title="statement not covered" >useInfiniteShows({</span>
+  } = <span class="cstat-no" title="statement not covered" >useUnifiedInfiniteShows({</span>
     // Use Carmel, IN as a sensible fallback so users see real shows
     coordinates: coordinates || { latitude: 39.9784, longitude: -86.118 },
     ...filters,
@@ -2347,6 +2363,12 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
         case 'feature':
 <span class="cstat-no" title="statement not covered" >          updated.features = (updated.features || []).filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >f !== value)</span>;</span>
 <span class="cstat-no" title="statement not covered" >          break;</span>
+        case 'keyword':
+<span class="cstat-no" title="statement not covered" >          delete updated.keyword;</span>
+<span class="cstat-no" title="statement not covered" >          break;</span>
+        case 'dealerCardType':
+<span class="cstat-no" title="statement not covered" >          updated.dealerCardTypes = (updated.dealerCardTypes || []).filter(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >t !== value)</span>;</span>
+<span class="cstat-no" title="statement not covered" >          break;</span>
         default:
 <span class="cstat-no" title="statement not covered" >          break;</span>
       }
@@ -2388,6 +2410,8 @@ const HomeScreen = <span class="cstat-no" title="statement not covered" ><span c
 <span class="cstat-no" title="statement not covered" >    if (filters.maxEntryFee !== undefined) <span class="cstat-no" title="statement not covered" >count++;</span></span>
 <span class="cstat-no" title="statement not covered" >    if (filters.categories &amp;&amp; filters.categories.length) <span class="cstat-no" title="statement not covered" >count += filters.categories.length;</span></span>
 <span class="cstat-no" title="statement not covered" >    if (filters.features &amp;&amp; filters.features.length) <span class="cstat-no" title="statement not covered" >count += filters.features.length;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (filters.keyword) <span class="cstat-no" title="statement not covered" >count++;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (filters.dealerCardTypes &amp;&amp; filters.dealerCardTypes.length) <span class="cstat-no" title="statement not covered" >count += filters.dealerCardTypes.length;</span></span>
 <span class="cstat-no" title="statement not covered" >    return count;</span>
   };
 &nbsp;
@@ -2893,7 +2917,7 @@ export default HomeScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-20T22:28:52.019Z
+                at 2025-08-22T01:06:08.413Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -99,6 +99,25 @@ const FilterChips: React.FC<FilterChipsProps> = ({
       });
     }
 
+    // Keyword chip
+    if (filters.keyword && filters.keyword.trim().length > 0) {
+      chips.push({
+        key: 'keyword',
+        label: `"${filters.keyword.trim()}"`,
+      });
+    }
+
+    // Dealer Card Types chips
+    if (filters.dealerCardTypes && filters.dealerCardTypes.length > 0) {
+      filters.dealerCardTypes.forEach(type => {
+        chips.push({
+          key: 'dealerCardType',
+          value: type,
+          label: type,
+        });
+      });
+    }
+
     return chips;
   };
 
@@ -120,7 +139,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
           <TouchableOpacity
             key={`${chip.key}-${index}`}
             style={styles.chip}
-            onPress={() => onRemoveFilter(chip.key)}
+            onPress={() => onRemoveFilter(chip.key, chip.value)}
             activeOpacity={0.7}
           >
             <Text style={styles.chipText}>{chip.label}</Text>

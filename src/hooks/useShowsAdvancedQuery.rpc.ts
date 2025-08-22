@@ -39,6 +39,8 @@ export interface ShowsAdvancedQueryParams {
   features?: Record<string, boolean>;
   /** Text search across title, description, location */
   keyword?: string;
+  /** Dealer card-type filter (e.g. Vintage, Sealed Wax) */
+  dealerCardTypes?: string[];
   /** Number of results per page (default: 20) */
   pageSize?: number;
   /** Page number, 1-based (default: 1) */
@@ -128,6 +130,7 @@ export const useShowsAdvancedQuery = (
     categories: params.categories,
     features: params.features,
     keyword: params.keyword,
+    dealer_card_types: params.dealerCardTypes,
     page_size: params.pageSize || 20,
     page: params.page || 1,
     status: params.status
@@ -274,6 +277,7 @@ export const useShowsInfiniteQuery = (
     categories: params.categories,
     features: params.features,
     keyword: params.keyword,
+    dealer_card_types: params.dealerCardTypes,
     page_size: params.pageSize || 20,
     status: params.status
   };

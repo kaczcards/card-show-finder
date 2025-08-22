@@ -232,6 +232,19 @@ export interface ShowFilters {
    * If true, the cache will be bypassed and a fresh API request will be made
    */
   bypassCache?: boolean;
+  /**
+   * Free-text keyword applied on “Apply Filters”.
+   * Matches across show title/description/location as well as
+   * dealer booth fields (specialty & notable items).
+   */
+  keyword?: string;
+  /**
+   * Selected dealer card types to narrow results to booths carrying
+   * at least one of the chosen types. Applied together with all other
+   * constraints (radius, date range, etc.) when the user taps
+   * “Apply Filters”.
+   */
+  dealerCardTypes?: string[];
 }
 
 // Collection-related types
