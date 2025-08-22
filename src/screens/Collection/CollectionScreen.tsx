@@ -26,6 +26,87 @@ import { supabase } from '../../supabase';
 import WantListEditor from '../../components/WantListEditor';
 import AttendeeWantLists from '../../components/AttendeeWantLists';
 
+/**
+ * DealerInventoryEditor
+ * ---------------------
+ * Memoized component that renders the dealer / organizer "What I Sell" editor.
+ * Extracted from the previous inline renderDealerInventorySection function to
+ * keep a stable component identity and avoid unnecessary re-renders that could
+ * steal TextInput focus.
+ */
+const DealerInventoryEditor = React.memo(
+  ({
+    value,
+    onChange,
+    loading,
+    saving,
+    error,
+    onRetry,
+    onSave,
+  }: {
+    value: string;
+    onChange: (text: string) => void;
+    loading: boolean;
+    saving: boolean;
+    error: string | null;
+    onRetry: () => void;
+    onSave: () => void;
+  }) => {
+    return (
+      <View style={styles.editorContainer}>
+        <Text style={styles.sectionTitle}>What I Sell</Text>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Loading your inventory...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <TextInput
+              key="dealer-inventory-input"
+              style={styles.textInput}
+              multiline
+              placeholder="List the products you typically carry…"
+              value={value}
+              onChangeText={onChange}
+              editable={!saving}
+              blurOnSubmit={false}
+              autoCorrect={false}
+              autoCapitalize="none"
+              underlineColorAndroid="transparent"
+              textAlignVertical="top"
+              placeholderTextColor="#999"
+            />
+            <View style={{ height: 8 }} />
+            <TouchableOpacity
+              style={[
+                styles.saveButtonWrapper,
+                saving && styles.saveButtonDisabled,
+              ]}
+              onPress={onSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    );
+  }
+);
+
 const CollectionScreen: React.FC = () => {
   // ===== Navigation =====
   const navigation = useNavigation();
@@ -237,56 +318,6 @@ const CollectionScreen: React.FC = () => {
   );
 
   // ---------------- Render helpers ----------------
-  const renderDealerInventorySection = () => (
-    <View style={styles.editorContainer}>
-      <Text style={styles.sectionTitle}>What I Sell</Text>
-      
-      {loadingInventory ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading your inventory...</Text>
-        </View>
-      ) : inventoryError ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{inventoryError}</Text>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={loadDealerInventory}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <>
-          <TextInput
-            style={styles.textInput}
-            multiline
-            placeholder={'List the products you typically carry…'}
-            value={inventoryContent}
-            onChangeText={setInventoryContent}
-            editable={!savingInventory}
-            blurOnSubmit={false}
-            autoCorrect={false}
-            textAlignVertical="top"
-            placeholderTextColor="#999"
-          />
-          <View style={{ height: 8 }} />
-          <TouchableOpacity
-            style={[styles.saveButtonWrapper, savingInventory && styles.saveButtonDisabled]}
-            onPress={saveDealerInventory}
-            disabled={savingInventory}
-          >
-            {savingInventory ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.saveButtonText}>Save</Text>
-            )}
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
-  );
-
   // Render error message for want list
   const renderWantListError = () => (
     <View style={styles.errorContainer}>
@@ -321,7 +352,17 @@ const CollectionScreen: React.FC = () => {
       {(user?.role === UserRole.DEALER ||
         user?.role === UserRole.MVP_DEALER ||
         user?.role === UserRole.SHOW_ORGANIZER) &&
-        renderDealerInventorySection()}
+        (
+          <DealerInventoryEditor
+            value={inventoryContent}
+            onChange={setInventoryContent}
+            loading={loadingInventory}
+            saving={savingInventory}
+            error={inventoryError}
+            onRetry={loadDealerInventory}
+            onSave={saveDealerInventory}
+          />
+        )}
 
       {/* Upgrade Tease for regular dealers */}
       {user?.role === UserRole.DEALER && (
