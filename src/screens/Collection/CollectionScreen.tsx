@@ -157,31 +157,27 @@ const CollectionScreen: React.FC = () => {
     setWantListError(null);
     
     try {
-      // Get want lists but filter out inventory items
+      // Fetch the user's single (regular) want-list row, if any
       const { data, error } = await supabase
         .from('want_lists')
         .select('*')
-        .eq('userid', userId);
-        
+        .eq('userid', userId)
+        .maybeSingle();
+
       if (error) {
         console.error('Error loading want list:', error);
         setWantListError(error.message || 'Failed to load your want list');
         return;
       }
-      
-      // Find the first want list that doesn't have the inventory prefix
-      const regularWantList = data?.find(_item => 
-        !_item.content || !_item.content.startsWith(INVENTORY_PREFIX)
-      );
-      
-      if (regularWantList) {
-        // Transform to match the expected format from getUserWantList
+
+      if (data) {
+        // Transform to the shape expected by <WantListEditor>
         setWantList({
-          id: regularWantList.id,
-          userId: regularWantList.userid,
-          content: regularWantList.content || '',
-          createdAt: regularWantList.createdat,
-          updatedAt: regularWantList.updatedat
+          id: data.id,
+          userId: data.userid,
+          content: data.content || '',
+          createdAt: data.createdat,
+          updatedAt: data.updatedat,
         });
       } else {
         setWantList(null);
