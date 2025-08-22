@@ -728,6 +728,8 @@ const getDirectPaginatedShows = async (
       maxEntryFee = null,
       categories = null,
       features = null,
+      keyword = undefined,
+      dealerCardTypes = undefined,
       pageSize = 20,
       page = 1,
     } = params;
@@ -850,6 +852,106 @@ const getDirectPaginatedShows = async (
         show.features && 
         features.every(feature => show.features[feature] === true)
       );
+    }
+
+    /* ------------------------------------------------------------------
+     * Advanced Dealer / Keyword Filtering
+     * ------------------------------------------------------------------
+     * If the caller supplied a free-text keyword and/or dealerCardTypes,
+     * we need to look at show_participants (dealer booth info) in
+     * addition to the basic show fields we’ve already filtered on.
+     * ----------------------------------------------------------------*/
+    const cleanKeyword =
+      typeof keyword === 'string' && keyword.trim().length
+        ? keyword.trim().toLowerCase()
+        : undefined;
+    const hasDealerTypeFilter =
+      Array.isArray(dealerCardTypes) && dealerCardTypes.length > 0;
+
+    if (cleanKeyword || hasDealerTypeFilter) {
+      try {
+        // Build quick lookup of participants by show
+        const showIds = filteredData.map(s => s.id);
+
+        if (showIds.length > 0) {
+          const { data: partRows, error: partErr } = await supabase
+            .from('show_participants')
+            .select('showid, specialty, notable_items, card_types')
+            .in('showid', showIds);
+
+          if (partErr) {
+            console.warn(
+              '[showService] Participant lookup failed – skipping dealer filters',
+              partErr.message,
+            );
+          } else {
+            const partsMap: Record<
+              string,
+              Array<{
+                specialty?: string | null;
+                notable_items?: string | null;
+                card_types?: string[] | null;
+              }>
+            > = {};
+
+            (partRows || []).forEach(row => {
+              const arr = partsMap[row.showid] ?? [];
+              arr.push(row);
+              partsMap[row.showid] = arr;
+            });
+
+            // Normalise dealer card type strings once for comparison
+            const normDealerTypes = (dealerCardTypes || []).map(t =>
+              t.toString().toLowerCase(),
+            );
+
+            filteredData = filteredData.filter(show => {
+              const participants = partsMap[show.id] || [];
+
+              /* Dealer card-type filtering */
+              let passesDealerType = true;
+              if (hasDealerTypeFilter) {
+                passesDealerType = participants.some(p => {
+                  if (!Array.isArray(p.card_types)) return false;
+                  return p.card_types.some(ct =>
+                    normDealerTypes.includes(ct.toString().toLowerCase()),
+                  );
+                });
+              }
+
+              /* Keyword filtering */
+              let passesKeyword = true;
+              if (cleanKeyword) {
+                const inShowFields =
+                  (show.title?.toLowerCase().includes(cleanKeyword) ||
+                    show.description?.toLowerCase().includes(cleanKeyword) ||
+                    show.location?.toLowerCase().includes(cleanKeyword) ||
+                    show.address?.toLowerCase().includes(cleanKeyword)) ??
+                  false;
+
+                const inDealerFields = participants.some(p => {
+                  const spec =
+                    (p.specialty ?? '').toString().toLowerCase() || '';
+                  const note =
+                    (p.notable_items ?? '').toString().toLowerCase() || '';
+                  return (
+                    spec.includes(cleanKeyword) || note.includes(cleanKeyword)
+                  );
+                });
+
+                passesKeyword = inShowFields || inDealerFields;
+              }
+
+              return passesDealerType && passesKeyword;
+            });
+          }
+        }
+      } catch (advErr) {
+        console.warn(
+          '[showService] Advanced dealer/keyword filter failed – proceeding without it',
+          advErr,
+        );
+      }
     }
     
     // Build a map of coordinates by address from shows that have coordinates

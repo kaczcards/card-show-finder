@@ -25,6 +25,8 @@ export interface ShowSearchParams {
   categories?: string[];
   features?: Record<string, boolean>;
   keyword?: string;
+  /** Dealer card-type filter (e.g. Vintage, Sealed Wax) */
+  dealer_card_types?: string[];
   page_size?: number;
   page?: number;
   status?: ShowStatus;
@@ -161,6 +163,7 @@ export const searchShowsAdvanced = async (
       categories: params.categories,
       features: params.features ? JSON.stringify(params.features) : null,
       keyword: params.keyword,
+      dealer_card_types: params.dealer_card_types,
       page_size: params.page_size || 20,
       page: params.page || 1,
       status: params.status || 'ACTIVE'

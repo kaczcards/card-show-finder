@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/252</span>
+                <span class='fraction'>0/264</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/203</span>
+                <span class='fraction'>0/209</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/68</span>
+                <span class='fraction'>0/69</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/236</span>
+                <span class='fraction'>0/246</span>
             </div>
         
             
@@ -1566,7 +1566,31 @@
 <a name='L1501'></a><a href='#L1501'>1501</a>
 <a name='L1502'></a><a href='#L1502'>1502</a>
 <a name='L1503'></a><a href='#L1503'>1503</a>
-<a name='L1504'></a><a href='#L1504'>1504</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1504'></a><a href='#L1504'>1504</a>
+<a name='L1505'></a><a href='#L1505'>1505</a>
+<a name='L1506'></a><a href='#L1506'>1506</a>
+<a name='L1507'></a><a href='#L1507'>1507</a>
+<a name='L1508'></a><a href='#L1508'>1508</a>
+<a name='L1509'></a><a href='#L1509'>1509</a>
+<a name='L1510'></a><a href='#L1510'>1510</a>
+<a name='L1511'></a><a href='#L1511'>1511</a>
+<a name='L1512'></a><a href='#L1512'>1512</a>
+<a name='L1513'></a><a href='#L1513'>1513</a>
+<a name='L1514'></a><a href='#L1514'>1514</a>
+<a name='L1515'></a><a href='#L1515'>1515</a>
+<a name='L1516'></a><a href='#L1516'>1516</a>
+<a name='L1517'></a><a href='#L1517'>1517</a>
+<a name='L1518'></a><a href='#L1518'>1518</a>
+<a name='L1519'></a><a href='#L1519'>1519</a>
+<a name='L1520'></a><a href='#L1520'>1520</a>
+<a name='L1521'></a><a href='#L1521'>1521</a>
+<a name='L1522'></a><a href='#L1522'>1522</a>
+<a name='L1523'></a><a href='#L1523'>1523</a>
+<a name='L1524'></a><a href='#L1524'>1524</a>
+<a name='L1525'></a><a href='#L1525'>1525</a>
+<a name='L1526'></a><a href='#L1526'>1526</a>
+<a name='L1527'></a><a href='#L1527'>1527</a>
+<a name='L1528'></a><a href='#L1528'>1528</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2042,6 +2066,30 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -3547,9 +3595,33 @@ const ShowParticipationScreen: React.FC = <span class="cstat-no" title="statemen
   };
   
   // Format date range for display
+  /**
+   * Convert any DB date (Date object, full ISO string, or plain `YYYY-MM-DD`)
+   * into a **local** `Date` that represents that calendar day at midnight
+   * in the device’s timezone.  This avoids the common off-by-one issue where
+   * a date stored as midnight UTC is rendered as the previous day in US time
+   * zones.
+   */
+  const toLocalDateFromInput = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(i</span>nput: Date | string): Date =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (input instanceof Date) <span class="cstat-no" title="statement not covered" >return input;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (!input) <span class="cstat-no" title="statement not covered" >return new Date(NaN);</span></span>
+&nbsp;
+    // Fast-path for date-only strings
+    const m = <span class="cstat-no" title="statement not covered" >/^([0-9]{4})-([0-9]{2})-([0-9]{2})/.exec(input);</span>
+<span class="cstat-no" title="statement not covered" >    if (m) {</span>
+      const y = <span class="cstat-no" title="statement not covered" >Number(m[1]);</span>
+      const mo = <span class="cstat-no" title="statement not covered" >Number(m[2]);</span> // 1-based
+      const d = <span class="cstat-no" title="statement not covered" >Number(m[3]);</span>
+<span class="cstat-no" title="statement not covered" >      return new Date(y, mo - 1, d); </span>// Local midnight
+    }
+&nbsp;
+    // Fallback – let JS parse (includes time component)
+<span class="cstat-no" title="statement not covered" >    return new Date(input);</span>
+  };
+&nbsp;
   const formatDateRange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>tartDate: Date | string, endDate: Date | string) =&gt; {</span>
-    const start = <span class="cstat-no" title="statement not covered" >new Date(startDate);</span>
-    const end = <span class="cstat-no" title="statement not covered" >new Date(endDate);</span>
+    const start = <span class="cstat-no" title="statement not covered" >toLocalDateFromInput(startDate);</span>
+    const end = <span class="cstat-no" title="statement not covered" >toLocalDateFromInput(endDate);</span>
     
     const startMonth = <span class="cstat-no" title="statement not covered" >start.toLocaleString('default', { month: 'short' });</span>
     const endMonth = <span class="cstat-no" title="statement not covered" >end.toLocaleString('default', { month: 'short' });</span>
@@ -4579,7 +4651,7 @@ export default ShowParticipationScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-20T22:28:52.019Z
+                at 2025-08-22T01:06:08.413Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
