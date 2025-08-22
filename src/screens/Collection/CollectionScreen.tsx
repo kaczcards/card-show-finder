@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -77,7 +77,7 @@ const DealerInventoryEditor = React.memo(
               placeholder="List the products you typically carry…"
               value={value}
               onChangeText={onChange}
-              editable={!saving}
+              editable={!saving && !loading}
               blurOnSubmit={false}
               autoCorrect={false}
               autoCapitalize="none"
@@ -123,7 +123,10 @@ const CollectionScreen: React.FC = () => {
   const [wantListError, setWantListError] = useState<string | null>(null);
 
   // ===== Dealer Inventory State =====
-  const [inventoryContent, setInventoryContent] = useState<string>('');
+  const [inventoryContent, setInventoryContent] = useState<string>(''); // Server copy
+  const [inventoryInput, setInventoryInput] = useState<string>(''); // Local input buffer
+  const [inventoryLoaded, setInventoryLoaded] = useState<boolean>(false);
+  const inventoryDirtyRef = useRef<boolean>(false);
   const [loadingInventory, setLoadingInventory] = useState<boolean>(true);
   const [savingInventory, setSavingInventory] = useState<boolean>(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
@@ -172,12 +175,26 @@ const CollectionScreen: React.FC = () => {
         return;
       }
       
-      setInventoryContent((data?.dealer_specialties || []).join(', '));
+      // Compute fetched string from dealer_specialties array
+      const fetched = (data?.dealer_specialties || []).join(', ');
+      
+      // Always update server copy
+      setInventoryContent(fetched);
+      
+      // Only update input if user hasn't made changes
+      if (!inventoryDirtyRef.current) {
+        setInventoryInput(fetched);
+      }
+      
+      setInventoryLoaded(true);
       setInventoryId(null);
     } catch (err) {
       console.error('Error loading dealer inventory:', err);
       setInventoryError('An unexpected error occurred. Please try again.');
       setInventoryContent('');
+      if (!inventoryDirtyRef.current) {
+        setInventoryInput('');
+      }
     } finally {
       setLoadingInventory(false);
     }
@@ -190,8 +207,8 @@ const CollectionScreen: React.FC = () => {
     try {
       setSavingInventory(true);
       
-      // Parse content into specialties array
-      const specialtiesArray = inventoryContent
+      // Parse content into specialties array - use inventoryInput instead of inventoryContent
+      const specialtiesArray = inventoryInput
         .split(/[\n,]+/)
         .map(item => item.trim())
         .filter(Boolean);
@@ -219,6 +236,12 @@ const CollectionScreen: React.FC = () => {
         console.error('Error saving inventory:', error);
         throw error;
       }
+      
+      // Update both copies with normalized data
+      const savedJoined = (data?.dealer_specialties || []).join(', ');
+      setInventoryContent(savedJoined);
+      setInventoryInput(savedJoined);
+      inventoryDirtyRef.current = false;
       
       Alert.alert('Success', 'Your inventory has been saved.');
     } catch (err) {
@@ -354,8 +377,11 @@ const CollectionScreen: React.FC = () => {
         user?.role === UserRole.SHOW_ORGANIZER) &&
         (
           <DealerInventoryEditor
-            value={inventoryContent}
-            onChange={setInventoryContent}
+            value={inventoryInput}
+            onChange={(text) => {
+              setInventoryInput(text);
+              inventoryDirtyRef.current = true;
+            }}
             loading={loadingInventory}
             saving={savingInventory}
             error={inventoryError}
