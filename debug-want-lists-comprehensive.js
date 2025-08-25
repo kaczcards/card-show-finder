@@ -89,6 +89,14 @@ async function checkDatabaseSchema() {
         log.error(`Table ${table} check failed: ${error.message}`);
       } else {
         log.success(`Table ${table} exists and is accessible`);
+        
+        // Add note about show_participants being the source of attendee data
+        if (table === 'show_participants') {
+          log.info('Note: Attendees are tracked in show_participants table with role and status fields');
+        }
+        if (table === 'user_favorite_shows') {
+          log.info('Note: user_favorite_shows tracks "hearted" shows but not used for attendance');
+        }
       }
     } catch (err) {
       log.error(`Error checking table ${table}: ${err.message}`);
@@ -96,43 +104,45 @@ async function checkDatabaseSchema() {
   }
 }
 
-// 2. Check if user_favorite_shows table has data
+// 2. Check if show_participants table has data for attendees
 async function checkFavoriteShowsData() {
-  log.section('Favorite Shows Data Check');
+  log.section('Show Participants Data Check');
   
   try {
-    // Check total count
+    // Check total count of participants
     const { count: totalCount, error: countError } = await supabase
-      .from('user_favorite_shows')
+      .from('show_participants')
       .select('*', { count: 'exact', head: true });
     
     if (countError) {
-      log.error(`Failed to count favorite shows: ${countError.message}`);
+      log.error(`Failed to count show participants: ${countError.message}`);
     } else {
-      log.info(`Total favorite shows records: ${totalCount}`);
+      log.info(`Total show participants records: ${totalCount}`);
       
       if (totalCount === 0) {
-        log.warning('No favorite shows found! This is likely the root cause of the issue.');
+        log.warning('No show participants found! This is likely the root cause of the issue.');
       }
     }
     
-    // Check if test attendee has favorited the test show
-    const { data: attendeeFavorite, error: attendeeError } = await supabase
-      .from('user_favorite_shows')
+    // Check if test attendee is registered for the test show
+    const { data: attendeeParticipation, error: attendeeError } = await supabase
+      .from('show_participants')
       .select('*')
-      .eq('user_id', TEST_ATTENDEE_ID)
-      .eq('show_id', TEST_SHOW_ID)
+      .eq('userid', TEST_ATTENDEE_ID)
+      .eq('showid', TEST_SHOW_ID)
+      .in('status', ['registered', 'confirmed'])
       .maybeSingle();
     
     if (attendeeError) {
-      log.error(`Failed to check attendee favorite: ${attendeeError.message}`);
-    } else if (attendeeFavorite) {
-      log.success(`Test attendee has favorited the test show`);
+      log.error(`Failed to check attendee participation: ${attendeeError.message}`);
+    } else if (attendeeParticipation) {
+      log.success(`Test attendee is registered for the test show with status: ${attendeeParticipation.status}`);
+      log.info(`Attendee role in show: ${attendeeParticipation.role}`);
     } else {
-      log.warning(`Test attendee has NOT favorited the test show - this is required for want lists to work`);
+      log.warning(`Test attendee is NOT registered for the test show - this is required for want lists to work`);
     }
   } catch (err) {
-    log.error(`Error checking favorite shows data: ${err.message}`);
+    log.error(`Error checking show participants data: ${err.message}`);
   }
 }
 
@@ -143,22 +153,24 @@ async function checkRLSPolicies() {
   // Test cases to verify RLS policies
   const testCases = [
     {
-      name: 'Attendee can see own favorites',
+      name: 'Attendee can see own participation records',
       userId: TEST_ATTENDEE_ID,
       role: 'attendee',
-      query: () => supabase.from('user_favorite_shows').select('*').eq('user_id', TEST_ATTENDEE_ID)
+      query: () => supabase.from('show_participants').select('*').eq('userid', TEST_ATTENDEE_ID)
     },
     {
-      name: 'MVP Dealer can see attendee favorites for shows they participate in',
+      name: 'MVP Dealer can see attendee participation for shows they participate in',
       userId: TEST_MVP_DEALER_ID,
       role: 'mvp_dealer',
-      query: () => supabase.from('user_favorite_shows').select('*').eq('show_id', TEST_SHOW_ID)
+      query: () => supabase.from('show_participants').select('*').eq('showid', TEST_SHOW_ID)
+        .in('status', ['registered', 'confirmed'])
     },
     {
-      name: 'Show Organizer can see attendee favorites for shows they organize',
+      name: 'Show Organizer can see attendee participation for shows they organize',
       userId: TEST_ORGANIZER_ID,
       role: 'show_organizer',
-      query: () => supabase.from('user_favorite_shows').select('*').eq('show_id', TEST_SHOW_ID)
+      query: () => supabase.from('show_participants').select('*').eq('showid', TEST_SHOW_ID)
+        .in('status', ['registered', 'confirmed'])
     }
   ];
   
@@ -186,22 +198,22 @@ async function checkRLSPolicies() {
     }
   }
   
-  // Check if RLS policies exist for user_favorite_shows
+  // Check if RLS policies exist for show_participants
   try {
-    log.info('Checking for RLS policies on user_favorite_shows table');
+    log.info('Checking for RLS policies on show_participants table');
     
     // This is a simplified check - in a real scenario, you'd query pg_policies
-    const { data, error } = await supabase.rpc('get_table_policies', { table_name: 'user_favorite_shows' });
+    const { data, error } = await supabase.rpc('get_table_policies', { table_name: 'show_participants' });
     
     if (error) {
       log.error(`Failed to check policies: ${error.message}`);
       log.info('Alternative check: Verify in Supabase dashboard that the following policies exist:');
-      log.info('1. "Allow authenticated users to view their own favorite shows"');
-      log.info('2. "Allow MVP dealers to view favorite shows for shows they participate in"');
-      log.info('3. "Allow show organizers to view favorite shows for shows they organize"');
+      log.info('1. "Allow authenticated users to view their own participation records"');
+      log.info('2. "Allow MVP dealers to view participant records for shows they participate in"');
+      log.info('3. "Allow show organizers to view participant records for shows they organize"');
     } else {
       const policies = data || [];
-      log.info(`Found ${policies.length} policies for user_favorite_shows table`);
+      log.info(`Found ${policies.length} policies for show_participants table`);
       
       // Check for specific policies
       const hasMvpDealerPolicy = policies.some(p => p.name.toLowerCase().includes('mvp dealer'));
@@ -346,28 +358,31 @@ async function checkServiceQueries() {
         const showIds = participatingShows.map(show => show.showid);
         const currentDate = new Date().toISOString();
         
+        // Check for ongoing or upcoming shows (end_date >= now OR start_date >= now if end_date is null)
         const { data: upcomingShows, error: showsError } = await supabase
           .from('shows')
-          .select('id, title, start_date')
+          .select('id, title, start_date, end_date')
           .in('id', showIds)
-          .gte('start_date', currentDate);
+          .or(`end_date.gte.${currentDate},and(end_date.is.null,start_date.gte.${currentDate})`);
         
         if (showsError) {
           log.error(`Failed to get upcoming shows: ${showsError.message}`);
         } else {
-          log.success(`Found ${upcomingShows.length} upcoming shows the MVP dealer is participating in`);
+          log.success(`Found ${upcomingShows.length} upcoming/ongoing shows the MVP dealer is participating in`);
           
           if (upcomingShows.length === 0) {
-            log.warning('No UPCOMING shows found - check if test show date is in the future');
+            log.warning('No UPCOMING shows found - check if test show date is in the future or still ongoing');
           } else {
             // Step 4: Check if we can get attendees for these shows
             const upcomingShowIds = upcomingShows.map(show => show.id);
             
             const { data: attendees, error: attendeesError } = await supabase
-              .from('user_favorite_shows')
-              .select('user_id, show_id')
-              .in('show_id', upcomingShowIds)
-              .neq('user_id', TEST_MVP_DEALER_ID);
+              .from('show_participants')
+              .select('userid, showid, role, status')
+              .in('showid', upcomingShowIds)
+              .neq('userid', TEST_MVP_DEALER_ID)
+              .in('role', ['attendee', 'dealer', 'mvp_dealer'])
+              .in('status', ['registered', 'confirmed']);
             
             if (attendeesError) {
               log.error(`Failed to get attendees: ${attendeesError.message}`);
@@ -378,13 +393,13 @@ async function checkServiceQueries() {
                 log.warning('No attendees found for upcoming shows - this is required for want lists to work');
               } else {
                 // Step 5: Check if we can get attendee profiles with correct roles
-                const attendeeIds = [...new Set(attendees.map(a => a.user_id))];
+                const attendeeIds = [...new Set(attendees.map(a => a.userid))];
                 
                 const { data: attendeeProfiles, error: profilesError } = await supabase
                   .from('profiles')
                   .select('id, role')
                   .in('id', attendeeIds)
-                  .in('role', ['attendee', 'dealer']);
+                  .in('role', ['attendee', 'dealer', 'mvp_dealer']);
                 
                 if (profilesError) {
                   log.error(`Failed to get attendee profiles: ${profilesError.message}`);
@@ -392,7 +407,7 @@ async function checkServiceQueries() {
                   log.success(`Found ${attendeeProfiles.length} attendee profiles with correct roles`);
                   
                   if (attendeeProfiles.length === 0) {
-                    log.warning('No attendees with correct roles found - check if test attendee has role "attendee" or "dealer"');
+                    log.warning('No attendees with correct roles found - check if test attendee has appropriate role');
                   } else {
                     // Step 6: Check if we can get want lists for these attendees
                     const validAttendeeIds = attendeeProfiles.map(profile => profile.id);
@@ -460,7 +475,7 @@ async function checkRelationships() {
       .from('shows')
       .select('id, title')
       .in('id', showIds)
-      .gte('start_date', currentDate);
+      .or(`end_date.gte.${currentDate},and(end_date.is.null,start_date.gte.${currentDate})`);
     
     if (showsError) {
       log.error(`Failed to get upcoming shows: ${showsError.message}`);
@@ -475,31 +490,34 @@ async function checkRelationships() {
     const upcomingShowIds = upcomingShows.map(s => s.id);
     log.success(`Found ${upcomingShowIds.length} upcoming shows for MVP dealer`);
     
-    // 3. Get attendees who have favorited these shows
-    const { data: favorites, error: favoritesError } = await supabase
-      .from('user_favorite_shows')
-      .select('user_id, show_id')
-      .in('show_id', upcomingShowIds);
+    // 3. Get attendees who are participating in these shows
+    const { data: participants, error: participantsError } = await supabase
+      .from('show_participants')
+      .select('userid, showid, role, status')
+      .in('showid', upcomingShowIds)
+      .neq('userid', TEST_MVP_DEALER_ID)
+      .in('role', ['attendee', 'dealer', 'mvp_dealer'])
+      .in('status', ['registered', 'confirmed']);
     
-    if (favoritesError) {
-      log.error(`Failed to get favorites: ${favoritesError.message}`);
+    if (participantsError) {
+      log.error(`Failed to get participants: ${participantsError.message}`);
       return;
     }
     
-    if (favorites.length === 0) {
-      log.error('No attendees have favorited the upcoming shows');
+    if (participants.length === 0) {
+      log.error('No attendees are participating in the upcoming shows');
       return;
     }
     
-    log.success(`Found ${favorites.length} favorites for upcoming shows`);
+    log.success(`Found ${participants.length} participants for upcoming shows`);
     
     // 4. Get attendee profiles
-    const attendeeIds = [...new Set(favorites.map(f => f.user_id))];
+    const attendeeIds = [...new Set(participants.map(p => p.userid))];
     const { data: attendees, error: attendeesError } = await supabase
       .from('profiles')
       .select('id, role')
       .in('id', attendeeIds)
-      .in('role', ['attendee', 'dealer']);
+      .in('role', ['attendee', 'dealer', 'mvp_dealer']);
     
     if (attendeesError) {
       log.error(`Failed to get attendee profiles: ${attendeesError.message}`);
@@ -557,10 +575,10 @@ async function runDiagnostics() {
     log.section('DIAGNOSTICS SUMMARY');
     log.info('Diagnostics completed. Review the output above for detailed findings.');
     log.info('Common issues and fixes:');
-    log.info('1. Missing favorites: Attendees need to heart shows for them to appear');
+    log.info('1. Missing participants: Attendees need to be registered for shows to appear');
     log.info('2. Missing want lists: Attendees need to create want lists');
-    log.info('3. RLS policies: Verify the policies allow MVP dealers and organizers to read favorites');
-    log.info('4. Show dates: Ensure shows are upcoming (future dates), not past shows');
+    log.info('3. RLS policies: Verify the policies allow MVP dealers and organizers to read show_participants');
+    log.info('4. Show dates: Ensure shows are upcoming or ongoing (end_date >= now or start_date >= now)');
     log.info('5. Participation: MVP dealers must be in show_participants for the shows');
     log.info('6. Roles: Check that users have the correct roles in the profiles table');
     log.info('7. Authentication: Ensure the app is making authenticated requests');
@@ -579,26 +597,28 @@ runDiagnostics().catch(err => {
 // Additional helper functions to fix common issues
 // ============================================================================
 
-// Function to add a test favorite (for debugging)
-async function addTestFavorite() {
-  log.section('Add Test Favorite');
+// Function to add a test participant (for debugging)
+async function addTestParticipant() {
+  log.section('Add Test Participant');
   
   try {
     const { data, error } = await supabase
-      .from('user_favorite_shows')
+      .from('show_participants')
       .upsert({
-        user_id: TEST_ATTENDEE_ID,
-        show_id: TEST_SHOW_ID,
-        created_at: new Date().toISOString()
+        userid: TEST_ATTENDEE_ID,
+        showid: TEST_SHOW_ID,
+        role: 'attendee',
+        status: 'confirmed',
+        createdat: new Date().toISOString()
       });
     
     if (error) {
-      log.error(`Failed to add test favorite: ${error.message}`);
+      log.error(`Failed to add test participant: ${error.message}`);
     } else {
-      log.success('Test favorite added successfully');
+      log.success('Test participant added successfully');
     }
   } catch (err) {
-    log.error(`Error adding test favorite: ${err.message}`);
+    log.error(`Error adding test participant: ${err.message}`);
   }
 }
 
@@ -607,6 +627,7 @@ async function addTestWantList() {
   log.section('Add Test Want List');
   
   try {
+    // Note: Attendee must be a participant in at least one show
     const { data, error } = await supabase
       .from('want_lists')
       .upsert({
@@ -626,9 +647,9 @@ async function addTestWantList() {
   }
 }
 
-// Function to add a test show participant (for debugging)
-async function addTestParticipant() {
-  log.section('Add Test Participant');
+// Function to add a test dealer participant (for debugging)
+async function addTestDealerParticipant() {
+  log.section('Add Test Dealer Participant');
   
   try {
     const { data, error } = await supabase
@@ -636,22 +657,22 @@ async function addTestParticipant() {
       .upsert({
         userid: TEST_MVP_DEALER_ID,
         showid: TEST_SHOW_ID,
-        role: 'dealer',
+        role: 'mvp_dealer',
         status: 'confirmed',
         createdat: new Date().toISOString()
       });
     
     if (error) {
-      log.error(`Failed to add test participant: ${error.message}`);
+      log.error(`Failed to add test dealer participant: ${error.message}`);
     } else {
-      log.success('Test participant added successfully');
+      log.success('Test dealer participant added successfully');
     }
   } catch (err) {
-    log.error(`Error adding test participant: ${err.message}`);
+    log.error(`Error adding test dealer participant: ${err.message}`);
   }
 }
 
 // Uncomment these lines to fix common issues for testing
-// addTestFavorite();
-// addTestWantList();
 // addTestParticipant();
+// addTestWantList();
+// addTestDealerParticipant();

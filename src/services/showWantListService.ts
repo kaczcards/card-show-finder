@@ -106,11 +106,19 @@ export const getWantListsForMvpDealer = async (
     
     // Get show details in a separate query
     const currentDate = new Date().toISOString();
+    /* ------------------------------------------------------------------
+     * Upcoming _or_ ongoing shows:
+     *   • If end_date exists – use `end_date >= today`
+     *   • If end_date is NULL – fall back to `start_date >= today`
+     * Supabase `or()` helper: or('cond1,cond2')
+     * ----------------------------------------------------------------*/
     const { data: showDetails, error: showDetailsError } = await supabase
       .from('shows')
-      .select('id, title, start_date, location')
+      .select('id, title, start_date, end_date, location')
       .in('id', allShowIds)
-      .gte('start_date', currentDate); // Filter for upcoming shows
+      .or(
+        `end_date.gte.${currentDate},and(end_date.is.null,start_date.gte.${currentDate})`
+      );
     
     if (showDetailsError) throw showDetailsError;
     
@@ -130,12 +138,21 @@ export const getWantListsForMvpDealer = async (
     // Get only the IDs of upcoming shows
     const showIds = showDetails.map(show => show.id);
     
-    // Step 1: Get all attendees for these shows from user_favorite_shows table
+    /* ------------------------------------------------------------------
+     * Step 1: fetch attendees / dealers (incl MVP dealers) who have
+     *         REGISTERED or CONFIRMED participation via show_participants
+     * ----------------------------------------------------------------*/
     const { data: allAttendees, error: attendeesError } = await supabase
-      .from('user_favorite_shows')
-      .select('user_id, show_id')
-      .in('show_id', showIds)
-      .neq('user_id', userId); // Exclude the dealer themselves
+      .from('show_participants')
+      .select('userid, showid, role, status')
+      .in('showid', showIds)
+      .neq('userid', userId)
+      .in('role', [
+        UserRole.ATTENDEE,
+        UserRole.DEALER,
+        UserRole.MVP_DEALER,
+      ])
+      .in('status', ['registered', 'confirmed']);
     
     if (attendeesError) throw attendeesError;
     
@@ -153,14 +170,18 @@ export const getWantListsForMvpDealer = async (
     }
     
     // Get unique attendee IDs from all attendees
-    const allAttendeeIds = [...new Set(allAttendees.map(a => a.user_id))];
+    const allAttendeeIds = [...new Set(allAttendees.map(a => a.userid))];
     
     // Step 2: Fetch profiles for these attendees to filter by role
     const { data: attendeeProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, role')
       .in('id', allAttendeeIds)
-      .in('role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
+      .in('role', [
+        UserRole.ATTENDEE,
+        UserRole.DEALER,
+        UserRole.MVP_DEALER,
+      ]);
     
     if (profilesError) throw profilesError;
     
@@ -183,11 +204,11 @@ export const getWantListsForMvpDealer = async (
     // Step 4: Create a mapping of user to shows they're attending (only for valid attendees)
     const userShowMap: Record<string, string[]> = {};
     allAttendees.forEach(a => {
-      if (validAttendeeIds.includes(a.user_id)) {
-        if (!userShowMap[a.user_id]) {
-          userShowMap[a.user_id] = [];
+      if (validAttendeeIds.includes(a.userid)) {
+        if (!userShowMap[a.userid]) {
+          userShowMap[a.userid] = [];
         }
-        userShowMap[a.user_id].push(a.show_id);
+        userShowMap[a.userid].push(a.showid);
       }
     });
     
@@ -350,9 +371,12 @@ export const getWantListsForShowOrganizer = async (
     const currentDate = new Date().toISOString();
     let showsQuery = supabase
       .from('shows')
-      .select('id, title, start_date, location')
+      .select('id, title, start_date, end_date, location')
       .eq('organizer_id', userId)
-      .gte('start_date', currentDate); // Only include upcoming shows
+      // Upcoming **or** ongoing – see MVP dealer helper above
+      .or(
+        `end_date.gte.${currentDate},and(end_date.is.null,start_date.gte.${currentDate})`
+      );
     
     if (showId) {
       showsQuery = showsQuery.eq('id', showId);
@@ -388,12 +412,21 @@ export const getWantListsForShowOrganizer = async (
       };
     });
     
-    // Step 1: Get all attendees for these shows from user_favorite_shows table
+    /* ------------------------------------------------------------------
+     * Step 1 – attendees / dealers (incl MVP) registered for the show
+     *          via show_participants
+     * ----------------------------------------------------------------*/
     const { data: allAttendees, error: attendeesError } = await supabase
-      .from('user_favorite_shows')
-      .select('user_id, show_id')
-      .in('show_id', showIds)
-      .neq('user_id', userId); // Exclude the organizer themselves
+      .from('show_participants')
+      .select('userid, showid, role, status')
+      .in('showid', showIds)
+      .neq('userid', userId)
+      .in('role', [
+        UserRole.ATTENDEE,
+        UserRole.DEALER,
+        UserRole.MVP_DEALER,
+      ])
+      .in('status', ['registered', 'confirmed']);
     
     if (attendeesError) throw attendeesError;
     
@@ -411,14 +444,18 @@ export const getWantListsForShowOrganizer = async (
     }
     
     // Get unique attendee IDs from all attendees
-    const allAttendeeIds = [...new Set(allAttendees.map(a => a.user_id))];
+    const allAttendeeIds = [...new Set(allAttendees.map(a => a.userid))];
     
     // Step 2: Fetch profiles for these attendees to filter by role
     const { data: attendeeProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, role')
       .in('id', allAttendeeIds)
-      .in('role', [UserRole.ATTENDEE, UserRole.DEALER]); // Only include regular attendees and dealers
+      .in('role', [
+        UserRole.ATTENDEE,
+        UserRole.DEALER,
+        UserRole.MVP_DEALER,
+      ]);
     
     if (profilesError) throw profilesError;
     
@@ -441,11 +478,11 @@ export const getWantListsForShowOrganizer = async (
     // Step 4: Create a mapping of user to shows they're attending (only for valid attendees)
     const userShowMap: Record<string, string[]> = {};
     allAttendees.forEach(a => {
-      if (validAttendeeIds.includes(a.user_id)) {
-        if (!userShowMap[a.user_id]) {
-          userShowMap[a.user_id] = [];
+      if (validAttendeeIds.includes(a.userid)) {
+        if (!userShowMap[a.userid]) {
+          userShowMap[a.userid] = [];
         }
-        userShowMap[a.user_id].push(a.show_id);
+        userShowMap[a.userid].push(a.showid);
       }
     });
     

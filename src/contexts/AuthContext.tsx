@@ -147,11 +147,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
          * refresh-token error from Supabase.  Ensures the app never crashes
          * on start and user is returned to a clean unauthenticated state.
          */
-        const handleInvalidToken = async (msg: string) => {
+        const handleInvalidToken = async () => {
           console.warn('[AuthContext] Invalid refresh token detected – forcing sign-out');
           try {
             await supabase.auth.signOut();
-          } catch (_e) {
+          } catch {
             /* ignore – we are clearing cache anyway */
           }
           await clearSupabaseCache();
@@ -181,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           (sessionError.message.includes('Invalid Refresh Token') ||
             sessionError.message.includes('Refresh Token Not Found'))
         ) {
-          await handleInvalidToken(sessionError.message);
+          await handleInvalidToken();
           return;
         }
         
