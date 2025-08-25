@@ -84,7 +84,8 @@ export const createPaymentSheetForSubscription = async (
   userId: string,
   planId: string,
   initPaymentSheet: (params: any) => Promise<any>,
-  presentPaymentSheet: () => Promise<any>
+  presentPaymentSheet: () => Promise<any>,
+  couponCode?: string
 ): Promise<StripePaymentResult> => {
   const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
   if (!plan) {
@@ -92,6 +93,38 @@ export const createPaymentSheetForSubscription = async (
   }
 
   try {
+    /* ------------------------------------------------------------------
+     * 0. Coupon / referral handling – may grant a free first month
+     * ------------------------------------------------------------------ */
+    if (couponCode && couponCode.trim().length > 0) {
+      const { data: couponResp, error: couponErr } = await supabase.rpc(
+        'redeem_coupon_for_subscription',
+        {
+          p_user_id: userId,
+          p_code: couponCode.trim(),
+          /*  Use String(...) so TS sees a genuine string and we avoid unsafe casts  */
+          p_plan_type: String(plan.type).toLowerCase(),
+          p_duration: String(plan.duration).toLowerCase(),
+          preview_only: false,
+        },
+      );
+
+      if (couponErr) {
+        return {
+          success: false,
+          error: couponErr.message || 'Failed to redeem promo code',
+        };
+      }
+
+      if (couponResp?.grant_free_month === true) {
+        // Apply free-month locally (no Stripe charge)
+        const freeTxId = `free_${Date.now()}`;
+        await processFreeMonthSubscriptionUpdate(userId, plan, freeTxId);
+        return { success: true, transactionId: freeTxId };
+      }
+      // Otherwise fall through to normal paid flow (coupon recorded server-side)
+    }
+
     // 1. Create a payment intent on the server (via Supabase Edge Function)
 
     // -----------------------------------------------------------
@@ -115,6 +148,7 @@ export const createPaymentSheetForSubscription = async (
         currency: 'usd',
         userId: userId,
         planId: plan.id,
+        ...(couponCode ? { couponCode } : {}),
       }),
     });
 
@@ -263,6 +297,74 @@ export const processSubscriptionUpdate = async (
       status: 'failed', // Log as 'failed' to indicate a processing failure post-payment
       transaction_id: transactionId,
       error_message: 'Post-payment profile update failed.',
+    });
+  }
+};
+
+/**
+ * Applies a **free first month** promo: updates the user's profile
+ * with an active subscription whose `payment_status` is set to
+ * `'trial'` (so UI can still show trial banners) **and** logs a
+ * $0 payment marked as succeeded.
+ *
+ * This mirrors `processSubscriptionUpdate` but with the specific
+ * free-month semantics required by coupon codes.
+ *
+ * @param userId        The user receiving the free month
+ * @param plan          The subscription plan (type/duration drive role + expiry)
+ * @param transactionId A synthetic ID we generate for analytics/logging
+ */
+export const processFreeMonthSubscriptionUpdate = async (
+  userId: string,
+  plan: SubscriptionPlan,
+  transactionId: string,
+): Promise<void> => {
+  try {
+    // Compute expiry using the same helper (30-day or 365-day window)
+    const expiryDate = calculateExpiryDate(plan);
+
+    // Determine new role from plan type
+    const newRole =
+      plan.type === 'dealer' ? UserRole.MVP_DEALER : UserRole.SHOW_ORGANIZER;
+
+    // Update profile – note payment_status = 'trial'
+    await updateUserProfileWithSubscription(
+      userId,
+      newRole,
+      expiryDate.toISOString(),
+    );
+    // Override payment_status to 'trial' after the generic update
+    await supabase
+      .from('profiles')
+      .update({
+        payment_status: 'trial',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId);
+
+    // Log a zero-dollar payment so analytics still capture the event
+    await logPayment({
+      user_id: userId,
+      plan_id: plan.id,
+      amount: 0,
+      currency: 'usd',
+      status: 'succeeded',
+      transaction_id: transactionId,
+    });
+  } catch (error: any) {
+    console.error(
+      'Failed to process free-month subscription update:',
+      error,
+    );
+    // Non-critical – the user already has the promo applied. We still log for observability.
+    await logPayment({
+      user_id: userId,
+      plan_id: plan.id,
+      amount: 0,
+      currency: 'usd',
+      status: 'failed',
+      transaction_id: transactionId,
+      error_message: 'Post-promo profile update failed.',
     });
   }
 };
