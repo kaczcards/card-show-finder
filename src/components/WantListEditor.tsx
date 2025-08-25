@@ -152,7 +152,11 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
+    >
       {/* Instructions Section */}
       <View style={styles.instructionsContainer}>
         <Text style={styles.instructionsTitle}>Want List Instructions</Text>
@@ -227,8 +231,11 @@ const WantListEditor: React.FC<WantListEditorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#f8f8f8',
+  },
+  /* Extra padding so last controls aren’t hidden under nav bar / keyboard */
+  scrollContent: {
+    paddingBottom: 24,
   },
   instructionsContainer: {
     backgroundColor: 'white',
