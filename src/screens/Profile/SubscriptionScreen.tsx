@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   useWindowDimensions,
+  TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
@@ -34,6 +35,7 @@ import {
   SubscriptionPlanType,
   SubscriptionDuration,
 } from '../../services/subscriptionTypes';
+import { supabase } from '../../supabase';
 
 const SubscriptionScreen: React.FC = () => {
   const { authState, refreshUserRole } = useAuth(); // Destructure refreshUserRole from useAuth
@@ -50,6 +52,11 @@ const SubscriptionScreen: React.FC = () => {
   const [timeRemaining, setTimeRemaining] = useState<{ days: number, hours: number } | null>(null);
   // Default to monthly billing
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  
+  // Promo code states
+  const [promoCode, setPromoCode] = useState<string>('');
+  const [promoStatus, setPromoStatus] = useState<'idle'|'valid'|'invalid'|'expired'|'applied'|'error'|'checking'>('idle');
+  const [promoMessage, setPromoMessage] = useState<string>('');
   
   // Colors
   const ORANGE = '#FF6A00';
@@ -121,6 +128,66 @@ const SubscriptionScreen: React.FC = () => {
     }
   };
   
+  const handleValidatePromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoStatus('invalid');
+      setPromoMessage('Please enter a promo code');
+      return;
+    }
+    
+    if (promoStatus === 'applied') {
+      return; // Already applied, do nothing
+    }
+    
+    setPromoStatus('checking');
+    setPromoMessage('Validating code...');
+    
+    try {
+      const { data, error } = await supabase.rpc('validate_coupon', {
+        p_code: promoCode.trim(),
+        p_plan_type: selectedPlan?.type?.toLowerCase() || null,
+        preview_only: true
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.valid) {
+        setPromoStatus('valid');
+        setPromoMessage('Valid code! First month free.');
+      } else if (data && data.expired) {
+        setPromoStatus('expired');
+        setPromoMessage('This code has expired.');
+      } else if (data && !data.valid) {
+        setPromoStatus('invalid');
+        setPromoMessage(data.message || 'Invalid promo code.');
+      } else {
+        setPromoStatus('error');
+        setPromoMessage('Could not validate code. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error validating promo code:', error);
+      setPromoStatus('error');
+      setPromoMessage(error.message || 'Error validating code. Please try again.');
+    }
+  };
+  
+  const handleApplyPromoCode = () => {
+    if (promoStatus === 'valid') {
+      setPromoStatus('applied');
+      setPromoMessage('First month free applied!');
+    } else {
+      handleValidatePromoCode();
+    }
+  };
+  
+  const handleClearPromoCode = () => {
+    setPromoCode('');
+    setPromoStatus('idle');
+    setPromoMessage('');
+  };
+  
   const handlePurchase = async () => {
     // Guard: subscription data must be ready
     if (subsLoading) {
@@ -135,6 +202,7 @@ const SubscriptionScreen: React.FC = () => {
         user.id,
         selectedPlan.id,
         { initPaymentSheet, presentPaymentSheet },
+        promoStatus === 'applied' ? promoCode : undefined
       );
       
       if (result.success) {
@@ -167,6 +235,7 @@ const SubscriptionScreen: React.FC = () => {
       const result = await renewSubscription(
         user.id,
         selectedPlan.id,
+        promoStatus === 'applied' ? promoCode : undefined
       );
       
       if (result.success) {
@@ -396,6 +465,10 @@ const SubscriptionScreen: React.FC = () => {
               </Text>
             )}
             
+            {promoStatus === 'applied' && billingCycle === 'monthly' && (
+              <Text style={styles.promoAppliedText}>First month free with code</Text>
+            )}
+            
             <View style={styles.planFeatures}>
               {dealerPlan?.features.slice(0, 3).map((feature, index) => (
                 <View key={index} style={styles.featureRow}>
@@ -430,6 +503,10 @@ const SubscriptionScreen: React.FC = () => {
               <Text style={styles.trialText}>
                 {organizerPlan.trialDays}-day free trial
               </Text>
+            )}
+            
+            {promoStatus === 'applied' && billingCycle === 'monthly' && (
+              <Text style={styles.promoAppliedText}>First month free with code</Text>
             )}
             
             <View style={styles.planFeatures}>
@@ -510,6 +587,81 @@ const SubscriptionScreen: React.FC = () => {
             })}
           </View>
         </ScrollView>
+      </View>
+    );
+  };
+  
+  const renderPromoCodeSection = () => {
+    return (
+      <View style={styles.promoCodeContainer}>
+        <Text style={styles.promoCodeLabel}>Have a promo code?</Text>
+        
+        <View style={styles.promoCodeInputRow}>
+          <TextInput
+            style={[
+              styles.promoCodeInput,
+              promoStatus === 'applied' && styles.promoCodeInputDisabled
+            ]}
+            placeholder="Enter promo code"
+            value={promoCode}
+            onChangeText={setPromoCode}
+            autoCapitalize="characters"
+            editable={promoStatus !== 'applied'}
+          />
+          
+          {promoStatus !== 'applied' ? (
+            <TouchableOpacity 
+              style={styles.promoCodeButton}
+              onPress={handleApplyPromoCode}
+              disabled={promoStatus === 'checking'}
+            >
+              {promoStatus === 'checking' ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.promoCodeButtonText}>Apply</Text>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={styles.promoClearButton}
+              onPress={handleClearPromoCode}
+            >
+              <Text style={styles.promoClearButtonText}>Clear</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {promoStatus !== 'idle' && promoMessage && (
+          <View style={[
+            styles.promoMessageContainer,
+            promoStatus === 'valid' || promoStatus === 'applied' 
+              ? styles.promoMessageSuccess
+              : promoStatus === 'invalid' || promoStatus === 'error'
+                ? styles.promoMessageError
+                : promoStatus === 'expired'
+                  ? styles.promoMessageWarning
+                  : {}
+          ]}>
+            <Text style={[
+              styles.promoMessageText,
+              promoStatus === 'valid' || promoStatus === 'applied'
+                ? styles.promoMessageTextSuccess
+                : promoStatus === 'invalid' || promoStatus === 'error'
+                  ? styles.promoMessageTextError
+                  : promoStatus === 'expired'
+                    ? styles.promoMessageTextWarning
+                    : {}
+            ]}>
+              {promoMessage}
+            </Text>
+          </View>
+        )}
+        
+        {promoStatus === 'applied' && (
+          <View style={styles.promoAppliedBadge}>
+            <Text style={styles.promoAppliedBadgeText}>First month free</Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -605,6 +757,7 @@ const SubscriptionScreen: React.FC = () => {
       {renderCurrentSubscription()}
       {renderPlanSelector()}
       {renderPlanComparison()}
+      {renderPromoCodeSection()}
       {renderActionButtons()}
       
       <View style={styles.disclaimerContainer}>
@@ -804,6 +957,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 12,
   },
+  promoAppliedText: {
+    fontSize: 14,
+    color: '#00AA00',
+    fontWeight: '500',
+    marginBottom: 12,
+  },
   planFeatures: {
     marginTop: 8,
   },
@@ -912,7 +1071,104 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
-  }
+  },
+  // Promo code styles
+  promoCodeContainer: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  promoCodeLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+    color: '#333',
+  },
+  promoCodeInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  promoCodeInput: {
+    flex: 1,
+    height: 48,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    marginRight: 8,
+  },
+  promoCodeInputDisabled: {
+    backgroundColor: '#f0f0f0',
+    color: '#666',
+  },
+  promoCodeButton: {
+    backgroundColor: '#0057B8',
+    height: 48,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  promoCodeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  promoClearButton: {
+    backgroundColor: '#f0f0f0',
+    height: 48,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  promoClearButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  promoMessageContainer: {
+    marginTop: 12,
+    padding: 8,
+    borderRadius: 4,
+  },
+  promoMessageSuccess: {
+    backgroundColor: '#e6f7e6',
+  },
+  promoMessageError: {
+    backgroundColor: '#ffe5e5',
+  },
+  promoMessageWarning: {
+    backgroundColor: '#fff9e6',
+  },
+  promoMessageText: {
+    fontSize: 14,
+  },
+  promoMessageTextSuccess: {
+    color: '#00AA00',
+  },
+  promoMessageTextError: {
+    color: '#cc0000',
+  },
+  promoMessageTextWarning: {
+    color: '#cc7700',
+  },
+  promoAppliedBadge: {
+    marginTop: 12,
+    backgroundColor: '#00AA00',
+    borderRadius: 4,
+    padding: 8,
+    alignSelf: 'flex-start',
+  },
+  promoAppliedBadgeText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
 });
 
 export default SubscriptionScreen;
