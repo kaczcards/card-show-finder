@@ -502,7 +502,7 @@ const CollectionScreen: React.FC = () => {
             hasDatabaseIssues={hasDatabaseIssues}
           />
 
-          {isPrivileged && !hasDatabaseIssues() && (
+          {isPrivileged && (
             <View style={{ flex: 1 }}>
               <AttendeeWantLists
                 userId={userId}
