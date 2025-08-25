@@ -99,6 +99,56 @@ export const getWantListsForMvpDealer = async (
       return { data: paginated, error: null };
     }
     
+    /* ------------------------------------------------------------------
+     * Fallback RPC v1 (older): get_accessible_want_lists
+     * This RPC returns full un-paginated array; we filter & paginate here
+     * ----------------------------------------------------------------*/
+    const { data: rpc2, error: rpc2Error } = await supabase.rpc(
+      'get_accessible_want_lists',
+      { viewer_id: userId }
+    );
+
+    if (!rpc2Error && Array.isArray(rpc2)) {
+      // Normalise field names coming from legacy RPC
+      let items: WantListWithUser[] = rpc2.map((r: any): WantListWithUser => ({
+        id: r.want_list_id ?? r.id,
+        userId: r.attendee_id ?? r.userid,
+        userName: r.attendee_name ?? r.userName ?? '',
+        userRole: UserRole.ATTENDEE,
+        content: r.content,
+        createdAt: r.updated_at ?? r.updatedAt ?? '',
+        updatedAt: r.updated_at ?? r.updatedAt ?? '',
+        showId: r.show_id ?? r.showId ?? '',
+        showTitle: r.show_title ?? r.showTitle ?? '',
+        showStartDate: r.show_start_date ?? r.showStartDate ?? '',
+        showLocation: r.show_location ?? r.showLocation ?? '',
+      }));
+
+      // Optional filters
+      if (showId) {
+        items = items.filter((i) => i.showId === showId);
+      }
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        items = items.filter((i) => i.content?.toLowerCase().includes(term));
+      }
+
+      const totalCount = items.length;
+      const start = (page - 1) * pageSize;
+      const paged = items.slice(start, start + pageSize);
+
+      return {
+        data: {
+          data: paged,
+          totalCount,
+          page,
+          pageSize,
+          hasMore: start + paged.length < totalCount,
+        },
+        error: null,
+      };
+    }
+
     // Verify the user is an MVP dealer
     const { data: userData, error: userError } = await supabase
       .from('profiles')
