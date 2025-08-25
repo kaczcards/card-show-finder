@@ -53,6 +53,51 @@ export const getWantListsForMvpDealer = async (
 ): Promise<{ data: PaginatedWantLists | null; error: any }> => {
   try {
     const { userId, showId, page = 1, pageSize = 20, searchTerm } = params;
+
+    /* ------------------------------------------------------------------
+     * Fast-path via SECURITY DEFINER RPC (bypasses RLS complexity)
+     * ----------------------------------------------------------------*/
+    const {
+      data: rpcData,
+      error: rpcError,
+    } = await supabase.rpc('get_visible_want_lists', {
+      viewer_id: userId,
+      show_id: showId ?? null,
+      search_term: searchTerm ?? null,
+      page,
+      page_size: pageSize,
+    });
+
+    if (!rpcError && rpcData && !rpcData.error && Array.isArray(rpcData.data)) {
+      const transformed: WantListWithUser[] = rpcData.data.map(
+        (item: any): WantListWithUser => ({
+          id: item.id,
+          userId: item.userId,
+          userName: item.userName,
+          userRole: item.userRole ?? UserRole.ATTENDEE, // fallback
+          content: item.content,
+          createdAt: item.updatedAt, // RPC doesn’t return createdAt
+          updatedAt: item.updatedAt,
+          showId: item.showId,
+          showTitle: item.showTitle,
+          showStartDate: item.showStartDate,
+          showLocation: item.showLocation,
+        }),
+      );
+
+      const paginated: PaginatedWantLists = {
+        data: transformed,
+        totalCount: rpcData.totalCount ?? transformed.length,
+        page: rpcData.page ?? page,
+        pageSize: rpcData.pageSize ?? pageSize,
+        hasMore:
+          typeof rpcData.hasMore === 'boolean'
+            ? rpcData.hasMore
+            : false,
+      };
+
+      return { data: paginated, error: null };
+    }
     
     // Verify the user is an MVP dealer
     const { data: userData, error: userError } = await supabase
@@ -345,6 +390,51 @@ export const getWantListsForShowOrganizer = async (
 ): Promise<{ data: PaginatedWantLists | null; error: any }> => {
   try {
     const { userId, showId, page = 1, pageSize = 20, searchTerm } = params;
+
+    /* ------------------------------------------------------------------
+     * Fast-path via SECURITY DEFINER RPC (bypasses RLS complexity)
+     * ----------------------------------------------------------------*/
+    const {
+      data: rpcData,
+      error: rpcError,
+    } = await supabase.rpc('get_visible_want_lists', {
+      viewer_id: userId,
+      show_id: showId ?? null,
+      search_term: searchTerm ?? null,
+      page,
+      page_size: pageSize,
+    });
+
+    if (!rpcError && rpcData && !rpcData.error && Array.isArray(rpcData.data)) {
+      const transformed: WantListWithUser[] = rpcData.data.map(
+        (item: any): WantListWithUser => ({
+          id: item.id,
+          userId: item.userId,
+          userName: item.userName,
+          userRole: item.userRole ?? UserRole.ATTENDEE,
+          content: item.content,
+          createdAt: item.updatedAt,
+          updatedAt: item.updatedAt,
+          showId: item.showId,
+          showTitle: item.showTitle,
+          showStartDate: item.showStartDate,
+          showLocation: item.showLocation,
+        }),
+      );
+
+      const paginated: PaginatedWantLists = {
+        data: transformed,
+        totalCount: rpcData.totalCount ?? transformed.length,
+        page: rpcData.page ?? page,
+        pageSize: rpcData.pageSize ?? pageSize,
+        hasMore:
+          typeof rpcData.hasMore === 'boolean'
+            ? rpcData.hasMore
+            : false,
+      };
+
+      return { data: paginated, error: null };
+    }
     
     // Verify the user is a Show Organizer
     const { data: userData, error: userError } = await supabase
