@@ -75,7 +75,13 @@ BEGIN
     RETURN jsonb_build_object('valid', FALSE, 'message', 'code_inactive');
   END IF;
 
-  IF v_row.expires_at < v_now OR v_row.expires_at <= TIMESTAMPTZ '2025-12-31 23:59:59+00' THEN
+  -- Hard global expiration (no codes valid after 2025-12-31 UTC)
+  IF v_now > TIMESTAMPTZ '2025-12-31 23:59:59+00' THEN
+    RETURN jsonb_build_object('valid', FALSE, 'expired', TRUE, 'expiresAt', v_row.expires_at);
+  END IF;
+
+  -- Code-specific expiration date
+  IF v_row.expires_at < v_now THEN
     RETURN jsonb_build_object('valid', FALSE, 'expired', TRUE, 'expiresAt', v_row.expires_at);
   END IF;
 
