@@ -105,7 +105,20 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
           setWantLists(result.data.data);
         } else {
           // Append data for pagination
-          setWantLists(prev => [...prev, ...result.data!.data]);
+          setWantLists(prev => {
+            const existingKeys = new Set(
+              prev.map((wl) => `${wl.id}:${wl.showId}`),
+            );
+            const merged = [...prev];
+            result.data!.data.forEach((wl) => {
+              const key = `${wl.id}:${wl.showId}`;
+              if (!existingKeys.has(key)) {
+                merged.push(wl);
+                existingKeys.add(key);
+              }
+            });
+            return merged;
+          });
         }
         
         setTotalCount(result.data.totalCount);
@@ -323,7 +336,7 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
       <FlatList
         data={wantLists}
         renderItem={renderWantListItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `${item.id}:${item.showId}`}
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmptyState}
