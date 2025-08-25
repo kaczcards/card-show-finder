@@ -20,15 +20,27 @@ const chalk = require('chalk');
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-// Test users with actual IDs from your database
-const TEST_ATTENDEE_ID = '49ced7c8-b18a-4a56-8893-908b9c12d422'; // Elvis
-const TEST_DEALER_ID = '50dddcd7-77b5-46d1-9072-22b7b93d5835';   // Dealer Acct
-const TEST_MVP_DEALER_ID = '84ec4c75-1c32-46f6-b0bb-7930869a4c81'; // Kevin
-const TEST_ORGANIZER_ID = 'eb10066f-8064-439e-9ea5-6a50f29957e0'; // Show Org 01
+// Test users with actual IDs from your database (env-overrideable)
+const TEST_ATTENDEE_ID =
+  process.env.TEST_ATTENDEE_ID ||
+  '49ced7c8-b18a-4a56-8893-908b9c12d422'; // Elvis
+const TEST_DEALER_ID =
+  process.env.TEST_DEALER_ID ||
+  '50dddcd7-77b5-46d1-9072-22b7b93d5835'; // Dealer Acct
+const TEST_MVP_DEALER_ID =
+  process.env.TEST_MVP_DEALER_ID ||
+  '84ec4c75-1c32-46f6-b0bb-7930869a4c81'; // Kevin
+const TEST_ORGANIZER_ID =
+  process.env.TEST_ORGANIZER_ID ||
+  'eb10066f-8064-439e-9ea5-6a50f29957e0'; // Show Org 01
 
-// Test shows with actual IDs from your database
-const TEST_SHOW_ID = '54af141a-9a08-4101-89ec-b4430e36f1ea'; // Magic: The Gathering Regional Championship
-const TEST_SHOW_ID_2 = 'ceebfb54-60f6-416b-8089-76f2715a7477'; // Regional Pokemon Tournament
+// Test shows with actual IDs from your database (env-overrideable)
+const TEST_SHOW_ID =
+  process.env.TEST_SHOW_ID ||
+  '54af141a-9a08-4101-89ec-b4430e36f1ea'; // Magic: The Gathering Regional Championship
+const TEST_SHOW_ID_2 =
+  process.env.TEST_SHOW_ID_2 ||
+  'ceebfb54-60f6-416b-8089-76f2715a7477'; // Regional Pokemon Tournament
 
 // ============================================================================
 // Initialize Supabase client
@@ -356,6 +368,11 @@ async function runDiagnostics() {
   log.section('WANT LISTS FEATURE DIAGNOSTICS');
   log.info(`Starting diagnostics at ${new Date().toLocaleString()}`);
   log.info(`Using Supabase URL: ${SUPABASE_URL}`);
+  log.info(
+    `Using IDs -> attendee: ${TEST_ATTENDEE_ID}, ` +
+      `mvpDealer: ${TEST_MVP_DEALER_ID}, organizer: ${TEST_ORGANIZER_ID}, ` +
+      `show1: ${TEST_SHOW_ID}, show2: ${TEST_SHOW_ID_2}`
+  );
   
   try {
     await checkDatabaseSchema();

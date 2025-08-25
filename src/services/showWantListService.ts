@@ -53,7 +53,102 @@ export const getWantListsForMvpDealer = async (
 ): Promise<{ data: PaginatedWantLists | null; error: any }> => {
   try {
     const { userId, showId, page = 1, pageSize = 20, searchTerm } = params;
+
+    /* ------------------------------------------------------------------
+     * Fast-path via SECURITY DEFINER RPC (bypasses RLS complexity)
+     * ----------------------------------------------------------------*/
+    const {
+      data: rpcData,
+      error: rpcError,
+    } = await supabase.rpc('get_visible_want_lists', {
+      viewer_id: userId,
+      show_id: showId ?? null,
+      search_term: searchTerm ?? null,
+      page,
+      page_size: pageSize,
+    });
+
+    if (!rpcError && rpcData && !rpcData.error && Array.isArray(rpcData.data)) {
+      const transformed: WantListWithUser[] = rpcData.data.map(
+        (item: any): WantListWithUser => ({
+          id: item.id,
+          userId: item.userId,
+          userName: item.userName,
+          userRole: item.userRole ?? UserRole.ATTENDEE, // fallback
+          content: item.content,
+          createdAt: item.updatedAt, // RPC doesn’t return createdAt
+          updatedAt: item.updatedAt,
+          showId: item.showId,
+          showTitle: item.showTitle,
+          showStartDate: item.showStartDate,
+          showLocation: item.showLocation,
+        }),
+      );
+
+      const paginated: PaginatedWantLists = {
+        data: transformed,
+        totalCount: rpcData.totalCount ?? transformed.length,
+        page: rpcData.page ?? page,
+        pageSize: rpcData.pageSize ?? pageSize,
+        hasMore:
+          typeof rpcData.hasMore === 'boolean'
+            ? rpcData.hasMore
+            : false,
+      };
+
+      return { data: paginated, error: null };
+    }
     
+    /* ------------------------------------------------------------------
+     * Fallback RPC v1 (older): get_accessible_want_lists
+     * This RPC returns full un-paginated array; we filter & paginate here
+     * ----------------------------------------------------------------*/
+    const { data: rpc2, error: rpc2Error } = await supabase.rpc(
+      'get_accessible_want_lists',
+      { viewer_id: userId }
+    );
+
+    if (!rpc2Error && Array.isArray(rpc2)) {
+      // Normalise field names coming from legacy RPC
+      let items: WantListWithUser[] = rpc2.map((r: any): WantListWithUser => ({
+        id: r.want_list_id ?? r.id,
+        userId: r.attendee_id ?? r.userid,
+        userName: r.attendee_name ?? r.userName ?? '',
+        userRole: UserRole.ATTENDEE,
+        content: r.content,
+        createdAt: r.updated_at ?? r.updatedAt ?? '',
+        updatedAt: r.updated_at ?? r.updatedAt ?? '',
+        showId: r.show_id ?? r.showId ?? '',
+        showTitle: r.show_title ?? r.showTitle ?? '',
+        showStartDate: r.show_start_date ?? r.showStartDate ?? '',
+        showLocation: r.show_location ?? r.showLocation ?? '',
+      }));
+
+      // Optional filters
+      if (showId) {
+        items = items.filter((i) => i.showId === showId);
+      }
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        items = items.filter((i) => i.content?.toLowerCase().includes(term));
+      }
+
+      const totalCount = items.length;
+      const start = (page - 1) * pageSize;
+      const paged = items.slice(start, start + pageSize);
+
+      return {
+        data: {
+          data: paged,
+          totalCount,
+          page,
+          pageSize,
+          hasMore: start + paged.length < totalCount,
+        },
+        error: null,
+      };
+    }
+
     // Verify the user is an MVP dealer
     const { data: userData, error: userError } = await supabase
       .from('profiles')
@@ -74,7 +169,7 @@ export const getWantListsForMvpDealer = async (
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     
-    // Get shows the dealer is participating in - WITHOUT using a join
+    // Get shows the dealer is participating in
     let participantsQuery = supabase
       .from('show_participants')
       .select('showid')
@@ -110,7 +205,6 @@ export const getWantListsForMvpDealer = async (
      * Upcoming _or_ ongoing shows:
      *   • If end_date exists – use `end_date >= today`
      *   • If end_date is NULL – fall back to `start_date >= today`
-     * Supabase `or()` helper: or('cond1,cond2')
      * ----------------------------------------------------------------*/
     const { data: showDetails, error: showDetailsError } = await supabase
       .from('shows')
@@ -137,6 +231,16 @@ export const getWantListsForMvpDealer = async (
     
     // Get only the IDs of upcoming shows
     const showIds = showDetails.map(show => show.id);
+    
+    // Create a map of show details for quick lookup
+    const showDetailsMap: Record<string, { title: string; startDate: string; location: string }> = {};
+    showDetails.forEach(show => {
+      showDetailsMap[show.id] = {
+        title: show.title,
+        startDate: show.start_date,
+        location: show.location
+      };
+    });
     
     /* ------------------------------------------------------------------
      * Step 1: fetch attendees / dealers (incl MVP dealers) who have
@@ -283,16 +387,6 @@ export const getWantListsForMvpDealer = async (
       };
     });
     
-    // Create a map of show details
-    const showDetailsMap: Record<string, { title: string; startDate: string; location: string }> = {};
-    showDetails.forEach(show => {
-      showDetailsMap[show.id] = {
-        title: show.title,
-        startDate: show.start_date,
-        location: show.location
-      };
-    });
-    
     // Transform the data to include show and user information
     const transformedData = wantLists.map(item => {
       // Find which shows this user is attending
@@ -346,6 +440,51 @@ export const getWantListsForShowOrganizer = async (
 ): Promise<{ data: PaginatedWantLists | null; error: any }> => {
   try {
     const { userId, showId, page = 1, pageSize = 20, searchTerm } = params;
+
+    /* ------------------------------------------------------------------
+     * Fast-path via SECURITY DEFINER RPC (bypasses RLS complexity)
+     * ----------------------------------------------------------------*/
+    const {
+      data: rpcData,
+      error: rpcError,
+    } = await supabase.rpc('get_visible_want_lists', {
+      viewer_id: userId,
+      show_id: showId ?? null,
+      search_term: searchTerm ?? null,
+      page,
+      page_size: pageSize,
+    });
+
+    if (!rpcError && rpcData && !rpcData.error && Array.isArray(rpcData.data)) {
+      const transformed: WantListWithUser[] = rpcData.data.map(
+        (item: any): WantListWithUser => ({
+          id: item.id,
+          userId: item.userId,
+          userName: item.userName,
+          userRole: item.userRole ?? UserRole.ATTENDEE,
+          content: item.content,
+          createdAt: item.updatedAt,
+          updatedAt: item.updatedAt,
+          showId: item.showId,
+          showTitle: item.showTitle,
+          showStartDate: item.showStartDate,
+          showLocation: item.showLocation,
+        }),
+      );
+
+      const paginated: PaginatedWantLists = {
+        data: transformed,
+        totalCount: rpcData.totalCount ?? transformed.length,
+        page: rpcData.page ?? page,
+        pageSize: rpcData.pageSize ?? pageSize,
+        hasMore:
+          typeof rpcData.hasMore === 'boolean'
+            ? rpcData.hasMore
+            : false,
+      };
+
+      return { data: paginated, error: null };
+    }
     
     // Verify the user is a Show Organizer
     const { data: userData, error: userError } = await supabase
