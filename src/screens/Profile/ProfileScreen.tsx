@@ -9,6 +9,7 @@ import useFavoriteCount from './hooks/useFavoriteCount';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
+import { checkAdminStatus } from '../../services/adminService';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { validateProfileForm } from '../../utils/validation/profileValidation';
 
@@ -28,8 +29,8 @@ const ProfileScreen: React.FC = () => {
   // Password reset loading
   const [isPasswordResetLoading, setIsPasswordResetLoading] = useState(false);
   // Admin status
-  const [isAdmin, _setIsAdmin] = useState(false);
-  const [_checkingAdmin, _setCheckingAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [_checkingAdmin, _setCheckingAdmin] = useState(false); // placeholder if needed later
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -56,8 +57,26 @@ const ProfileScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       refreshFavoriteCount();
+      // ---------------------------------------------------------------------------------
+      // Re-evaluate admin status each time the screen gains focus or when the user changes
+      // ---------------------------------------------------------------------------------
+      let _isMounted = true;
+      (async () => {
+        try {
+          const { isAdmin: adminFlag } = await checkAdminStatus();
+          if (_isMounted) setIsAdmin(adminFlag);
+        } catch (err) {
+          // Defensive: never crash UI on admin check failure
+          if (_isMounted) setIsAdmin(false);
+          console.error('[ProfileScreen] Failed admin status check:', err);
+        }
+      })();
+
+      return () => {
+        _isMounted = false;
+      };
       // no cleanup needed
-    }, [refreshFavoriteCount, user])
+    }, [refreshFavoriteCount, user?.id])
   );
   
   // Handle logout
