@@ -255,7 +255,6 @@ const AdminMapScreen: React.FC = () => {
           loadingEnabled={true}
           showsCompass={true}
           showsScale={true}
-          provider="google"
           onRegionChangeComplete={setMapRegion}
         />
       </View>

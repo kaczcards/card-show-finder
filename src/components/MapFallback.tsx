@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ScrollView,
   NativeModules as _NativeModules,
+  UIManager,
 } from 'react-native';
 
 /**
@@ -74,6 +75,27 @@ export type CalloutProps = {
 export const PROVIDER_GOOGLE = 'google';
 
 // ---------------------------------------------------------------------------
+// Helper function to check if a specific native view manager is available
+// ---------------------------------------------------------------------------
+/**
+ * Checks if a specific native view manager is registered
+ */
+export const hasViewManager = (name: string): boolean => {
+  if (Platform.OS === 'web') return false;
+  
+  try {
+    // Check if UIManager has the view manager config
+    return (
+      UIManager.hasOwnProperty(name) || // For older RN versions
+      UIManager.hasOwnProperty('getViewManagerConfig') && 
+      UIManager.getViewManagerConfig(name) != null
+    );
+  } catch {
+    return false;
+  }
+};
+
+// ---------------------------------------------------------------------------
 // Helper function to check if native maps module is available
 // ---------------------------------------------------------------------------
 /**
@@ -86,9 +108,15 @@ export const isNativeMapsAvailable = (): boolean => {
   }
   
   try {
-    // Dynamically require react-native-maps; if it resolves and exposes a MapView,
-    // we consider the native module available.  This is more permissive and works
-    // in custom-dev clients where TurboModuleRegistry names may differ.
+    // First check if any of the required native view managers exist
+    const hasAIRMap = hasViewManager('AIRMap');
+    const hasAIRGoogleMap = hasViewManager('AIRGoogleMap');
+    
+    if (!hasAIRMap && !hasAIRGoogleMap) {
+      return false;
+    }
+    
+    // Then try to require the module
     const RNMaps = require('react-native-maps');
     return !!(RNMaps && (RNMaps.default || RNMaps.MapView));
   } catch {
@@ -211,7 +239,16 @@ export const MapView = forwardRef<any, MapViewProps & {
       const RNMaps = require('react-native-maps');
       const RealMapView = RNMaps.default || RNMaps.MapView;
       
-      return <RealMapView ref={ref} {...restProps}>{children}</RealMapView>;
+      // Check if Google provider is available
+      const googleAvailable = hasViewManager('AIRGoogleMap');
+      
+      // Clone props and sanitize provider if needed
+      const sanitizedProps = {...restProps};
+      if (sanitizedProps.provider === 'google' && !googleAvailable) {
+        delete sanitizedProps.provider;
+      }
+      
+      return <RealMapView ref={ref} {...sanitizedProps}>{children}</RealMapView>;
     } catch (error) {
       console.error('Failed to load react-native-maps even though native module was detected:', error);
       // Fall through to fallback if dynamic require fails
@@ -347,6 +384,15 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
       const RNMaps = require('react-native-maps');
       const RealMapView = RNMaps.default || RNMaps.MapView;
 
+      // Check if Google provider is available
+      const googleAvailable = hasViewManager('AIRGoogleMap');
+      
+      // Clone props and sanitize provider if needed
+      const sanitizedProps = {...restProps};
+      if (sanitizedProps.provider === 'google' && !googleAvailable) {
+        delete sanitizedProps.provider;
+      }
+
       // Helper to extract coordinates from an item when caller
       // did not provide a renderMarker implementation
       const getCoordinates = (item: any): Coordinates | null => {
@@ -404,7 +450,7 @@ export const FixedClusteredMapView = forwardRef<any, MapViewProps & {
           : null;
 
       return (
-        <RealMapView ref={ref} {...restProps}>
+        <RealMapView ref={ref} {...sanitizedProps}>
           {markers}
         </RealMapView>
       );
@@ -521,4 +567,5 @@ export default {
   FixedClusteredMapView,
   PROVIDER_GOOGLE,
   isNativeMapsAvailable,
+  hasViewManager,
 };
