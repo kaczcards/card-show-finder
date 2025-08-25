@@ -246,14 +246,14 @@ const CollectionScreen: React.FC = () => {
   const [wantListError, setWantListError] = useState<string | null>(null);
 
   // ===== Dealer Inventory State =====
-  const [inventoryContent, setInventoryContent] = useState<string>(''); // Server copy
+  const [_inventoryContent, setInventoryContent] = useState<string>(''); // Server copy
   const [inventoryInput, setInventoryInput] = useState<string>(''); // Local input buffer
-  const [inventoryLoaded, setInventoryLoaded] = useState<boolean>(false);
+  const [_inventoryLoaded, setInventoryLoaded] = useState<boolean>(false);
   const inventoryDirtyRef = useRef<boolean>(false);
   const [loadingInventory, setLoadingInventory] = useState<boolean>(true);
   const [savingInventory, setSavingInventory] = useState<boolean>(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
-  const [inventoryId, setInventoryId] = useState<string | null>(null);
+  const [_inventoryId, setInventoryId] = useState<string | null>(null);
 
   // ===== Upcoming Shows State =====
   const [upcomingShows, setUpcomingShows] = useState<any[]>([]); // Using 'any' for now
