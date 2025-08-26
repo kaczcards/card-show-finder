@@ -26,6 +26,13 @@ interface AttendeeWantListsProps {
   userRole: UserRole;
   shows?: Show[]; // Optional list of shows for filtering
   initialShowId?: string; // Optional initial show to filter by
+  /**
+   * Optional header component coming from the parent screen.
+   * When provided we prepend it to this component's own header so the
+   * entire page can be rendered inside a single FlatList (no nested
+   * VirtualizedLists).
+   */
+  headerComponent?: React.ReactNode;
 }
 
 const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
@@ -33,7 +40,19 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
   userRole,
   shows = [],
   initialShowId,
+  headerComponent,
 }) => {
+  /* ------------------------------------------------------------------
+   *  Debug: basic props + mount
+   * ------------------------------------------------------------------ */
+  // eslint-disable-next-line no-console
+  console.log('[AttendeeWantLists] mount', {
+    userId,
+    userRole,
+    initialShowId,
+    showsCount: shows?.length ?? 0,
+  });
+
   // State for want lists data
   const [wantLists, setWantLists] = useState<WantListWithUser[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -56,6 +75,13 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
     showId: string | undefined = selectedShowId
   ) => {
     try {
+      // eslint-disable-next-line no-console
+      console.log('[AttendeeWantLists] loadWantLists()', {
+        pageNum,
+        refresh,
+        search,
+        showId,
+      });
       if (refresh) {
         setIsRefreshing(true);
       } else if (!refresh && pageNum === 1) {
@@ -100,6 +126,12 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
       }
       
       if (result.data) {
+        // eslint-disable-next-line no-console
+        console.log('[AttendeeWantLists] loadWantLists() result', {
+          totalCount: result.data.totalCount,
+          itemsReturned: result.data.data.length,
+          page: result.data.page,
+        });
         if (pageNum === 1 || refresh) {
           // Replace data for first page or refresh
           setWantLists(result.data.data);
@@ -129,6 +161,11 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
       console.error('Error loading want lists:', err);
       setError(err instanceof Error ? err.message : 'Failed to load want lists');
     } finally {
+      // eslint-disable-next-line no-console
+      console.log('[AttendeeWantLists] loadWantLists() finished', {
+        isLoading: false,
+        isRefreshing: false,
+      });
       setIsLoading(false);
       setIsRefreshing(false);
     }
@@ -136,6 +173,8 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
 
   // Load data when component mounts or filters change
   useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[AttendeeWantLists] useEffect -> initial load');
     loadWantLists(1, false);
   }, [loadWantLists]);
 
@@ -220,6 +259,9 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
   const renderHeader = () => {
     return (
       <>
+        {/* (Optional) External header from parent screen */}
+        {headerComponent}
+
         {/* Header with title */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>
@@ -360,6 +402,12 @@ const AttendeeWantLists: React.FC<AttendeeWantListsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    /*
+     * The component is now the ONLY VirtualizedList on the Collection screen
+     * (the screen itself no longer wraps everything in a ScrollView).  
+     * Therefore we revert to `flex: 1` so that the FlatList can properly take
+     * all available space and provide its own scrolling behaviour.
+     */
     flex: 1,
     backgroundColor: '#f8f8f8',
   },
