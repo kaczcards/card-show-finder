@@ -55,7 +55,7 @@ if (!EXPO_PUBLIC_GOOGLE_MAPS_API_KEY) {
 module.exports = {
   name: "Card Show Finder",
   slug: "card-show-finder",
-  version: "1.0.2",
+  version: "1.0.3",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light",
@@ -142,11 +142,11 @@ module.exports = {
     /* Unique identifier used for App Store publishing */
     bundleIdentifier: "com.kaczcards.cardshowfinder",
     /* Build number bump for App Store submission */
-    buildNumber: "3"
+    buildNumber: "4"
   },
   android: {
     package: "com.kaczcards.cardshowfinder",
-    versionCode: 3,
+    versionCode: 4,
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
@@ -210,7 +210,7 @@ module.exports = {
   updates: {
     url: "https://u.expo.dev/13f5779d-487a-4bfd-b7df-9e925db60a1a",
   },
-  runtimeVersion: "1.0.2",
+  runtimeVersion: "1.0.3",
 
   plugins: [
     [

@@ -59,6 +59,9 @@
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Allow Card Show Finder to access your location so we can display nearby card shows.</string>
+    <!-- Camera permission (ITMS-90683) -->
+    <key>NSCameraUsageDescription</key>
+    <string>Allow Card Show Finder to use the camera so you can take photos of your trading cards, event badges, or QR codes at shows.</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
