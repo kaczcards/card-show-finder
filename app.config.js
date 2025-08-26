@@ -55,7 +55,7 @@ if (!EXPO_PUBLIC_GOOGLE_MAPS_API_KEY) {
 module.exports = {
   name: "Card Show Finder",
   slug: "card-show-finder",
-  version: "1.0.3",
+  version: "1.0.4",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light",
@@ -99,6 +99,9 @@ module.exports = {
         "Allow Card Show Finder to access your location so we can display nearby card shows.",
       NSUserTrackingUsageDescription:
         "This identifier will be used to deliver a better, more relevant experience (e.g., analytics and limited advertising).",
+      /* Camera permission – required for Apple review (ITMS-90683) */
+      NSCameraUsageDescription:
+        "Allow Card Show Finder to use the camera so you can take photos of your trading cards, event badges, or QR codes at shows.",
       ITSAppUsesNonExemptEncryption: false,
       /* --------------------------------------------------------------
        * App Transport Security – strict by default.  For dev builds we
@@ -142,11 +145,11 @@ module.exports = {
     /* Unique identifier used for App Store publishing */
     bundleIdentifier: "com.kaczcards.cardshowfinder",
     /* Build number bump for App Store submission */
-    buildNumber: "4"
+    buildNumber: "5"
   },
   android: {
     package: "com.kaczcards.cardshowfinder",
-    versionCode: 4,
+    versionCode: 5,
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
@@ -210,7 +213,7 @@ module.exports = {
   updates: {
     url: "https://u.expo.dev/13f5779d-487a-4bfd-b7df-9e925db60a1a",
   },
-  runtimeVersion: "1.0.3",
+  runtimeVersion: "1.0.4",
 
   plugins: [
     [
