@@ -6,7 +6,8 @@
  */
 
 import AdminMapScreen from './AdminMapScreen';
+import GenerateReferralCodeScreen from './GenerateReferralCodeScreen';
 
 // Re-export with the correct name (automation added the leading underscore by mistake)
-export { AdminMapScreen };
-export default AdminMapScreen;
+export { AdminMapScreen, GenerateReferralCodeScreen };
+export default { AdminMapScreen, GenerateReferralCodeScreen };

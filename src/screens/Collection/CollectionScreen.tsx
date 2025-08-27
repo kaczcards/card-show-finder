@@ -466,11 +466,50 @@ const CollectionScreen: React.FC = () => {
     }, [userId])
   );
 
-  // ---------------- Render helpers ----------------
-  
-  // Render header for FlatList (all content before AttendeeWantLists)
-  // -------------------- render --------------------
+  // Render the header component for the main FlatList
+  const renderHeader = () => {
+    return (
+      <CollectionHeader
+        userRole={user?.role}
+        isPrivileged={isPrivileged}
+        wantList={wantList}
+        userId={userId}
+        upcomingShows={upcomingShows}
+        loadingWantList={loadingWantList}
+        loadingShows={loadingShows}
+        wantListError={wantListError}
+        showsError={showsError}
+        inventoryValue={inventoryInput}
+        onInventoryChange={handleInventoryChange}
+        loadingInventory={loadingInventory}
+        savingInventory={savingInventory}
+        inventoryError={inventoryError}
+        onRetryInventory={loadDealerInventory}
+        onSaveInventory={saveDealerInventory}
+        onNavigateToSubscription={handleNavigateToSubscription}
+        hasDatabaseIssues={hasDatabaseIssues}
+      />
+    );
+  };
 
+  // For non-privileged users, we just show the header
+  if (!isPrivileged) {
+    return (
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>My Collection</Text>
+        </View>
+
+        {/* Content */}
+        <View style={styles.content}>
+          {renderHeader()}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // For privileged users, we use the AttendeeWantLists component
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -480,38 +519,19 @@ const CollectionScreen: React.FC = () => {
 
       {/* Content */}
       <View style={styles.content}>
-        <View style={{ flex: 1 }}>
-          <CollectionHeader
-            userRole={user?.role}
-            isPrivileged={isPrivileged}
-            wantList={wantList}
+        {/* Use a custom FlatList for the main content to avoid nesting issues */}
+        {hasDatabaseIssues() ? (
+          // If there are database issues, just show the header
+          renderHeader()
+        ) : (
+          // Otherwise, use AttendeeWantLists with the header as its ListHeaderComponent
+          <AttendeeWantLists
             userId={userId}
-            upcomingShows={upcomingShows}
-            loadingWantList={loadingWantList}
-            loadingShows={loadingShows}
-            wantListError={wantListError}
-            showsError={showsError}
-            inventoryValue={inventoryInput}
-            onInventoryChange={handleInventoryChange}
-            loadingInventory={loadingInventory}
-            savingInventory={savingInventory}
-            inventoryError={inventoryError}
-            onRetryInventory={loadDealerInventory}
-            onSaveInventory={saveDealerInventory}
-            onNavigateToSubscription={handleNavigateToSubscription}
-            hasDatabaseIssues={hasDatabaseIssues}
+            userRole={user?.role}
+            shows={upcomingShows}
+            headerComponent={renderHeader()}
           />
-
-          {isPrivileged && !hasDatabaseIssues() && (
-            <View style={{ flex: 1 }}>
-              <AttendeeWantLists
-                userId={userId}
-                userRole={user?.role}
-                shows={upcomingShows}
-              />
-            </View>
-          )}
-        </View>
+        )}
       </View>
     </SafeAreaView>
   );

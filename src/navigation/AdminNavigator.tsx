@@ -2,12 +2,14 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AdminMapScreen } from '../screens/Admin';
 import { useAuth } from '../contexts/AuthContext';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { GenerateReferralCodeScreen } from '../screens/Admin';
 
 // Define the param list for the Admin stack navigator
 export type AdminStackParamList = {
   AdminMap: undefined;
+  GenerateReferralCode: undefined;
   // Add other admin screens here as needed
 };
 
@@ -52,10 +54,27 @@ const AdminNavigator: React.FC = () => {
       <Stack.Screen
         name="AdminMap"
         component={AdminMapScreen}
-        options={{
-          title: "Coordinate Validation",
-          headerBackTitle: "Back",
-        }}
+        options={({ navigation }) => ({
+          title: 'Coordinate Validation',
+          headerBackTitle: 'Back',
+          headerRight: () => (
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+              onPress={() => navigation.navigate('GenerateReferralCode')}
+              accessibilityLabel="Generate referral codes"
+            >
+              <Ionicons name="gift" size={20} color="#0057B8" />
+              <Text style={{ marginLeft: 4, color: '#0057B8', fontWeight: '600' }}>
+                Codes
+              </Text>
+            </TouchableOpacity>
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="GenerateReferralCode"
+        component={GenerateReferralCodeScreen}
+        options={{ title: 'Generate Referral Code' }}
       />
       {/* Add more admin screens here as needed */}
     </Stack.Navigator>
