@@ -210,8 +210,7 @@ export const initiateSubscriptionPurchase = async (
   stripeCtx?: {
     initPaymentSheet: (params: any) => Promise<any>;
     presentPaymentSheet: () => Promise<any>;
-  },
-  couponCode?: string
+  }
 ): Promise<PaymentResult> => {
   try {
     // Find the selected plan
@@ -232,8 +231,7 @@ export const initiateSubscriptionPurchase = async (
           userId,
           planId,
           stripeCtx.initPaymentSheet,
-          stripeCtx.presentPaymentSheet,
-          couponCode
+          stripeCtx.presentPaymentSheet
         );
 
       if (!stripeResult.success) {
@@ -318,11 +316,10 @@ export const initiateSubscriptionPurchase = async (
  */
 export const renewSubscription = async (
   userId: string,
-  planId: string,
-  couponCode?: string
+  planId: string
 ): Promise<PaymentResult> => {
   // Forward to initiateSubscriptionPurchase so we keep one code-path
-  return initiateSubscriptionPurchase(userId, planId, undefined, couponCode);
+  return initiateSubscriptionPurchase(userId, planId);
 };
 
 /**
