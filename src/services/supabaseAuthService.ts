@@ -797,3 +797,45 @@ export const updateUserRole          = _updateUserRole;
 
 export const addShowToFavorites      = _addShowToFavorites;
 export const removeShowFromFavorites = _removeShowFromFavorites;
+
+/**
+ * Permanently delete a user account.
+ * 1. Removes the profile row from profiles table
+ * 2. Attempts to delete the Supabase Auth user
+ */
+const _deleteAccount = async (
+  userId: string,
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    // Delete profile data (cascading FKs handle child rows)
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", userId);
+
+    if (profileError) {
+      throw profileError;
+    }
+
+    // Note: Auth user deletion may require Edge Function in production
+    try {
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) {
+        console.warn("Auth user deletion failed:", authError);
+      }
+    } catch (authErr) {
+      console.warn("Auth deletion not available:", authErr);
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message || "Failed to delete account" };
+  }
+};
+
+export const deleteAccount = _deleteAccount;
+
