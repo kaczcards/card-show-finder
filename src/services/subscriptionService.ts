@@ -10,6 +10,8 @@ import {
   StripePaymentResult,
   _calculateExpiryDate as calculateExpiryDate
 } from './subscriptionTypes';
+import AppleIAPService, { SUBSCRIPTION_SKUS, PRODUCT_TO_PLAN_MAP } from './appleIAPService';
+import { Platform } from 'react-native';
 
 /**
  * Result of a payment operation
@@ -196,9 +198,139 @@ export const getSubscriptionDetails = (user: User): {
 };
 
 /**
+ * Get available Apple IAP products for a specific account type
+ * @param accountType The account type to get products for
+ * @returns Promise with formatted product information
+ */
+export const getAvailableAppleProducts = async (
+  accountType: 'dealer' | 'organizer'
+): Promise<Array<{
+  id: string,
+  title: string,
+  description: string,
+  price: string,
+  localizedPrice: string,
+  currency: string,
+  planId: string
+}>> => {
+  // Only available on iOS
+  if (Platform.OS !== 'ios') {
+    return [];
+  }
+  
+  try {
+    // Initialize Apple IAP service if needed
+    await AppleIAPService.initialize();
+    
+    // Get products for the specified account type
+    const products = await AppleIAPService.getProductsForAccountType(accountType);
+    
+    // Format the products for display
+    return products.map(product => ({
+      id: product.productId,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      localizedPrice: product.localizedPrice,
+      currency: product.currency,
+      planId: PRODUCT_TO_PLAN_MAP[product.productId] || ''
+    }));
+  } catch (error) {
+    console.error('[subscriptionService] Error getting Apple products:', error);
+    return [];
+  }
+};
+
+/**
+ * Initiate an Apple IAP subscription purchase
+ * @param userId The ID of the user making the purchase
+ * @param planId The ID of the plan being purchased
+ * @returns Promise with the payment result
+ */
+export const initiateAppleIAPPurchase = async (
+  userId: string,
+  planId: string
+): Promise<PaymentResult> => {
+  try {
+    // Only available on iOS
+    if (Platform.OS !== 'ios') {
+      return {
+        success: false,
+        error: 'Apple IAP is only available on iOS devices'
+      };
+    }
+    
+    // Find the selected plan
+    const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
+    if (!plan) {
+      return {
+        success: false,
+        error: 'Invalid subscription plan selected'
+      };
+    }
+    
+    // Map internal plan ID to Apple product ID
+    let appleProductId: string;
+    if (plan.type === SubscriptionPlanType.DEALER) {
+      appleProductId = plan.duration === SubscriptionDuration.MONTHLY 
+        ? SUBSCRIPTION_SKUS.DEALER_MONTHLY 
+        : SUBSCRIPTION_SKUS.DEALER_ANNUAL;
+    } else if (plan.type === SubscriptionPlanType.ORGANIZER) {
+      appleProductId = plan.duration === SubscriptionDuration.MONTHLY 
+        ? SUBSCRIPTION_SKUS.ORGANIZER_MONTHLY 
+        : SUBSCRIPTION_SKUS.ORGANIZER_ANNUAL;
+    } else {
+      return {
+        success: false,
+        error: 'Invalid plan type'
+      };
+    }
+    
+    // Initialize Apple IAP service if needed
+    await AppleIAPService.initialize();
+    
+    // Initiate the purchase
+    const purchaseResult = await AppleIAPService.purchaseSubscription(appleProductId, userId);
+    
+    if (!purchaseResult.success) {
+      return {
+        success: false,
+        error: purchaseResult.error || 'Apple IAP purchase failed'
+      };
+    }
+    
+    // Get the user's updated subscription details
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('subscription_expiry')
+      .eq('id', userId)
+      .single();
+    
+    if (fetchError) {
+      console.error('[subscriptionService] Error fetching updated profile:', fetchError);
+    }
+    
+    return {
+      success: true,
+      transactionId: purchaseResult.transactionId,
+      subscriptionExpiry: profile?.subscription_expiry 
+        ? new Date(profile.subscription_expiry) 
+        : undefined
+    };
+  } catch (error: any) {
+    console.error('[subscriptionService] Error processing Apple IAP purchase:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to process Apple IAP payment'
+    };
+  }
+};
+
+/**
  * Initiate a subscription purchase
  * @param userId The ID of the user making the purchase
  * @param planId The ID of the plan being purchased
+ * @param paymentMethod The payment method to use ('stripe' or 'apple')
  * @param stripeCtx Optional Stripe helpers (initPaymentSheet, presentPaymentSheet) –
  *                  if provided we run the real payment flow, otherwise we fall back
  *                  to the legacy mock implementation (useful for unit tests / Storybook).
@@ -207,6 +339,7 @@ export const getSubscriptionDetails = (user: User): {
 export const initiateSubscriptionPurchase = async (
   userId: string,
   planId: string,
+  paymentMethod: 'stripe' | 'apple' = 'stripe',
   stripeCtx?: {
     initPaymentSheet: (params: any) => Promise<any>;
     presentPaymentSheet: () => Promise<any>;
@@ -220,6 +353,11 @@ export const initiateSubscriptionPurchase = async (
         success: false,
         error: 'Invalid subscription plan selected'
       };
+    }
+    
+    // If using Apple IAP and on iOS, use the Apple IAP flow
+    if (paymentMethod === 'apple' && Platform.OS === 'ios') {
+      return initiateAppleIAPPurchase(userId, planId);
     }
     
     /* ------------------------------------------------------------------
@@ -312,14 +450,56 @@ export const initiateSubscriptionPurchase = async (
  * Renew an existing subscription
  * @param userId The ID of the user renewing their subscription
  * @param planId The ID of the plan being renewed
+ * @param paymentMethod The payment method to use ('stripe' or 'apple')
  * @returns Promise with the payment result
  */
 export const renewSubscription = async (
   userId: string,
-  planId: string
+  planId: string,
+  paymentMethod: 'stripe' | 'apple' = 'stripe'
 ): Promise<PaymentResult> => {
   // Forward to initiateSubscriptionPurchase so we keep one code-path
-  return initiateSubscriptionPurchase(userId, planId);
+  return initiateSubscriptionPurchase(userId, planId, paymentMethod);
+};
+
+/**
+ * Restore purchases from Apple App Store
+ * @param userId The ID of the user restoring purchases
+ * @returns Promise with the result of the restoration
+ */
+export const restorePurchases = async (
+  userId: string
+): Promise<{ success: boolean, error?: string }> => {
+  try {
+    // Only available on iOS
+    if (Platform.OS !== 'ios') {
+      return {
+        success: false,
+        error: 'Restore purchases is only available on iOS devices'
+      };
+    }
+    
+    // Initialize Apple IAP service if needed
+    await AppleIAPService.initialize();
+    
+    // Restore purchases
+    const restored = await AppleIAPService.restorePurchases();
+    
+    if (!restored) {
+      return {
+        success: false,
+        error: 'No purchases to restore'
+      };
+    }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('[subscriptionService] Error restoring purchases:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to restore purchases'
+    };
+  }
 };
 
 /**
