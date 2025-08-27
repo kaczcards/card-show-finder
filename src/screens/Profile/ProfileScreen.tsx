@@ -1,5 +1,5 @@
 import React, { useState, useEffect as _useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Switch as _Switch, Platform as _Platform, FlatList as _FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Switch as _Switch, Platform as _Platform, FlatList as _FlatList, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 // UI sub-components & hooks extracted during refactor
@@ -653,6 +653,36 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
             <Ionicons
               name="chevron-forward"
               size={20}
+              color="#ccc"
+              style={styles.actionButtonIcon}
+            />
+          </TouchableOpacity>
+
+          {/* Terms of Use */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => Linking.openURL('https://cardshowfinder.com/terms')}
+          >
+            <Ionicons name="document-text-outline" size={20} color="#007AFF" />
+            <Text style={styles.actionButtonText}>Terms of Use</Text>
+            <Ionicons
+              name="open-outline"
+              size={16}
+              color="#ccc"
+              style={styles.actionButtonIcon}
+            />
+          </TouchableOpacity>
+
+          {/* Privacy Policy */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => Linking.openURL('https://cardshowfinder.com/privacy')}
+          >
+            <Ionicons name="shield-outline" size={20} color="#007AFF" />
+            <Text style={styles.actionButtonText}>Privacy Policy</Text>
+            <Ionicons
+              name="open-outline"
+              size={16}
               color="#ccc"
               style={styles.actionButtonIcon}
             />
