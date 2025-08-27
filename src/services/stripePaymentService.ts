@@ -114,7 +114,7 @@ export const createPaymentSheetForSubscription = async (
         amount: plan.price * 100, // Stripe expects amount in cents
         currency: 'usd',
         userId: userId,
-        planId: plan.id,
+        planId: plan.id
       }),
     });
 

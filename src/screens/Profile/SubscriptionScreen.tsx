@@ -134,7 +134,7 @@ const SubscriptionScreen: React.FC = () => {
       const result = await initiateSubscriptionPurchase(
         user.id,
         selectedPlan.id,
-        { initPaymentSheet, presentPaymentSheet },
+        { initPaymentSheet, presentPaymentSheet }
       );
       
       if (result.success) {
@@ -166,7 +166,7 @@ const SubscriptionScreen: React.FC = () => {
     try {
       const result = await renewSubscription(
         user.id,
-        selectedPlan.id,
+        selectedPlan.id
       );
       
       if (result.success) {
@@ -912,7 +912,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
-  }
+  },
 });
 
 export default SubscriptionScreen;

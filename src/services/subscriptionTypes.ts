@@ -52,7 +52,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     type: SubscriptionPlanType.DEALER,
     name: 'MVP Dealer Monthly',
     description: 'Preview inventory, interact with collectors & more (_monthly)',
-    price: 29.99,
+    price: 9.99,
     duration: SubscriptionDuration.MONTHLY,
     trialDays: 7,
     features: [
@@ -68,7 +68,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     type: SubscriptionPlanType.DEALER,
     name: 'MVP Dealer Annual',
     description: 'Save 25% with annual billing',
-    price: 261, // $29 × 12 × 0.75
+    price: 99.99,
     duration: SubscriptionDuration.ANNUAL,
     trialDays: 7,
     isPopular: true,
@@ -88,7 +88,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     type: SubscriptionPlanType.ORGANIZER,
     name: 'Show Organizer Monthly',
     description: 'Organize shows & engage dealers/collectors (monthly)',
-    price: 44.99,
+    price: 14.99,
     duration: SubscriptionDuration.MONTHLY,
     trialDays: 7,
     features: [
@@ -106,7 +106,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     type: SubscriptionPlanType.ORGANIZER,
     name: 'Show Organizer Annual',
     description: 'Save 25% with annual billing',
-    price: 441, // $49 × 12 × 0.75
+    price: 149.99,
     duration: SubscriptionDuration.ANNUAL,
     trialDays: 7,
     isPopular: true,

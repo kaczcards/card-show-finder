@@ -1,5 +1,5 @@
 import React, { useState, useEffect as _useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Switch as _Switch, Platform as _Platform, FlatList as _FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Switch as _Switch, Platform as _Platform, FlatList as _FlatList, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 // UI sub-components & hooks extracted during refactor
@@ -9,8 +9,10 @@ import useFavoriteCount from './hooks/useFavoriteCount';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
+import { checkAdminStatus } from '../../services/adminService';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { validateProfileForm } from '../../utils/validation/profileValidation';
+import { deleteAccount } from '../../services/supabaseAuthService';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole, resetPassword } = useAuth();
@@ -27,9 +29,11 @@ const ProfileScreen: React.FC = () => {
   const [isRefreshingRole, setIsRefreshingRole] = useState(false);
   // Password reset loading
   const [isPasswordResetLoading, setIsPasswordResetLoading] = useState(false);
+  // account-deletion loading
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   // Admin status
-  const [isAdmin, _setIsAdmin] = useState(false);
-  const [_checkingAdmin, _setCheckingAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [_checkingAdmin, _setCheckingAdmin] = useState(false); // placeholder if needed later
   
   // State for editable fields
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -56,8 +60,26 @@ const ProfileScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       refreshFavoriteCount();
+      // ---------------------------------------------------------------------------------
+      // Re-evaluate admin status each time the screen gains focus or when the user changes
+      // ---------------------------------------------------------------------------------
+      let _isMounted = true;
+      (async () => {
+        try {
+          const { isAdmin: adminFlag } = await checkAdminStatus();
+          if (_isMounted) setIsAdmin(adminFlag);
+        } catch (err) {
+          // Defensive: never crash UI on admin check failure
+          if (_isMounted) setIsAdmin(false);
+          console.error('[ProfileScreen] Failed admin status check:', err);
+        }
+      })();
+
+      return () => {
+        _isMounted = false;
+      };
       // no cleanup needed
-    }, [refreshFavoriteCount, user])
+    }, [refreshFavoriteCount, user?.id])
   );
   
   // Handle logout
@@ -210,6 +232,38 @@ console.warn('[ProfileScreen] Profile updated successfully');
     } finally {
       setIsPasswordResetLoading(false);
     }
+  };
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeletingAccount(true);
+            try {
+              const result = await deleteAccount(user.id);
+              if (result.success) {
+                Alert.alert('Account Deleted', 'Your account has been removed.', [
+                  { text: 'OK', onPress: () => logout() },
+                ]);
+              } else {
+                Alert.alert('Error', result.error || 'Failed to delete account');
+              }
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Failed to delete account');
+            } finally {
+              setIsDeletingAccount(false);
+            }
+          },
+        },
+      ],
+    );
   };
   
   // Format phone number for display
@@ -603,7 +657,51 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
               style={styles.actionButtonIcon}
             />
           </TouchableOpacity>
+
+          {/* Terms of Use */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => Linking.openURL('https://cardshowfinder.com/terms')}
+          >
+            <Ionicons name="document-text-outline" size={20} color="#007AFF" />
+            <Text style={styles.actionButtonText}>Terms of Use</Text>
+            <Ionicons
+              name="open-outline"
+              size={16}
+              color="#ccc"
+              style={styles.actionButtonIcon}
+            />
+          </TouchableOpacity>
+
+          {/* Privacy Policy */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => Linking.openURL('https://cardshowfinder.com/privacy')}
+          >
+            <Ionicons name="shield-outline" size={20} color="#007AFF" />
+            <Text style={styles.actionButtonText}>Privacy Policy</Text>
+            <Ionicons
+              name="open-outline"
+              size={16}
+              color="#ccc"
+              style={styles.actionButtonIcon}
+            />
+          </TouchableOpacity>
           
+          {/* Delete Account */}
+          <TouchableOpacity
+            style={styles.deleteAccountButton}
+            onPress={handleDeleteAccount}
+            disabled={isDeletingAccount}
+          >
+            {isDeletingAccount ? (
+              <ActivityIndicator size="small" color="#FF3B30" style={{ marginHorizontal: 2 }} />
+            ) : (
+              <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+            )}
+            <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
             <Text style={styles.logoutButtonText}>Logout</Text>
@@ -830,6 +928,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   logoutButtonText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    marginLeft: 12,
+  },
+  deleteAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  deleteAccountButtonText: {
     fontSize: 16,
     color: '#FF3B30',
     marginLeft: 12,
