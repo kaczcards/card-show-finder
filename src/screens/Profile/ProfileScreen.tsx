@@ -1,5 +1,5 @@
 import React, { useState, useEffect as _useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Switch as _Switch, Platform as _Platform, FlatList as _FlatList, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Switch as _Switch, Platform as _Platform, FlatList as _FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 // UI sub-components & hooks extracted during refactor
@@ -13,6 +13,7 @@ import { checkAdminStatus } from '../../services/adminService';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { validateProfileForm } from '../../utils/validation/profileValidation';
 import { deleteAccount } from '../../services/supabaseAuthService';
+import { openExternalLink } from '../../utils/safeLinking';
 
 const ProfileScreen: React.FC = () => {
   const { authState, logout, updateProfile, clearError, refreshUserRole, resetPassword } = useAuth();
@@ -247,7 +248,7 @@ console.warn('[ProfileScreen] Profile updated successfully');
           onPress: async () => {
             setIsDeletingAccount(true);
             try {
-              const result = await deleteAccount(user.id);
+              const result = await deleteAccount(user!.id);
               if (result.success) {
                 Alert.alert('Account Deleted', 'Your account has been removed.', [
                   { text: 'OK', onPress: () => logout() },
@@ -661,7 +662,11 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
           {/* Terms of Use */}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => Linking.openURL('https://cardshowfinder.com/terms')}
+            onPress={() =>
+              openExternalLink('https://csfinderapp.com/terms', {
+                whitelistHosts: ['csfinderapp.com'],
+              })
+            }
           >
             <Ionicons name="document-text-outline" size={20} color="#007AFF" />
             <Text style={styles.actionButtonText}>Terms of Use</Text>
@@ -676,7 +681,11 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
           {/* Privacy Policy */}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => Linking.openURL('https://cardshowfinder.com/privacy')}
+            onPress={() =>
+              openExternalLink('https://csfinderapp.com/Privacy/', {
+                whitelistHosts: ['csfinderapp.com'],
+              })
+            }
           >
             <Ionicons name="shield-outline" size={20} color="#007AFF" />
             <Text style={styles.actionButtonText}>Privacy Policy</Text>
