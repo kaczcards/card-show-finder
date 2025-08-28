@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
@@ -23,6 +24,7 @@ import {
   renewSubscription,
   cancelSubscription,
   formatExpiryDate,
+  restorePurchases,
 } from '../../services/subscriptionService';
 
 /* -------------------------------------------------------------
@@ -35,6 +37,8 @@ import {
   SubscriptionDuration,
 } from '../../services/subscriptionTypes';
 
+import { openExternalLink } from '../../utils/safeLinking';
+
 const SubscriptionScreen: React.FC = () => {
   const { authState, refreshUserRole } = useAuth(); // Destructure refreshUserRole from useAuth
   const { user } = authState;
@@ -45,6 +49,7 @@ const SubscriptionScreen: React.FC = () => {
   
   const [loading, setLoading] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [restoringPurchases, setRestoringPurchases] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
   const [timeRemaining, setTimeRemaining] = useState<{ days: number, hours: number } | null>(null);
@@ -131,10 +136,13 @@ const SubscriptionScreen: React.FC = () => {
     
     setProcessingPayment(true);
     try {
+      // Use different payment methods based on platform
+      const paymentMethod = Platform.OS === 'ios' ? 'apple' : 'stripe';
       const result = await initiateSubscriptionPurchase(
         user.id,
         selectedPlan.id,
-        { initPaymentSheet, presentPaymentSheet }
+        paymentMethod,
+        Platform.OS === 'ios' ? undefined : { initPaymentSheet, presentPaymentSheet }
       );
       
       if (result.success) {
@@ -164,9 +172,12 @@ const SubscriptionScreen: React.FC = () => {
     
     setProcessingPayment(true);
     try {
+      // Use different payment methods based on platform
+      const paymentMethod = Platform.OS === 'ios' ? 'apple' : 'stripe';
       const result = await renewSubscription(
         user.id,
-        selectedPlan.id
+        selectedPlan.id,
+        paymentMethod
       );
       
       if (result.success) {
@@ -227,6 +238,31 @@ const SubscriptionScreen: React.FC = () => {
         }
       ]
     );
+  };
+  
+  const handleRestorePurchases = async () => {
+    if (!user) return;
+    
+    setRestoringPurchases(true);
+    try {
+      const result = await restorePurchases(user.id);
+      
+      if (result.success) {
+        await refreshUserRole();
+        Alert.alert(
+          'Purchases Restored',
+          'Your purchases have been successfully restored.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Restore Failed', result.error || 'No purchases found to restore.');
+      }
+    } catch (error: any) {
+      console.error('Error restoring purchases:', error);
+      Alert.alert('Error', error.message || 'Failed to restore purchases');
+    } finally {
+      setRestoringPurchases(false);
+    }
   };
   
   const toggleBillingCycle = () => {
@@ -550,6 +586,21 @@ const SubscriptionScreen: React.FC = () => {
     
     return (
       <View style={styles.actionButtonsContainer}>
+        {/* Restore Purchases button - iOS only */}
+        {Platform.OS === 'ios' && (
+          <TouchableOpacity
+            style={styles.restorePurchasesButton}
+            onPress={handleRestorePurchases}
+            disabled={restoringPurchases}
+          >
+            {restoringPurchases ? (
+              <ActivityIndicator color="#0057B8" size="small" />
+            ) : (
+              <Text style={styles.restorePurchasesText}>Restore Purchases</Text>
+            )}
+          </TouchableOpacity>
+        )}
+        
         {user.accountType !== 'collector' && activeStatus && (
           <TouchableOpacity 
             style={styles.cancelButton}
@@ -574,6 +625,68 @@ const SubscriptionScreen: React.FC = () => {
             <Text style={styles.primaryButtonText}>{buttonText}</Text>
           )}
         </TouchableOpacity>
+      </View>
+    );
+  };
+  
+  const renderLegalSection = () => {
+    // Get subscription details for display
+    const subscriptionTitle = selectedPlan?.name || 
+                             (currentSubscription?.name || 'Subscription');
+    const subscriptionLength = billingCycle === 'monthly' ? 'Monthly' : 'Annual';
+    const subscriptionPrice = selectedPlan?.price || 
+                             (currentSubscription?.price || '');
+    
+    return (
+      <View style={styles.legalSection}>
+        <Text style={styles.legalSectionTitle}>Subscription Information</Text>
+        
+        <View style={styles.legalInfoRow}>
+          <Text style={styles.legalLabel}>Title:</Text>
+          <Text style={styles.legalValue}>{subscriptionTitle}</Text>
+        </View>
+        
+        <View style={styles.legalInfoRow}>
+          <Text style={styles.legalLabel}>Length:</Text>
+          <Text style={styles.legalValue}>{subscriptionLength}</Text>
+        </View>
+        
+        <View style={styles.legalInfoRow}>
+          <Text style={styles.legalLabel}>Price:</Text>
+          <Text style={styles.legalValue}>
+            ${subscriptionPrice} {billingCycle === 'monthly' ? 'per month' : 'per year'}
+          </Text>
+        </View>
+        
+        <Text style={styles.legalText}>
+          Payment will be charged to your Apple ID account at the confirmation of purchase. 
+          Subscription automatically renews unless it is canceled at least 24 hours before the 
+          end of the current period. Your account will be charged for renewal within 24 hours 
+          prior to the end of the current period.
+        </Text>
+        
+        <Text style={styles.legalText}>
+          You can manage and cancel your subscriptions by going to your account settings on the 
+          App Store after purchase.
+        </Text>
+        
+        <View style={styles.legalLinksContainer}>
+          <TouchableOpacity 
+            onPress={() => openExternalLink('https://csfinderapp.com/terms', {
+              whitelistHosts: ['csfinderapp.com']
+            })}
+          >
+            <Text style={styles.legalLink}>Terms of Use</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            onPress={() => openExternalLink('https://csfinderapp.com/Privacy/', {
+              whitelistHosts: ['csfinderapp.com']
+            })}
+          >
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -606,11 +719,15 @@ const SubscriptionScreen: React.FC = () => {
       {renderPlanSelector()}
       {renderPlanComparison()}
       {renderActionButtons()}
+      {renderLegalSection()}
       
       <View style={styles.disclaimerContainer}>
         <Text style={styles.disclaimerText}>
-          By subscribing, you agree to our Terms of Service and Privacy Policy.
+          By subscribing, you agree to our Terms of Use and Privacy Policy.
           Subscriptions will automatically renew unless canceled at least 24 hours before the end of the current period.
+          {Platform.OS === 'ios' ? 
+            ' You can manage and cancel your subscriptions in your Apple ID account settings.' : 
+            ' You can cancel your subscription at any time through your account settings.'}
         </Text>
       </View>
     </ScrollView>
@@ -912,6 +1029,60 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
+  },
+  restorePurchasesButton: {
+    padding: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  restorePurchasesText: {
+    color: '#0057B8',
+    fontSize: 16,
+  },
+  legalSection: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  legalSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333',
+  },
+  legalInfoRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  legalLabel: {
+    fontSize: 16,
+    color: '#666',
+    width: 80,
+  },
+  legalValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    flex: 1,
+  },
+  legalText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  legalLinksContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 8,
+  },
+  legalLink: {
+    fontSize: 16,
+    color: '#0057B8',
+    textDecorationLine: 'underline',
+    padding: 8,
   },
 });
 

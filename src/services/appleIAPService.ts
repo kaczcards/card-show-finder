@@ -3,6 +3,7 @@ import {
   endConnection,
   getProducts,
   getSubscriptions,
+  getAvailablePurchases,
   requestPurchase,
   finishTransaction,
   purchaseUpdatedListener,
@@ -17,7 +18,7 @@ import {
 import { Platform, Alert } from 'react-native';
 import { supabase } from '../supabase';
 import { User } from '../types';
-import { errorService } from './errorService';
+import { handleNetworkError, handleSupabaseError } from './errorService';
 
 // Define subscription product IDs
 export const SUBSCRIPTION_SKUS = {
@@ -115,7 +116,7 @@ class AppleIAPService {
           await this.handlePurchaseSuccess(purchase);
         } catch (error) {
           console.error('[AppleIAPService] Error processing purchase:', error);
-          this.notifyPurchaseCallback(purchase.productId, {
+          this.notifyPurchaseCallback(purchase.productId || '', {
             success: false,
             error: 'Failed to process purchase',
             productId: purchase.productId,
@@ -143,7 +144,7 @@ class AppleIAPService {
       return true;
     } catch (error) {
       console.error('[AppleIAPService] Failed to initialize IAP:', error);
-      errorService.handleNetworkError(error, {
+      handleNetworkError(error, {
         context: 'AppleIAPService.initialize',
         severity: 'high'
       });
@@ -166,7 +167,7 @@ class AppleIAPService {
       }
 
       // Get all subscription products
-      const products = await getProducts(Object.values(SUBSCRIPTION_SKUS));
+      const products = await getProducts({ skus: Object.values(SUBSCRIPTION_SKUS) });
       
       if (products.length === 0) {
         console.warn('[AppleIAPService] No products available');
@@ -179,7 +180,7 @@ class AppleIAPService {
       return products;
     } catch (error) {
       console.error('[AppleIAPService] Error getting products:', error);
-      errorService.handleNetworkError(error, {
+      handleNetworkError(error, {
         context: 'AppleIAPService.getAvailableProducts',
         severity: 'medium'
       });
@@ -228,7 +229,7 @@ class AppleIAPService {
         this.purchaseCallbacks[productId] = resolve;
         
         // Request the purchase
-        requestPurchase(productId)
+        requestPurchase({ sku: productId })
           .catch(error => {
             console.error('[AppleIAPService] Purchase request failed:', error);
             // Clean up the callback
@@ -242,7 +243,7 @@ class AppleIAPService {
             });
           });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('[AppleIAPService] Purchase failed:', error);
       return {
         success: false,
@@ -279,21 +280,21 @@ class AppleIAPService {
       const subscriptionDetails = this.getSubscriptionDetailsFromPurchase(purchase);
       
       // Update the user's subscription in Supabase
-      await this.updateUserSubscription(purchase.transactionId, subscriptionDetails);
+      await this.updateUserSubscription(transactionId, subscriptionDetails);
 
       // Notify callback of success
-      this.notifyPurchaseCallback(productId, {
+      this.notifyPurchaseCallback(productId || '', {
         success: true,
         productId,
         transactionId,
         receipt: transactionReceipt
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('[AppleIAPService] Error processing purchase:', error);
       
       // Notify callback of failure
-      this.notifyPurchaseCallback(purchase.productId, {
+      this.notifyPurchaseCallback(purchase.productId || '', {
         success: false,
         error: error.message || 'Failed to process purchase',
         productId: purchase.productId,
@@ -309,7 +310,7 @@ class AppleIAPService {
     try {
       // Validate the receipt with Apple
       const validation = await validateReceiptIos({
-        receiptBody: receipt,
+        receiptBody: { 'receipt-data': receipt },
         isTest: __DEV__ // Use sandbox environment for development
       });
 
@@ -318,7 +319,7 @@ class AppleIAPService {
       }
 
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('[AppleIAPService] Receipt validation error:', error);
       return { 
         success: false, 
@@ -336,8 +337,8 @@ class AppleIAPService {
     const { productId } = purchase;
     
     // Get the plan ID and account type from the product ID
-    const planId = PRODUCT_TO_PLAN_MAP[productId] || 'unknown';
-    const accountType = PRODUCT_TO_ACCOUNT_TYPE[productId] || 'unknown';
+    const planId = PRODUCT_TO_PLAN_MAP[productId || ''] || 'unknown';
+    const accountType = PRODUCT_TO_ACCOUNT_TYPE[productId || ''] || 'unknown';
     
     // Calculate expiry date (1 month or 1 year from now)
     const now = new Date();
@@ -393,7 +394,7 @@ class AppleIAPService {
       console.log('[AppleIAPService] User subscription updated successfully');
     } catch (error) {
       console.error('[AppleIAPService] Failed to update user subscription:', error);
-      errorService.handleSupabaseError(error, {
+      handleSupabaseError(error, {
         context: 'AppleIAPService.updateUserSubscription',
         severity: 'high'
       });
@@ -411,11 +412,14 @@ class AppleIAPService {
   /**
    * Notify a purchase callback with the result
    */
-  private notifyPurchaseCallback(productId: string, result: PurchaseResult): void {
-    const callback = this.purchaseCallbacks[productId];
+  private notifyPurchaseCallback(productId: string | undefined, result: PurchaseResult): void {
+    // Normalise undefined / null productIds so we always hit a deterministic key
+    const key = productId ?? '';
+
+    const callback = this.purchaseCallbacks[key];
     if (callback) {
       callback(result);
-      delete this.purchaseCallbacks[productId];
+      delete this.purchaseCallbacks[key];
     }
   }
 
@@ -477,7 +481,7 @@ class AppleIAPService {
       }
 
       // Get available purchases from Apple
-      const availablePurchases = await getSubscriptions(Object.values(SUBSCRIPTION_SKUS));
+      const availablePurchases = await getAvailablePurchases();
       
       if (!availablePurchases || availablePurchases.length === 0) {
         console.log('[AppleIAPService] No purchases to restore');
@@ -492,13 +496,13 @@ class AppleIAPService {
         try {
           await this.handlePurchaseSuccess(purchase);
           restoredAny = true;
-        } catch (error) {
+        } catch (error: any) {
           console.error('[AppleIAPService] Error restoring purchase:', error);
         }
       }
 
       return restoredAny;
-    } catch (error) {
+    } catch (error: any) {
       console.error('[AppleIAPService] Failed to restore purchases:', error);
       return false;
     }

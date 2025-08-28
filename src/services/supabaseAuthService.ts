@@ -832,7 +832,7 @@ const _deleteAccount = async (
     }
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     return { success: false, error: error.message || "Failed to delete account" };
   }
 };
