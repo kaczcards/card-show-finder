@@ -105,7 +105,7 @@ Questions or concerns about this Privacy Policy?
 Kacz Cards LLC – Privacy Office  
 415 Mission St, Floor 37  
 San Francisco, CA 94105, USA  
-Email: **privacy@cardshowfinder.app**
+Email: **privacy@csfinderapp.com**
 
 ---
 
