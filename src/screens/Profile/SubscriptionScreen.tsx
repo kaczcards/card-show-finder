@@ -720,18 +720,23 @@ const SubscriptionScreen: React.FC = () => {
         </Text>
         
         <View style={styles.legalLinksContainer}>
-          <TouchableOpacity 
-            onPress={() => openExternalLink('https://csfinderapp.com/terms', {
-              whitelistHosts: ['csfinderapp.com']
-            })}
+          <TouchableOpacity
+            onPress={() =>
+              openExternalLink(
+                'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+                { whitelistHosts: ['apple.com'] },
+              )
+            }
           >
             <Text style={styles.legalLink}>Terms of Use</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            onPress={() => openExternalLink('https://csfinderapp.com/Privacy/', {
-              whitelistHosts: ['csfinderapp.com']
-            })}
+
+          <TouchableOpacity
+            onPress={() =>
+              openExternalLink('https://cardshowfinder.app/privacy', {
+                whitelistHosts: ['cardshowfinder.app'],
+              })
+            }
           >
             <Text style={styles.legalLink}>Privacy Policy</Text>
           </TouchableOpacity>

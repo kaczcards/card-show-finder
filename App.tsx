@@ -250,7 +250,24 @@ export default function App() {
     // Perform any initialization tasks here
     const prepare = async () => {
       try {
-        // Initialise Sentry first so it captures any early errors
+        /**
+         * -------------------------------------------------------------
+         * 1. App Tracking Transparency prompt (iOS 14+)
+         *    Must occur *before* any analytics / tracking initialises.
+         * -------------------------------------------------------------
+         */
+        const isATTSupported =
+          Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 14;
+        if (isATTSupported) {
+          await requestATT(); // fire prompt early in cold-start path
+        }
+
+        /**
+         * -------------------------------------------------------------
+         * 2. Initialise Sentry **after** ATT decision so we respect
+         *    the user’s tracking preference.
+         * -------------------------------------------------------------
+         */
         await initSentry();
 
         // Load any resources, fonts, or cached data
