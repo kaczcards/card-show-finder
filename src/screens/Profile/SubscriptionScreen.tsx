@@ -722,9 +722,10 @@ const SubscriptionScreen: React.FC = () => {
         <View style={styles.legalLinksContainer}>
           <TouchableOpacity
             onPress={() =>
-              openExternalLink('https://csfinderapp.com/terms', {
-                whitelistHosts: ['csfinderapp.com'],
-              })
+              openExternalLink(
+                'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+                { whitelistHosts: ['apple.com'] },
+              )
             }
           >
             <Text style={styles.legalLink}>Terms of Use</Text>
@@ -732,8 +733,8 @@ const SubscriptionScreen: React.FC = () => {
 
           <TouchableOpacity
             onPress={() =>
-              openExternalLink('https://csfinderapp.com/privacy', {
-                whitelistHosts: ['csfinderapp.com'],
+              openExternalLink('https://cardshowfinder.app/privacy', {
+                whitelistHosts: ['cardshowfinder.app'],
               })
             }
           >
