@@ -55,6 +55,11 @@ if (!EXPO_PUBLIC_GOOGLE_MAPS_API_KEY) {
 module.exports = {
   name: "Card Show Finder",
   slug: "card-show-finder",
+  // Professional app synopsis with required subscription disclosure
+  description:
+    "Discover trading-card shows near you, save favorites, and manage events. " +
+    "Auto-renewable MVP Dealer and Show Organizer subscriptions are available. " +
+    "Terms of Use: https://csfinderapp.com/terms",
   version: "1.0.4",
   orientation: "portrait",
   icon: "./assets/icon.png",
@@ -222,6 +227,9 @@ module.exports = {
         locationAlwaysAndWhenInUsePermission: "Allow Card Show Finder to access your location so we can display nearby card shows."
       }
     ],
+    // App Tracking Transparency (iOS 14+) – required to correctly link the
+    // native framework and generate the Info.plist entries that Apple checks
+    "expo-tracking-transparency",
     "sentry-expo"                        // Enabled for crash reporting
   ],
   // Note: Expo's "hooks" field was removed because it is not a valid

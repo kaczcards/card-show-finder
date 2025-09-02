@@ -40,6 +40,53 @@ import { theme } from './src/constants/theme';
 import RootNavigator from './src/navigation';
 
 /**
+ * Helper: Request App Tracking Transparency (ATT) permission on iOS
+ * ------------------------------------------------------------------
+ * Extracted to module scope so it can be invoked from multiple hooks
+ * without re-creating the function each render and to resolve scope
+ * issues in later effects.
+ */
+const requestATT = async (): Promise<void> => {
+  if (Platform.OS !== 'ios') return;
+  try {
+    // Skip if the native module isn't compiled in (Expo Go / bare JS runtimes)
+    const { NativeModules } = require('react-native');
+    if (!NativeModules?.ExpoTrackingTransparency) {
+      if (__DEV__) console.warn('[ATT] Native module not available – skipping');
+      return;
+    }
+
+    // Dynamic import prevents crashes in runtimes lacking the native module
+    const mod = await import('expo-tracking-transparency');
+    const getPerms =
+      (mod as any).getTrackingPermissionsAsync as
+        | undefined
+        | (() => Promise<{ status: string }>);
+    const reqPerms =
+      (mod as any).requestTrackingPermissionsAsync as
+        | undefined
+        | (() => Promise<{ status: string }>);
+
+    if (typeof getPerms !== 'function' || typeof reqPerms !== 'function') {
+      if (__DEV__) console.warn('[ATT] Module present but functions missing – skipping');
+      return;
+    }
+
+    const { status } = await getPerms();
+    if (status === 'undetermined') {
+      await reqPerms();
+    }
+  } catch (err: any) {
+    // When running in Expo Go or other runtimes without the native module
+    if (__DEV__)
+      console.warn(
+        '[ATT] Tracking transparency unavailable in this runtime:',
+        err?.message || err
+      );
+  }
+};
+
+/**
  * React Query client – single instance shared across the app.
  *  - staleTime:   30 seconds (data considered fresh for this long)
  *  - cacheTime:    5 minutes (unused data kept in cache this long)
@@ -151,48 +198,6 @@ export default function App() {
      * Prompt the user for tracking permission if it hasn't been asked yet.
      * Runs as a fire-and-forget task so it never blocks app start-up.
      */
-    const requestATT = async () => {
-      if (Platform.OS !== 'ios') return;
-      try {
-        // Skip if the native module isn't compiled in (Expo Go / bare JS runtimes)
-        const { NativeModules } = require('react-native');
-        if (!NativeModules?.ExpoTrackingTransparency) {
-          if (__DEV__)
-            console.warn('[ATT] Native module not available – skipping');
-          return;
-        }
-
-        // Dynamic import prevents crashes in Expo Go / builds lacking the native module
-        const mod = await import('expo-tracking-transparency');
-        const getPerms =
-          (mod as any).getTrackingPermissionsAsync as
-            | undefined
-            | (() => Promise<{ status: string }>);
-        const reqPerms =
-          (mod as any).requestTrackingPermissionsAsync as
-            | undefined
-            | (() => Promise<{ status: string }>);
-
-        if (typeof getPerms !== 'function' || typeof reqPerms !== 'function') {
-          if (__DEV__)
-            console.warn('[ATT] Module present but functions missing – skipping');
-          return;
-        }
-
-        const { status } = await getPerms();
-        if (status === 'undetermined') {
-          await reqPerms();
-        }
-      } catch (err: any) {
-        // When running in Expo Go or other runtimes without the native module
-        if (__DEV__)
-          console.warn(
-            '[ATT] Tracking transparency unavailable in this runtime:',
-            err?.message || err
-          );
-      }
-    };
-
     /**
      * Initialise Sentry *safely* even inside Expo Go.
      * Falls back gracefully if the native Sentry module isn’t available.
@@ -245,10 +250,25 @@ export default function App() {
     // Perform any initialization tasks here
     const prepare = async () => {
       try {
-        // Initialise Sentry first so it captures any early errors
+        /**
+         * -------------------------------------------------------------
+         * 1. App Tracking Transparency prompt (iOS 14+)
+         *    Must occur *before* any analytics / tracking initialises.
+         * -------------------------------------------------------------
+         */
+        const isATTSupported =
+          Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 14;
+        if (isATTSupported) {
+          await requestATT(); // fire prompt early in cold-start path
+        }
+
+        /**
+         * -------------------------------------------------------------
+         * 2. Initialise Sentry **after** ATT decision so we respect
+         *    the user’s tracking preference.
+         * -------------------------------------------------------------
+         */
         await initSentry();
-        // Fire-and-forget ATT prompt (iOS only)
-        requestATT();
 
         // Load any resources, fonts, or cached data
         // This is where you would load fonts with expo-font if needed
@@ -266,6 +286,31 @@ export default function App() {
 
     prepare();
   }, []);
+
+  /**
+   * -------------------------------------------------------------
+   *  ATT request – run *after* the app is fully ready so that the
+   *  permission sheet doesn’t compete with the native splash.
+   *  Still happens before user-level network/analytics inside the
+   *  React tree because nothing renders until `isReady === true`.
+   * -------------------------------------------------------------
+   */
+  useEffect(() => {
+    if (!isReady) return;
+
+    const isATTSupported =
+      Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 14;
+
+    if (!isATTSupported) {
+      if (__DEV__) console.warn('[ATT] Skipping – unsupported platform/version');
+      return;
+    }
+
+    (async () => {
+      if (__DEV__) console.warn('[ATT] Requesting tracking permission…');
+      await requestATT();
+    })();
+  }, [isReady]);
 
   if (!isReady) {
     return (
