@@ -14,6 +14,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext'; // Using useAuth for refreshUserRole
 import { useUserSubscriptions } from '../../hooks/useUserSubscriptions';
 import { useStripe } from '@stripe/stripe-react-native'; // Stripe hooks
+// Network info for connectivity checks
+import NetInfo from '@react-native-community/netinfo';
 /* -------------------------------------------------------------
  * Subscription service – functions that act on the database
  * ----------------------------------------------------------- */
@@ -56,6 +58,9 @@ const SubscriptionScreen: React.FC = () => {
   // Default to monthly billing
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   
+  // --- Misc helpers --------------------------------------------------
+  const PURCHASE_TIMEOUT_MS = 15000; // 15 s safety timeout
+
   // Colors
   const ORANGE = '#FF6A00';
   const _BLUE = '#0057B8';
@@ -134,17 +139,40 @@ const SubscriptionScreen: React.FC = () => {
     }
     if (!user || !selectedPlan) return;
     
+    // Check basic network connectivity before proceeding
+    const netState = await NetInfo.fetch();
+    if (!netState.isConnected) {
+      Alert.alert('No Internet Connection', 'Please connect to the internet and try again.');
+      return;
+    }
+
     setProcessingPayment(true);
     try {
+      // Helper to actually run the purchase
+      const doPurchase = () =>
+        initiateSubscriptionPurchase(
+          user.id,
+          selectedPlan.id,
+          Platform.OS === 'ios' ? 'apple' : 'stripe',
+          Platform.OS === 'ios' ? undefined : { initPaymentSheet, presentPaymentSheet },
+        );
+
+      // Run purchase with timeout protection
+      const result = await Promise.race([
+        doPurchase(),
+        new Promise<{ success: false; error: string }>((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                success: false,
+                error: 'The purchase request timed out. Please try again.',
+              }),
+            PURCHASE_TIMEOUT_MS,
+          ),
+        ),
+      ]);
+
       // Use different payment methods based on platform
-      const paymentMethod = Platform.OS === 'ios' ? 'apple' : 'stripe';
-      const result = await initiateSubscriptionPurchase(
-        user.id,
-        selectedPlan.id,
-        paymentMethod,
-        Platform.OS === 'ios' ? undefined : { initPaymentSheet, presentPaymentSheet }
-      );
-      
       if (result.success) {
         await refreshUserRole(); // Call to refresh user's role and state after successful purchase
         Alert.alert(
@@ -153,7 +181,28 @@ const SubscriptionScreen: React.FC = () => {
           [{ text: 'OK', onPress: () => navigation.goBack() }]
         );
       } else {
-        Alert.alert('Error', result.error || 'Failed to process payment');
+        // Friendly messaging for common edge-cases
+        const rawErr = result.error || 'Failed to process payment';
+        const friendlyMsg =
+          rawErr.includes('E_SERVICE_ERROR') || rawErr.includes('purchases_unavailable')
+            ? 'In-app purchases are currently unavailable. If you are the app owner, make sure the Paid Apps Agreement is signed in App Store Connect.'
+            : rawErr;
+
+        // Offer retry for transient network errors
+        if (friendlyMsg.toLowerCase().includes('network')) {
+          Alert.alert('Network Error', friendlyMsg, [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Retry',
+              onPress: () => {
+                // small delay to ensure state reset
+                setTimeout(handlePurchase, 300);
+              },
+            },
+          ]);
+        } else {
+          Alert.alert('Purchase Failed', friendlyMsg);
+        }
       }
     } catch (error: any) {
       console.error('Error purchasing subscription:', error);
@@ -671,18 +720,23 @@ const SubscriptionScreen: React.FC = () => {
         </Text>
         
         <View style={styles.legalLinksContainer}>
-          <TouchableOpacity 
-            onPress={() => openExternalLink('https://csfinderapp.com/terms', {
-              whitelistHosts: ['csfinderapp.com']
-            })}
+          <TouchableOpacity
+            onPress={() =>
+              openExternalLink(
+                'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+                { whitelistHosts: ['apple.com'] },
+              )
+            }
           >
             <Text style={styles.legalLink}>Terms of Use</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            onPress={() => openExternalLink('https://csfinderapp.com/Privacy/', {
-              whitelistHosts: ['csfinderapp.com']
-            })}
+
+          <TouchableOpacity
+            onPress={() =>
+              openExternalLink('https://cardshowfinder.app/privacy', {
+                whitelistHosts: ['cardshowfinder.app'],
+              })
+            }
           >
             <Text style={styles.legalLink}>Privacy Policy</Text>
           </TouchableOpacity>
