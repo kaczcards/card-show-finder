@@ -59,7 +59,7 @@ module.exports = {
   description:
     "Discover trading-card shows near you, save favorites, and manage events. " +
     "Auto-renewable MVP Dealer and Show Organizer subscriptions are available. " +
-    "Terms of Use: https://cardshowfinder.app/terms",
+    "Terms of Use: https://csfinderapp.com/terms",
   version: "1.0.4",
   orientation: "portrait",
   icon: "./assets/icon.png",
