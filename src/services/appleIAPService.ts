@@ -2,7 +2,6 @@ import {
   initConnection, 
   endConnection,
   getProducts,
-  getSubscriptions,
   getAvailablePurchases,
   requestPurchase,
   finishTransaction,
@@ -10,12 +9,11 @@ import {
   purchaseErrorListener,
   validateReceiptIos,
   Product,
-  Subscription,
   PurchaseError,
   SubscriptionPurchase,
   ProductPurchase
 } from 'react-native-iap';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import { supabase } from '../supabase';
 import { User } from '../types';
 import { handleNetworkError, handleSupabaseError } from './errorService';
@@ -87,7 +85,7 @@ class AppleIAPService {
    */
   async initialize(): Promise<boolean> {
     if (this.isInitialized) {
-      console.log('[AppleIAPService] Already initialized');
+      console.warn('[AppleIAPService] Already initialized');
       return true;
     }
 
@@ -99,11 +97,11 @@ class AppleIAPService {
 
       // Initialize the connection to the App Store
       await initConnection();
-      console.log('[AppleIAPService] IAP connection initialized');
+      console.warn('[AppleIAPService] IAP connection initialized');
       
       // Set up purchase update listener
       this.purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
-        console.log('[AppleIAPService] Purchase updated:', purchase);
+        console.warn('[AppleIAPService] Purchase updated:', purchase);
         
         try {
           // Finish the transaction immediately to prevent duplicate callbacks
@@ -172,7 +170,7 @@ class AppleIAPService {
       if (products.length === 0) {
         console.warn('[AppleIAPService] No products available');
       } else {
-        console.log('[AppleIAPService] Products retrieved:', products.length);
+        console.warn('[AppleIAPService] Products retrieved:', products.length);
         // Cache the products
         this.cachedProducts = products;
       }
@@ -267,7 +265,7 @@ class AppleIAPService {
         throw new Error('Invalid purchase data');
       }
 
-      console.log('[AppleIAPService] Processing purchase:', productId);
+      console.warn('[AppleIAPService] Processing purchase:', productId);
 
       // Validate the receipt with Apple
       const validationResult = await this.validateReceipt(transactionReceipt);
@@ -308,22 +306,58 @@ class AppleIAPService {
    */
   private async validateReceipt(receipt: string): Promise<{ success: boolean; error?: string }> {
     try {
-      // Validate the receipt with Apple
-      const validation = await validateReceiptIos({
+      /**
+       * ------------------------------------------------------------------
+       * 1. Attempt PRODUCTION validation first
+       * ------------------------------------------------------------------
+       */
+      const prodResult: any = await validateReceiptIos({
         receiptBody: { 'receipt-data': receipt },
-        isTest: __DEV__ // Use sandbox environment for development
+        isTest: false, // always start with production environment
       });
 
-      if (!validation || !validation.receipt) {
-        return { success: false, error: 'Invalid receipt validation response' };
+      // Successful validation in production (status === 0)
+      if (prodResult?.status === 0 && prodResult?.receipt) {
+        return { success: true };
       }
 
-      return { success: true };
-    } catch (error: any) {
-      console.error('[AppleIAPService] Receipt validation error:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Receipt validation failed' 
+      /**
+       * ------------------------------------------------------------------
+       * 2. If we get status 21007 -> sandbox receipt sent to production
+       *    Retry against the sandbox environment
+       * ------------------------------------------------------------------
+       */
+      if (prodResult?.status === 21007) {
+        console.warn(
+          '[AppleIAPService] Production validation returned 21007 – retrying in sandbox'
+        );
+
+        const sandboxResult: any = await validateReceiptIos({
+          receiptBody: { 'receipt-data': receipt },
+          isTest: true,
+        });
+
+        if (sandboxResult?.status === 0 && sandboxResult?.receipt) {
+          return { success: true };
+        }
+
+        // Sandbox also failed – propagate error
+        return {
+          success: false,
+          error: `Sandbox validation failed (status ${sandboxResult?.status ?? 'unknown'})`,
+        };
+      }
+
+      // Any other non-zero status code from production
+      return {
+        success: false,
+        error: `Production validation failed (status ${prodResult?.status ?? 'unknown'})`,
+      };
+    } catch (err: any) {
+      console.error('[AppleIAPService] Receipt validation exception:', err);
+      return {
+        success: false,
+        error: err?.message || 'Receipt validation threw an exception',
       };
     }
   }
@@ -391,7 +425,7 @@ class AppleIAPService {
         throw error;
       }
 
-      console.log('[AppleIAPService] User subscription updated successfully');
+      console.warn('[AppleIAPService] User subscription updated successfully');
     } catch (error) {
       console.error('[AppleIAPService] Failed to update user subscription:', error);
       handleSupabaseError(error, {
@@ -458,12 +492,12 @@ class AppleIAPService {
   /**
    * Check if a user has an active subscription
    */
-  async checkSubscriptionStatus(user: User): Promise<boolean> {
-    if (!user) return false;
+  async checkSubscriptionStatus(_user: User): Promise<boolean> {
+    if (!_user) return false;
     
     // If user has active subscription status and future expiry date
-    if (user.subscriptionStatus === 'active' && user.subscriptionExpiry) {
-      const expiryDate = new Date(user.subscriptionExpiry);
+    if (_user.subscriptionStatus === 'active' && _user.subscriptionExpiry) {
+      const expiryDate = new Date(_user.subscriptionExpiry);
       const now = new Date();
       return expiryDate > now;
     }
@@ -484,11 +518,11 @@ class AppleIAPService {
       const availablePurchases = await getAvailablePurchases();
       
       if (!availablePurchases || availablePurchases.length === 0) {
-        console.log('[AppleIAPService] No purchases to restore');
+        console.warn('[AppleIAPService] No purchases to restore');
         return false;
       }
 
-      console.log('[AppleIAPService] Purchases to restore:', availablePurchases.length);
+      console.warn('[AppleIAPService] Purchases to restore:', availablePurchases.length);
       
       // Process each purchase
       let restoredAny = false;
@@ -527,7 +561,7 @@ class AppleIAPService {
     if (this.isInitialized) {
       endConnection()
         .then(() => {
-          console.log('[AppleIAPService] IAP connection ended');
+          console.warn('[AppleIAPService] IAP connection ended');
         })
         .catch(error => {
           console.error('[AppleIAPService] Error ending IAP connection:', error);

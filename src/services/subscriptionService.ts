@@ -468,7 +468,7 @@ export const renewSubscription = async (
  * @returns Promise with the result of the restoration
  */
 export const restorePurchases = async (
-  userId: string
+  _userId: string
 ): Promise<{ success: boolean, error?: string }> => {
   try {
     // Only available on iOS
