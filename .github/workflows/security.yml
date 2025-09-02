@@ -5,6 +5,10 @@
 #  restoring the original `on:` triggers once the new workflow is
 #  confirmed stable.
 # --------------------------------------------------------------------
+# Manual-only trigger so the workflow no longer runs (and fails) on each push.
+on:
+  workflow_dispatch:
+
 # on:
 #   schedule:
 #     - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight UTC
@@ -26,7 +30,7 @@
 #         default: false
 #         type: boolean
 
-name: Security Scanning (disabled - see security-fixed.yml)
+name: Security Scanning (manual-only; prefer security-fixed.yml)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
