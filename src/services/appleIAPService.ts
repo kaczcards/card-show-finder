@@ -7,6 +7,7 @@ import {
   finishTransaction,
   purchaseUpdatedListener,
   purchaseErrorListener,
+  getReceiptIOS,
   validateReceiptIos,
   Product,
   PurchaseError,
@@ -260,15 +261,44 @@ class AppleIAPService {
   ): Promise<void> {
     try {
       const { productId, transactionId, transactionReceipt } = purchase;
-      
-      if (!productId || !transactionId || !transactionReceipt) {
+
+      // ------------------------------------------------------------------
+      // Basic structural checks – must always have product & transaction
+      // ------------------------------------------------------------------
+      if (!productId || !transactionId) {
         throw new Error('Invalid purchase data');
+      }
+
+      /**
+       * ------------------------------------------------------------------
+       * Ensure we have a receipt to validate.
+       *  • Prefer receipt from the purchase callback.
+       *  • If missing (known edge-case on iOS 17/18 for subscriptions)
+       *    fetch the most recent receipt from the device.
+       * ------------------------------------------------------------------
+       */
+      let receiptToValidate: string | null | undefined = transactionReceipt;
+      if (!receiptToValidate) {
+        try {
+          // Force-refresh the receipt to ensure we always get the latest copy
+          const latest = await getReceiptIOS({ forceRefresh: true }); // may throw if unavailable
+          if (latest) {
+            receiptToValidate = latest;
+            console.warn('[AppleIAPService] Fetched latest receipt via getReceiptIOS');
+          }
+        } catch (fetchErr) {
+          console.warn('[AppleIAPService] getReceiptIOS failed:', fetchErr);
+        }
+      }
+
+      if (!receiptToValidate) {
+        throw new Error('Missing receipt');
       }
 
       console.warn('[AppleIAPService] Processing purchase:', productId);
 
       // Validate the receipt with Apple
-      const validationResult = await this.validateReceipt(transactionReceipt);
+      const validationResult = await this.validateReceipt(receiptToValidate);
       
       if (!validationResult.success) {
         throw new Error(`Receipt validation failed: ${validationResult.error}`);
@@ -285,7 +315,7 @@ class AppleIAPService {
         success: true,
         productId,
         transactionId,
-        receipt: transactionReceipt
+        receipt: receiptToValidate
       });
       
     } catch (error: any) {
@@ -306,6 +336,32 @@ class AppleIAPService {
    */
   private async validateReceipt(receipt: string): Promise<{ success: boolean; error?: string }> {
     try {
+      /**
+       * ------------------------------------------------------------------
+       * 0. Try server-side validation first (Supabase Edge Function)
+       * ------------------------------------------------------------------
+       */
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          'iap-validate-receipt',
+          { body: { receiptData: receipt } },
+        );
+
+        if (!error && data?.success) {
+          return { success: true };
+        }
+        if (error) {
+          console.warn('[AppleIAPService] Edge function validation error:', error);
+        } else {
+          console.warn(
+            '[AppleIAPService] Edge function responded but validation failed – falling back',
+          );
+        }
+      } catch (fnErr) {
+        // Function not deployed / network failure → fall back silently
+        console.warn('[AppleIAPService] Edge function invoke threw – falling back:', fnErr);
+      }
+
       /**
        * ------------------------------------------------------------------
        * 1. Attempt PRODUCTION validation first
