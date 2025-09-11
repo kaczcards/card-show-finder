@@ -1,6 +1,12 @@
 import React from 'react';
 import { TouchableOpacity, Image, StyleSheet, ViewStyle, ImageStyle } from 'react-native';
 
+// ---------------------------------------------------------------------------
+// Local asset references (hoisted so Metro can statically analyse & bundle)
+// ---------------------------------------------------------------------------
+const WHATNOT_LOGO = require('../../../assets/images/social/whatnot-logo.png');
+const EBAY_LOGO    = require('../../../assets/images/social/ebay-logo.png');
+
 /**
  * Supported social media platforms
  */
@@ -53,12 +59,6 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   size = 22, // bump default for better visibility
   activeOpacity = 0.7,
 }) => {
-  // ---------------------------------------------------------------------------
-  // Local asset references (hoisted so Metro can statically analyse & bundle)
-  // ---------------------------------------------------------------------------
-  const WHATNOT_LOGO = require('../../../assets/images/social/whatnot-logo.png');
-  const EBAY_LOGO = require('../../../assets/images/social/ebay-logo.png');
-
   // Map of platform to image source
   const getImageSource = () => {
     switch (platform) {
