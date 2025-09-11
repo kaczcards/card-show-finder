@@ -20,6 +20,8 @@ import _MapView, { Marker, Callout, PROVIDER_GOOGLE as _PROVIDER_GOOGLE, Region 
 import { useAuth } from '../../contexts/AuthContext';
 import { Show, ShowStatus as _ShowStatus, ShowFilters, Coordinates } from '../../types';
 import FilterSheet from '../../components/FilterSheet';
+import { supabase } from '../../supabase';
+import { debounce } from 'lodash';
 import MapShowCluster, { MapShowClusterHandle } from '../../components/MapShowCluster/index';
 import * as locationService from '../../services/locationService';
 import { getPaginatedShows } from '../../services/showService';
@@ -233,7 +235,6 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
 
     setupInitialRegion();
   }, [getUserLocation, user, initialUserLocation]);
-
   // Fetch shows based on location or ZIP code
   const fetchShows = useCallback(async (isRefreshing = false) => {
     if (!userLocation) return;
@@ -299,6 +300,30 @@ console.warn('[MapScreen] Filters being used:', currentFilters);
       }
     }
   }, [filters, userLocation, getUserLocation, user]);
+
+  /* ------------------------------------------------------------------
+   * Realtime – refresh map when the `shows` table changes.
+   * Debounce 2 s so bursts of DB events trigger only one fetch.
+   * ----------------------------------------------------------------*/
+  useEffect(() => {
+    const debounced = debounce(() => {
+      fetchShows();
+    }, 2000);
+
+    const channel = supabase
+      .channel('realtime:shows-map')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shows' },
+        () => debounced(),
+      )
+      .subscribe();
+
+    return () => {
+      debounced.cancel();
+      channel.unsubscribe();
+    };
+  }, [fetchShows]);
 
   // Load shows when screen is focused or when the initial region is set
   useFocusEffect(
