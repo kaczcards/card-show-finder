@@ -663,7 +663,7 @@ console.warn('[ProfileScreen] Forcing display as Dealer for specific user ID');
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() =>
-              openExternalLink('https://csfinderapp.com/terms', {
+              openExternalLink('https://csfinderapp.com/Terms/', {
                 whitelistHosts: ['csfinderapp.com'],
               })
             }
