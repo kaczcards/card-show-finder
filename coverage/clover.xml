@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1757624511333" clover="3.2.0">
-  <project timestamp="1757624511333" name="All files">
-    <metrics statements="9403" coveredstatements="0" conditionals="7612" coveredconditionals="0" methods="1649" coveredmethods="0" elements="18664" coveredelements="0" complexity="0" loc="9403" ncloc="9403" packages="32" files="145" classes="145"/>
+<coverage generated="1757624805825" clover="3.2.0">
+  <project timestamp="1757624805825" name="All files">
+    <metrics statements="9410" coveredstatements="0" conditionals="7622" coveredconditionals="0" methods="1650" coveredmethods="0" elements="18682" coveredelements="0" complexity="0" loc="9410" ncloc="9410" packages="32" files="145" classes="145"/>
     <package name="src">
       <metrics statements="45" coveredstatements="0" conditionals="34" coveredconditionals="0" methods="4" coveredmethods="0"/>
       <file name="debug-unclaimed-shows.ts" path="/Users/kevin/card-show-finder/src/debug-unclaimed-shows.ts">
@@ -5194,9 +5194,9 @@
       </file>
     </package>
     <package name="src.screens.ShowDetail">
-      <metrics statements="50" coveredstatements="0" conditionals="88" coveredconditionals="0" methods="16" coveredmethods="0"/>
+      <metrics statements="57" coveredstatements="0" conditionals="98" coveredconditionals="0" methods="17" coveredmethods="0"/>
       <file name="ShowDetailScreen.tsx" path="/Users/kevin/card-show-finder/src/screens/ShowDetail/ShowDetailScreen.tsx">
-        <metrics statements="50" coveredstatements="0" conditionals="88" coveredconditionals="0" methods="16" coveredmethods="0"/>
+        <metrics statements="57" coveredstatements="0" conditionals="98" coveredconditionals="0" methods="17" coveredmethods="0"/>
         <line num="46" count="0" type="stmt"/>
         <line num="50" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="51" count="0" type="stmt"/>
@@ -5216,37 +5216,44 @@
         <line num="148" count="0" type="stmt"/>
         <line num="149" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="150" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="155" count="0" type="stmt"/>
-        <line num="156" count="0" type="cond" truecount="0" falsecount="4"/>
-        <line num="157" count="0" type="stmt"/>
         <line num="158" count="0" type="stmt"/>
-        <line num="161" count="0" type="stmt"/>
-        <line num="166" count="0" type="stmt"/>
-        <line num="169" count="0" type="stmt"/>
-        <line num="181" count="0" type="stmt"/>
-        <line num="182" count="0" type="stmt"/>
-        <line num="187" count="0" type="stmt"/>
-        <line num="188" count="0" type="stmt"/>
-        <line num="189" count="0" type="stmt"/>
-        <line num="193" count="0" type="stmt"/>
-        <line num="194" count="0" type="stmt"/>
-        <line num="197" count="0" type="stmt"/>
-        <line num="198" count="0" type="stmt"/>
-        <line num="212" count="0" type="stmt"/>
-        <line num="213" count="0" type="stmt"/>
-        <line num="227" count="0" type="stmt"/>
-        <line num="228" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="230" count="0" type="stmt"/>
-        <line num="244" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="245" count="0" type="stmt"/>
-        <line num="254" count="0" type="cond" truecount="0" falsecount="4"/>
-        <line num="255" count="0" type="stmt"/>
-        <line num="262" count="0" type="stmt"/>
-        <line num="270" count="0" type="stmt"/>
-        <line num="280" count="0" type="stmt"/>
-        <line num="338" count="0" type="stmt"/>
-        <line num="350" count="0" type="stmt"/>
-        <line num="357" count="0" type="stmt"/>
+        <line num="159" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="160" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="161" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="162" count="0" type="stmt"/>
+        <line num="163" count="0" type="stmt"/>
+        <line num="167" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="172" count="0" type="stmt"/>
+        <line num="173" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="174" count="0" type="stmt"/>
+        <line num="175" count="0" type="stmt"/>
+        <line num="178" count="0" type="stmt"/>
+        <line num="183" count="0" type="stmt"/>
+        <line num="191" count="0" type="stmt"/>
+        <line num="203" count="0" type="stmt"/>
+        <line num="204" count="0" type="stmt"/>
+        <line num="209" count="0" type="stmt"/>
+        <line num="210" count="0" type="stmt"/>
+        <line num="211" count="0" type="stmt"/>
+        <line num="215" count="0" type="stmt"/>
+        <line num="216" count="0" type="stmt"/>
+        <line num="219" count="0" type="stmt"/>
+        <line num="220" count="0" type="stmt"/>
+        <line num="234" count="0" type="stmt"/>
+        <line num="235" count="0" type="stmt"/>
+        <line num="249" count="0" type="stmt"/>
+        <line num="250" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="252" count="0" type="stmt"/>
+        <line num="266" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="267" count="0" type="stmt"/>
+        <line num="276" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="277" count="0" type="stmt"/>
+        <line num="284" count="0" type="stmt"/>
+        <line num="292" count="0" type="stmt"/>
+        <line num="302" count="0" type="stmt"/>
+        <line num="360" count="0" type="stmt"/>
+        <line num="372" count="0" type="stmt"/>
+        <line num="379" count="0" type="stmt"/>
       </file>
       <file name="index.ts" path="/Users/kevin/card-show-finder/src/screens/ShowDetail/index.ts">
         <metrics statements="0" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
