@@ -1,7 +1,7 @@
 import { 
   initConnection, 
   endConnection,
-  getProducts,
+  getSubscriptions,
   getAvailablePurchases,
   requestPurchase,
   finishTransaction,
@@ -10,6 +10,7 @@ import {
   getReceiptIOS,
   validateReceiptIos,
   Product,
+  Subscription,
   PurchaseError,
   SubscriptionPurchase,
   ProductPurchase
@@ -77,7 +78,7 @@ class AppleIAPService {
   private purchaseUpdateSubscription: any = null;
   private purchaseErrorSubscription: any = null;
   private isInitialized: boolean = false;
-  private cachedProducts: Product[] = [];
+  private cachedProducts: Array<Product | Subscription> = [];
   private purchaseCallbacks: Record<string, (result: PurchaseResult) => void> = {};
 
   /**
@@ -129,7 +130,7 @@ class AppleIAPService {
         console.error('[AppleIAPService] Purchase error:', error);
         
         // Find the product ID from the error if possible
-        const productId = error.productId || '';
+        const productId = (error.productId || '').trim();
         
         // Notify callback with error
         this.notifyPurchaseCallback(productId, {
@@ -154,7 +155,7 @@ class AppleIAPService {
   /**
    * Get all available subscription products
    */
-  async getAvailableProducts(): Promise<Product[]> {
+  async getAvailableProducts(): Promise<Array<Product | Subscription>> {
     try {
       if (!this.isInitialized && !(await this.initialize())) {
         throw new Error('IAP service not initialized');
@@ -166,7 +167,7 @@ class AppleIAPService {
       }
 
       // Get all subscription products
-      const products = await getProducts({ skus: Object.values(SUBSCRIPTION_SKUS) });
+      const products = await getSubscriptions({ skus: Object.values(SUBSCRIPTION_SKUS) });
       
       if (products.length === 0) {
         console.warn('[AppleIAPService] No products available');
@@ -190,7 +191,9 @@ class AppleIAPService {
   /**
    * Get products for a specific account type (dealer or organizer)
    */
-  async getProductsForAccountType(accountType: 'dealer' | 'organizer'): Promise<Product[]> {
+  async getProductsForAccountType(
+    accountType: 'dealer' | 'organizer'
+  ): Promise<Array<Product | Subscription>> {
     const products = await this.getAvailableProducts();
     
     // Filter products by account type
@@ -220,6 +223,16 @@ class AppleIAPService {
 
       if (!userId) {
         throw new Error('User ID is required');
+      }
+
+      // Preflight validation to ensure the product is available from StoreKit
+      const available = await getSubscriptions({ skus: [productId] });
+      if (available.length === 0) {
+        return {
+          success: false,
+          error: 'This product is not currently available for purchase. Please try again later.',
+          productId
+        };
       }
 
       // Create a promise that will be resolved when the purchase completes
@@ -504,7 +517,7 @@ class AppleIAPService {
    */
   private notifyPurchaseCallback(productId: string | undefined, result: PurchaseResult): void {
     // Normalise undefined / null productIds so we always hit a deterministic key
-    const key = productId ?? '';
+    const key = (productId ?? '').trim();
 
     const callback = this.purchaseCallbacks[key];
     if (callback) {
