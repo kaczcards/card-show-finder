@@ -500,24 +500,24 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
 
   // Add zoom controls
   const handleZoom = (zoomIn = true) => {
-    if (mapRef.current && typeof mapRef.current.getMapRef === 'function') {
-      // FixedClusteredMapView exposes getMapRef() which returns the underlying MapView
-      const mapView = mapRef.current.getMapRef();
-      if (mapView) {
-        // Determine zoom factor
-        const factor = zoomIn ? 0.5 : 2; // smaller delta ⇒ zoom-in
+    // Attempt to retrieve the underlying MapView. If getMapRef() is not
+    // implemented for some reason, fall back to using the ref object itself.
+    const mapView = (mapRef.current?.getMapRef?.() ?? mapRef.current) as any;
 
-        // Calculate new region based on current prop `region`
-        const newRegion = {
-          latitude: region.latitude,
-          longitude: region.longitude,
-          latitudeDelta: region.latitudeDelta * factor,
-          longitudeDelta: region.longitudeDelta * factor,
-        };
+    if (mapView && typeof mapView.animateToRegion === 'function') {
+      // Determine zoom factor
+      const factor = zoomIn ? 0.5 : 2; // smaller delta ⇒ zoom-in
 
-        // Animate the map to the new region
-        mapView.animateToRegion(newRegion, 300);
-      }
+      // Calculate new region based on current prop `region`
+      const newRegion = {
+        latitude: region.latitude,
+        longitude: region.longitude,
+        latitudeDelta: region.latitudeDelta * factor,
+        longitudeDelta: region.longitudeDelta * factor,
+      };
+
+      // Animate the map to the new region
+      mapView.animateToRegion(newRegion, 300);
     }
   };
 
@@ -548,7 +548,8 @@ const MapShowCluster = forwardRef<MapShowClusterHandle, MapShowClusterProps>(({
         accessor="coordinates"
         clusterPressMaxChildren={50}
         nodeExtractor={showToPoint}
-        liteMode={Platform.OS === 'android'} // Use LiteMode on Android for better performance
+        /* Disable liteMode so pinch/zoom gestures work on Android */
+        liteMode={false}
       />
       <View style={styles.zoomControls}>
         <TouchableOpacity 
