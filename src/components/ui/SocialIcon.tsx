@@ -50,16 +50,22 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   onPress,
   style,
   iconStyle,
-  size = 20,
+  size = 22, // bump default for better visibility
   activeOpacity = 0.7,
 }) => {
+  // ---------------------------------------------------------------------------
+  // Local asset references (hoisted so Metro can statically analyse & bundle)
+  // ---------------------------------------------------------------------------
+  const WHATNOT_LOGO = require('../../../assets/images/social/whatnot-logo.png');
+  const EBAY_LOGO = require('../../../assets/images/social/ebay-logo.png');
+
   // Map of platform to image source
   const getImageSource = () => {
     switch (platform) {
       case 'whatnot':
-        return require('../../../assets/images/social/whatnot-logo.png');
+        return WHATNOT_LOGO;
       case 'ebay':
-        return require('../../../assets/images/social/ebay-logo.png');
+        return EBAY_LOGO;
       case 'facebook':
         // Fallback to Ionicons for platforms we haven't created custom icons for yet
         return { uri: 'https://cdn.iconscout.com/icon/free/png-256/free-facebook-logo-2019-1597680-1350125.png' };
@@ -68,7 +74,7 @@ const SocialIcon: React.FC<SocialIconProps> = ({
       case 'twitter':
         return { uri: 'https://cdn.iconscout.com/icon/free/png-256/free-twitter-241-721979.png' };
       default:
-        return require('../../../assets/images/social/whatnot-logo.png');
+        return WHATNOT_LOGO;
     }
   };
 
