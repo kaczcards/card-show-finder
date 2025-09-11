@@ -151,6 +151,23 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
     }
   }, [parsedShow, navigation]);
 
+  /**
+   * Helper: determine whether a show is still upcoming.
+   * Uses endDate if available, otherwise startDate.
+   */
+  const isUpcoming = (s: ShowType | null): boolean => {
+    if (!s) return false;
+    const compareDateStr = (s.endDate || s.startDate) as string;
+    if (!compareDateStr) return false;
+    const compareDate = new Date(compareDateStr);
+    return compareDate.getTime() > Date.now();
+  };
+
+  // Label for the attendance button based on show timing
+  const attendanceLabel = isUpcoming(parsedShow)
+    ? 'Mark as Attending'
+    : 'Mark as Attended';
+
   // Handle marking a show as attended
   const handleMarkAsAttended = async () => {
     if (!user || !parsedShow) {
@@ -163,7 +180,12 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
       // This would typically call a service function
       
       // For now, just show a success message
-      Alert.alert("Success", "You've marked this show as attended!");
+      Alert.alert(
+        'Success',
+        isUpcoming(parsedShow)
+          ? "You've marked that you'll attend this show!"
+          : "You've marked this show as attended!"
+      );
       
       // Track this business event in Sentry
       captureMessage(
@@ -326,7 +348,7 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
             onPress={handleMarkAsAttended}
           >
             <Ionicons name="checkmark-circle-outline" size={24} color="white" />
-            <Text style={styles.attendanceButtonText}>Mark as Attended</Text>
+            <Text style={styles.attendanceButtonText}>{attendanceLabel}</Text>
           </TouchableOpacity>
         )}
       </View>
