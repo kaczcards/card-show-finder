@@ -36,6 +36,53 @@ const stockImages = [
 // Always-safe fallback
 const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
 
+/* ------------------------------------------------------------------ */
+/* Helpers – default date range & normalisation                       */
+/* ------------------------------------------------------------------ */
+/**
+ * Returns a 30-day forward-looking date window starting today.
+ */
+const getDefaultDateRange = () => {
+  const start = new Date();
+  const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  return { startDate: start, endDate: end };
+};
+
+/**
+ * Ensures any incoming ShowFilters object has a **forward-looking**
+ * date window.  If the stored dates are stale (or missing) we reset
+ * them to the next 30 days so the Home page always shows upcoming
+ * events.
+ */
+const normalizeDateFilters = (input: ShowFilters): ShowFilters => {
+  const today = new Date();
+  let { startDate, endDate } = input;
+
+  const parsedStart = startDate ? new Date(startDate) : null;
+  const parsedEnd = endDate ? new Date(endDate) : null;
+
+  // Missing end or past-end → reset full window
+  if (!parsedEnd || parsedEnd < today) {
+    const def = getDefaultDateRange();
+    return { ...input, startDate: def.startDate, endDate: def.endDate };
+  }
+
+  // Missing start → today
+  if (!parsedStart) {
+    const def = getDefaultDateRange();
+    return { ...input, startDate: def.startDate, endDate: def.endDate };
+  }
+
+  // Start in past but end in future → shift window to today…today+30
+  if (parsedStart < today && parsedEnd >= today) {
+    const def = getDefaultDateRange();
+    return { ...input, startDate: def.startDate, endDate: def.endDate };
+  }
+
+  // Valid forward-looking range – leave untouched
+  return input;
+};
+
 // Define props interface for HomeScreen
 interface HomeScreenProps {
   customFilters?: ShowFilters;
@@ -87,8 +134,7 @@ const HomeScreen = ({
     // user's home ZIP code.  Users can change this in Filters and the
     // app will remember their last used settings.
     radius: 25,
-    startDate: new Date(),
-    endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+    ...getDefaultDateRange(),
     maxEntryFee: undefined,
     features: [],
     categories: [],
@@ -125,7 +171,8 @@ const HomeScreen = ({
         const stored = await AsyncStorage.getItem(getTempFiltersKey());
         if (stored) {
           const parsed: ShowFilters = JSON.parse(stored);
-          setLocalFilters({ ...defaultFilters, ...parsed });
+          const normalized = normalizeDateFilters({ ...defaultFilters, ...parsed });
+          setLocalFilters(normalized);
         }
       } catch (_e) {
         console.warn('Failed to load stored filters', _e);
@@ -141,6 +188,20 @@ const HomeScreen = ({
       console.warn('Failed to persist filters')
     );
   }, [localFilters, customFilters, getTempFiltersKey]);
+
+  /**
+   * ------------------------------------------------------------------
+   * Normalise date filters whenever authentication state changes.
+   * This guarantees that when a user logs in (or the app starts with
+   * an already-authenticated session) we always default to a valid
+   * “today → +30 days” window unless the parent supplies customFilters.
+   * ------------------------------------------------------------------
+   */
+  useEffect(() => {
+    if (customFilters) return; // parent controls filters
+    setLocalFilters(prev => normalizeDateFilters(prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authState.isAuthenticated]);
 
   // Get stock image based on show index or ID to ensure consistency
   const getStockImage = (index: number, id?: string) => {
@@ -203,7 +264,10 @@ console.warn(`Getting coordinates for zip code: ${authState.user.homeZipCode}`);
         appState.current.match(/inactive|background/) && 
         nextAppState === 'active'
       ) {
-         
+        // Ensure dates are still valid before refreshing
+        if (!customFilters) {
+          setLocalFilters(prev => normalizeDateFilters(prev));
+        }
 console.warn('App has come to the foreground - refreshing data');
         refresh();
       }
@@ -474,6 +538,23 @@ console.warn('App has come to the foreground - refreshing data');
   // Fallback to default radius (_25) if the filter is undefined
   const currentRadius = filters.radius ?? defaultFilters.radius ?? 25;
 
+  /**
+   * Calculate how many days are represented by the current start / end
+   * dates, clamped to ≥ 0 and with sane fallbacks to 30.
+   */
+  const nextDays = (() => {
+    const startMs =
+      filters.startDate !== undefined
+        ? new Date(filters.startDate as any).getTime()
+        : Date.now();
+    const endMs =
+      filters.endDate !== undefined
+        ? new Date(filters.endDate as any).getTime()
+        : startMs + 30 * 24 * 60 * 60 * 1000;
+    const diff = Math.round((endMs - startMs) / (1000 * 60 * 60 * 24));
+    return Math.max(0, Number.isFinite(diff) ? diff : 30);
+  })();
+
   const safeShows = shows.filter(show => {
     // Skip shows without coordinates
     if (!show.coordinates || !effectiveCoords) return false;
@@ -617,7 +698,7 @@ console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${sa
             <View style={styles.activeFilterPill}>
               <Ionicons name="calendar" size={14} color={SECONDARY_COLOR} />
               <Text style={styles.activeFilterText}>
-                Next {Math.round((new Date(filters.endDate as string | Date).getTime() - new Date(filters.startDate as string | Date).getTime()) / (1000 * 60 * 60 * 24))} days
+                Next {nextDays} days
               </Text>
             </View>
           </View>
