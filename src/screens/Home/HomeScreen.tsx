@@ -200,7 +200,6 @@ const HomeScreen = ({
   useEffect(() => {
     if (customFilters) return; // parent controls filters
     setLocalFilters(prev => normalizeDateFilters(prev));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authState.isAuthenticated]);
 
   // Get stock image based on show index or ID to ensure consistency
