@@ -198,6 +198,20 @@ export const getSubscriptionDetails = (user: User): {
 };
 
 /**
+ * Narrow a `Product | Subscription` object to the shape that contains
+ * price-related fields.  React-Native-IAP’s `SubscriptionAndroid` omits
+ * these, which is why we need a guard when compiling against the union.
+ */
+const hasPriceFields = (
+  p: any,
+): p is { price: string; localizedPrice: string; currency: string } =>
+  p &&
+  typeof p === 'object' &&
+  'price' in p &&
+  'localizedPrice' in p &&
+  'currency' in p;
+
+/**
  * Get available Apple IAP products for a specific account type
  * @param accountType The account type to get products for
  * @returns Promise with formatted product information
@@ -226,15 +240,23 @@ export const getAvailableAppleProducts = async (
     const products = await AppleIAPService.getProductsForAccountType(accountType);
     
     // Format the products for display
-    return products.map(product => ({
-      id: product.productId,
-      title: product.title,
-      description: product.description,
-      price: product.price,
-      localizedPrice: product.localizedPrice,
-      currency: product.currency,
-      planId: PRODUCT_TO_PLAN_MAP[product.productId] || ''
-    }));
+    return products.map((product) => {
+      const price = hasPriceFields(product) ? product.price : '';
+      const localizedPrice = hasPriceFields(product)
+        ? product.localizedPrice
+        : '';
+      const currency = hasPriceFields(product) ? product.currency : '';
+
+      return {
+        id: product.productId,
+        title: product.title,
+        description: product.description,
+        price,
+        localizedPrice,
+        currency,
+        planId: PRODUCT_TO_PLAN_MAP[product.productId] || '',
+      };
+    });
   } catch (error) {
     console.error('[subscriptionService] Error getting Apple products:', error);
     return [];
