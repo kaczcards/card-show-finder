@@ -14,6 +14,7 @@ import FilterPresetModal from '../../components/FilterPresetModal';
 import { ShowFilters, Coordinates } from '../../types';
 import { useUnifiedInfiniteShows } from '../../hooks';
 import { supabase } from '../../supabase';
+import { debounce } from 'lodash';
 
 // Constants
 const PRIMARY_COLOR = '#FF6A00';   // Orange
@@ -295,6 +296,38 @@ console.warn('App has come to the foreground - refreshing data');
     ...filters,
     enabled: true // Always enable the query, even without coordinates
   });
+
+  /**
+   * ------------------------------------------------------------------
+   * Realtime subscription – invalidate show queries when the `shows`
+   * table changes.  We debounce to 2 seconds so a burst of INSERT /
+   * UPDATE / DELETE events only triggers one React-Query refresh.
+   * ------------------------------------------------------------------
+   */
+  useEffect(() => {
+    // Debounced refresh (2 s)
+    const debounced = debounce(() => {
+      refresh();
+    }, 2000);
+
+    // Subscribe to ALL changes on public.shows
+    const channel = supabase
+      .channel('realtime:shows-home')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shows' },
+        () => {
+          debounced();
+        }
+      )
+      .subscribe();
+
+    // Cleanup on unmount
+    return () => {
+      debounced.cancel();
+      channel.unsubscribe();
+    };
+  }, [refresh]);
 
   /* ------------------------------------------------------------------
    * Debugging – log coordinate / results changes
