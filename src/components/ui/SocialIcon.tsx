@@ -74,14 +74,15 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   const renderIcon = () => {
     if (platform === 'whatnot') {
       return (
-        <Svg width={size} height={size} viewBox="0 0 20 20">
-          <Path
-            fill="#FF001F"
-            d="M3.5,4h2.5c0.3,0,0.5,0.2,0.6,0.4l2.4,7.2l2.4-7.2C11.5,4.2,11.7,4,12,4h2.5c0.3,0,0.5,0.2,0.5,0.5v11
-              c0,0.3-0.2,0.5-0.5,0.5h-1.8c-0.3,0-0.5-0.2-0.5-0.5v-6.1L10.7,14c-0.1,0.3-0.3,0.4-0.6,0.4h-0.2c-0.3,0-0.5-0.2-0.6-0.4L7.8,9.4
-              v6.1c0,0.3-0.2,0.5-0.5,0.5H5.5C5.2,16,5,15.8,5,15.5v-11C5,4.2,5.2,4,3.5,4z"
-          />
-        </Svg>
+        <Image
+          source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Whatnot_logo.png' }}
+          style={[
+            styles.iconImage,
+            { width: size, height: size },
+            iconStyle,
+          ]}
+          resizeMode="contain"
+        />
       );
     }
 
