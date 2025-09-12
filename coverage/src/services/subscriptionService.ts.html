@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/181</span>
+                <span class='fraction'>0/186</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/167</span>
+                <span class='fraction'>0/178</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/21</span>
+                <span class='fraction'>0/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/166</span>
+                <span class='fraction'>0/172</span>
             </div>
         
             
@@ -745,7 +745,29 @@
 <a name='L680'></a><a href='#L680'>680</a>
 <a name='L681'></a><a href='#L681'>681</a>
 <a name='L682'></a><a href='#L682'>682</a>
-<a name='L683'></a><a href='#L683'>683</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L683'></a><a href='#L683'>683</a>
+<a name='L684'></a><a href='#L684'>684</a>
+<a name='L685'></a><a href='#L685'>685</a>
+<a name='L686'></a><a href='#L686'>686</a>
+<a name='L687'></a><a href='#L687'>687</a>
+<a name='L688'></a><a href='#L688'>688</a>
+<a name='L689'></a><a href='#L689'>689</a>
+<a name='L690'></a><a href='#L690'>690</a>
+<a name='L691'></a><a href='#L691'>691</a>
+<a name='L692'></a><a href='#L692'>692</a>
+<a name='L693'></a><a href='#L693'>693</a>
+<a name='L694'></a><a href='#L694'>694</a>
+<a name='L695'></a><a href='#L695'>695</a>
+<a name='L696'></a><a href='#L696'>696</a>
+<a name='L697'></a><a href='#L697'>697</a>
+<a name='L698'></a><a href='#L698'>698</a>
+<a name='L699'></a><a href='#L699'>699</a>
+<a name='L700'></a><a href='#L700'>700</a>
+<a name='L701'></a><a href='#L701'>701</a>
+<a name='L702'></a><a href='#L702'>702</a>
+<a name='L703'></a><a href='#L703'>703</a>
+<a name='L704'></a><a href='#L704'>704</a>
+<a name='L705'></a><a href='#L705'>705</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -952,6 +974,20 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -974,6 +1010,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1627,6 +1671,20 @@ export const getSubscriptionDetails = <span class="cstat-no" title="statement no
 };
 &nbsp;
 /**
+ * Narrow a `Product | Subscription` object to the shape that contains
+ * price-related fields.  React-Native-IAP’s `SubscriptionAndroid` omits
+ * these, which is why we need a guard when compiling against the union.
+ */
+const hasPriceFields = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span></span>
+  p: any,
+): p is { price: string; localizedPrice: string; currency: string } =&gt;
+<span class="cstat-no" title="statement not covered" >  p &amp;&amp;</span>
+  typeof p === 'object' &amp;&amp;
+  'price' in p &amp;&amp;
+  'localizedPrice' in p &amp;&amp;
+  'currency' in p;
+&nbsp;
+/**
  * Get available Apple IAP products for a specific account type
  * @param accountType The account type to get products for
  * @returns Promise with formatted product information
@@ -1655,15 +1713,23 @@ export const getAvailableAppleProducts = <span class="cstat-no" title="statement
     const products = <span class="cstat-no" title="statement not covered" >await AppleIAPService.getProductsForAccountType(accountType);</span>
     
     // Format the products for display
-<span class="cstat-no" title="statement not covered" >    return products.map(<span class="fstat-no" title="function not covered" >pr</span>oduct =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
-      id: product.productId,
-      title: product.title,
-      description: product.description,
-      price: product.price,
-      localizedPrice: product.localizedPrice,
-      currency: product.currency,
-      planId: PRODUCT_TO_PLAN_MAP[product.productId] || ''
-    }));
+<span class="cstat-no" title="statement not covered" >    return products.map(<span class="fstat-no" title="function not covered" >(p</span>roduct) =&gt; {</span>
+      const price = <span class="cstat-no" title="statement not covered" >hasPriceFields(product) ? product.price : '';</span>
+      const localizedPrice = <span class="cstat-no" title="statement not covered" >hasPriceFields(product)</span>
+        ? product.localizedPrice
+        : '';
+      const currency = <span class="cstat-no" title="statement not covered" >hasPriceFields(product) ? product.currency : '';</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      return {</span>
+        id: product.productId,
+        title: product.title,
+        description: product.description,
+        price,
+        localizedPrice,
+        currency,
+        planId: PRODUCT_TO_PLAN_MAP[product.productId] || '',
+      };
+    });
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    console.error('[subscriptionService] Error getting Apple products:', error);</span>
 <span class="cstat-no" title="statement not covered" >    return [];</span>
@@ -2116,7 +2182,7 @@ export const canAccessOrganizerFeatures = <span class="cstat-no" title="statemen
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-02T15:12:32.512Z
+                at 2025-09-12T18:27:58.845Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

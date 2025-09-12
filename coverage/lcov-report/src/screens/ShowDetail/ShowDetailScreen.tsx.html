@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/54</span>
+                <span class='fraction'>0/63</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/88</span>
+                <span class='fraction'>0/98</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/50</span>
+                <span class='fraction'>0/57</span>
             </div>
         
             
@@ -507,7 +507,29 @@
 <a name='L442'></a><a href='#L442'>442</a>
 <a name='L443'></a><a href='#L443'>443</a>
 <a name='L444'></a><a href='#L444'>444</a>
-<a name='L445'></a><a href='#L445'>445</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L445'></a><a href='#L445'>445</a>
+<a name='L446'></a><a href='#L446'>446</a>
+<a name='L447'></a><a href='#L447'>447</a>
+<a name='L448'></a><a href='#L448'>448</a>
+<a name='L449'></a><a href='#L449'>449</a>
+<a name='L450'></a><a href='#L450'>450</a>
+<a name='L451'></a><a href='#L451'>451</a>
+<a name='L452'></a><a href='#L452'>452</a>
+<a name='L453'></a><a href='#L453'>453</a>
+<a name='L454'></a><a href='#L454'>454</a>
+<a name='L455'></a><a href='#L455'>455</a>
+<a name='L456'></a><a href='#L456'>456</a>
+<a name='L457'></a><a href='#L457'>457</a>
+<a name='L458'></a><a href='#L458'>458</a>
+<a name='L459'></a><a href='#L459'>459</a>
+<a name='L460'></a><a href='#L460'>460</a>
+<a name='L461'></a><a href='#L461'>461</a>
+<a name='L462'></a><a href='#L462'>462</a>
+<a name='L463'></a><a href='#L463'>463</a>
+<a name='L464'></a><a href='#L464'>464</a>
+<a name='L465'></a><a href='#L465'>465</a>
+<a name='L466'></a><a href='#L466'>466</a>
+<a name='L467'></a><a href='#L467'>467</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -661,6 +683,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -673,6 +712,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1104,6 +1148,23 @@ const ShowDetailScreen: React.FC&lt;ShowDetailProps&gt; = <span class="cstat-no"
     }
   }, [parsedShow, navigation]);
 &nbsp;
+  /**
+   * Helper: determine whether a show is still upcoming.
+   * Uses endDate if available, otherwise startDate.
+   */
+  const isUpcoming = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>: ShowType | null): boolean =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (!s) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+    const compareDateStr = <span class="cstat-no" title="statement not covered" >(s.endDate || s.startDate) as string;</span>
+<span class="cstat-no" title="statement not covered" >    if (!compareDateStr) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+    const compareDate = <span class="cstat-no" title="statement not covered" >new Date(compareDateStr);</span>
+<span class="cstat-no" title="statement not covered" >    return compareDate.getTime() &gt; Date.now();</span>
+  };
+&nbsp;
+  // Label for the attendance button based on show timing
+  const attendanceLabel = <span class="cstat-no" title="statement not covered" >isUpcoming(parsedShow)</span>
+    ? 'Mark as Attending'
+    : 'Mark as Attended';
+&nbsp;
   // Handle marking a show as attended
   const handleMarkAsAttended = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!user || !parsedShow) {</span>
@@ -1116,7 +1177,12 @@ const ShowDetailScreen: React.FC&lt;ShowDetailProps&gt; = <span class="cstat-no"
       // This would typically call a service function
       
       // For now, just show a success message
-<span class="cstat-no" title="statement not covered" >      Alert.alert("Success", "You've marked this show as attended!");</span>
+<span class="cstat-no" title="statement not covered" >      Alert.alert(</span>
+        'Success',
+        isUpcoming(parsedShow)
+          ? "You've marked that you'll attend this show!"
+          : "You've marked this show as attended!"
+      );
       
       // Track this business event in Sentry
 <span class="cstat-no" title="statement not covered" >      captureMessage(</span>
@@ -1279,7 +1345,7 @@ const ShowDetailScreen: React.FC&lt;ShowDetailProps&gt; = <span class="cstat-no"
             onPress={handleMarkAsAttended}
           &gt;
             &lt;Ionicons name="checkmark-circle-outline" size={24} color="white" /&gt;
-            &lt;Text style={styles.attendanceButtonText}&gt;Mark as Attended&lt;/Text&gt;
+            &lt;Text style={styles.attendanceButtonText}&gt;{attendanceLabel}&lt;/Text&gt;
           &lt;/TouchableOpacity&gt;
         )}
       &lt;/View&gt;
@@ -1402,7 +1468,7 @@ export default ShowDetailScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-02T15:12:30.591Z
+                at 2025-09-12T18:27:58.673Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

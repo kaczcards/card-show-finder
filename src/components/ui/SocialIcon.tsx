@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Image, StyleSheet, ViewStyle, ImageStyle } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 
 /**
  * Supported social media platforms
@@ -50,16 +51,12 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   onPress,
   style,
   iconStyle,
-  size = 20,
+  size = 22, // bump default for better visibility
   activeOpacity = 0.7,
 }) => {
-  // Map of platform to image source
+  // Map of platform to image source (for remote/png icons)
   const getImageSource = () => {
     switch (platform) {
-      case 'whatnot':
-        return require('../../../assets/images/social/whatnot-logo.png');
-      case 'ebay':
-        return require('../../../assets/images/social/ebay-logo.png');
       case 'facebook':
         // Fallback to Ionicons for platforms we haven't created custom icons for yet
         return { uri: 'https://cdn.iconscout.com/icon/free/png-256/free-facebook-logo-2019-1597680-1350125.png' };
@@ -68,26 +65,49 @@ const SocialIcon: React.FC<SocialIconProps> = ({
       case 'twitter':
         return { uri: 'https://cdn.iconscout.com/icon/free/png-256/free-twitter-241-721979.png' };
       default:
-        return require('../../../assets/images/social/whatnot-logo.png');
+        // Fallback to Instagram icon since Whatnot/eBay are rendered via inline SVG
+        return { uri: 'https://cdn.iconscout.com/icon/free/png-256/free-instagram-1868978-1583142.png' };
     }
   };
 
-  // Map of platform to brand color
-  const _getPlatformColor = (): string => {
-    switch (platform) {
-      case 'whatnot':
-        return '#FF001F';
-      case 'ebay':
-        return '#E53238';
-      case 'facebook':
-        return '#1877F2';
-      case 'instagram':
-        return '#C13584';
-      case 'twitter':
-        return '#1DA1F2';
-      default:
-        return '#FF001F';
+  // Render icon node (SVG for Whatnot/eBay, Image for others)
+  const renderIcon = () => {
+    if (platform === 'whatnot') {
+      return (
+        <Image
+          source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Whatnot_logo.png' }}
+          style={[
+            styles.iconImage,
+            { width: size, height: size },
+            iconStyle,
+          ]}
+          resizeMode="contain"
+        />
+      );
     }
+
+    if (platform === 'ebay') {
+      return (
+        <SvgUri
+          uri="https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg"
+          width={size}
+          height={size}
+        />
+      );
+    }
+
+    // default image usage
+    return (
+      <Image
+        source={getImageSource()}
+        style={[
+          styles.iconImage,
+          { width: size, height: size },
+          iconStyle,
+        ]}
+        resizeMode="contain"
+      />
+    );
   };
 
   return (
@@ -98,15 +118,7 @@ const SocialIcon: React.FC<SocialIconProps> = ({
       accessibilityLabel={`${platform} link`}
       accessibilityRole="button"
     >
-      <Image
-        source={getImageSource()}
-        style={[
-          styles.iconImage,
-          { width: size, height: size },
-          iconStyle,
-        ]}
-        resizeMode="contain"
-      />
+      {renderIcon()}
     </TouchableOpacity>
   );
 };
