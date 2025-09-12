@@ -74,16 +74,10 @@ const SocialIcon: React.FC<SocialIconProps> = ({
   const renderIcon = () => {
     if (platform === 'whatnot') {
       return (
-        <Image
-          source={{
-            uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Whatnot_logo.png/64px-Whatnot_logo.png',
-          }}
-          style={[
-            styles.iconImage,
-            { width: size, height: size },
-            iconStyle,
-          ]}
-          resizeMode="contain"
+        <SvgUri
+          uri="https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/svg/whatnot.svg"
+          width={size}
+          height={size}
         />
       );
     }
