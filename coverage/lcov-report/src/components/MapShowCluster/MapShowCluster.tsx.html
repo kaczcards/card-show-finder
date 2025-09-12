@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/150</span>
+                <span class='fraction'>0/149</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/144</span>
+                <span class='fraction'>0/143</span>
             </div>
         
             
@@ -753,7 +753,8 @@
 <a name='L688'></a><a href='#L688'>688</a>
 <a name='L689'></a><a href='#L689'>689</a>
 <a name='L690'></a><a href='#L690'>690</a>
-<a name='L691'></a><a href='#L691'>691</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L691'></a><a href='#L691'>691</a>
+<a name='L692'></a><a href='#L692'>692</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1255,9 +1256,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1275,8 +1277,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1945,24 +1947,24 @@ const MapShowCluster = <span class="cstat-no" title="statement not covered" >for
 &nbsp;
   // Add zoom controls
   const handleZoom = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(z</span>oomIn = <span class="branch-0 cbranch-no" title="branch not covered" >true)</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (mapRef.current &amp;&amp; typeof mapRef.current.getMapRef === 'function') {</span>
-      // FixedClusteredMapView exposes getMapRef() which returns the underlying MapView
-      const mapView = <span class="cstat-no" title="statement not covered" >mapRef.current.getMapRef();</span>
-<span class="cstat-no" title="statement not covered" >      if (mapView) {</span>
-        // Determine zoom factor
-        const factor = <span class="cstat-no" title="statement not covered" >zoomIn ? 0.5 : 2;</span> // smaller delta ⇒ zoom-in
+    // Attempt to retrieve the underlying MapView. If getMapRef() is not
+    // implemented for some reason, fall back to using the ref object itself.
+    const mapView = <span class="cstat-no" title="statement not covered" >(mapRef.current?.getMapRef?.() ?? mapRef.current) as any;</span>
 &nbsp;
-        // Calculate new region based on current prop `region`
-        const newRegion = <span class="cstat-no" title="statement not covered" >{</span>
-          latitude: region.latitude,
-          longitude: region.longitude,
-          latitudeDelta: region.latitudeDelta * factor,
-          longitudeDelta: region.longitudeDelta * factor,
-        };
+<span class="cstat-no" title="statement not covered" >    if (mapView &amp;&amp; typeof mapView.animateToRegion === 'function') {</span>
+      // Determine zoom factor
+      const factor = <span class="cstat-no" title="statement not covered" >zoomIn ? 0.5 : 2;</span> // smaller delta ⇒ zoom-in
 &nbsp;
-        // Animate the map to the new region
-<span class="cstat-no" title="statement not covered" >        mapView.animateToRegion(newRegion, 300);</span>
-      }
+      // Calculate new region based on current prop `region`
+      const newRegion = <span class="cstat-no" title="statement not covered" >{</span>
+        latitude: region.latitude,
+        longitude: region.longitude,
+        latitudeDelta: region.latitudeDelta * factor,
+        longitudeDelta: region.longitudeDelta * factor,
+      };
+&nbsp;
+      // Animate the map to the new region
+<span class="cstat-no" title="statement not covered" >      mapView.animateToRegion(newRegion, 300);</span>
     }
   };
 &nbsp;
@@ -1993,7 +1995,8 @@ const MapShowCluster = <span class="cstat-no" title="statement not covered" >for
         accessor="coordinates"
         clusterPressMaxChildren={50}
         nodeExtractor={showToPoint}
-        liteMode={Platform.OS === 'android'} // Use LiteMode on Android for better performance
+        /* Disable liteMode so pinch/zoom gestures work on Android */
+        liteMode={false}
       /&gt;
       &lt;View style={styles.zoomControls}&gt;
         &lt;TouchableOpacity 
@@ -2140,7 +2143,7 @@ export default MapShowCluster;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-02T15:12:30.591Z
+                at 2025-09-12T18:27:58.673Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -212,10 +212,14 @@ export const useShowsAdvancedQuery = (
       }
     },
     // options object continuation
-      // Default stale time: 5 minutes for show data
-      staleTime: 5 * 60 * 1000,
+      // Default stale time: 15 minutes for show data (Realtime now keeps data fresh)
+      staleTime: 15 * 60 * 1000,
       // Default cache time: 10 minutes (renamed to gcTime in v5)
       gcTime: 10 * 60 * 1000,
+      // Disable focus refetch (Realtime handles updates)
+      refetchOnWindowFocus: false,
+      // Do refetch when connection comes back after offline
+      refetchOnReconnect: true,
       // Merge with user-provided options
       ...options
   });
@@ -373,9 +377,14 @@ export const useShowsInfiniteQuery = (
         return lastPage.pagination.currentPage + 1;
       },
       // Default stale time: 5 minutes for show data
-      staleTime: 5 * 60 * 1000,
+      // Default stale time: 15 minutes (Realtime handles interim updates)
+      staleTime: 15 * 60 * 1000,
       // Default cache time: 10 minutes (renamed to gcTime in v5)
       gcTime: 10 * 60 * 1000,
+      // Prevent extra refetches on window focus
+      refetchOnWindowFocus: false,
+      // Refresh when connection is restored
+      refetchOnReconnect: true,
       // Merge with user-provided options
       ...options
   });
