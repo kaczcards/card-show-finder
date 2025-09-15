@@ -109,6 +109,30 @@ const normalizeAddress = (str?: string): string => {
 };
 
 /**
+ * Return true when the given `endDate` is today **or in the future**
+ * regardless of the timestamp component (treat the show as lasting
+ * until 23:59:59 on its calendar day).
+ */
+const isEndDateOnOrAfterToday = (endDate: string | Date): boolean => {
+  try {
+    const d = new Date(endDate as any);
+    if (!isFinite(d.getTime())) return false;
+    const endOfDay = new Date(
+      d.getFullYear(),
+      d.getMonth(),
+      d.getDate(),
+      23,
+      59,
+      59,
+      999,
+    );
+    return endOfDay >= new Date();
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Convert a raw Supabase row into an app `Show` object.
  */
 /* ------------------------------------------------------------------ */
@@ -350,24 +374,14 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
             );
           }
           
-          filteredData = filteredData.filter(show => {
-            // Parse the end date, ensuring timezone issues don't cause off-by-one errors
-            const showEndDate = new Date(show.end_date);
-            const isValid = showEndDate >= today;
-            
-            // Debug logging specifically for our target show
-            if (show.id === DEBUG_SHOW_ID) {
-              if (__DEV__)
-              console.warn(
-                `[showService][DEBUG_SHOW] Filtering decision: show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
-              );
-            }
-            
-            return isValid;
-          });
-          
+          filteredData = filteredData.filter(show =>
+            isEndDateOnOrAfterToday(show.end_date),
+          );
+
           if (__DEV__)
-          console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+            console.warn(
+              `[showService] Date-only filter applied. ${filteredData.length} shows remaining.`,
+            );
         }
         
         // Filter by max entry fee if specified
@@ -496,24 +510,14 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
             );
           }
           
-          filteredData = filteredData.filter(show => {
-            // Parse the end date, ensuring timezone issues don't cause off-by-one errors
-            const showEndDate = new Date(show.end_date);
-            const isValid = showEndDate >= today;
-            
-            // Debug logging specifically for our target show
-            if (show.id === DEBUG_SHOW_ID) {
-              if (__DEV__)
-              console.warn(
-                `[showService][DEBUG_SHOW] Filtering decision (find_filtered): show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
-              );
-            }
-            
-            return isValid;
-          });
-          
+          filteredData = filteredData.filter(show =>
+            isEndDateOnOrAfterToday(show.end_date),
+          );
+
           if (__DEV__)
-          console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+            console.warn(
+              `[showService] Date-only filter applied. ${filteredData.length} shows remaining.`,
+            );
         }
         
         /* ----- DEBUG: Target show after filters (find_filtered_shows) ----- */
@@ -565,15 +569,14 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         
         // Ensure we're not showing past shows
         if (Array.isArray(filteredData)) {
-          const today = new Date();
-          filteredData = filteredData.filter(show => {
-            // Parse the end date, ensuring timezone issues don't cause off-by-one errors
-            const showEndDate = new Date(show.end_date);
-            return showEndDate >= today;
-          });
-          
+          filteredData = filteredData.filter(show =>
+            isEndDateOnOrAfterToday(show.end_date),
+          );
+
           if (__DEV__)
-          console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+            console.warn(
+              `[showService] Date-only filter applied. ${filteredData.length} shows remaining.`,
+            );
         }
         
         // Apply date range filtering
@@ -649,23 +652,14 @@ export const getShows = async (filters: ShowFilters = {}): Promise<Show[]> => {
         );
       }
       
-      filteredData = filteredData.filter(show => {
-        // Parse the end date, ensuring timezone issues don't cause off-by-one errors
-        const showEndDate = new Date(show.end_date);
-        const isValid = showEndDate >= today;
-        
-        // Debug logging specifically for our target show
-        if (show.id === DEBUG_SHOW_ID) {
-          console.warn(
-            `[showService][DEBUG_SHOW] Filtering decision (basic query): show.end_date (${showEndDate.toISOString()}) ${isValid ? '>=' : '<'} today (${today.toISOString()}) => ${isValid ? 'KEEP' : 'FILTER OUT'}`
-          );
-        }
-        
-        return isValid;
-      });
-      
+      filteredData = filteredData.filter(show =>
+        isEndDateOnOrAfterToday(show.end_date),
+      );
+
       if (__DEV__)
-      console.warn(`[showService] Filtered out past shows. ${filteredData.length} shows remaining.`);
+        console.warn(
+          `[showService] Date-only filter applied. ${filteredData.length} shows remaining.`,
+        );
     }
     
     return Array.isArray(filteredData) ? filteredData.map(mapDbShowToAppShow) : [];
@@ -1082,8 +1076,14 @@ const getDirectPaginatedShows = async (
           }
         }
         
-        // Skip shows without valid coordinates
-        if (!showCoords) return false;
+        // Include shows without coordinates (distance unknown)
+        if (!showCoords) {
+          if (__DEV__)
+            console.warn(
+              '[showService] Including show without coordinates (distance unknown)',
+            );
+          return true;
+        }
         
         const distance = calculateDistanceBetweenCoordinates(
           { latitude, longitude },
@@ -1395,16 +1395,15 @@ export const getUpcomingShows = async (params: {
     // Ensure we're not showing past shows
     let filteredData = showRows;
     if (Array.isArray(filteredData)) {
-      const today = new Date();
-      filteredData = filteredData.filter(show => {
-        // Parse the end date, ensuring timezone issues don't cause off-by-one errors
-        const showEndDate = new Date(show.end_date);
-        return showEndDate >= today;
-      });
-      
+      filteredData = filteredData.filter(show =>
+        isEndDateOnOrAfterToday(show.end_date),
+      );
+
       if (__DEV__)
         console.warn(
-          `[showService] Filtered out past shows. ${filteredData.length} shows remaining.`,
+          `[showService] Date-only filter removed ${
+            (showRows?.length || 0) - filteredData.length
+          } past attended show(s). ${filteredData.length} remain.`,
         );
     }
 
