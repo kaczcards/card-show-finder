@@ -588,8 +588,8 @@ console.warn('App has come to the foreground - refreshing data');
   })();
 
   const safeShows = shows.filter(show => {
-    // Skip shows without coordinates
-    if (!show.coordinates || !effectiveCoords) return false;
+    // If no coordinates, keep the show (distance unknown – include)
+    if (!show.coordinates || !effectiveCoords) return true;
     
     const distance = calculateDistanceBetweenCoordinates(
       effectiveCoords,
@@ -601,8 +601,8 @@ console.warn('App has come to the foreground - refreshing data');
 
   // Also apply the same filtering to emergency show list if needed
   const safeEmergencyShows = emergencyShowList.filter(show => {
-    // Skip shows without coordinates
-    if (!show.coordinates || !effectiveCoords) return false;
+    // If no coordinates, keep the show (distance unknown – include)
+    if (!show.coordinates || !effectiveCoords) return true;
     
     const distance = calculateDistanceBetweenCoordinates(
       effectiveCoords,
@@ -615,11 +615,21 @@ console.warn('App has come to the foreground - refreshing data');
   // Log the filtering results for debugging
   useEffect(() => {
     if (shows.length > 0) {
-       
-console.warn(`[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles`);
-      
-      if (shows.length !== safeShows.length) {
-        console.warn(`[HomeScreen] Filtered out ${shows.length - safeShows.length} shows that were outside the ${currentRadius} mile radius!`);
+      const unknownCount = safeShows.filter(s => !s.coordinates).length;
+      console.warn(
+        `[HomeScreen] Client-side filtering: ${shows.length} shows → ${safeShows.length} shows within ${filters.radius} miles` +
+          (unknownCount > 0
+            ? ` (included ${unknownCount} show${
+                unknownCount === 1 ? '' : 's'
+              } with unknown distance)`
+            : ''),
+      );
+
+      const outsideRadius = shows.length - safeShows.length + unknownCount;
+      if (outsideRadius > 0) {
+        console.warn(
+          `[HomeScreen] Filtered out ${outsideRadius} shows that were outside the ${currentRadius} mile radius (unknown-distance shows are kept).`,
+        );
       }
     }
   }, [shows.length, safeShows.length, currentRadius]);
