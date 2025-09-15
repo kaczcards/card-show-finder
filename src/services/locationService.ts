@@ -78,7 +78,16 @@ export const geocodeAddress = async (address: string): Promise<Coordinates | nul
       longitude: results[0].longitude,
     };
   } catch (error: any) {
-    console.error('Error geocoding address:', error);
+    // On-device geocoding can legitimately fail (incomplete address,
+    // no network, provider quota, etc.).  Surface it in development
+    // builds but keep production logs clean.
+    if (__DEV__) {
+      console.warn(
+        '[locationService] geocodeAsync failed for address',
+        address,
+        error?.message || error,
+      );
+    }
     return null;
   }
 };

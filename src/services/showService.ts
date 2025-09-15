@@ -1002,6 +1002,13 @@ const getDirectPaginatedShows = async (
     }
 
     /* ------------------------------------------------------------------
+     * Limit total on-device geocode requests so we don't hammer
+     * the provider on large pages.
+     * ------------------------------------------------------------------ */
+    let geocodeAttempts = 0;
+    const MAX_GEOCODE_ATTEMPTS = 5;
+
+    /* ------------------------------------------------------------------
      * 🔍  Address-level geocoding for rows still missing coordinates
      * ------------------------------------------------------------------
      * At this point ‑ filteredData may still contain shows with no lat/lng
@@ -1030,11 +1037,24 @@ const getDirectPaginatedShows = async (
       }
 
       // Prefer full street address; fall back to "City, ST"
-      const addr = show.address || show.location;
-      if (!addr) continue;
+      const rawAddr = show.address || show.location;
+      const addr =
+        typeof rawAddr === 'string' ? rawAddr.trim() : '';
+      // Skip clearly invalid candidate strings
+      if (!addr || addr.length < 4 || !/[A-Za-z]/.test(addr)) continue;
+
+      // Stop if we've reached our per-page geocode quota
+      if (geocodeAttempts >= MAX_GEOCODE_ATTEMPTS) continue;
+
+      // Many plain city/state strings work better with country hint
+      let candidate = addr;
+      if (!/\b(usa|united states)\b/i.test(candidate)) {
+        candidate = `${candidate}, USA`;
+      }
 
       try {
-        const geo = await getAddressCoordinatesWithCache(addr);
+        geocodeAttempts++;
+        const geo = await getAddressCoordinatesWithCache(candidate);
         if (geo) {
           // Assign so later distance filter can use them
           show.latitude = geo.latitude;
@@ -1042,7 +1062,7 @@ const getDirectPaginatedShows = async (
           if (__DEV__)
             console.warn('[showService] Geocoded missing coords from address', {
               id: show.id,
-              address: addr,
+              address: candidate,
               coords: geo,
             });
         }
