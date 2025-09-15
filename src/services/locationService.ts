@@ -114,6 +114,62 @@ export const reverseGeocodeCoordinates = async (
 const ZIP_CACHE_KEY_PREFIX = '@zip_cache:';
 
 /**
+ * AsyncStorage key prefix for caching **address → coordinates** look-ups
+ * (used when a show row is missing lat/lng but has a textual address).
+ */
+const ADDRESS_CACHE_KEY_PREFIX = '@addr_cache:';
+
+/**
+ * Normalise an address so similar strings hit the same cache key.
+ * Lower-case > trim > collapse whitespace > remove punctuation
+ * except commas (city, ST still works).
+ */
+const normalizeAddressForCache = (str?: string): string => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s,]/g, '');
+};
+
+/**
+ * Retrieve address→coords from AsyncStorage cache
+ */
+const getAddressFromCache = async (
+  normalizedAddress: string,
+): Promise<Coordinates | null> => {
+  try {
+    const raw = await AsyncStorage.getItem(
+      `${ADDRESS_CACHE_KEY_PREFIX}${normalizedAddress}`,
+    );
+    return raw ? (JSON.parse(raw) as Coordinates) : null;
+  } catch (err) {
+    if (__DEV__)
+      console.warn('[locationService] Failed to read address cache', err);
+    return null;
+  }
+};
+
+/**
+ * Persist address→coords to AsyncStorage cache
+ */
+const setAddressCache = async (
+  normalizedAddress: string,
+  coords: Coordinates,
+): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(
+      `${ADDRESS_CACHE_KEY_PREFIX}${normalizedAddress}`,
+      JSON.stringify(coords),
+    );
+  } catch (err) {
+    if (__DEV__)
+      console.warn('[locationService] Failed to write address cache', err);
+  }
+};
+
+/**
  * Retrieve ZIP code data from AsyncStorage cache
  */
 const getZipFromCache = async (zipCode: string): Promise<ZipCodeData | null> => {
@@ -251,6 +307,36 @@ export const getZipCodeCoordinates = async (zipCode: string): Promise<ZipCodeDat
     console.error('Error getting ZIP code coordinates:', error);
     return null;
   }
+};
+
+/**
+ * Geocode an **arbitrary address string** with client-side fallback +
+ * AsyncStorage caching so repeated calls are cheap/offline.
+ *
+ * 1. Normalise address → cache key
+ * 2. Return cached coordinates if present
+ * 3. Otherwise geocode, cache result, return coords
+ *
+ * NOTE: This is intentionally lightweight – no DB writes – so it can be
+ * safely called from client-only contexts (e.g. showService distance calc).
+ */
+export const getAddressCoordinatesWithCache = async (
+  address: string,
+): Promise<Coordinates | null> => {
+  const key = normalizeAddressForCache(address);
+  if (!key) return null;
+
+  // 1) Check local cache
+  const cached = await getAddressFromCache(key);
+  if (cached) return cached;
+
+  // 2) Geocode
+  const coords = await geocodeAddress(address);
+  if (!coords) return null;
+
+  // 3) Cache and return
+  await setAddressCache(key, coords);
+  return coords;
 };
 
 /**

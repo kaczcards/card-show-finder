@@ -6,7 +6,10 @@
 
 import { supabase } from '../supabase';
 import { Show, ShowStatus } from '../types';
-import { calculateDistanceBetweenCoordinates } from './locationService';
+import {
+  calculateDistanceBetweenCoordinates,
+  getAddressCoordinatesWithCache,
+} from './locationService';
 import { safeOverlaps } from '../utils/postgrest';
 
 /* ------------------------------------------------------------------ */
@@ -996,6 +999,60 @@ const getDirectPaginatedShows = async (
       console.warn(
         `[showService] Built coordinates map from ${coordsByAddress.size} addresses with known coordinates`
       );
+    }
+
+    /* ------------------------------------------------------------------
+     * 🔍  Address-level geocoding for rows still missing coordinates
+     * ------------------------------------------------------------------
+     * At this point ‑ filteredData may still contain shows with no lat/lng
+     * and no address-match in coordsByAddress.  Before distance filtering
+     * we attempt a **lightweight, cached geocode** of the address/location
+     * string so those shows can participate in radius filtering.
+     * ------------------------------------------------------------------ */
+    for (const show of filteredData) {
+      const hasLatLng =
+        typeof show.latitude === 'number' &&
+        typeof show.longitude === 'number' &&
+        isFinite(show.latitude) &&
+        isFinite(show.longitude);
+
+      const hasPointArray =
+        show.coordinates &&
+        show.coordinates.coordinates &&
+        Array.isArray(show.coordinates.coordinates) &&
+        show.coordinates.coordinates.length >= 2;
+
+      const hasWkb = typeof show.coordinates === 'string';
+
+      if (hasLatLng || hasPointArray || hasWkb) {
+        // Already has coordinates (or will be parsed later) – skip
+        continue;
+      }
+
+      // Prefer full street address; fall back to "City, ST"
+      const addr = show.address || show.location;
+      if (!addr) continue;
+
+      try {
+        const geo = await getAddressCoordinatesWithCache(addr);
+        if (geo) {
+          // Assign so later distance filter can use them
+          show.latitude = geo.latitude;
+          show.longitude = geo.longitude;
+          if (__DEV__)
+            console.warn('[showService] Geocoded missing coords from address', {
+              id: show.id,
+              address: addr,
+              coords: geo,
+            });
+        }
+      } catch (gErr) {
+        if (__DEV__)
+          console.warn(
+            '[showService] Geocode attempt failed – continuing without coords',
+            { id: show.id, err: (gErr as Error).message },
+          );
+      }
     }
     
     // Filter results for shows within the radius
