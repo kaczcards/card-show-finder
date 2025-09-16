@@ -698,6 +698,37 @@ class AppleIAPService {
       }
 
       // --------------------------------------------------------------
+      // 2b. Fallback – nothing in receipt?  Ask StoreKit for purchases
+      //     (This can happen on older receipts or edge-cases)
+      // --------------------------------------------------------------
+      if (!result.productId) {
+        try {
+          const available = await getAvailablePurchases();
+          if (available && available.length > 0) {
+            console.warn(
+              `[AppleIAPService] Receipt lacked productId – processing ${available.length} available purchase(s) as fallback`
+            );
+            for (const p of available) {
+              try {
+                // cast – react-native-iap union type
+                await this.handlePurchaseSuccess(p as any);
+              } catch (e) {
+                console.warn('[AppleIAPService] Fallback restore item failed:', e);
+              }
+            }
+            console.warn('[AppleIAPService] Restore successful via fallback list');
+            return true;
+          }
+        } catch (e) {
+          console.warn('[AppleIAPService] Fallback getAvailablePurchases failed:', e);
+        }
+        console.warn(
+          '[AppleIAPService] No product found in receipt and no available purchases – likely different Apple ID'
+        );
+        return false;
+      }
+
+      // --------------------------------------------------------------
       // 3. Update subscription in Supabase
       // --------------------------------------------------------------
       const details = this.getSubscriptionDetailsFromProduct(
