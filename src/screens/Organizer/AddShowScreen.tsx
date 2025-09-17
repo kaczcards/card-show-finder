@@ -484,11 +484,18 @@ const AddShowScreen: React.FC = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.formContainer}>
-          {/* Debug helper button */}
-          <TouchableOpacity style={styles.debugButton} onPress={handleDebugSchema}>
-            <Ionicons name="bug-outline" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
-            <Text style={styles.debugText}>Debug Schema</Text>
-          </TouchableOpacity>
+          {/* Debug helper button – only visible in development builds */}
+          {__DEV__ && (
+            <TouchableOpacity style={styles.debugButton} onPress={handleDebugSchema}>
+              <Ionicons
+                name="bug-outline"
+                size={16}
+                color="#FFFFFF"
+                style={{ marginRight: 4 }}
+              />
+              <Text style={styles.debugText}>Debug Schema</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Title */}
           <View style={styles.formGroup}>
