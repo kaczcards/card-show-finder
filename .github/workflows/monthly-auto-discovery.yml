@@ -1,0 +1,56 @@
+name: Monthly Auto-Discovery
+
+# Description: This workflow automatically runs the card show auto-discovery process
+# on the 1st of every month at midnight UTC, and can also be triggered manually.
+
+on:
+  # Run at midnight on the 1st of every month
+  schedule:
+    - cron: '0 0 1 * *'
+  
+  # Allow manual triggering from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  auto-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10  # Set maximum runtime to prevent hanging jobs
+    
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      
+      - name: Run Auto-Discovery Process
+        id: discovery
+        run: |
+          echo "Starting auto-discovery process..."
+          RESPONSE=$(curl -s -X POST "https://zmfqzegykwyrrvrpwylf.supabase.co/functions/v1/auto-discovery/discover" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            -w "\nHTTP Status: %{http_code}\n")
+          
+          echo "$RESPONSE"
+          
+          # Extract HTTP status code
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP Status:" | awk '{print $3}')
+          
+          # Check if the request was successful
+          if [[ "$HTTP_STATUS" == "200" ]]; then
+            echo "✅ Auto-discovery completed successfully!"
+            echo "::set-output name=status::success"
+          else
+            echo "❌ Auto-discovery failed with status code: $HTTP_STATUS"
+            echo "::set-output name=status::failure"
+            exit 1
+          fi
+      
+      - name: Check Auto-Discovery Stats
+        if: steps.discovery.outputs.status == 'success'
+        run: |
+          echo "Getting auto-discovery statistics..."
+          curl -s -X GET "https://zmfqzegykwyrrvrpwylf.supabase.co/functions/v1/auto-discovery/stats" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json"
+          
+          echo "\n✅ Monthly auto-discovery process completed!"

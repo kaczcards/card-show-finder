@@ -150,7 +150,7 @@ module.exports = {
     /* Unique identifier used for App Store publishing */
     bundleIdentifier: "com.kaczcards.cardshowfinder",
     /* Build number bump for App Store submission */
-    buildNumber: "7"
+    buildNumber: "8"
   },
   android: {
     package: "com.kaczcards.cardshowfinder",
