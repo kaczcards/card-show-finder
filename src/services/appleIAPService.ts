@@ -347,7 +347,20 @@ class AppleIAPService {
   /**
    * Validate a receipt with Apple's servers
    */
-  private async validateReceipt(receipt: string): Promise<{ success: boolean; error?: string }> {
+  /**
+   * Validate a base64 receipt string.
+   * Returns success flag **plus** the latest productId / expiry / transactionId
+   * parsed from Apple’s response when available.
+   */
+  private async validateReceipt(
+    receipt: string
+  ): Promise<{
+    success: boolean;
+    productId?: string;
+    expiryDateISO?: string;
+    transactionId?: string;
+    error?: string;
+  }> {
     try {
       /**
        * ------------------------------------------------------------------
@@ -361,7 +374,8 @@ class AppleIAPService {
         );
 
         if (!error && data?.success) {
-          return { success: true };
+          const parsed = this.extractLatestFromAppleResponse(data);
+          return { success: true, ...parsed };
         }
         if (error) {
           console.warn('[AppleIAPService] Edge function validation error:', error);
@@ -387,7 +401,8 @@ class AppleIAPService {
 
       // Successful validation in production (status === 0)
       if (prodResult?.status === 0 && prodResult?.receipt) {
-        return { success: true };
+        const parsed = this.extractLatestFromAppleResponse(prodResult);
+        return { success: true, ...parsed };
       }
 
       /**
@@ -407,7 +422,8 @@ class AppleIAPService {
         });
 
         if (sandboxResult?.status === 0 && sandboxResult?.receipt) {
-          return { success: true };
+          const parsed = this.extractLatestFromAppleResponse(sandboxResult);
+          return { success: true, ...parsed };
         }
 
         // Sandbox also failed – propagate error
@@ -429,6 +445,75 @@ class AppleIAPService {
         error: err?.message || 'Receipt validation threw an exception',
       };
     }
+  }
+
+  /**
+   * Extract the latest subscription info from an Apple validation response.
+   */
+  private extractLatestFromAppleResponse(resp: any): {
+    productId?: string;
+    expiryDateISO?: string;
+    transactionId?: string;
+  } {
+    // Candidate list from latest_receipt_info or receipt.in_app
+    const list = Array.isArray(resp?.latest_receipt_info)
+      ? resp.latest_receipt_info
+      : Array.isArray(resp?.receipt?.in_app)
+      ? resp.receipt.in_app
+      : [];
+    if (!Array.isArray(list) || list.length === 0) return {};
+
+    const preferred = list.filter(
+      (it: any) => it?.product_id && PRODUCT_TO_PLAN_MAP[it.product_id]
+    );
+    const pickFrom = preferred.length > 0 ? preferred : list;
+
+    const withMs = pickFrom.map((it: any) => ({
+      it,
+      ms: Number(it?.expires_date_ms ?? it?.purchase_date_ms ?? 0),
+    }));
+    withMs.sort((a, b) => b.ms - a.ms);
+    const latest = withMs[0]?.it;
+
+    const productId = latest?.product_id;
+    const expiryMs = Number(latest?.expires_date_ms ?? 0);
+    const expiryDateISO =
+      Number.isFinite(expiryMs) && expiryMs > 0
+        ? new Date(expiryMs).toISOString()
+        : undefined;
+    const transactionId =
+      latest?.transaction_id || latest?.original_transaction_id || undefined;
+    return { productId, expiryDateISO, transactionId };
+  }
+
+  /**
+   * Build SubscriptionDetails from a productId and optional expiry date (ISO).
+   */
+  private getSubscriptionDetailsFromProduct(
+    productId: string,
+    expiryDateISO?: string
+  ): SubscriptionDetails {
+    const planId = PRODUCT_TO_PLAN_MAP[productId || ''] || 'unknown';
+    const accountType = PRODUCT_TO_ACCOUNT_TYPE[productId || ''] || 'unknown';
+
+    let expiry: Date | null = expiryDateISO ? new Date(expiryDateISO) : null;
+    if (!expiry || isNaN(+expiry)) {
+      const now = new Date();
+      expiry = new Date(now);
+      if (planId.includes('monthly')) {
+        expiry.setMonth(now.getMonth() + 1);
+      } else if (planId.includes('annual')) {
+        expiry.setFullYear(now.getFullYear() + 1);
+      }
+    }
+
+    return {
+      planId,
+      accountType,
+      expiryDate: expiry.toISOString(),
+      status: 'active',
+      paymentStatus: 'paid',
+    };
   }
 
   /**
@@ -579,32 +664,82 @@ class AppleIAPService {
    */
   async restorePurchases(): Promise<boolean> {
     try {
+      // Ensure IAP is ready
       if (!this.isInitialized && !(await this.initialize())) {
         throw new Error('IAP service not initialized');
       }
 
-      // Get available purchases from Apple
-      const availablePurchases = await getAvailablePurchases();
-      
-      if (!availablePurchases || availablePurchases.length === 0) {
-        console.warn('[AppleIAPService] No purchases to restore');
+      // --------------------------------------------------------------
+      // 1. Always force-refresh the receipt – most reliable on iOS
+      // --------------------------------------------------------------
+      // getReceiptIOS may return `undefined`, so include that in the union
+      let receipt: string | null | undefined = null;
+      try {
+        receipt = await getReceiptIOS({ forceRefresh: true });
+      } catch (e) {
+        console.warn('[AppleIAPService] getReceiptIOS during restore failed:', e);
+      }
+
+      if (!receipt) {
+        console.warn('[AppleIAPService] No iOS receipt found to restore');
         return false;
       }
 
-      console.warn('[AppleIAPService] Purchases to restore:', availablePurchases.length);
-      
-      // Process each purchase
-      let restoredAny = false;
-      for (const purchase of availablePurchases) {
-        try {
-          await this.handlePurchaseSuccess(purchase);
-          restoredAny = true;
-        } catch (error: any) {
-          console.error('[AppleIAPService] Error restoring purchase:', error);
-        }
+      // --------------------------------------------------------------
+      // 2. Validate the refreshed receipt
+      // --------------------------------------------------------------
+      const result = await this.validateReceipt(receipt);
+      if (!result.success) {
+        console.warn(
+          '[AppleIAPService] Receipt validation during restore failed:',
+          result.error
+        );
+        return false;
       }
 
-      return restoredAny;
+      // --------------------------------------------------------------
+      // 2b. Fallback – nothing in receipt?  Ask StoreKit for purchases
+      //     (This can happen on older receipts or edge-cases)
+      // --------------------------------------------------------------
+      if (!result.productId) {
+        try {
+          const available = await getAvailablePurchases();
+          if (available && available.length > 0) {
+            console.warn(
+              `[AppleIAPService] Receipt lacked productId – processing ${available.length} available purchase(s) as fallback`
+            );
+            for (const p of available) {
+              try {
+                // cast – react-native-iap union type
+                await this.handlePurchaseSuccess(p as any);
+              } catch (e) {
+                console.warn('[AppleIAPService] Fallback restore item failed:', e);
+              }
+            }
+            console.warn('[AppleIAPService] Restore successful via fallback list');
+            return true;
+          }
+        } catch (e) {
+          console.warn('[AppleIAPService] Fallback getAvailablePurchases failed:', e);
+        }
+        console.warn(
+          '[AppleIAPService] No product found in receipt and no available purchases – likely different Apple ID'
+        );
+        return false;
+      }
+
+      // --------------------------------------------------------------
+      // 3. Update subscription in Supabase
+      // --------------------------------------------------------------
+      const details = this.getSubscriptionDetailsFromProduct(
+        result.productId || '',
+        result.expiryDateISO
+      );
+      const txId = result.transactionId || `restore-${Date.now()}`;
+
+      await this.updateUserSubscription(txId, details);
+      console.warn('[AppleIAPService] Restore successful');
+      return true;
     } catch (error: any) {
       console.error('[AppleIAPService] Failed to restore purchases:', error);
       return false;

@@ -6,7 +6,10 @@
 
 import { supabase } from '../supabase';
 import { Show, ShowStatus } from '../types';
-import { calculateDistanceBetweenCoordinates } from './locationService';
+import {
+  calculateDistanceBetweenCoordinates,
+  getAddressCoordinatesWithCache,
+} from './locationService';
 import { safeOverlaps } from '../utils/postgrest';
 
 /* ------------------------------------------------------------------ */
@@ -996,6 +999,80 @@ const getDirectPaginatedShows = async (
       console.warn(
         `[showService] Built coordinates map from ${coordsByAddress.size} addresses with known coordinates`
       );
+    }
+
+    /* ------------------------------------------------------------------
+     * Limit total on-device geocode requests so we don't hammer
+     * the provider on large pages.
+     * ------------------------------------------------------------------ */
+    let geocodeAttempts = 0;
+    const MAX_GEOCODE_ATTEMPTS = 5;
+
+    /* ------------------------------------------------------------------
+     * 🔍  Address-level geocoding for rows still missing coordinates
+     * ------------------------------------------------------------------
+     * At this point ‑ filteredData may still contain shows with no lat/lng
+     * and no address-match in coordsByAddress.  Before distance filtering
+     * we attempt a **lightweight, cached geocode** of the address/location
+     * string so those shows can participate in radius filtering.
+     * ------------------------------------------------------------------ */
+    for (const show of filteredData) {
+      const hasLatLng =
+        typeof show.latitude === 'number' &&
+        typeof show.longitude === 'number' &&
+        isFinite(show.latitude) &&
+        isFinite(show.longitude);
+
+      const hasPointArray =
+        show.coordinates &&
+        show.coordinates.coordinates &&
+        Array.isArray(show.coordinates.coordinates) &&
+        show.coordinates.coordinates.length >= 2;
+
+      const hasWkb = typeof show.coordinates === 'string';
+
+      if (hasLatLng || hasPointArray || hasWkb) {
+        // Already has coordinates (or will be parsed later) – skip
+        continue;
+      }
+
+      // Prefer full street address; fall back to "City, ST"
+      const rawAddr = show.address || show.location;
+      const addr =
+        typeof rawAddr === 'string' ? rawAddr.trim() : '';
+      // Skip clearly invalid candidate strings
+      if (!addr || addr.length < 4 || !/[A-Za-z]/.test(addr)) continue;
+
+      // Stop if we've reached our per-page geocode quota
+      if (geocodeAttempts >= MAX_GEOCODE_ATTEMPTS) continue;
+
+      // Many plain city/state strings work better with country hint
+      let candidate = addr;
+      if (!/\b(usa|united states)\b/i.test(candidate)) {
+        candidate = `${candidate}, USA`;
+      }
+
+      try {
+        geocodeAttempts++;
+        const geo = await getAddressCoordinatesWithCache(candidate);
+        if (geo) {
+          // Assign so later distance filter can use them
+          show.latitude = geo.latitude;
+          show.longitude = geo.longitude;
+          if (__DEV__)
+            console.warn('[showService] Geocoded missing coords from address', {
+              id: show.id,
+              address: candidate,
+              coords: geo,
+            });
+        }
+      } catch (gErr) {
+        if (__DEV__)
+          console.warn(
+            '[showService] Geocode attempt failed – continuing without coords',
+            { id: show.id, err: (gErr as Error).message },
+          );
+      }
     }
     
     // Filter results for shows within the radius
