@@ -283,12 +283,13 @@ export const _signIn = async (
       return { error: new Error('No user returned from sign in') };
     }
 
-    // Fetch the user's profile
+    // ------------------------------------------------------------------
+    // Fetch the user's profile with better error handling
+    // ------------------------------------------------------------------
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', data.user.id)
-      .single();
+      .eq('id', data.user.id);
 
     if (profileError) {
       return {
@@ -296,12 +297,23 @@ export const _signIn = async (
       };
     }
 
-    if (!profileData) {
+    if (!profileData || profileData.length === 0) {
       return { error: new Error('No profile data found for user') };
     }
 
+    if (profileData.length > 1) {
+      console.warn(
+        'Multiple profiles found for user:',
+        data.user.id,
+        'using first one',
+      );
+    }
+
+    // Use the first profile if multiple exist
+    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+
     // Map to our User type
-    const user = mapProfileToUser(data.user, profileData);
+    const user = mapProfileToUser(data.user, profile);
     return { user };
   } catch (error: any) {
     console.error('Error in signin:', error.message);
@@ -341,22 +353,27 @@ export const _getSession = async (): Promise<User | null> => {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', authUser.id)
-      .single();
-    
-    if (profileError && profileError.code !== 'PGRST116') {
-      // PGRST116 means no rows returned
+      .eq('id', authUser.id);
+
+    if (profileError) {
       console.error('Error getting profile:', profileError);
       throw profileError;
     }
-    
-    if (!profileData) {
+
+    if (!profileData || profileData.length === 0) {
       console.warn('No profile found for user:', authUser.id);
       return null;
     }
-    
+
+    if (profileData.length > 1) {
+      console.warn('Multiple profiles found for user:', authUser.id, 'using first one');
+    }
+
+    // Use the first profile if multiple exist
+    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+
     // Map to our User type
-    const user = mapProfileToUser(authUser, profileData);
+    const user = mapProfileToUser(authUser, profile);
     
     return user;
   } catch (error) {
@@ -386,18 +403,28 @@ console.warn('[_supabaseAuthService] Fetching user profile for ID:', userId);
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
-      .single();
+      .eq('id', userId);
 
     if (profileError) {
       console.error('[_supabaseAuthService] Error fetching profile:', profileError);
       return null;
     }
 
-    if (!profileData) {
+    if (!profileData || profileData.length === 0) {
       console.warn('[_supabaseAuthService] No profile found for user:', userId);
       return null;
     }
+
+    if (profileData.length > 1) {
+      console.warn(
+        '[_supabaseAuthService] Multiple profiles found for user:',
+        userId,
+        'using first one'
+      );
+    }
+
+    // Use the first profile if multiple exist
+    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
 
     /* -----------------------------------------------------------
      * 2) Retrieve auth data for the **current** user via session.
@@ -422,7 +449,7 @@ console.warn('[_supabaseAuthService] Fetching user profile for ID:', userId);
     /* -----------------------------------------------------------
      * 3) Map combined auth + profile data to our `User` type
      * --------------------------------------------------------- */
-    return mapProfileToUser(authUser, profileData);
+    return mapProfileToUser(authUser, profile);
   } catch (error: any) {
     console.error('[_supabaseAuthService] Unexpected error in getCurrentUser:', error);
     return null;
@@ -557,7 +584,7 @@ export const _updateUserProfile = async (userData: Partial<User>): Promise<User>
     const previousZip = sessionUser?.homeZipCode ?? null;
     
     // Convert our User fields to DB fields
-    const profileData = mapUserToProfile(userData);
+    const profileData = _mapUserToProfile(userData);
     
     // Remove any undefined values to avoid setting NULL
     Object.keys(profileData).forEach(key => {
@@ -638,19 +665,33 @@ console.warn('Auth state change event:', event);
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', userId)
-            .single();
-          
+            .eq('id', userId);
+
+          // --- Improved error handling ---------------------------------------
           if (profileError) {
-            throw profileError;
+            console.error('Profile fetch error:', profileError);
+            throw new Error(`Profile fetch failed: ${profileError.message}`);
           }
-          
-          if (!profileData) {
+
+          if (!profileData || profileData.length === 0) {
+            console.error('No profile found for user:', userId);
             throw new Error('No profile found for user');
           }
+
+          if (profileData.length > 1) {
+            // Data-integrity edge-case: pick first row but log warning
+            console.warn(
+              'Multiple profiles found for user:',
+              userId,
+              'using first record.'
+            );
+          }
+
+          // Use the first profile row if an array was returned
+          const profile = Array.isArray(profileData) ? profileData[0] : profileData;
           
           // Map profile to our User type
-          const user = mapProfileToUser(session.user, profileData);
+          const user = mapProfileToUser(session.user, profile);
           
           callback({
             user,
