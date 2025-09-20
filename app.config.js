@@ -145,7 +145,7 @@ module.exports = {
      * production domain used for your Supabase redirect / link-shortener.
      * ------------------------------------------------------------------ */
     associatedDomains: [
-      "applinks:cardshowfinder.app"
+      "applinks:csfinderapp.com"
     ],
     /* Unique identifier used for App Store publishing */
     bundleIdentifier: "com.kaczcards.cardshowfinder",
@@ -178,7 +178,7 @@ module.exports = {
         data: [
           {
             scheme: "https",
-            host: "cardshowfinder.app",
+            host: "csfinderapp.com",
             pathPrefix: "/reset-password",
           },
         ],
