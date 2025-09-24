@@ -230,6 +230,7 @@ module.exports = {
     // App Tracking Transparency (iOS 14+) – required to correctly link the
     // native framework and generate the Info.plist entries that Apple checks
     "expo-tracking-transparency",
+    "expo-asset",                        // Required for asset management
     "sentry-expo"                        // Enabled for crash reporting
   ],
   // Note: Expo's "hooks" field was removed because it is not a valid
