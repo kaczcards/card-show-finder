@@ -60,7 +60,7 @@ module.exports = {
     "Discover trading-card shows near you, save favorites, and manage events. " +
     "Auto-renewable MVP Dealer and Show Organizer subscriptions are available. " +
     "Terms of Use: https://csfinderapp.com/Terms/",
-  version: "1.0.4",
+  version: "1.0.5",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light",
@@ -150,11 +150,11 @@ module.exports = {
     /* Unique identifier used for App Store publishing */
     bundleIdentifier: "com.kaczcards.cardshowfinder",
     /* Build number bump for App Store submission */
-    buildNumber: "8"
+    buildNumber: "9"
   },
   android: {
     package: "com.kaczcards.cardshowfinder",
-    versionCode: 5,
+    versionCode: 6,
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
