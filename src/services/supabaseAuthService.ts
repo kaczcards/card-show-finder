@@ -108,10 +108,19 @@ export const _signUp = async (
       throw new Error('First name is required');
     }
 
-    // First, create the auth user
+    // Create the auth user with metadata for the trigger
     const { data, error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
+      options: {
+        emailRedirectTo: 'https://csfinderapp.com/reset-password/',
+        data: {
+          role: UserRole.ATTENDEE,
+          firstName,
+          lastName,
+          homeZipCode,
+        }
+      }
     });
 
     if (error) {
@@ -124,25 +133,9 @@ export const _signUp = async (
 
     const userId = data.user.id;
 
-    // Then add their profile information to the profiles table
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        first_name: firstName,
-        last_name: lastName || null,
-        home_zip_code: homeZipCode,
-        role: UserRole.ATTENDEE, // Default role
-        account_type: 'collector', // Default account type
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-    if (profileError) {
-      // If profile creation fails, we should still be OK since the auth
-      // trigger should create a minimal profile
-      console.warn('Error creating profile:', profileError);
-    }
+    // Profile creation is handled by the database trigger
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Construct user object
     const user: User = {
@@ -197,7 +190,20 @@ export const _registerUser = async (
     }
 
     // ---- Create Auth user -------------------------------------------------------
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    // Pass user metadata so the handle_new_user() trigger can access it
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        emailRedirectTo: 'https://csfinderapp.com/reset-password/',
+        data: {
+          role,
+          firstName,
+          lastName,
+          homeZipCode,
+        }
+      }
+    });
     if (error) {
       throw error;
     }
@@ -215,24 +221,13 @@ export const _registerUser = async (
         ? 'dealer'
         : 'collector';
 
-    // ---- Insert / update profile row -------------------------------------------
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        first_name: firstName,
-        last_name: lastName || null,
-        home_zip_code: homeZipCode,
-        role,
-        account_type: accountType,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-    if (profileError) {
-      // RLS triggers should still create a minimal row, but log just in case.
-      console.warn('Error creating profile:', profileError);
-    }
+    // ---- Profile creation is handled by database trigger -----------------------
+    // The handle_new_user() trigger automatically creates the profile when the
+    // auth user is created, so we don't need to manually insert it here.
+    // This avoids RLS policy conflicts during registration.
+    
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // ---- Build & return User object --------------------------------------------
     const nowIso = new Date().toISOString();
@@ -513,7 +508,7 @@ export const _refreshUser = async (): Promise<User | null> => {
 export const _resetPassword = async (email: string): Promise<void> => {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'cardshowhunter://reset-password',
+      redirectTo: 'https://csfinderapp.com/reset-password/',
     });
     
     if (error) {
@@ -534,6 +529,9 @@ export const _resendEmailVerification = async (email: string): Promise<void> => 
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
+      options: {
+        emailRedirectTo: 'https://csfinderapp.com/reset-password/',
+      }
     });
     if (error) {
       throw error;

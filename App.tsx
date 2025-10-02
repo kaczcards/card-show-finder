@@ -38,6 +38,8 @@ import { theme } from './src/constants/theme';
 
 // Import root navigator from navigation folder
 import RootNavigator from './src/navigation';
+// Import email verification guard
+import EmailVerificationGuard from './src/components/EmailVerificationGuard';
 
 /**
  * Helper: Request App Tracking Transparency (ATT) permission on iOS
@@ -368,7 +370,9 @@ export default function App() {
             <ThemeProvider>
               <AuthProvider>
                 <ErrorBoundary>
-                  <RootNavigator />
+                  <EmailVerificationGuard>
+                    <RootNavigator />
+                  </EmailVerificationGuard>
                 </ErrorBoundary>
                 <StatusBar style="auto" />
                 {/* Global toast portal */}

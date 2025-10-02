@@ -194,18 +194,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', session.user.id)
-            .single();
+            .eq('id', session.user.id);
           
-          if (profileError) {
-            throw profileError;
+          // Handle case where profile doesn't exist (old user or trigger failed)
+          if (profileError || !profileData || profileData.length === 0) {
+            console.error('No profile found for user:', session.user.id);
+            // Sign out the user and show error
+            await supabase.auth.signOut();
+            setAuthState({
+              user: null,
+              isLoading: false,
+              error: 'No profile found. Please register again.',
+              isAuthenticated: false,
+            });
+            return;
           }
+          
+          // Use first profile if multiple exist
+          const profile = Array.isArray(profileData) ? profileData[0] : profileData;
           
           // Map combined auth + profile data using shared helper so ALL fields
           // (including social URLs) are consistently included.
           const userData: User = supabaseAuthService.mapProfileToUser(
             session.user,
-            profileData,
+            profile,
           );
           
           setAuthState({
