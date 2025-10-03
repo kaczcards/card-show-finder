@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approve Pending Shows - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #FF6B35;
+        }
+
+        .show-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .show-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        .show-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .show-title {
+            font-size: 24px;
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .show-date {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .show-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .detail-item {
+            font-size: 14px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            color: #333;
+        }
+
+        .show-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-approve {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .empty-state {
+            background: white;
+            padding: 60px 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .empty-state h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #666;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .show-header {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Pending Show Submissions</h1>
+            <p>Review and approve shows submitted via the website form</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Pending Shows</h3>
+                <div class="number" id="pendingCount">-</div>
+            </div>
+        </div>
+
+        <div class="message" id="messageBox"></div>
+
+        <div id="loadingState" class="loading">
+            Loading pending shows...
+        </div>
+
+        <div id="showsList"></div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h2>🎉 All caught up!</h2>
+            <p>No pending shows to review right now.</p>
+        </div>
+    </div>
+
+    <script>
+        // REPLACE WITH YOUR ACTUAL CREDENTIALS
+        const SUPABASE_URL = 'https://zmfqzegykwyrrvrpwylf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZnF6ZWd5a3d5cnJ2cnB3eWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxOTA4NzEsImV4cCI6MjA2NTc2Njg3MX0.7YRVny1VcGqAJlSu0izsfXAB0e1kwf_KCh6KD7uFIyw';
+
+        // You need to login as admin - get this from localStorage after logging into your app
+        // For now, you'll need to set this manually after logging in
+        let authToken = SUPABASE_ANON_KEY; // This will work for reading, but you need to be logged in as admin to approve
+
+        async function loadPendingShows() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_shows_pending?status=eq.PENDING&order=created_at.desc`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load shows');
+                }
+
+                const shows = await response.json();
+                
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('pendingCount').textContent = shows.length;
+
+                if (shows.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    return;
+                }
+
+                displayShows(shows);
+            } catch (error) {
+                console.error('Error loading shows:', error);
+                showMessage('Failed to load pending shows. Make sure you are logged in as admin.', 'error');
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+
+        function displayShows(shows) {
+            const showsList = document.getElementById('showsList');
+            showsList.innerHTML = '';
+
+            shows.forEach(show => {
+                const data = show.raw_payload;
+                const card = document.createElement('div');
+                card.className = 'show-card';
+                card.innerHTML = `
+                    <div class="show-header">
+                        <div>
+                            <div class="show-title">${data.name || 'Untitled Show'}</div>
+                            <div class="show-date">
+                                📅 ${formatDate(data.startDate)} 
+                                ${data.startDate !== data.endDate ? '- ' + formatDate(data.endDate) : ''}
+                            </div>
+                        </div>
+                        <span class="badge badge-pending">PENDING</span>
+                    </div>
+
+                    <div class="show-details">
+                        <div class="detail-item">
+                            <span class="detail-label">📍 Venue</span>
+                            <span class="detail-value">${data.venueName || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">📮 Address</span>
+                            <span class="detail-value">${data.address || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">💵 Admission</span>
+                            <span class="detail-value">${data.entryFee || 'Free / Not specified'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">📧 Contact</span>
+                            <span class="detail-value">${data.contactEmail || 'Not provided'}</span>
+                        </div>
+                    </div>
+
+                    ${data.description ? `
+                        <div class="show-description">
+                            <strong>Description:</strong><br>
+                            ${data.description}
+                        </div>
+                    ` : ''}
+
+                    <div class="action-buttons">
+                        <button class="btn btn-approve" onclick="approveShow('${show.id}', '${data.name}')">
+                            ✅ Approve & Publish
+                        </button>
+                        <button class="btn btn-reject" onclick="rejectShow('${show.id}', '${data.name}')">
+                            ❌ Reject
+                        </button>
+                    </div>
+                `;
+                showsList.appendChild(card);
+            });
+        }
+
+        async function approveShow(showId, showName) {
+            if (!confirm(`Approve "${showName}"?\n\nThis will publish the show to the app immediately.`)) {
+                return;
+            }
+
+            try {
+                // Call the approve_pending_show function
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/approve_pending_show`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        p_pending_id: showId,
+                        p_admin_notes: 'Approved via admin panel'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage(`✅ "${showName}" has been approved and published!`, 'success');
+                    setTimeout(() => loadPendingShows(), 1500);
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error approving show:', error);
+                showMessage(`❌ Failed to approve show: ${error.message}`, 'error');
+            }
+        }
+
+        async function rejectShow(showId, showName) {
+            const reason = prompt(`Reject "${showName}"?\n\nOptional: Enter a reason for rejection:`);
+            
+            if (reason === null) return; // User cancelled
+
+            try {
+                // Call the reject_pending_show function
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/reject_pending_show`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        p_pending_id: showId,
+                        p_reason: reason || 'Rejected by admin'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage(`✅ "${showName}" has been rejected.`, 'success');
+                    setTimeout(() => loadPendingShows(), 1500);
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error rejecting show:', error);
+                showMessage(`❌ Failed to reject show: ${error.message}`, 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = text;
+            messageBox.className = `message ${type}`;
+            messageBox.style.display = 'block';
+            
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Load shows on page load
+        loadPendingShows();
+
+        // Reload every 30 seconds
+        setInterval(loadPendingShows, 30000);
+    </script>
+</body>
+</html>

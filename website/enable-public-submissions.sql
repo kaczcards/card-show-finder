@@ -6,8 +6,11 @@
 -- Only admins can view/approve these submissions
 -- ================================================================
 
+-- Drop policy if it already exists
+DROP POLICY IF EXISTS "allow_public_show_submissions" ON public.scraped_shows_pending;
+
 -- Create policy to allow anonymous show submissions
-CREATE POLICY IF NOT EXISTS "allow_public_show_submissions"
+CREATE POLICY "allow_public_show_submissions"
 ON public.scraped_shows_pending
 FOR INSERT
 TO anon
