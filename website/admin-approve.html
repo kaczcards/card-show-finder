@@ -389,6 +389,8 @@
             }
 
             try {
+                console.log('🔄 Approving show:', showId);
+                
                 // Call the approve_pending_show function
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/approve_pending_show`, {
                     method: 'POST',
@@ -403,16 +405,25 @@
                     })
                 });
 
+                console.log('📡 Approve response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Approve error response:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
                 const result = await response.json();
+                console.log('✅ Approve result:', result);
 
                 if (result.success) {
                     showMessage(`✅ "${showName}" has been approved and published!`, 'success');
                     setTimeout(() => loadPendingShows(), 1500);
                 } else {
-                    throw new Error(result.error || 'Unknown error');
+                    throw new Error(result.error || 'Unknown error from database function');
                 }
             } catch (error) {
-                console.error('Error approving show:', error);
+                console.error('💥 Error approving show:', error);
                 showMessage(`❌ Failed to approve show: ${error.message}`, 'error');
             }
         }
