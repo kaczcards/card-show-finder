@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Your Card Show | Card Show Finder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+
+        .app-teaser {
+            background: #f8f9fa;
+            border-left: 4px solid #FF6B35;
+            padding: 20px;
+            margin: 20px 30px;
+            border-radius: 8px;
+        }
+
+        .app-teaser h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .app-teaser p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .app-teaser .download-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .app-teaser a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #FF6B35;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .app-teaser a:hover {
+            background: #FF8C42;
+        }
+
+        .form-section {
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .required {
+            color: #FF6B35;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        input[type="url"],
+        input[type="email"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e4e8;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #FF6B35;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .time-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .day-entry {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid #e1e4e8;
+            position: relative;
+        }
+
+        .day-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .day-number {
+            font-weight: 700;
+            color: #FF6B35;
+            font-size: 16px;
+        }
+
+        .remove-day-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .remove-day-btn:hover {
+            background: #c82333;
+        }
+
+        .add-day-btn {
+            width: 100%;
+            padding: 14px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .add-day-btn:hover {
+            background: #218838;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message,
+        .error-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .time-group {
+                grid-template-columns: 1fr;
+            }
+
+            .app-teaser .download-links {
+                flex-direction: column;
+            }
+
+            .app-teaser a {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Submit Your Card Show</h1>
+            <p>Share your upcoming card show with collectors everywhere!</p>
+        </div>
+
+        <div class="app-teaser">
+            <h3>🎉 Want to Manage Your Shows on the Go?</h3>
+            <p>Download the Card Show Finder app to update your shows anytime, get notifications about nearby collectors, and more!</p>
+            <div class="download-links">
+                <a href="#">📱 Download for iOS</a>
+                <a href="#">🤖 Download for Android</a>
+            </div>
+        </div>
+
+        <form id="showSubmissionForm" class="form-section">
+            <div class="success-message" id="successMessage"></div>
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Organizer Information Section -->
+            <h2 class="section-title">📋 Your Information</h2>
+            
+            <div class="form-group">
+                <label for="organizerName">Your Name <span class="required">*</span></label>
+                <input type="text" id="organizerName" name="organizerName" required>
+                <div class="helper-text">We'll use this to contact you about your show</div>
+            </div>
+
+            <div class="form-group">
+                <label for="organizerEmail">Your Email <span class="required">*</span></label>
+                <input type="email" id="organizerEmail" name="organizerEmail" required>
+                <div class="helper-text">We'll send you updates about your submission</div>
+            </div>
+
+            <!-- Show Details Section -->
+            <h2 class="section-title">🎪 Show Details</h2>
+
+            <div class="form-group">
+                <label for="showName">Show Name <span class="required">*</span></label>
+                <input type="text" id="showName" name="showName" required 
+                       placeholder="e.g., Summer Sports Card Show">
+            </div>
+
+            <div class="form-group">
+                <label for="venueName">Venue/Location Name <span class="required">*</span></label>
+                <input type="text" id="venueName" name="venueName" required 
+                       placeholder="e.g., Convention Center">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Full Address <span class="required">*</span></label>
+                <input type="text" id="address" name="address" required 
+                       placeholder="e.g., 123 Main St, Springfield, IL 62701">
+            </div>
+
+            <!-- Daily Schedule Section -->
+            <h2 class="section-title">📅 Show Schedule</h2>
+            <div class="helper-text" style="margin-bottom: 15px;">
+                Add each day your show is running. Click "Add Another Day" for multi-day shows.
+            </div>
+
+            <div id="daysContainer">
+                <!-- First day (always present) -->
+                <div class="day-entry" data-day="1">
+                    <div class="day-entry-header">
+                        <span class="day-number">Day 1</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Date <span class="required">*</span></label>
+                        <input type="date" name="day_date[]" required>
+                    </div>
+                    <div class="time-group">
+                        <div class="form-group">
+                            <label>Start Time <span class="required">*</span></label>
+                            <input type="time" name="day_start[]" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Time <span class="required">*</span></label>
+                            <input type="time" name="day_end[]" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="add-day-btn" id="addDayBtn">
+                ➕ Add Another Day
+            </button>
+
+            <!-- Optional Information Section -->
+            <h2 class="section-title">ℹ️ Additional Information (Optional)</h2>
+
+            <div class="form-group">
+                <label for="admission">Admission/Entry Fee</label>
+                <input type="text" id="admission" name="admission" 
+                       placeholder="e.g., $5 or Free">
+            </div>
+
+            <div class="form-group">
+                <label for="contactEmail">Public Contact Email</label>
+                <input type="email" id="contactEmail" name="contactEmail"
+                       placeholder="Public email for attendees to reach you">
+                <div class="helper-text">This will be shown to collectors (different from your personal email above)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="imageUrl">Event Flyer/Image URL</label>
+                <input type="url" id="imageUrl" name="imageUrl" 
+                       placeholder="https://example.com/flyer.jpg">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" 
+                          placeholder="Tell collectors about your show..."></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                🚀 Submit Show for Review
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // REPLACE WITH YOUR ACTUAL CREDENTIALS
+        const SUPABASE_URL = 'https://zmfqzegykwyrrvrpwylf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZnF6ZWd5a3d5cnJ2cnB3eWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxOTA4NzEsImV4cCI6MjA2NTc2Njg3MX0.7YRVny1VcGqAJlSu0izsfXAB0e1kwf_KCh6KD7uFIyw';
+
+        const form = document.getElementById('showSubmissionForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const addDayBtn = document.getElementById('addDayBtn');
+        const daysContainer = document.getElementById('daysContainer');
+        let dayCount = 1;
+
+        // Add Another Day functionality
+        addDayBtn.addEventListener('click', function() {
+            dayCount++;
+            const newDay = document.createElement('div');
+            newDay.className = 'day-entry';
+            newDay.setAttribute('data-day', dayCount);
+            newDay.innerHTML = `
+                <div class="day-entry-header">
+                    <span class="day-number">Day ${dayCount}</span>
+                    <button type="button" class="remove-day-btn" onclick="removeDay(this)">
+                        ❌ Remove
+                    </button>
+                </div>
+                <div class="form-group">
+                    <label>Date <span class="required">*</span></label>
+                    <input type="date" name="day_date[]" required>
+                </div>
+                <div class="time-group">
+                    <div class="form-group">
+                        <label>Start Time <span class="required">*</span></label>
+                        <input type="time" name="day_start[]" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time <span class="required">*</span></label>
+                        <input type="time" name="day_end[]" required>
+                    </div>
+                </div>
+            `;
+            daysContainer.appendChild(newDay);
+        });
+
+        // Remove day functionality
+        window.removeDay = function(button) {
+            const dayEntry = button.closest('.day-entry');
+            dayEntry.remove();
+            // Renumber remaining days
+            const remaining = daysContainer.querySelectorAll('.day-entry');
+            remaining.forEach((entry, index) => {
+                entry.setAttribute('data-day', index + 1);
+                entry.querySelector('.day-number').textContent = `Day ${index + 1}`;
+            });
+            dayCount = remaining.length;
+        };
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Submitting...';
+
+            try {
+                // Gather form data
+                const formData = new FormData(form);
+                
+                // Build daily schedule array
+                const dates = formData.getAll('day_date[]');
+                const startTimes = formData.getAll('day_start[]');
+                const endTimes = formData.getAll('day_end[]');
+                
+                const dailySchedule = dates.map((date, index) => ({
+                    date: date,
+                    startTime: startTimes[index],
+                    endTime: endTimes[index]
+                }));
+
+                // Determine overall start and end dates
+                const sortedDates = [...dates].sort();
+                const overallStartDate = sortedDates[0];
+                const overallEndDate = sortedDates[sortedDates.length - 1];
+
+                // Build the payload
+                const showData = {
+                    name: formData.get('showName'),
+                    venueName: formData.get('venueName'),
+                    address: formData.get('address'),
+                    startDate: `${overallStartDate}T${startTimes[0]}:00`,
+                    endDate: `${overallEndDate}T${endTimes[endTimes.length - 1]}:00`,
+                    entryFee: formData.get('admission') || null,
+                    contactEmail: formData.get('contactEmail') || null,
+                    imageUrl: formData.get('imageUrl') || null,
+                    description: formData.get('description') || null,
+                    dailySchedule: dailySchedule,
+                    organizerName: formData.get('organizerName'),
+                    organizerEmail: formData.get('organizerEmail')
+                };
+
+                // Submit to Supabase
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_shows_pending`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        source_url: 'https://cardshowfinder.com/submit-show',
+                        raw_payload: showData,
+                        status: 'PENDING',
+                        organizer_name: showData.organizerName,
+                        organizer_email: showData.organizerEmail
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to submit show');
+                }
+
+                // Success!
+                showSuccess('✅ Thank you! Your show has been submitted for review. We\'ll email you at ' + showData.organizerEmail + ' once it\'s approved!');
+                form.reset();
+                
+                // Reset to single day
+                const allDays = daysContainer.querySelectorAll('.day-entry');
+                allDays.forEach((day, index) => {
+                    if (index > 0) day.remove();
+                });
+                dayCount = 1;
+
+            } catch (error) {
+                console.error('Submission error:', error);
+                showError('❌ Something went wrong. Please try again or contact us directly.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Submit Show for Review';
+            }
+        });
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 10000);
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 8000);
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
