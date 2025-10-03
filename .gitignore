@@ -52,9 +52,11 @@ reports/
 .env*.local
 # primary env file (contains Supabase keys, etc.)
 .env
+.env.save
 
 # mobile service credentials (never commit)
 google-services.json
+google-service-account.json
 GoogleService-Info.plist
 
 # typescript
