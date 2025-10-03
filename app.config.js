@@ -60,7 +60,7 @@ module.exports = {
     "Discover trading-card shows near you, save favorites, and manage events. " +
     "Auto-renewable MVP Dealer and Show Organizer subscriptions are available. " +
     "Terms of Use: https://csfinderapp.com/Terms/",
-  version: "1.0.4",
+  version: "1.0.6",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light",
@@ -145,16 +145,16 @@ module.exports = {
      * production domain used for your Supabase redirect / link-shortener.
      * ------------------------------------------------------------------ */
     associatedDomains: [
-      "applinks:cardshowfinder.app"
+      "applinks:csfinderapp.com"
     ],
     /* Unique identifier used for App Store publishing */
     bundleIdentifier: "com.kaczcards.cardshowfinder",
     /* Build number bump for App Store submission */
-    buildNumber: "8"
+    buildNumber: "9"
   },
   android: {
     package: "com.kaczcards.cardshowfinder",
-    versionCode: 5,
+    versionCode: 6,
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
@@ -178,7 +178,7 @@ module.exports = {
         data: [
           {
             scheme: "https",
-            host: "cardshowfinder.app",
+            host: "csfinderapp.com",
             pathPrefix: "/reset-password",
           },
         ],
@@ -230,6 +230,7 @@ module.exports = {
     // App Tracking Transparency (iOS 14+) – required to correctly link the
     // native framework and generate the Info.plist entries that Apple checks
     "expo-tracking-transparency",
+    "expo-asset",                        // Required for asset management
     "sentry-expo"                        // Enabled for crash reporting
   ],
   // Note: Expo's "hooks" field was removed because it is not a valid

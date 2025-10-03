@@ -19,7 +19,7 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.0.5</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -39,7 +39,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>9</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSMinimumSystemVersion</key>
@@ -50,18 +50,44 @@
     <dict>
       <key>NSAllowsArbitraryLoads</key>
       <false/>
-      <key>NSAllowsLocalNetworking</key>
-      <true/>
+      <key>NSAllowsArbitraryLoadsForMedia</key>
+      <false/>
+      <key>NSAllowsArbitraryLoadsInWebContent</key>
+      <false/>
+      <key>NSExceptionDomains</key>
+      <dict>
+        <key>localhost</key>
+        <dict>
+          <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+          <true/>
+          <key>NSIncludesSubdomains</key>
+          <true/>
+        </dict>
+        <key>127.0.0.1</key>
+        <dict>
+          <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+          <true/>
+          <key>NSIncludesSubdomains</key>
+          <true/>
+        </dict>
+      </dict>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>Allow Card Show Finder to use the camera so you can take photos of your trading cards, event badges, or QR codes at shows.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Allow local network access for development only.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Allow Card Show Finder to access your location so we can display nearby card shows.</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Allow Card Show Finder to access your location so we can display nearby card shows.</string>
-    <!-- Camera permission (ITMS-90683) -->
-    <key>NSCameraUsageDescription</key>
-    <string>Allow Card Show Finder to use the camera so you can take photos of your trading cards, event badges, or QR codes at shows.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your photos</string>
+    <key>NSUserTrackingUsageDescription</key>
+    <string>This identifier will be used to deliver a better, more relevant experience (e.g., analytics and limited advertising).</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
@@ -88,8 +114,5 @@
     <string>Light</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
-    <!-- App Tracking Transparency permission prompt (iOS 14+) -->
-    <key>NSUserTrackingUsageDescription</key>
-    <string>We use your device identifier to improve analytics and personalize the experience. We do not sell your data.</string>
   </dict>
 </plist>

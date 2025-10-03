@@ -108,10 +108,19 @@ export const _signUp = async (
       throw new Error('First name is required');
     }
 
-    // First, create the auth user
+    // Create the auth user with metadata for the trigger
     const { data, error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
+      options: {
+        emailRedirectTo: 'https://csfinderapp.com/verify',
+        data: {
+          role: UserRole.ATTENDEE,
+          firstName,
+          lastName,
+          homeZipCode,
+        }
+      }
     });
 
     if (error) {
@@ -124,25 +133,9 @@ export const _signUp = async (
 
     const userId = data.user.id;
 
-    // Then add their profile information to the profiles table
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        first_name: firstName,
-        last_name: lastName || null,
-        home_zip_code: homeZipCode,
-        role: UserRole.ATTENDEE, // Default role
-        account_type: 'collector', // Default account type
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-    if (profileError) {
-      // If profile creation fails, we should still be OK since the auth
-      // trigger should create a minimal profile
-      console.warn('Error creating profile:', profileError);
-    }
+    // Profile creation is handled by the database trigger
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Construct user object
     const user: User = {
@@ -197,7 +190,20 @@ export const _registerUser = async (
     }
 
     // ---- Create Auth user -------------------------------------------------------
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    // Pass user metadata so the handle_new_user() trigger can access it
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        emailRedirectTo: 'https://csfinderapp.com/verify',
+        data: {
+          role,
+          firstName,
+          lastName,
+          homeZipCode,
+        }
+      }
+    });
     if (error) {
       throw error;
     }
@@ -215,24 +221,13 @@ export const _registerUser = async (
         ? 'dealer'
         : 'collector';
 
-    // ---- Insert / update profile row -------------------------------------------
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        first_name: firstName,
-        last_name: lastName || null,
-        home_zip_code: homeZipCode,
-        role,
-        account_type: accountType,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-    if (profileError) {
-      // RLS triggers should still create a minimal row, but log just in case.
-      console.warn('Error creating profile:', profileError);
-    }
+    // ---- Profile creation is handled by database trigger -----------------------
+    // The handle_new_user() trigger automatically creates the profile when the
+    // auth user is created, so we don't need to manually insert it here.
+    // This avoids RLS policy conflicts during registration.
+    
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // ---- Build & return User object --------------------------------------------
     const nowIso = new Date().toISOString();
@@ -283,12 +278,13 @@ export const _signIn = async (
       return { error: new Error('No user returned from sign in') };
     }
 
-    // Fetch the user's profile
+    // ------------------------------------------------------------------
+    // Fetch the user's profile with better error handling
+    // ------------------------------------------------------------------
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', data.user.id)
-      .single();
+      .eq('id', data.user.id);
 
     if (profileError) {
       return {
@@ -296,12 +292,23 @@ export const _signIn = async (
       };
     }
 
-    if (!profileData) {
+    if (!profileData || profileData.length === 0) {
       return { error: new Error('No profile data found for user') };
     }
 
+    if (profileData.length > 1) {
+      console.warn(
+        'Multiple profiles found for user:',
+        data.user.id,
+        'using first one',
+      );
+    }
+
+    // Use the first profile if multiple exist
+    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+
     // Map to our User type
-    const user = mapProfileToUser(data.user, profileData);
+    const user = mapProfileToUser(data.user, profile);
     return { user };
   } catch (error: any) {
     console.error('Error in signin:', error.message);
@@ -341,22 +348,27 @@ export const _getSession = async (): Promise<User | null> => {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', authUser.id)
-      .single();
-    
-    if (profileError && profileError.code !== 'PGRST116') {
-      // PGRST116 means no rows returned
+      .eq('id', authUser.id);
+
+    if (profileError) {
       console.error('Error getting profile:', profileError);
       throw profileError;
     }
-    
-    if (!profileData) {
+
+    if (!profileData || profileData.length === 0) {
       console.warn('No profile found for user:', authUser.id);
       return null;
     }
-    
+
+    if (profileData.length > 1) {
+      console.warn('Multiple profiles found for user:', authUser.id, 'using first one');
+    }
+
+    // Use the first profile if multiple exist
+    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+
     // Map to our User type
-    const user = mapProfileToUser(authUser, profileData);
+    const user = mapProfileToUser(authUser, profile);
     
     return user;
   } catch (error) {
@@ -386,18 +398,28 @@ console.warn('[_supabaseAuthService] Fetching user profile for ID:', userId);
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
-      .single();
+      .eq('id', userId);
 
     if (profileError) {
       console.error('[_supabaseAuthService] Error fetching profile:', profileError);
       return null;
     }
 
-    if (!profileData) {
+    if (!profileData || profileData.length === 0) {
       console.warn('[_supabaseAuthService] No profile found for user:', userId);
       return null;
     }
+
+    if (profileData.length > 1) {
+      console.warn(
+        '[_supabaseAuthService] Multiple profiles found for user:',
+        userId,
+        'using first one'
+      );
+    }
+
+    // Use the first profile if multiple exist
+    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
 
     /* -----------------------------------------------------------
      * 2) Retrieve auth data for the **current** user via session.
@@ -422,7 +444,7 @@ console.warn('[_supabaseAuthService] Fetching user profile for ID:', userId);
     /* -----------------------------------------------------------
      * 3) Map combined auth + profile data to our `User` type
      * --------------------------------------------------------- */
-    return mapProfileToUser(authUser, profileData);
+    return mapProfileToUser(authUser, profile);
   } catch (error: any) {
     console.error('[_supabaseAuthService] Unexpected error in getCurrentUser:', error);
     return null;
@@ -486,7 +508,7 @@ export const _refreshUser = async (): Promise<User | null> => {
 export const _resetPassword = async (email: string): Promise<void> => {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'cardshowhunter://reset-password',
+      redirectTo: 'https://csfinderapp.com/reset-password/',
     });
     
     if (error) {
@@ -507,6 +529,9 @@ export const _resendEmailVerification = async (email: string): Promise<void> => 
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
+      options: {
+        emailRedirectTo: 'https://csfinderapp.com/reset-password/',
+      }
     });
     if (error) {
       throw error;
@@ -557,7 +582,7 @@ export const _updateUserProfile = async (userData: Partial<User>): Promise<User>
     const previousZip = sessionUser?.homeZipCode ?? null;
     
     // Convert our User fields to DB fields
-    const profileData = mapUserToProfile(userData);
+    const profileData = _mapUserToProfile(userData);
     
     // Remove any undefined values to avoid setting NULL
     Object.keys(profileData).forEach(key => {
@@ -638,19 +663,33 @@ console.warn('Auth state change event:', event);
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', userId)
-            .single();
-          
+            .eq('id', userId);
+
+          // --- Improved error handling ---------------------------------------
           if (profileError) {
-            throw profileError;
+            console.error('Profile fetch error:', profileError);
+            throw new Error(`Profile fetch failed: ${profileError.message}`);
           }
-          
-          if (!profileData) {
+
+          if (!profileData || profileData.length === 0) {
+            console.error('No profile found for user:', userId);
             throw new Error('No profile found for user');
           }
+
+          if (profileData.length > 1) {
+            // Data-integrity edge-case: pick first row but log warning
+            console.warn(
+              'Multiple profiles found for user:',
+              userId,
+              'using first record.'
+            );
+          }
+
+          // Use the first profile row if an array was returned
+          const profile = Array.isArray(profileData) ? profileData[0] : profileData;
           
           // Map profile to our User type
-          const user = mapProfileToUser(session.user, profileData);
+          const user = mapProfileToUser(session.user, profile);
           
           callback({
             user,
