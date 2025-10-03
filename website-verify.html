@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verified - Card Show Finder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .checkmark {
+            width: 50px;
+            height: 50px;
+            stroke: white;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+            animation: draw 0.8s ease-out 0.3s forwards;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+        }
+
+        @keyframes draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        h1 {
+            color: #1a1a1a;
+            font-size: 28px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .highlight {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .app-info {
+            background: #f7f7f7;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .app-info h2 {
+            font-size: 18px;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+
+        .app-info p {
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-container {
+            background: #fee;
+            border: 2px solid #fcc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .error-container h2 {
+            color: #c00;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .error-container p {
+            color: #900;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            p {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <svg class="checkmark" viewBox="0 0 52 52">
+                <polyline points="14,26 22,34 38,16"></polyline>
+            </svg>
+        </div>
+
+        <h1>Email Verified!</h1>
+        <p>Your email has been successfully verified.</p>
+        <p class="highlight">You can now close this page and return to the app.</p>
+
+        <div class="app-info">
+            <h2>📱 Return to the App</h2>
+            <p>Go back to the Card Show Finder app on your device. The app should automatically detect that your email has been verified.</p>
+        </div>
+
+        <div id="error-message" style="display: none;" class="error-container">
+            <h2>⚠️ Verification Issue</h2>
+            <p id="error-text"></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // IMPORTANT: Replace this with your actual Supabase credentials
+        const SUPABASE_URL = 'https://zmfqzegykwyrrvrpwylf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZnF6ZWd5a3d5cnJ2cnB3eWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxOTA4NzEsImV4cCI6MjA2NTc2Njg3MX0.7YRVny1VcGqAJlSu0izsfXAB0e1kwf_KCh6KD7uFIyw';
+
+        // Initialize Supabase client
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Process the verification on page load
+        async function processVerification() {
+            try {
+                // Get URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+                const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
+                const type = urlParams.get('type') || hashParams.get('type');
+                const error = urlParams.get('error');
+                const errorDescription = urlParams.get('error_description');
+
+                // Check for errors
+                if (error) {
+                    showError(`Verification failed: ${errorDescription || error}`);
+                    return;
+                }
+
+                // Check if this is a signup confirmation
+                if (type === 'signup' && accessToken) {
+                    // Set the session with the access token from the email link
+                    const { data, error: sessionError } = await supabaseClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: urlParams.get('refresh_token') || hashParams.get('refresh_token') || ''
+                    });
+
+                    if (sessionError) {
+                        showError(`Session error: ${sessionError.message}`);
+                        return;
+                    }
+
+                    // Verification successful - the page already shows success message
+                    console.log('Email verified successfully');
+
+                    // Sign out the user from the web session (they'll sign in via the app)
+                    await supabaseClient.auth.signOut();
+                } else if (!type) {
+                    // No type parameter means this is just someone visiting the page
+                    // Show the success message anyway (they came from an email link)
+                    console.log('Email verification page loaded');
+                } else {
+                    showError('Invalid verification link. Please request a new verification email.');
+                }
+            } catch (err) {
+                console.error('Verification error:', err);
+                showError(`An error occurred: ${err.message}`);
+            }
+        }
+
+        // Run verification on page load
+        processVerification();
+    </script>
+</body>
+</html>

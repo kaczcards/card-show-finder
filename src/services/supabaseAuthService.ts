@@ -113,7 +113,7 @@ export const _signUp = async (
       email: credentials.email,
       password: credentials.password,
       options: {
-        emailRedirectTo: 'https://csfinderapp.com/reset-password/',
+        emailRedirectTo: 'https://csfinderapp.com/verify',
         data: {
           role: UserRole.ATTENDEE,
           firstName,
@@ -195,7 +195,7 @@ export const _registerUser = async (
       email, 
       password,
       options: {
-        emailRedirectTo: 'https://csfinderapp.com/reset-password/',
+        emailRedirectTo: 'https://csfinderapp.com/verify',
         data: {
           role,
           firstName,
