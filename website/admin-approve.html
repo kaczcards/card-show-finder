@@ -285,31 +285,41 @@
 
         async function loadPendingShows() {
             try {
+                console.log('🔍 Fetching pending shows...');
+                console.log('URL:', `${SUPABASE_URL}/rest/v1/scraped_shows_pending?status=eq.PENDING&order=created_at.desc`);
+                
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_shows_pending?status=eq.PENDING&order=created_at.desc`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${authToken}`
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
+                console.log('📡 Response status:', response.status);
+                
                 if (!response.ok) {
-                    throw new Error('Failed to load shows');
+                    const errorText = await response.text();
+                    console.error('❌ Response error:', errorText);
+                    throw new Error(`Failed to load shows: ${response.status} - ${errorText}`);
                 }
 
                 const shows = await response.json();
+                console.log('✅ Shows loaded:', shows.length, shows);
                 
                 document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('pendingCount').textContent = shows.length;
 
                 if (shows.length === 0) {
+                    console.log('ℹ️ No pending shows found');
                     document.getElementById('emptyState').style.display = 'block';
                     return;
                 }
 
                 displayShows(shows);
             } catch (error) {
-                console.error('Error loading shows:', error);
-                showMessage('Failed to load pending shows. Make sure you are logged in as admin.', 'error');
+                console.error('💥 Error loading shows:', error);
+                showMessage(`Failed to load pending shows: ${error.message}. Check browser console (F12) for details.`, 'error');
                 document.getElementById('loadingState').style.display = 'none';
             }
         }
