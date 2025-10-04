@@ -253,7 +253,51 @@
             margin-top: 5px;
         }
 
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 2px solid #e1e4e8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-label:hover {
+            background: #e9ecef;
+            border-color: #FF6B35;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #FF6B35;
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + span {
+            font-weight: 600;
+            color: #FF6B35;
+        }
+
+        .checkbox-label span {
+            font-size: 14px;
+            color: #333;
+        }
+
         @media (max-width: 768px) {
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
             .time-group {
                 grid-template-columns: 1fr;
             }
@@ -322,6 +366,7 @@
                 <label for="address">Full Address <span class="required">*</span></label>
                 <input type="text" id="address" name="address" required 
                        placeholder="e.g., 123 Main St, Springfield, IL 62701">
+                <div class="helper-text">⚠️ Please include: Street Address, City, State, and Zip Code - this will be displayed in the app</div>
             </div>
 
             <!-- Daily Schedule Section -->
@@ -383,6 +428,72 @@
                 <label for="description">Description</label>
                 <textarea id="description" name="description" 
                           placeholder="Tell collectors about your show..."></textarea>
+            </div>
+
+            <!-- Show Features Section -->
+            <h2 class="section-title">✨ Show Features (Optional)</h2>
+            <div class="helper-text" style="margin-bottom: 15px;">Check all that apply to help collectors find your show</div>
+            
+            <div class="checkbox-grid">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="features" value="On-Site Grading">
+                    <span>🔍 On-Site Grading</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="features" value="Autograph Guests">
+                    <span>✍️ Autograph Guests</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="features" value="Food Vendors">
+                    <span>🍕 Food Vendors</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="features" value="Door Prizes">
+                    <span>🎁 Door Prizes</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="features" value="Auction">
+                    <span>🔨 Auction</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="features" value="Card Breakers">
+                    <span>📦 Card Breakers</span>
+                </label>
+            </div>
+
+            <!-- Categories Section -->
+            <h2 class="section-title">🃏 What's Available at Your Show? (Optional)</h2>
+            <div class="helper-text" style="margin-bottom: 15px;">Check all card types that will be available</div>
+            
+            <div class="checkbox-grid">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="categories" value="Sports Cards">
+                    <span>⚾ Sports Cards</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="categories" value="Pokemon">
+                    <span>⚡ Pokemon</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="categories" value="Magic: The Gathering">
+                    <span>🔮 Magic: The Gathering</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="categories" value="Yu-Gi-Oh">
+                    <span>🎴 Yu-Gi-Oh</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="categories" value="Comics">
+                    <span>💥 Comics</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="categories" value="Memorabilia">
+                    <span>🏆 Memorabilia</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="categories" value="Vintage">
+                    <span>📜 Vintage</span>
+                </label>
             </div>
 
             <button type="submit" class="submit-btn" id="submitBtn">
@@ -461,16 +572,36 @@
                 const startTimes = formData.getAll('day_start[]');
                 const endTimes = formData.getAll('day_end[]');
                 
+                // VALIDATE: Check that end time is after start time for each day
+                for (let i = 0; i < dates.length; i++) {
+                    const startDateTime = new Date(`${dates[i]}T${startTimes[i]}`);
+                    const endDateTime = new Date(`${dates[i]}T${endTimes[i]}`);
+                    
+                    if (endDateTime <= startDateTime) {
+                        throw new Error(`Day ${i + 1}: End time (${endTimes[i]}) must be after start time (${startTimes[i]}). Please check your times!`);
+                    }
+                }
+                
+                // Get user's timezone
+                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                
                 const dailySchedule = dates.map((date, index) => ({
                     date: date,
                     startTime: startTimes[index],
-                    endTime: endTimes[index]
+                    endTime: endTimes[index],
+                    timezone: userTimezone
                 }));
 
                 // Determine overall start and end dates
                 const sortedDates = [...dates].sort();
                 const overallStartDate = sortedDates[0];
                 const overallEndDate = sortedDates[sortedDates.length - 1];
+
+                // Collect features (checkboxes)
+                const features = formData.getAll('features');
+                
+                // Collect categories (checkboxes)
+                const categories = formData.getAll('categories');
 
                 // Build the payload
                 const showData = {
@@ -484,30 +615,53 @@
                     imageUrl: formData.get('imageUrl') || null,
                     description: formData.get('description') || null,
                     dailySchedule: dailySchedule,
+                    features: features,
+                    categories: categories,
                     organizerName: formData.get('organizerName'),
                     organizerEmail: formData.get('organizerEmail')
                 };
 
-                // Submit to Supabase
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_shows_pending`, {
+                // Step 1: Submit show to scraped_shows_pending
+                const showResponse = await fetch(`${SUPABASE_URL}/rest/v1/scraped_shows_pending`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                        'Prefer': 'return=minimal'
+                        'Prefer': 'return=representation'
                     },
                     body: JSON.stringify({
                         source_url: 'https://cardshowfinder.com/submit-show',
                         raw_payload: showData,
-                        status: 'PENDING',
-                        organizer_name: showData.organizerName,
-                        organizer_email: showData.organizerEmail
+                        status: 'PENDING'
                     })
                 });
 
-                if (!response.ok) {
+                if (!showResponse.ok) {
                     throw new Error('Failed to submit show');
+                }
+
+                // Get the pending show ID from the response
+                const pendingShows = await showResponse.json();
+                const pendingShowId = pendingShows[0]?.id;
+
+                // Step 2: Submit organizer info to web_show_submissions (mailing list)
+                if (pendingShowId) {
+                    await fetch(`${SUPABASE_URL}/rest/v1/web_show_submissions`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            organizer_name: showData.organizerName,
+                            organizer_email: showData.organizerEmail,
+                            pending_show_id: pendingShowId,
+                            status: 'PENDING'
+                        })
+                    });
                 }
 
                 // Success!

@@ -27,7 +27,10 @@ import {
   OrganizerInfo,
   DealersList,
   ShowDescription,
-  ShowManagementButtons
+  ShowManagementButtons,
+  ShowDailySchedule,
+  ShowFeatures,
+  ShowCategories
 } from './components';
 
 // Import the new hook
@@ -330,6 +333,15 @@ const ShowDetailScreen: React.FC<ShowDetailProps> = ({ route, navigation }) => {
         
         {/* Organizer Info */}
         {organizer && <OrganizerInfo organizer={organizer} />}
+        
+        {/* Daily Schedule */}
+        <ShowDailySchedule dailySchedule={show.daily_schedule} />
+        
+        {/* Show Features */}
+        <ShowFeatures features={show.features} />
+        
+        {/* Show Categories */}
+        <ShowCategories categories={show.categories} />
         
         {/* Show Description */}
         <ShowDescription description={show.description} />

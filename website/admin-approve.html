@@ -422,8 +422,8 @@
             try {
                 console.log('🔄 Approving show:', showId);
                 
-                // Call the approve_pending_show function
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/approve_pending_show`, {
+                // Call the approve_show_v2 function
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/approve_show_v2`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -445,13 +445,33 @@
                 }
 
                 const result = await response.json();
-                console.log('✅ Approve result:', result);
+                
+                // Log EVERYTHING about the result
+                console.log('📦 RAW RESULT:', JSON.stringify(result, null, 2));
+                console.log('📦 RESULT KEYS:', Object.keys(result));
+                console.log('📦 RESULT SUCCESS:', result.success);
+                console.log('📦 RESULT ERROR:', result.error);
+                console.log('📦 RESULT SQL_ERROR:', result.sql_error);
+                console.log('📦 RESULT SQL_STATE:', result.sql_state);
+                console.log('📦 RESULT DETAIL:', result.detail);
+                console.log('📦 RESULT SHOW_DATA:', result.show_data);
 
                 if (result.success) {
                     showMessage(`✅ "${showName}" has been approved and published!`, 'success');
                     setTimeout(() => loadPendingShows(), 1500);
                 } else {
-                    throw new Error(result.error || 'Unknown error from database function');
+                    // Build detailed error message
+                    let errorMsg = result.error || 'Unknown error';
+                    let fullDetails = [errorMsg];
+                    
+                    if (result.sql_error) fullDetails.push('SQL Error: ' + result.sql_error);
+                    if (result.sql_state) fullDetails.push('SQL State: ' + result.sql_state);
+                    if (result.detail) fullDetails.push('Detail: ' + result.detail);
+                    
+                    console.error('❌ FULL ERROR DETAILS:', fullDetails.join('\n'));
+                    if (result.show_data) console.error('❌ SHOW DATA THAT FAILED:', result.show_data);
+                    
+                    throw new Error(fullDetails.join('\n'));
                 }
             } catch (error) {
                 console.error('💥 Error approving show:', error);

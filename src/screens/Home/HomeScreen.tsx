@@ -41,10 +41,12 @@ const fallbackImage = require('../../../assets/stock/home_show_01.jpg');
 /* Helpers – default date range & normalisation                       */
 /* ------------------------------------------------------------------ */
 /**
- * Returns a 30-day forward-looking date window starting today.
+ * Returns a 30-day forward-looking date window starting from the beginning of today.
+ * This ensures shows happening today are included.
  */
 const getDefaultDateRange = () => {
   const start = new Date();
+  start.setHours(0, 0, 0, 0); // Set to midnight (start of today)
   const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   return { startDate: start, endDate: end };
 };
@@ -57,6 +59,7 @@ const getDefaultDateRange = () => {
  */
 const normalizeDateFilters = (input: ShowFilters): ShowFilters => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to midnight to include shows happening today
   let { startDate, endDate } = input;
 
   const parsedStart = startDate ? new Date(startDate) : null;

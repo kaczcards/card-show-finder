@@ -183,6 +183,26 @@ const ShowTimeInfo: React.FC<ShowTimeInfoProps> = ({ show }) => {
 
   // Get formatted show hours with comprehensive error handling
   const getFormattedShowHours = (): string => {
+    // First check if we have a daily_schedule with times
+    const dailySchedule = safeShow.daily_schedule || safeShow.dailySchedule;
+    if (dailySchedule && Array.isArray(dailySchedule) && dailySchedule.length > 0) {
+      // For multi-day shows with different times, show "See schedule below"
+      const allSameTime = dailySchedule.every((day: any) => 
+        day.startTime === dailySchedule[0].startTime && 
+        day.endTime === dailySchedule[0].endTime
+      );
+      
+      if (!allSameTime) {
+        return 'Varies by day (see below)';
+      }
+      
+      // If all days have the same time, show that time
+      const firstDay = dailySchedule[0];
+      if (firstDay.startTime && firstDay.endTime) {
+        return `${formatTime(firstDay.startTime)} - ${formatTime(firstDay.endTime)}`;
+      }
+    }
+    
     // Try all possible time fields with safe access
     const startTime = safeShow.start_time || safeShow.startTime || safeShow.time;
     const endTime = safeShow.end_time || safeShow.endTime;

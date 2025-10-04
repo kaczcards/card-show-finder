@@ -5,6 +5,9 @@ import OrganizerInfo from './OrganizerInfo';
 import DealersList from './DealersList';
 import ShowDescription from './ShowDescription';
 import ShowManagementButtons from './ShowManagementButtons';
+import ShowDailySchedule from './ShowDailySchedule';
+import ShowFeatures from './ShowFeatures';
+import ShowCategories from './ShowCategories';
 
 export {
   ShowHeaderActions,
@@ -13,5 +16,8 @@ export {
   OrganizerInfo,
   DealersList,
   ShowDescription,
-  ShowManagementButtons
+  ShowManagementButtons,
+  ShowDailySchedule,
+  ShowFeatures,
+  ShowCategories
 };
