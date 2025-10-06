@@ -406,9 +406,11 @@
             <h2 class="section-title">ℹ️ Additional Information (Optional)</h2>
 
             <div class="form-group">
-                <label for="admission">Admission/Entry Fee</label>
-                <input type="text" id="admission" name="admission" 
-                       placeholder="e.g., $5 or Free">
+                <label for="admission">Admission/Entry Fee (in dollars)</label>
+                <input type="number" id="admission" name="admission" 
+                       step="0.01" min="0"
+                       placeholder="5.00">
+                <div class="helper-text">Enter amount in dollars (e.g., 5.00 for $5). Leave blank if free.</div>
             </div>
 
             <div class="form-group">
