@@ -186,13 +186,32 @@ You can test the password update directly:
 
 ---
 
+## What Changed
+
+### New Files:
+1. **`app/api/auth/reset-password/route.ts`** - API endpoint for admin password reset
+2. **`app/auth/callback/route.ts`** - Handles auth callbacks and password reset tokens
+3. **`app/auth/reset-password/page.tsx`** - UI for entering new password
+4. **`app/login/page.tsx`** - Updated with "Forgot Password" feature
+
+### Environment Variables:
+- Added `NEXT_PUBLIC_SITE_URL` for dynamic redirect URLs
+
+### How It's Different:
+- **Mobile app** uses `supabaseAuthService.resetPassword()` with hardcoded redirect
+- **Admin dashboard** uses `/api/auth/reset-password` with dynamic redirect
+- Both use the same Supabase Auth but with different redirect URLs
+- No conflicts because redirect URLs are set per API call
+
+---
+
 ## Commit These Files
 
 Don't forget to commit the new auth handler files:
 
 ```bash
 cd /Users/kevin/card-show-finder
-git add card-show-admin/app/auth/
-git commit -m "Add password reset callback and reset-password page"
+git add card-show-admin/
+git commit -m "Add admin dashboard password reset with dual-flow support"
 git push
 ```
