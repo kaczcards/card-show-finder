@@ -126,9 +126,12 @@ fix(android): regenerate app icons to correct size
 
 ## Additional Notes
 - The splash screen logo files (`splashscreen_logo.png`) in the `drawable-*` directories were also regenerated
-- No changes were needed to source icon files (`assets/icon.png`, `assets/adaptive-icon.png`)
+- The source `assets/icon.png` remained unchanged (1024x1024)
+- The source `assets/adaptive-icon.png` was resized from 1024x1024 with full content to 1024x1024 with 66% content + 34% transparent padding
+- A backup of the original adaptive icon was saved to `assets/adaptive-icon-backup.png`
 - The Expo prebuild process correctly handled the conversion from PNG to WebP format
 - Android adaptive icons use a white background as specified in `app.config.js`
+- The safe zone approach ensures the icon looks good on all Android devices regardless of their launcher icon shape
 
 ## References
 - [Expo App Icon Documentation](https://docs.expo.dev/develop/user-interface/app-icons/)
