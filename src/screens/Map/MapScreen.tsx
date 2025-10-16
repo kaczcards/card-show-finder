@@ -94,16 +94,31 @@ const MapScreen: React.FC<MapScreenProps> = ({
   // Get user location
   const getUserLocation = useCallback(async () => {
     try {
+      // Android-specific: Check if homeZipCode is available first
+      if (Platform.OS === 'android') {
+        console.log('[MapScreen-Android] User object:', {
+          hasUser: !!user,
+          userId: user?.id,
+          homeZipCode: user?.homeZipCode,
+        });
+      }
+
       const hasPermission = await locationService.checkLocationPermissions();
 
       if (!hasPermission) {
         const granted = await locationService.requestLocationPermissions();
         if (!granted) {
-           
-console.warn('Location permission denied');
-          // Show toast notification if falling back to ZIP code
+          console.log('[MapScreen] Location permission denied - attempting ZIP code fallback');
+          // Permission denied - fall back to ZIP code immediately
           if (user?.homeZipCode) {
+            console.log('[MapScreen] Using homeZipCode:', user.homeZipCode);
             showLocationFailedToast(user.homeZipCode);
+            
+            const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+            if (zipData && zipData.coordinates) {
+              console.log('[MapScreen] Successfully got coordinates from ZIP code:', zipData.coordinates);
+              return zipData.coordinates;
+            }
           } else {
             showErrorToast(
               'Location Permission Denied',
@@ -114,20 +129,23 @@ console.warn('Location permission denied');
         }
       }
 
+      // Try to get actual GPS location
       const location = await locationService.getCurrentLocation();
 
       if (location) {
-         
-console.warn('Got user location:', location);
+        console.log('[MapScreen] Got GPS location:', location);
         return location;
       } else if (user && user.homeZipCode) {
-         
-console.warn('Falling back to user ZIP code:', user.homeZipCode);
+        // GPS failed - fall back to ZIP code
+        console.log('[MapScreen] GPS failed - falling back to ZIP code:', user.homeZipCode);
         showLocationFailedToast(user.homeZipCode);
         
         const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
         if (zipData && zipData.coordinates) {
+          console.log('[MapScreen] Successfully got coordinates from ZIP code:', zipData.coordinates);
           return zipData.coordinates;
+        } else {
+          console.error('[MapScreen] Failed to get coordinates from ZIP code');
         }
       }
 
@@ -140,7 +158,23 @@ console.warn('Falling back to user ZIP code:', user.homeZipCode);
       
       return null;
     } catch (error) {
-      console.error('Error getting user location:', error);
+      console.error('[MapScreen] Error getting user location:', error);
+      
+      // On error, try ZIP code as last resort
+      if (user?.homeZipCode) {
+        console.log('[MapScreen] Error occurred - attempting ZIP code fallback:', user.homeZipCode);
+        try {
+          const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+          if (zipData && zipData.coordinates) {
+            console.log('[MapScreen] Successfully recovered using ZIP code');
+            showLocationFailedToast(user.homeZipCode);
+            return zipData.coordinates;
+          }
+        } catch (zipError) {
+          console.error('[MapScreen] ZIP code fallback also failed:', zipError);
+        }
+      }
+      
       showErrorToast(
         'Location Error',
         'Failed to get your location. Please try again.'
