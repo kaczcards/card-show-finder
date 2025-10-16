@@ -150,7 +150,7 @@ cat android/app/src/main/AndroidManifest.xml | grep "geo.API_KEY"
 
 You should see:
 ```xml
-<meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyDAtiiYZj0H6wWhVQ-TfG28ukeaA_b3DXM"/>
+<meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR_API_KEY_HERE"/>
 ```
 
 **Check 3: Look for ZIP Code Geocoding Errors**
