@@ -60,7 +60,7 @@ module.exports = {
     "Discover trading-card shows near you, save favorites, and manage events. " +
     "Auto-renewable MVP Dealer and Show Organizer subscriptions are available. " +
     "Terms of Use: https://csfinderapp.com/Terms/",
-  version: "1.0.6",
+  version: "1.0.7",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light",
@@ -154,13 +154,18 @@ module.exports = {
   },
   android: {
     package: "com.kaczcards.cardshowfinder",
-    versionCode: 6,
+    versionCode: 91,
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
     },
     edgeToEdgeEnabled: true,
     permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+    config: {
+      googleMaps: {
+        apiKey: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+      },
+    },
     /**
      * Match iOS – run Hermes on Android as well.
      * Keeping this in app config prevents configuration drift
@@ -218,7 +223,7 @@ module.exports = {
   updates: {
     url: "https://u.expo.dev/13f5779d-487a-4bfd-b7df-9e925db60a1a",
   },
-  runtimeVersion: "1.0.4",
+  runtimeVersion: "1.0.6",
 
   plugins: [
     [
