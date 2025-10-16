@@ -134,6 +134,30 @@ const MapScreen: React.FC<MapScreenProps> = ({
 
       if (location) {
         console.log('[MapScreen] Got GPS location:', location);
+        
+        // Android emulator default locations (common defaults)
+        // San Jose: 37.4219983, -122.084
+        // Mountain View: 37.4220, -122.0841
+        const isSanJoseDefault = (
+          Math.abs(location.latitude - 37.4219983) < 0.01 &&
+          Math.abs(location.longitude - (-122.084)) < 0.01
+        );
+        
+        // If on Android and got the emulator default location, prefer user's ZIP code
+        if (Platform.OS === 'android' && isSanJoseDefault && user?.homeZipCode) {
+          console.log('[MapScreen-Android] Detected emulator default GPS (San Jose) - using homeZipCode instead:', user.homeZipCode);
+          
+          const zipData = await locationService.getZipCodeCoordinates(user.homeZipCode);
+          if (zipData && zipData.coordinates) {
+            console.log('[MapScreen-Android] Using ZIP code coordinates instead of emulator default:', zipData.coordinates);
+            showLocationFailedToast(user.homeZipCode);
+            return zipData.coordinates;
+          } else {
+            console.log('[MapScreen-Android] ZIP code geocoding failed, falling back to emulator GPS');
+            return location;
+          }
+        }
+        
         return location;
       } else if (user && user.homeZipCode) {
         // GPS failed - fall back to ZIP code
