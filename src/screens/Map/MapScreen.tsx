@@ -240,9 +240,14 @@ const MapScreen: React.FC<MapScreenProps> = ({
             regionToSet = { ...determinedLocation, latitudeDelta: 0.5, longitudeDelta: 0.5 };
         }
 
+        console.log('[MapScreen] Final region to set:', regionToSet);
+        console.log('[MapScreen] Setting userLocation state to:', determinedLocation);
+        
         setUserLocation(determinedLocation);
         setInitialRegion(regionToSet);
         setCurrentRegion(regionToSet);
+
+        console.log('[MapScreen] State updated - map should initialize now');
 
         if (!initialUserLocation && !user?.homeZipCode) {
           setError('Could not determine your location. Please set your home ZIP code in your profile.');
